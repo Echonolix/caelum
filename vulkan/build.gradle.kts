@@ -11,6 +11,6 @@ dependencies {
 kotlin {
     compilerOptions {
         optIn.add("kotlin.contracts.ExperimentalContracts")
-        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xbackend-threads=0", "-Xcontext-parameters")
     }
 }

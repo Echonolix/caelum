@@ -11,7 +11,6 @@ import org.echonolix.vulkan.VKFFI
 import org.echonolix.vulkan.decOrHexToInt
 import org.echonolix.vulkan.pascalCaseToAllCaps
 import org.echonolix.vulkan.tryParseXML
-import java.lang.foreign.MemoryLayout
 
 private val enumTypeWhitelist = setOf(
     "VkResult",
@@ -87,11 +86,9 @@ class PatchedRegistry(registry: Registry) {
         .toList()
     val registryExtensions = registry.extensions.extensions.asSequence()
         .filter { it.author !in VKFFI.ignoredVendor }
-        .filter { it.obsoletedby == null }
-        .filter { it.deprecatedby == null }
         .filter { it.supported.contains("vulkan") }
         .toList()
-    val enums = registry.enums
+    val registryEnums = registry.enums
     val registryTypes = registry.types.types
         .associate { type ->
             val name = type.name ?: type.inner.firstNotNullOf {
@@ -181,7 +178,7 @@ class PatchedRegistry(registry: Registry) {
                 typedefs[typeDef.name] = Element.TypeDef(typeDef.name, baseType)
             }
 
-        val bitmaskBitsEnum = enums.asSequence()
+        val bitmaskBitsEnum = registryEnums.asSequence()
             .filter { it.type == Registry.Enums.Type.bitmask }
             .associateBy { it.name }
 
@@ -243,7 +240,7 @@ class PatchedRegistry(registry: Registry) {
     val enumTypes = mutableMapOf<String, Element.EnumType>()
 
     init {
-        val enumEnums = enums.asSequence()
+        val enumEnums = registryEnums.asSequence()
             .filter { it.type == Registry.Enums.Type.enum }
             .toList()
 
@@ -282,7 +279,7 @@ class PatchedRegistry(registry: Registry) {
     val constantElements = mutableMapOf<String, Element.Constant>()
 
     init {
-        val constantEnums = enums.asSequence()
+        val constantEnums = registryEnums.asSequence()
             .filter { it.type == Registry.Enums.Type.constants }
             .toList()
 
@@ -312,8 +309,8 @@ class PatchedRegistry(registry: Registry) {
         check(constantElements.keys.containsAll(constantEnums.flatMap { it.enums.map { it.name } }))
     }
 
-    val allStuff = enumTypes + flagBitTypes + constantElements
-    val allEnum = enumTypes + flagBitTypes
+    val allStuff = (enumTypes + flagBitTypes + constantElements).toMutableMap()
+    val allEnum = (enumTypes + flagBitTypes).toMutableMap()
 
     val funcpointerTypeTypes = mutableMapOf<String, Element.FuncpointerType>()
 
@@ -466,7 +463,7 @@ class PatchedRegistry(registry: Registry) {
 //        if (this.name != "VkVendorId") {
 //            fixedEnumName = fixedEnumName.removeVendorTag()
 //        }
-        if (this.name !in enumTypeWhitelist) {
+        if (this.name !in enumTypeWhitelist && !fixedEnumName.contains("RESERVED")) {
             check(fixedEnumName.startsWith(prefix)) {
                 "Expected $fixedEnumName to start with $prefix"
             }
@@ -651,10 +648,35 @@ class PatchedRegistry(registry: Registry) {
                             allStuff[it.name]?.requiredBy = extension.name
                             return@forEach
                         }
-                        allEnum[it.extends]!!.addEntry(it, extension.number).requiredBy = extension.name
+                        if (extension.obsoletedby == null && extension.deprecatedby == null) {
+                            allEnum[it.extends]!!.addEntry(it, extension.number).requiredBy = extension.name
+                        }
                     }
             }
         }
+
+        val toRemove = allElements.asSequence()
+            .filterNot { it.value is Element.BasicType }
+            .filterNot { it.value is Element.BaseType }
+            .filter {
+                it.value.requiredBy in VKFFI.skippedExtension
+            }
+            .map { it.key }
+            .toSet()
+        removeStuff(toRemove)
+    }
+
+   private fun removeStuff(toRemove: Set<String>) {
+        this.allTypes.keys.removeAll(toRemove)
+        this.allElements.keys.removeAll(toRemove)
+        this.flagBitTypes.keys.removeAll(toRemove)
+        this.flagTypes.keys.removeAll(toRemove)
+        this.enumTypes.keys.removeAll(toRemove)
+        this.allEnum.keys.removeAll(toRemove)
+        this.allStuff.keys.removeAll(toRemove)
+        this.funcpointerTypeTypes.keys.removeAll(toRemove)
+        this.structTypes.keys.removeAll(toRemove)
+        this.unionTypes.keys.removeAll(toRemove)
     }
 }
 
@@ -726,7 +748,3 @@ data class XMLMember(
     @XmlElement val comment: String? = null,
     @XmlValue val inner: List<CompactFragment> = emptyList()
 )
-
-fun main() {
-    val a = MemoryLayout.unionLayout()
-}

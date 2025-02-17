@@ -1,11 +1,6 @@
 package org.echonolix.ktffi
 
-import java.lang.foreign.MemoryLayout
-import java.lang.foreign.MemorySegment
-import java.lang.foreign.SegmentAllocator
-import java.lang.foreign.StructLayout
-import java.lang.foreign.UnionLayout
-import java.lang.foreign.ValueLayout
+import java.lang.foreign.*
 
 sealed class NativeType(open val layout: MemoryLayout) {
     val arrayLayout: MemoryLayout = run {
@@ -37,13 +32,23 @@ abstract class NativeUnion(override val layout: UnionLayout) : NativeType(layout
 @JvmInline
 value class NativePointer<T : NativeType>(
     val _address: Long,
-)
+) {
+    inline operator fun invoke(block: NativePointer<T>.() -> Unit): NativePointer<T> {
+        this.block()
+        return this
+    }
+}
 
 @JvmInline
 value class NativeValue<T : NativeType>(
     val _segment: MemorySegment,
 ) {
     fun ptr(): NativePointer<T> = NativePointer(_segment.address())
+
+    inline operator fun invoke(block: NativeValue<T>.() -> Unit): NativeValue<T> {
+        this.block()
+        return this
+    }
 }
 
 fun <T : NativeType> T.malloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout))
@@ -51,7 +56,8 @@ fun <T : NativeType> T.malloc(allocator: SegmentAllocator): NativeValue<T> = Nat
 context(allocator: SegmentAllocator)
 fun <T : NativeType> T.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
 
-fun <T : NativeType> T.calloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })
+fun <T : NativeType> T.calloc(allocator: SegmentAllocator): NativeValue<T> =
+    NativeValue(allocator.allocate(layout).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
 fun <T : NativeType> T.calloc(): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })
@@ -88,7 +94,8 @@ context(allocator: SegmentAllocator)
 fun <T : NativeType> T.mallocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.mallocArr(count: Int): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count.toLong()))
+fun <T : NativeType> T.mallocArr(count: Int): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count.toLong()))
 
 fun <T : NativeType> T.callocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(arrayLayout, count).apply { fill(0) })
@@ -97,10 +104,12 @@ fun <T : NativeType> T.callocArr(count: Int, allocator: SegmentAllocator): Nativ
     NativeArray(allocator.allocate(arrayLayout, count.toLong()).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.callocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count).apply { fill(0) })
+fun <T : NativeType> T.callocArr(count: Long): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.callocArr(count: Int): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count.toLong()).apply { fill(0) })
+fun <T : NativeType> T.callocArr(count: Int): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count.toLong()).apply { fill(0) })
 
 val `_$OMNI_SEGMENT$_` = MemorySegment.ofAddress(0L).reinterpret(Long.MAX_VALUE)
 

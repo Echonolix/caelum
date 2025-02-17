@@ -76,6 +76,8 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: Element) = apply {
 }
 
 interface MemberVisitor {
+    fun visit(member: Element.Member)
+    fun visitOpaqueType(index: Int, member: Element.Member, name: String)
     fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType)
     fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType)
     fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType)

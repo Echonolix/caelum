@@ -82,6 +82,19 @@ class FFIGenContext(
                     .receiver(arrayCnameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
+                    .addParameter("value", valueCnameP)
+                    .addStatement(
+                        "%M(value._segment, 0L, _segment, elementAddress(index), %T.arrayLayout.byteSize())",
+                        MemorySegment::class.member("copy"),
+                        cname
+                    )
+                    .build()
+            )
+            topLevelFunctions.add(
+                FunSpec.builder("set")
+                    .receiver(arrayCnameP)
+                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addParameter("index", LONG)
                     .addParameter("value", pointerCnameP)
                     .addStatement(
                         "%M(%M, value._address, _segment, elementAddress(index), %T.arrayLayout.byteSize())",
@@ -127,7 +140,6 @@ class FFIGenContext(
                 "layout",
                 member.name
             )
-            common(member)
         }
 
         private fun pointer(member: Element.Member) {
@@ -136,7 +148,6 @@ class FFIGenContext(
                 ValueLayout::class.member("ADDRESS"),
                 member.name
             )
-            common(member)
         }
 
         private fun basicType(member: Element.Member, cBasicType: CBasicType) {
@@ -228,7 +239,14 @@ class FFIGenContext(
                 ValueLayout::class.member(cBasicType.valueLayoutName!!),
                 member.name
             )
+        }
+
+        override fun visit(member: Element.Member) {
             common(member)
+        }
+
+        override fun visitOpaqueType(index: Int, member: Element.Member, name: String) {
+
         }
 
         override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
@@ -281,7 +299,7 @@ class FFIGenContext(
 
     private fun visitStruct(registry: PatchedRegistry, struct: Element.StructUnion, visitor: MemberVisitor) {
         val typeText = struct.javaClass.simpleName.lowercase()
-        println("$typeText ${struct.name}")
+//        println("$typeText ${struct.name}")
 
         for (i in struct.members.indices) {
             val member = struct.members[i]
@@ -289,7 +307,13 @@ class FFIGenContext(
                 var fixedType = member.type.removePrefix("const ")
                 fixedType = fixedType.removePrefix("struct ")
                 val withoutStar = fixedType.removeSuffix("*")
-                if (withoutStar in whitelistTypes) return@runCatching
+                if (withoutStar in whitelistTypes) {
+                    check(withoutStar.length == fixedType.length - 1)
+                    visitor.visitOpaqueType(i, member, withoutStar)
+                    return@runCatching
+                }
+
+                visitor.visit(member)
 
                 if (withoutStar.length == fixedType.length - 1) {
                     visitor.visitPointer(i, member, registry.allTypes[withoutStar]!!)
