@@ -6,9 +6,6 @@ import org.echonolix.ktffi.CBasicType
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
-import kotlin.collections.get
 
 enum class EnumKind(val cname: ClassName, val dataType: CBasicType) {
     ENUM(VKFFI.vkEnumsCname, CBasicType.int32_t),
@@ -85,18 +82,38 @@ fun genEnums(registry: PatchedRegistry) {
     )
 
     val skipped = setOf("VkFormat")
+    val enumTypeAliasesFile = genCtx.newFile(FileSpec.builder(VKFFI.enumPackageName, "EnumTypeAliases"))
 
-    registry.enumTypes.values.asSequence()
-        .filter { it.name !in skipped }
-        .forEach { enumType ->
+    registry.enumTypes.asSequence()
+        .filter { (name, _) -> name !in skipped }
+        .forEach { (name, enumType) ->
+            val aliasType = registry.aliasTypes[name]
+            if (aliasType != null) {
+                enumTypeAliasesFile.addTypeAlias(
+                    TypeAliasSpec.builder(name, ClassName(VKFFI.enumPackageName, aliasType.name))
+                        .build()
+                )
+                return@forEach
+            }
+
             genCtx.newFile(FileSpec.builder(VKFFI.enumPackageName, enumType.name))
                 .genEnumType(enumType)
         }
 
+    val flagTypeAliasesFile = genCtx.newFile(FileSpec.builder(VKFFI.enumPackageName, "FlagTypeAliases"))
 
-    registry.flagTypes.values.asSequence()
-        .filter { it.name !in skipped }
-        .forEach { flagType ->
+    registry.flagTypes.asSequence()
+        .filter { (name, _) -> name !in skipped }
+        .forEach { (name, flagType) ->
+            val aliasType = registry.aliasTypes[name]
+            if (aliasType != null) {
+                flagTypeAliasesFile.addTypeAlias(
+                    TypeAliasSpec.builder(name, ClassName(VKFFI.enumPackageName, aliasType.name))
+                        .build()
+                )
+                return@forEach
+            }
+
             val flagBitType = registry.flagBitTypes[flagType.bitType]
             val thisCname = ClassName(VKFFI.enumPackageName, flagType.name)
             val enumKind = if (flagBitType?.type == CBasicType.int64_t) EnumKind.FLAG64 else EnumKind.FLAG32
@@ -248,64 +265,64 @@ private fun TypeSpec.Builder.addMethodHandleFields(thisCname: ClassName, enumKin
 
 private fun FileSpec.Builder.genEnumType(enumType: Element.EnumType) {
     val thisCname = ClassName(VKFFI.enumPackageName, enumType.name)
-            addType(
-                TypeSpec.enumBuilder(thisCname)
-                    .tryAddKdoc(enumType)
-                    .addVkEnum(EnumKind.ENUM)
-                    .apply {
-                        enumType.entries.values.forEach { entry ->
-                            addEnumConstant(
-                                entry.fixedName,
-                                TypeSpec.anonymousClassBuilder()
-                                    .tryAddKdoc(entry)
-                                    .superclass(ClassName(VKFFI.enumPackageName, enumType.name))
-                                    .addSuperclassConstructorParameter(entry.valueCode)
-                                    .build()
-                            )
-                        }
-                    }
-                    .addType(
-                        TypeSpec.companionObjectBuilder()
-                            .addFunction(
-                                FunSpec.builder("fromInt")
-                                    .addAnnotation(JvmStatic::class)
-                                    .addParameter(
-                                        "value",
-                                        EnumKind.ENUM.dataType.kotlinType
-                                    )
-                                    .returns(thisCname)
-                                    .apply {
-                                        addCode(
-                                            CodeBlock.builder()
-                                                .beginControlFlow("return when (value)")
-                                                .apply {
-                                                    enumType.entries.values.forEach { entry ->
-                                                        addStatement(
-                                                            "%L -> %T.%N",
-                                                            entry.valueNum,
-                                                            thisCname,
-                                                            entry.fixedName
-                                                        )
-                                                    }
-                                                }
-                                                .addStatement("else -> throw IllegalArgumentException(\"Unknown value: \$value\")")
-                                                .endControlFlow()
-                                                .build()
-                                        )
-                                    }
-                                    .build()
-                            )
-                            .addFunction(
-                                FunSpec.builder("toInt")
-                                    .addAnnotation(JvmStatic::class)
-                                    .addParameter("value", thisCname)
-                                    .returns(EnumKind.ENUM.dataType.kotlinType)
-                                    .addStatement("return value.value")
-                                    .build()
-                            )
-                            .addMethodHandleFields(thisCname, EnumKind.ENUM)
+    addType(
+        TypeSpec.enumBuilder(thisCname)
+            .tryAddKdoc(enumType)
+            .addVkEnum(EnumKind.ENUM)
+            .apply {
+                enumType.entries.values.forEach { entry ->
+                    addEnumConstant(
+                        entry.fixedName,
+                        TypeSpec.anonymousClassBuilder()
+                            .tryAddKdoc(entry)
+                            .superclass(ClassName(VKFFI.enumPackageName, enumType.name))
+                            .addSuperclassConstructorParameter(entry.valueCode)
                             .build()
                     )
+                }
+            }
+            .addType(
+                TypeSpec.companionObjectBuilder()
+                    .addFunction(
+                        FunSpec.builder("fromInt")
+                            .addAnnotation(JvmStatic::class)
+                            .addParameter(
+                                "value",
+                                EnumKind.ENUM.dataType.kotlinType
+                            )
+                            .returns(thisCname)
+                            .apply {
+                                addCode(
+                                    CodeBlock.builder()
+                                        .beginControlFlow("return when (value)")
+                                        .apply {
+                                            enumType.entries.values.forEach { entry ->
+                                                addStatement(
+                                                    "%L -> %T.%N",
+                                                    entry.valueNum,
+                                                    thisCname,
+                                                    entry.fixedName
+                                                )
+                                            }
+                                        }
+                                        .addStatement("else -> throw IllegalArgumentException(\"Unknown value: \$value\")")
+                                        .endControlFlow()
+                                        .build()
+                                )
+                            }
+                            .build()
+                    )
+                    .addFunction(
+                        FunSpec.builder("toInt")
+                            .addAnnotation(JvmStatic::class)
+                            .addParameter("value", thisCname)
+                            .returns(EnumKind.ENUM.dataType.kotlinType)
+                            .addStatement("return value.value")
+                            .build()
+                    )
+                    .addMethodHandleFields(thisCname, EnumKind.ENUM)
                     .build()
             )
+            .build()
+    )
 }

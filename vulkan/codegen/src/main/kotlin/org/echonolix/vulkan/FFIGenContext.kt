@@ -31,6 +31,7 @@ class FFIGenContext(
 
     class StructInfo {
         val memoryLayoutInitializer = CodeBlock.builder()
+            .indent()
         var size = 0L; private set
         var alignment = 0L; private set
         var endPadding = 0L; private set
@@ -45,15 +46,21 @@ class FFIGenContext(
                 val roundedSize = (size + alignment - 1) / alignment * alignment
                 endPadding = roundedSize - size
             }
+            memoryLayoutInitializer.unindent()
         }
     }
 
     class UnionInfo {
         val memoryLayoutInitializer = CodeBlock.builder()
+            .indent()
         var size = 0L; private set
 
         fun updateSize(size: Long) {
             this.size = maxOf(this.size, size)
+        }
+
+        fun finish() {
+            memoryLayoutInitializer.unindent()
         }
     }
 
@@ -134,7 +141,10 @@ class FFIGenContext(
                 }
                 error("Unsupported type: $fixedType($deTypeDef)")
             }.onFailure {
-                throw RuntimeException("Failed to process member <${member.type} ${member.name}> of <$typeText ${struct.name}>", it)
+                throw RuntimeException(
+                    "Failed to process member <${member.type} ${member.name}> of <$typeText ${struct.name}>",
+                    it
+                )
             }
         }
 
@@ -214,7 +224,7 @@ class FFIGenContext(
                         val unionInfo = getUnionInfo(registry, member.type)
                         memoryLayoutInitializer.addStatement(
                             "%T.%N.withName(%S),",
-                            ClassName(VKFFI.structPackageName, member.type),
+                            ClassName(VKFFI.unionPackageName, member.type),
                             "layout",
                             member.name
                         )
@@ -240,6 +250,8 @@ class FFIGenContext(
                     }
 
                 })
+
+                finish()
             }
         }
     }
@@ -317,7 +329,7 @@ class FFIGenContext(
                         val unionInfo = getUnionInfo(registry, member.type)
                         memoryLayoutInitializer.addStatement(
                             "%T.%N.withName(%S),",
-                            ClassName(VKFFI.structPackageName, member.type),
+                            ClassName(VKFFI.unionPackageName, member.type),
                             "layout",
                             member.name
                         )

@@ -7,8 +7,8 @@ import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.util.CompactFragment
 import org.echonolix.ktffi.CBasicType
-import org.echonolix.vulkan.decOrHexToInt
 import org.echonolix.vulkan.VKFFI
+import org.echonolix.vulkan.decOrHexToInt
 import org.echonolix.vulkan.pascalCaseToAllCaps
 import org.echonolix.vulkan.tryParseXML
 import java.lang.foreign.MemoryLayout
@@ -489,6 +489,7 @@ class PatchedRegistry(registry: Registry) {
     init {
         registryTypes.values.asSequence()
             .filter { it.category == Registry.Types.Type.Category.struct || it.category == Registry.Types.Type.Category.union }
+            .filter { it.alias == null }
             .forEach { struct ->
                 var comment: String? = null
                 val members = mutableListOf<Element.Member>()
@@ -508,7 +509,7 @@ class PatchedRegistry(registry: Registry) {
                         0 -> {}
                         1 -> {
                             val firstText = innerText[0]
-                            when(firstText[0]) {
+                            when (firstText[0]) {
                                 '*' -> {
                                     type = "$type*"
                                 }
@@ -560,6 +561,37 @@ class PatchedRegistry(registry: Registry) {
                 }
             }
 
+        registryTypes.values.asSequence()
+            .filter { it.category == Registry.Types.Type.Category.struct || it.category == Registry.Types.Type.Category.union }
+            .filter { it.alias != null }
+            .forEach {
+                if (it.category == Registry.Types.Type.Category.struct) {
+                    var struct = structTypes[it.alias]!!
+                    structTypes[it.name!!] = struct
+                    aliasTypes[it.name] = struct
+                } else {
+                    var union = unionTypes[it.alias]
+                    unionTypes[it.name!!] = union!!
+                    aliasTypes[it.name] = union
+                }
+            }
+
+        check(
+            structTypes.keys.containsAll(
+                registryTypes.values.asSequence()
+                    .filter { it.category == Registry.Types.Type.Category.struct }
+                    .mapNotNull { it.name }
+                    .toList()
+            )
+        )
+        check(
+            unionTypes.keys.containsAll(
+                registryTypes.values.asSequence()
+                    .filter { it.category == Registry.Types.Type.Category.union }
+                    .mapNotNull { it.name }
+                    .toList()
+            )
+        )
         unionTypes.toMap(allTypes)
         structTypes.toMap(allTypes)
         allTypes.toMap(allElements)
@@ -664,7 +696,8 @@ sealed class Element(val name: String) {
 
     class FuncpointerType(name: String, val returnType: String, val params: Map<String, String>) : Type(name)
 
-    class Member(name: String, val type: String, val maxCharLen: String?, val bits: Int, val xml: XMLMember) : Element(name)
+    class Member(name: String, val type: String, val maxCharLen: String?, val bits: Int, val xml: XMLMember) :
+        Element(name)
 
     sealed class StructUnion(name: String, val members: List<Member>) : Type(name)
     class Struct(name: String, members: List<Member>) : StructUnion(name, members)

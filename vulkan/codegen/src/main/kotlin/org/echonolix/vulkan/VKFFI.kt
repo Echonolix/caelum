@@ -65,7 +65,9 @@ object VKFFI {
 
     val structPackageName = "$packageName.structs"
     val vkStructCname = ClassName(structPackageName, "VkStruct")
-    val vkUnionCname = ClassName(structPackageName, "VkUnion")
+
+    val unionPackageName = "$packageName.unions"
+    val vkUnionCname = ClassName(unionPackageName, "VkUnion")
 
     val methodHandlesCname = MethodHandles::class.asClassName()
     val methodTypeCname = MethodType::class.asClassName()

@@ -1,22 +1,26 @@
 package org.echonolix.vulkan
 
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
-import com.squareup.kotlinpoet.TypeSpec
 import org.echonolix.ktffi.KTFFICodegen
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.foreign.MemoryLayout
+import java.lang.foreign.UnionLayout
 
 context(genCtx: FFIGenContext)
 fun genUnion(registry: PatchedRegistry) {
-    genCtx.newFile(FileSpec.builder(VKFFI.vkStructCname))
+    genCtx.newFile(FileSpec.builder(VKFFI.vkUnionCname))
         .addType(
-            TypeSpec.interfaceBuilder(VKFFI.vkStructCname)
-                .addSuperinterface(KTFFICodegen.structCname)
+            TypeSpec.classBuilder(VKFFI.vkUnionCname)
                 .addModifiers(KModifier.SEALED)
+                .superclass(KTFFICodegen.unionCname)
+                .primaryConstructor(
+                    FunSpec.constructorBuilder()
+                        .addParameter("layout", UnionLayout::class)
+                        .build()
+                )
+                .addSuperclassConstructorParameter("layout")
                 .build()
         )
 
@@ -24,21 +28,34 @@ fun genUnion(registry: PatchedRegistry) {
         val structClass = TypeSpec.objectBuilder(struct.name)
         with(structClass) {
             val structInfo = genCtx.getUnionInfo(registry, struct.name)
-            superclass(VKFFI.vkStructCname)
+            superclass(VKFFI.vkUnionCname)
             addSuperclassConstructorParameter(
                 CodeBlock.builder()
+                    .add("\n")
+                    .indent()
                     .addStatement("%M(", MemoryLayout::class.member("unionLayout"))
                     .add(structInfo.memoryLayoutInitializer.build())
-                    .addStatement(")")
+                    .add(")\n")
+                    .unindent()
                     .build()
             )
         }
 
-        genCtx.newFile(FileSpec.builder(VKFFI.structPackageName, struct.name))
+        genCtx.newFile(FileSpec.builder(VKFFI.unionPackageName, struct.name))
             .addType(structClass.build())
     }
 
-    registry.unionTypes.values.forEach { struct ->
-        addUnion(struct)
+    val aliasesFile = genCtx.newFile(FileSpec.builder(VKFFI.unionPackageName, "UnionAliases"))
+
+    registry.unionTypes.forEach { (name, struct) ->
+        val aliasType = registry.aliasTypes[struct.name]
+        if (aliasType != null) {
+            aliasesFile.addTypeAlias(
+                TypeAliasSpec.builder(struct.name, ClassName(VKFFI.unionPackageName, aliasType.name))
+                    .build()
+            )
+        } else {
+            addUnion(struct)
+        }
     }
 }

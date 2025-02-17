@@ -4,10 +4,12 @@ import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
 import java.lang.foreign.StructLayout
+import java.lang.foreign.UnionLayout
 import java.lang.foreign.ValueLayout
 
-sealed class Type(val layout: MemoryLayout) {
+sealed class Type(open val layout: MemoryLayout) {
     val arrayLayout: MemoryLayout = run {
+        val layout = layout
         if (layout is StructLayout) {
             val alignment = layout.byteAlignment()
             val size = layout.byteSize()
@@ -26,8 +28,8 @@ sealed class Type(val layout: MemoryLayout) {
     }
 }
 
-abstract class Struct(layout: MemoryLayout) : Type(layout)
-abstract class Union(layout: MemoryLayout) : Type(layout)
+abstract class Struct(override val layout: StructLayout) : Type(layout)
+abstract class Union(override val layout: UnionLayout) : Type(layout)
 
 @JvmInline
 value class Pointer<T : Type>(
