@@ -1,11 +1,11 @@
-package org.echonolix.vkffi
+package org.echonolix.vulkan
 
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.Documentable
 import com.squareup.kotlinpoet.FileSpec
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
-import org.echonolix.vkffi.schema.Element
+import org.echonolix.vulkan.schema.Element
 
 fun String.decOrHexToInt(): Int = if (startsWith("0x")) {
     substring(2).toInt(16)

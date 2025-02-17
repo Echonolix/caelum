@@ -15,11 +15,14 @@ pluginManagement {
 
 rootProject.name = "ktffi"
 
-include(":core:codegen")
-
-listOf(":core").forEach {
-    include(it)
-    project(it).name = rootProject.name + it.replace(":", "-")
+listOf(
+    "ktffi-core" to file("core"),
+    "ktffi-core.codegen" to file("core/codegen"),
+    "ktffi-codegen-api" to file("codegen-api"),
+).forEach { (name, dir) ->
+    includeFlat(name)
+    project(":$name").projectDir = dir
 }
 
-include(":vkffi", ":vkffi:codegen")
+
+include(":vulkan", ":vulkan:codegen")

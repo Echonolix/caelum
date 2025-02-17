@@ -1,4 +1,4 @@
-package org.echonolix.ffi
+package org.echonolix.ktffi
 
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment

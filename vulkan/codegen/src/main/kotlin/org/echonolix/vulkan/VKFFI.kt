@@ -1,6 +1,9 @@
-package org.echonolix.vkffi
+package org.echonolix.vulkan
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.asClassName
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
 object VKFFI {
     const val VK_EXT_ENUM_BASE = 1000000000
@@ -55,12 +58,14 @@ object VKFFI {
 
     val packageName = "org.echonolix.vulkan"
     val enumPackageName = "$packageName.enums"
-    val vkEnumBaseCName = ClassName(enumPackageName, "VkEnumBase")
-    val vkEnumsCName = ClassName(enumPackageName, "VkEnums")
+    val vkEnumBaseCname = ClassName(enumPackageName, "VkEnumBase")
+    val vkEnumsCname = ClassName(enumPackageName, "VkEnums")
     val vkFlags32CNAME = ClassName(enumPackageName, "VkFlags")
     val vkFlags64CNAME = ClassName(enumPackageName, "VkFlags64")
 
     val structPackage = "$packageName.structs"
-    val vkStructCName = ClassName(structPackage, "VkStruct")
-    val vkStructArrayCName = vkStructCName.nestedClass("Array")
+    val vkStructCname = ClassName(structPackage, "VkStruct")
+
+    val methodHandlesCname = MethodHandles::class.asClassName()
+    val methodTypeCname = MethodType::class.asClassName()
 }

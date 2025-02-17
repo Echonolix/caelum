@@ -1,4 +1,4 @@
-package org.echonolix.vkffi.schema
+package org.echonolix.vulkan.schema
 
 import kotlinx.serialization.Serializable
 import nl.adaptivity.xmlutil.serialization.XML
@@ -6,7 +6,7 @@ import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.util.CompactFragment
-import org.echonolix.vkffi.CBasicType
+import org.echonolix.ktffi.CBasicType
 
 @JvmInline
 @Serializable

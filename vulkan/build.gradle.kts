@@ -1,15 +1,11 @@
 plugins {
-    kotlin("jvm")
     id("org.echonolix.ktgen")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
+    ktgen(project(":vulkan:codegen"))
     implementation(kotlin("reflect"))
-    ktgen(project(":vkffi:codegen"))
+    api(project(":ktffi-core"))
 }
 
 kotlin {

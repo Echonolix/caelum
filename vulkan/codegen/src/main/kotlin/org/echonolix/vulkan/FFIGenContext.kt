@@ -1,4 +1,4 @@
-package org.echonolix.vkffi
+package org.echonolix.vulkan
 
 import com.squareup.kotlinpoet.FileSpec
 import java.nio.file.Path
@@ -8,10 +8,11 @@ class FFIGenContext(
 ) {
     val fileSpecs = mutableListOf<FileSpec.Builder>()
 
-    fun newFile(fileSpec: FileSpec.Builder) {
+    fun newFile(fileSpec: FileSpec.Builder): FileSpec.Builder {
         fileSpec.addSuppress()
         fileSpec.indent("    ")
         fileSpecs.add(fileSpec)
+        return fileSpec
     }
 
     fun writeOutput(dir: Path) {

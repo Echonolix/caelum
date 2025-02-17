@@ -1,4 +1,4 @@
-package org.echonolix.vkffi
+package org.echonolix.vulkan
 
 @JvmInline
 value class Pointer<T>(val address: Long)

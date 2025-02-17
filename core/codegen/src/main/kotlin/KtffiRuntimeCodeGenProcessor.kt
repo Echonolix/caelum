@@ -1,6 +1,7 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import org.echonolix.ktffi.KTFFICodegen
 import org.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
@@ -10,15 +11,10 @@ import kotlin.reflect.KClass
 
 class KtffiRuntimeCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: List<Path>, outputDir: Path) {
-        val packageName = "org.echonolix.ffi"
-        val typeCName = ClassName(packageName, "Type")
-        val arrayCName = ClassName(packageName, "Array")
-        val valueCName = ClassName(packageName, "Value")
-        val pointerCName = ClassName(packageName, "Pointer")
         val validChars = ('a'..'z').toList()
         val random = Random(0)
 
-        val file = FileSpec.builder(packageName, "CoreGenerated")
+        val file = FileSpec.builder(KTFFICodegen.packageName, "CoreGenerated")
             .indent("    ")
             .addAnnotation(
                 AnnotationSpec.builder(Suppress::class)
@@ -31,14 +27,14 @@ class KtffiRuntimeCodeGenProcessor : KtgenProcessor {
             )
 
         CBasicType.entries.forEach {
-            val cname = ClassName(packageName, it.name)
-            val arrayCNameP = arrayCName.parameterizedBy(cname)
-            val valueCNameP = valueCName.parameterizedBy(cname)
-            val pointerCNameP = pointerCName.parameterizedBy(cname)
+            val cname = ClassName(KTFFICodegen.packageName, it.name)
+            val arrayCNameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
+            val valueCNameP = KTFFICodegen.valueCname.parameterizedBy(cname)
+            val pointerCNameP = KTFFICodegen.pointerCname.parameterizedBy(cname)
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
                 TypeSpec.objectBuilder(cname)
-                    .addSuperinterface(typeCName)
+                    .addSuperinterface(KTFFICodegen.typeCname)
                     .addProperty(
                         PropertySpec.builder("layout", it.valueLayoutType)
                             .addModifiers(KModifier.OVERRIDE)

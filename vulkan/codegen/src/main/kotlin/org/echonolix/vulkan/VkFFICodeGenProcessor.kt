@@ -1,4 +1,4 @@
-package org.echonolix.vkffi
+package org.echonolix.vulkan
 
 import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
@@ -9,8 +9,8 @@ import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import org.echonolix.ktgen.KtgenProcessor
-import org.echonolix.vkffi.schema.PatchedRegistry
-import org.echonolix.vkffi.schema.Registry
+import org.echonolix.vulkan.schema.PatchedRegistry
+import org.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
 
 class VkFFICodeGenProcessor : KtgenProcessor {

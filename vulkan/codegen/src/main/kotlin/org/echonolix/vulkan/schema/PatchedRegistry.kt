@@ -1,4 +1,4 @@
-package org.echonolix.vkffi.schema
+package org.echonolix.vulkan.schema
 
 import com.squareup.kotlinpoet.CodeBlock
 import kotlinx.serialization.Serializable
@@ -6,11 +6,11 @@ import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.util.CompactFragment
-import org.echonolix.vkffi.CBasicType
-import org.echonolix.vkffi.decOrHexToInt
-import org.echonolix.vkffi.VKFFI
-import org.echonolix.vkffi.pascalCaseToAllCaps
-import org.echonolix.vkffi.tryParseXML
+import org.echonolix.ktffi.CBasicType
+import org.echonolix.vulkan.decOrHexToInt
+import org.echonolix.vulkan.VKFFI
+import org.echonolix.vulkan.pascalCaseToAllCaps
+import org.echonolix.vulkan.tryParseXML
 
 private val enumTypeWhitelist = setOf(
     "VkResult",

@@ -1,15 +1,10 @@
 plugins {
-    kotlin("jvm")
     kotlin("plugin.serialization") version "2.1.0"
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation("org.echonolix:ktgen-api")
-    implementation(kotlin("reflect"))
+    implementation(project(":ktffi-codegen-api"))
+    implementation(project(":ktffi-core"))
     implementation("io.github.pdvrieze.xmlutil:serialization:0.90.3")
 }
 
