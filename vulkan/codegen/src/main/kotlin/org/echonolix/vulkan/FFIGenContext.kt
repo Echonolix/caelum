@@ -1,5 +1,6 @@
 package org.echonolix.vulkan
 
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -12,6 +13,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import org.echonolix.ktffi.CBasicType
+import org.echonolix.ktffi.CType
 import org.echonolix.ktffi.KTFFICodegen
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
@@ -35,7 +37,7 @@ class FFIGenContext(
     }
 
     fun writeOutput(dir: Path) {
-        fileSpecs.forEach {
+        fileSpecs.parallelStream().forEach {
             it.build().writeTo(dir)
         }
     }
@@ -152,6 +154,12 @@ class FFIGenContext(
             )
             structUnionInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CType::class)
+                            .addMember("%S", member.type)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
                     .mutable()
                     .receiver(structUnionInfo.valueCnameP)
                     .getter(
@@ -181,6 +189,12 @@ class FFIGenContext(
 
             structUnionInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CType::class)
+                            .addMember("%S", member.type)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
                     .mutable()
                     .receiver(structUnionInfo.pointerCnameP)
                     .getter(

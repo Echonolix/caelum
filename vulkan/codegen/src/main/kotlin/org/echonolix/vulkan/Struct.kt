@@ -31,6 +31,7 @@ fun genStruct(registry: PatchedRegistry) {
         file.addProperties(structInfo.topLevelProperties)
 
         val structClass = TypeSpec.objectBuilder(structInfo.cname)
+        structClass.tryAddKdoc(struct)
         structClass.superclass(VKFFI.vkStructCname)
         structClass.addSuperclassConstructorParameter(
             CodeBlock.builder()

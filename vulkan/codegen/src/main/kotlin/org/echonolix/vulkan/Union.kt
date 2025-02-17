@@ -31,6 +31,7 @@ fun genUnion(registry: PatchedRegistry) {
         file.addProperties(unionInfo.topLevelProperties)
 
         val structClass = TypeSpec.objectBuilder(unionInfo.cname)
+        structClass.tryAddKdoc(union)
         structClass.superclass(VKFFI.vkUnionCname)
         structClass.addSuperclassConstructorParameter(
             CodeBlock.builder()

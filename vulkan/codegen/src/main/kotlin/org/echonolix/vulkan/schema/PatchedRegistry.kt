@@ -601,7 +601,6 @@ class PatchedRegistry(registry: Registry) {
     init {
         val skipped = setOf("vk_platform")
         val skippedRequire = setOf("API constants")
-        val skippedCategory = setOf(Registry.Types.Type.Category.struct, Registry.Types.Type.Category.union)
         registryFeatures.forEach { feature ->
             val featureVKVersion = "Vulkan ${feature.number}"
             feature.require.asSequence()
@@ -609,7 +608,6 @@ class PatchedRegistry(registry: Registry) {
                 .forEach { require ->
                     require.types.asSequence()
                         .filterNot { it.name in skipped }
-                        .filterNot { registryTypes[it.name]!!.category in skippedCategory }
                         .forEach {
                             allElements[it.name]!!.requiredBy = featureVKVersion
                         }
@@ -628,7 +626,6 @@ class PatchedRegistry(registry: Registry) {
             extension.require.forEach { require ->
                 require.types.asSequence()
                     .filterNot { it.name in skipped }
-                    .filterNot { registryTypes[it.name]!!.category in skippedCategory }
                     .forEach {
                         val type = allElements[it.name] ?: aliasTypes[it.name]
                         type?.requiredBy = extension.name
