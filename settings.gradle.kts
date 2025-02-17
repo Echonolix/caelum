@@ -7,6 +7,10 @@ includeBuild("../ktgen") {
 
 pluginManagement {
     includeBuild("../ktgen")
+
+    plugins {
+        id("org.jetbrains.kotlin.jvm") version "2.1.20-Beta2"
+    }
 }
 
 rootProject.name = "ktffi"
@@ -18,4 +22,4 @@ listOf(":core").forEach {
     project(it).name = rootProject.name + it.replace(":", "-")
 }
 
-include(":vkffi")
+include(":vkffi", ":vkffi:codegen")
