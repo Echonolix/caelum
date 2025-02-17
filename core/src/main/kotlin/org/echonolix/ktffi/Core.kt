@@ -3,13 +3,31 @@ package org.echonolix.ktffi
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
+import java.lang.foreign.StructLayout
 import java.lang.foreign.ValueLayout
 
-sealed interface Type {
-    val layout: MemoryLayout
+sealed class Type(val layout: MemoryLayout) {
+    val arrayLayout: MemoryLayout = run {
+        if (layout is StructLayout) {
+            val alignment = layout.byteAlignment()
+            val size = layout.byteSize()
+            val roundedSize = (size + alignment - 1) / alignment * alignment
+            if (roundedSize == size) {
+                layout
+            } else {
+                MemoryLayout.structLayout(
+                    *layout.memberLayouts().toTypedArray(),
+                    MemoryLayout.paddingLayout(roundedSize - size)
+                )
+            }
+        } else {
+            layout
+        }
+    }
 }
 
-interface Struct : Type
+abstract class Struct(layout: MemoryLayout) : Type(layout)
+abstract class Union(layout: MemoryLayout) : Type(layout)
 
 @JvmInline
 value class Pointer<T : Type>(

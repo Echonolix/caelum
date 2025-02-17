@@ -11,6 +11,7 @@ import org.echonolix.vulkan.decOrHexToInt
 import org.echonolix.vulkan.VKFFI
 import org.echonolix.vulkan.pascalCaseToAllCaps
 import org.echonolix.vulkan.tryParseXML
+import java.lang.foreign.MemoryLayout
 
 private val enumTypeWhitelist = setOf(
     "VkResult",
@@ -103,6 +104,10 @@ class PatchedRegistry(registry: Registry) {
 
     val basicTypes = CBasicType.entries.associateWith { Element.BasicType(it.name, it) }
     val opaqueTypes = mutableMapOf<String, Element.OpaqueType>()
+    val externalTypes = registryTypes.values.asSequence()
+        .filter { it.requires != null }
+        .map { it.name!! }
+        .toSet()
     val unusedTypes = mutableSetOf<String>()
     val aliasTypes = mutableMapOf<String, Element.Type>()
     val allTypes = mutableMapOf<String, Element.Type>()
@@ -141,7 +146,8 @@ class PatchedRegistry(registry: Registry) {
             .forEach {
                 it.name!!
                 val opaqueType = Element.OpaqueType(it.name)
-                val baseType = Element.BaseType(it.name, opaqueType)
+                val typedefType = Element.TypeDef(it.name, opaqueType)
+                val baseType = Element.BaseType(it.name, typedefType)
                 opaqueType.docs = it.comment
                 baseType.docs = it.comment
                 opaqueTypes[it.name] = opaqueType
@@ -197,8 +203,7 @@ class PatchedRegistry(registry: Registry) {
                         unusedTypes.add(xml.name)
                     } else {
                         val bitmaskBitsEnum = bitmaskBitsEnum[bitTypeName]!!
-                        val bitDataType =
-                            if (bitmaskBitsEnum.bitwidth == 64) CBasicType.uint64_t else CBasicType.uint32_t
+                        val bitDataType = if (bitmaskBitsEnum.bitwidth == 64) CBasicType.int64_t else CBasicType.int32_t
                         val bitmaskBits = Element.FlagBitType(bitTypeName, bitDataType, bitmask)
                         flagBitTypes[bitmaskBits.name] = bitmaskBits
                         bitmaskBitsEnum.enums.asSequence()
@@ -214,7 +219,7 @@ class PatchedRegistry(registry: Registry) {
             .filterNot { flagBitTypes.containsKey(it.name) }
             .forEach {
                 check(it.enums.isEmpty())
-                val bitDataType = if (it.bitwidth == 64) CBasicType.uint64_t else CBasicType.uint32_t
+                val bitDataType = if (it.bitwidth == 64) CBasicType.int64_t else CBasicType.int32_t
                 val bitmaskBits = Element.FlagBitType(it.name, bitDataType, null)
                 bitmaskBits.docs = it.comment
                 flagBitTypes[bitmaskBits.name] = bitmaskBits
@@ -356,7 +361,7 @@ class PatchedRegistry(registry: Registry) {
             ))
     }
 
-    val handleTypes = mutableMapOf<String, Element.Handle>()
+    val handleTypes = mutableMapOf<String, Element.HandleType>()
 
     init {
         val registryHandleTypes = registryTypes.values.asSequence()
@@ -368,7 +373,7 @@ class PatchedRegistry(registry: Registry) {
                 if (handleType.alias != null) {
                     handleTypes[handleType.name!!] = handleTypes[handleType.alias]!!
                 } else {
-                    val handle = Element.Handle(
+                    val handle = Element.HandleType(
                         handleType.name!!,
                         handleType.objtypeenum!!,
                         handleType.parent
@@ -479,13 +484,14 @@ class PatchedRegistry(registry: Registry) {
     }
 
     val structTypes = mutableMapOf<String, Element.Struct>()
+    val unionTypes = mutableMapOf<String, Element.Union>()
 
     init {
         registryTypes.values.asSequence()
-            .filter { it.category == Registry.Types.Type.Category.struct }
+            .filter { it.category == Registry.Types.Type.Category.struct || it.category == Registry.Types.Type.Category.union }
             .forEach { struct ->
                 var comment: String? = null
-                val members = mutableListOf<Element.Struct.Member>()
+                val members = mutableListOf<Element.Member>()
                 struct.inner.forEach { member ->
                     val xmlComment = member.tryParseXML<XMLComment>()
                     if (xmlComment != null) {
@@ -532,7 +538,7 @@ class PatchedRegistry(registry: Registry) {
                             arrayLen = xmlTagRegex.matchEntire(secondText)!!.groupValues[1]
                         }
                     }
-                    val member = Element.Struct.Member(
+                    val member = Element.Member(
                         xmlMember.name,
                         type,
                         arrayLen,
@@ -543,11 +549,18 @@ class PatchedRegistry(registry: Registry) {
                     comment = null
                     members.add(member)
                 }
-                val structType = Element.Struct(struct.name!!, members)
-                structType.docs = struct.comment
-                structTypes[struct.name] = structType
+                if (struct.category == Registry.Types.Type.Category.union) {
+                    val unionType = Element.Union(struct.name!!, members)
+                    unionType.docs = struct.comment
+                    unionTypes[struct.name] = unionType
+                } else {
+                    val structType = Element.Struct(struct.name!!, members)
+                    structType.docs = struct.comment
+                    structTypes[struct.name] = structType
+                }
             }
 
+        unionTypes.toMap(allTypes)
         structTypes.toMap(allTypes)
         allTypes.toMap(allElements)
     }
@@ -637,7 +650,7 @@ sealed class Element(val name: String) {
 
     class OpaqueType(name: String) : Type(name)
     class BasicType(name: String, val value: CBasicType) : Type(name)
-    class BaseType(name: String, val value: Type) : Type(name)
+    class BaseType(name: String, val value: TypeDef) : Type(name)
     class TypeDef(name: String, val value: Type) : Type(name)
 
     class FlagType(name: String, val bitType: String?) : Type(name) {
@@ -646,14 +659,16 @@ sealed class Element(val name: String) {
 
     class FlagBitType(name: String, type: CBasicType, val bitmaskType: FlagType?) : CEnum(name, type)
     class EnumType(name: String) : CEnum(name, CBasicType.int32_t)
-    class Handle(name: String, val objectEnum: String, val parent: String?) : Type(name)
+    class HandleType(name: String, val objectEnum: String, val parent: String?) : Type(name)
 
 
     class FuncpointerType(name: String, val returnType: String, val params: Map<String, String>) : Type(name)
 
-    class Struct(name: String, val members: List<Member>) : Type(name) {
-        class Member(name: String, val type: String, val maxCharLen: String?, val bits: Int, val xml: XMLMember) : Element(name)
-    }
+    class Member(name: String, val type: String, val maxCharLen: String?, val bits: Int, val xml: XMLMember) : Element(name)
+
+    sealed class StructUnion(name: String, val members: List<Member>) : Type(name)
+    class Struct(name: String, members: List<Member>) : StructUnion(name, members)
+    class Union(name: String, members: List<Member>) : StructUnion(name, members)
 
     class VulkanVersion(name: String, val version: String, val required: List<Element>) : Element(name)
     class Extension(name: String, val specVersion: Int, val required: List<Element>) : Element(name)
@@ -675,7 +690,12 @@ data class XMLMember(
     val objecttype: String? = null,
     val featurelink: String? = null,
     val selector: String? = null,
+    val selection: String? = null,
     val externsync: Boolean = false,
     @XmlElement val comment: String? = null,
     @XmlValue val inner: List<CompactFragment> = emptyList()
 )
+
+fun main() {
+    val a = MemoryLayout.unionLayout()
+}

@@ -99,7 +99,7 @@ fun genEnums(registry: PatchedRegistry) {
         .forEach { flagType ->
             val flagBitType = registry.flagBitTypes[flagType.bitType]
             val thisCname = ClassName(VKFFI.enumPackageName, flagType.name)
-            val enumKind = if (flagBitType?.type == CBasicType.uint64_t) EnumKind.FLAG64 else EnumKind.FLAG32
+            val enumKind = if (flagBitType?.type == CBasicType.int64_t) EnumKind.FLAG64 else EnumKind.FLAG32
             genCtx.newFile(
                 FileSpec.builder(thisCname)
                     .addType(

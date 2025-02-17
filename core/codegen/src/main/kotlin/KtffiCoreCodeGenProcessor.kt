@@ -9,7 +9,7 @@ import java.nio.file.Path
 import java.util.Random
 import kotlin.reflect.KClass
 
-class KtffiRuntimeCodeGenProcessor : KtgenProcessor {
+class KtffiCoreCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: List<Path>, outputDir: Path) {
         val validChars = ('a'..'z').toList()
         val random = Random(0)
@@ -34,13 +34,8 @@ class KtffiRuntimeCodeGenProcessor : KtgenProcessor {
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
                 TypeSpec.objectBuilder(cname)
-                    .addSuperinterface(KTFFICodegen.typeCname)
-                    .addProperty(
-                        PropertySpec.builder("layout", it.valueLayoutType)
-                            .addModifiers(KModifier.OVERRIDE)
-                            .initializer("%M", ValueLayout::class.member(it.valueLayoutName))
-                            .build()
-                    )
+                    .superclass(KTFFICodegen.typeCname)
+                    .addSuperclassConstructorParameter("%M", ValueLayout::class.member(it.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
                             .addAnnotation(JvmField::class)

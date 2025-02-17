@@ -11,7 +11,7 @@ import org.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.foreign.MemoryLayout
 
 context(genCtx: FFIGenContext)
-fun genStruct(registry: PatchedRegistry) {
+fun genUnion(registry: PatchedRegistry) {
     genCtx.newFile(FileSpec.builder(VKFFI.vkStructCname))
         .addType(
             TypeSpec.interfaceBuilder(VKFFI.vkStructCname)
@@ -20,14 +20,14 @@ fun genStruct(registry: PatchedRegistry) {
                 .build()
         )
 
-    fun addStruct(struct: Element.Struct) {
+    fun addUnion(struct: Element.Union) {
         val structClass = TypeSpec.objectBuilder(struct.name)
         with(structClass) {
-            val structInfo = genCtx.getStructInfo(registry, struct.name)
+            val structInfo = genCtx.getUnionInfo(registry, struct.name)
             superclass(VKFFI.vkStructCname)
             addSuperclassConstructorParameter(
                 CodeBlock.builder()
-                    .addStatement("%M(", MemoryLayout::class.member("structLayout"))
+                    .addStatement("%M(", MemoryLayout::class.member("unionLayout"))
                     .add(structInfo.memoryLayoutInitializer.build())
                     .addStatement(")")
                     .build()
@@ -38,7 +38,7 @@ fun genStruct(registry: PatchedRegistry) {
             .addType(structClass.build())
     }
 
-    registry.structTypes.values.forEach { struct ->
-        addStruct(struct)
+    registry.unionTypes.values.forEach { struct ->
+        addUnion(struct)
     }
 }

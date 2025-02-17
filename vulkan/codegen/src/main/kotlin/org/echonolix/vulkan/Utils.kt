@@ -73,3 +73,15 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: Element) = apply {
 
     addKdoc(sb.toString())
 }
+
+interface MemberVisitor {
+    fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType)
+    fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType)
+    fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType)
+    fun visitFlagType(index: Int, member: Element.Member, type: Element.FlagType)
+    fun visitFuncpointerType(index: Int, member: Element.Member, type: Element.FuncpointerType)
+    fun visitStructType(index: Int, member: Element.Member, type: Element.Struct)
+    fun visitUnionType(index: Int, member: Element.Member, type: Element.Union)
+    fun visitPointer(index: Int, member: Element.Member, type: Element.Type)
+    fun visitArray(index: Int, member: Element.Member, type: Element.Type)
+}

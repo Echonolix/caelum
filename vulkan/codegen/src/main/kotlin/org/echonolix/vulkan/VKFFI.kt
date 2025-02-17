@@ -63,8 +63,9 @@ object VKFFI {
     val vkFlags32CNAME = ClassName(enumPackageName, "VkFlags")
     val vkFlags64CNAME = ClassName(enumPackageName, "VkFlags64")
 
-    val structPackage = "$packageName.structs"
-    val vkStructCname = ClassName(structPackage, "VkStruct")
+    val structPackageName = "$packageName.structs"
+    val vkStructCname = ClassName(structPackageName, "VkStruct")
+    val vkUnionCname = ClassName(structPackageName, "VkUnion")
 
     val methodHandlesCname = MethodHandles::class.asClassName()
     val methodTypeCname = MethodType::class.asClassName()

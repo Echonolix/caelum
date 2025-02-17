@@ -12,6 +12,8 @@ import org.echonolix.ktgen.KtgenProcessor
 import org.echonolix.vulkan.schema.PatchedRegistry
 import org.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 class VkFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: List<Path>, outputDir: Path) {
@@ -40,15 +42,22 @@ class VkFFICodeGenProcessor : KtgenProcessor {
             }
         }
         val registry = xml.decodeFromString<Registry>(registryText)
+        val patchedRegistry = PatchedRegistry(registry)
 
-        val gc = FFIGenContext("org.echonolix.vulkan")
+        val gc = FFIGenContext(VKFFI.packageName, patchedRegistry.externalTypes + patchedRegistry.opaqueTypes.keys)
 
         with(gc) {
-            val patchedRegistry = PatchedRegistry(registry)
             genEnums(patchedRegistry)
             genStruct(patchedRegistry)
         }
 
         gc.writeOutput(outputDir)
     }
+}
+
+@OptIn(ExperimentalPathApi::class)
+fun main() {
+    val outputDir = Path.of("vulkan/build/generated/ktgen")
+    outputDir.deleteRecursively()
+    VkFFICodeGenProcessor().process(emptyList(), outputDir)
 }
