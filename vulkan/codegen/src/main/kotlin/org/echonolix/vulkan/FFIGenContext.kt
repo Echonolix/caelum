@@ -3,11 +3,22 @@ package org.echonolix.vulkan
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.LONG
 import com.squareup.kotlinpoet.MemberName.Companion.member
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import org.echonolix.ktffi.CBasicType
+import org.echonolix.ktffi.KTFFICodegen
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
+import java.lang.foreign.MemoryLayout
+import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
+import java.lang.invoke.VarHandle
 import java.nio.file.Path
 
 class FFIGenContext(
@@ -29,38 +40,228 @@ class FFIGenContext(
         }
     }
 
-    class StructInfo {
-        val memoryLayoutInitializer = CodeBlock.builder()
-            .indent()
-        var size = 0L; private set
-        var alignment = 0L; private set
-        var endPadding = 0L; private set
+    sealed class StructUnionInfo(val cname: ClassName) {
+        val arrayCnameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
+        val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(cname)
+        val valueCnameP = KTFFICodegen.valueCname.parameterizedBy(cname)
 
-        fun updateSize(size: Long) {
-            this.size += size
-            alignment = maxOf(alignment, size)
+        val properties = mutableListOf<PropertySpec>()
+        val topLevelProperties = mutableListOf<PropertySpec>()
+        val topLevelFunctions = mutableListOf<FunSpec>()
+        val memoryLayoutInitializer = CodeBlock.builder().indent()
+
+        init {
+            topLevelFunctions.add(
+                FunSpec.builder("elementAddress")
+                    .receiver(arrayCnameP)
+                    .addModifiers(KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .returns(LONG)
+                    .addStatement(
+                        "return %T.arrayByteOffsetHandle.invokeExact(_segment.address(), index) as Long",
+                        cname
+                    )
+                    .build()
+            )
+            topLevelFunctions.add(
+                FunSpec.builder("get")
+                    .receiver(arrayCnameP)
+                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .returns(pointerCnameP)
+                    .addStatement(
+                        "return %T(elementAddress(index))",
+                        KTFFICodegen.pointerCname
+                    )
+                    .build()
+            )
+            topLevelFunctions.add(
+                FunSpec.builder("set")
+                    .receiver(arrayCnameP)
+                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .addParameter("value", pointerCnameP)
+                    .addStatement(
+                        "%M(%M, value._address, _segment, elementAddress(index), %T.arrayLayout.byteSize())",
+                        MemorySegment::class.member("copy"),
+                        KTFFICodegen.omniSegment,
+                        cname
+                    )
+                    .build()
+            )
         }
 
-        fun finish() {
-            if (alignment > 0) {
-                val roundedSize = (size + alignment - 1) / alignment * alignment
-                endPadding = roundedSize - size
-            }
+        abstract fun finish()
+    }
+
+    class StructInfo(cname: ClassName) : StructUnionInfo(cname) {
+        override fun finish() {
             memoryLayoutInitializer.unindent()
         }
     }
 
-    class UnionInfo {
-        val memoryLayoutInitializer = CodeBlock.builder()
-            .indent()
-        var size = 0L; private set
+    class UnionInfo(cname: ClassName) : StructUnionInfo(cname) {
+        override fun finish() {
+            memoryLayoutInitializer.unindent()
+        }
+    }
 
-        fun updateSize(size: Long) {
-            this.size = maxOf(this.size, size)
+    inner class DefaultVisitor(private val registry: PatchedRegistry, private val structUnionInfo: StructUnionInfo) : MemberVisitor  {
+        private fun StructUnionInfo.offsetProperty(member: Element.Member) {
+            properties += PropertySpec.builder("${member.name}_offset", Long::class)
+                .addAnnotation(JvmField::class)
+                .initializer("layout.byteOffset(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                .build()
         }
 
-        fun finish() {
-            memoryLayoutInitializer.unindent()
+        private fun common(member: Element.Member) {
+            structUnionInfo.offsetProperty(member)
+        }
+
+        private fun structOrUnion(member: Element.Member, type: Element.StructUnion, info: StructUnionInfo) {
+            structUnionInfo.memoryLayoutInitializer.addStatement(
+                "%T.%N.withName(%S),",
+                ClassName(info.cname.packageName, member.type),
+                "layout",
+                member.name
+            )
+            common(member)
+        }
+
+        private fun pointer(member: Element.Member) {
+            structUnionInfo.memoryLayoutInitializer.addStatement(
+                "%M.withName(%S),",
+                ValueLayout::class.member("ADDRESS"),
+                member.name
+            )
+            common(member)
+        }
+
+        private fun basicType(member: Element.Member, cBasicType: CBasicType) {
+            structUnionInfo.properties.add(
+                PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
+                    .addAnnotation(JvmField::class)
+                    .initializer("layout.varHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                    .build()
+            )
+            structUnionInfo.properties.add(
+                PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
+                    .addAnnotation(JvmField::class)
+                    .initializer("layout.arrayElementVarHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                    .build()
+            )
+            structUnionInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, cBasicType.typeName)
+                    .mutable()
+                    .receiver(structUnionInfo.valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return (%T.%N.get(_segment, 0L) as %T)${cBasicType.fromBase}",
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                cBasicType.baseType.asTypeName()
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", cBasicType.typeName)
+                            .addStatement(
+                                "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+
+            structUnionInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, cBasicType.typeName)
+                    .mutable()
+                    .receiver(structUnionInfo.pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegen.omniSegment,
+                                cBasicType.baseType.asTypeName()
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", cBasicType.typeName)
+                            .addStatement(
+                                "%T.%N.set(%M, _address, value${cBasicType.toBase})",
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegen.omniSegment
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            structUnionInfo.memoryLayoutInitializer.addStatement(
+                "%M.withName(%S),",
+                ValueLayout::class.member(cBasicType.valueLayoutName!!),
+                member.name
+            )
+            common(member)
+        }
+
+        override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
+            basicType(member, type.value)
+        }
+
+        override fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType) {
+            pointer(member)
+        }
+
+        override fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType) {
+            basicType(member, CBasicType.int32_t)
+        }
+
+        override fun visitFlagType(
+            index: Int,
+            member: Element.Member,
+            type: Element.FlagType,
+            flagBitType: Element.FlagBitType?
+        ) {
+            basicType(member, registry.flagBitTypes[type.bitType]?.type ?: CBasicType.int32_t)
+        }
+
+        override fun visitFuncpointerType(
+            index: Int,
+            member: Element.Member,
+            type: Element.FuncpointerType
+        ) {
+            pointer(member)
+        }
+
+        override fun visitStructType(index: Int, member: Element.Member, type: Element.Struct) {
+            val structInfo = getStructInfo(registry, member.type)
+            structOrUnion(member, type, structInfo)
+        }
+
+        override fun visitUnionType(index: Int, member: Element.Member, type: Element.Union) {
+            val unionInfo = getUnionInfo(registry, member.type)
+            structOrUnion(member, type, unionInfo)
+        }
+
+        override fun visitPointer(index: Int, member: Element.Member, type: Element.Type) {
+            pointer(member)
+        }
+
+        override fun visitArray(index: Int, member: Element.Member, type: Element.Type) {
+            pointer(member)
         }
     }
 
@@ -112,13 +313,13 @@ class FFIGenContext(
 
                 val flagType = deTypeDef as? Element.FlagType
                 if (flagType != null) {
-                    visitor.visitFlagType(i, member, flagType)
+                    visitor.visitFlagType(i, member, flagType, registry.flagBitTypes[flagType.bitType])
                     return@runCatching
                 }
 
                 val flagBitType = deTypeDef as? Element.FlagBitType
                 if (flagBitType != null) {
-                    visitor.visitFlagType(i, member, flagBitType.bitmaskType!!)
+                    visitor.visitFlagType(i, member, flagBitType.bitmaskType!!, flagBitType)
                     return@runCatching
                 }
 
@@ -147,110 +348,14 @@ class FFIGenContext(
                 )
             }
         }
-
-        println()
     }
 
     private val unionInfoCache = mutableMapOf<String, UnionInfo>()
     fun getUnionInfo(registry: PatchedRegistry, name: String): UnionInfo {
         return unionInfoCache.getOrPut(name) {
-            UnionInfo().apply {
+            UnionInfo(ClassName(VKFFI.unionPackageName, name)).apply {
                 val union = registry.unionTypes[name] ?: error("Struct $name not found")
-
-                visitStruct(registry, union, object : MemberVisitor {
-                    override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
-                        val cBasicType = type.value
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member(cBasicType.valueLayoutName!!),
-                            member.name
-                        )
-                        updateSize(cBasicType.valueLayout!!.byteSize())
-                    }
-
-                    override fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                    override fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("JAVA_INT"),
-                            member.name
-                        )
-                        updateSize(4)
-                    }
-
-                    override fun visitFlagType(index: Int, member: Element.Member, type: Element.FlagType) {
-                        val cBasicType = registry.flagBitTypes[type.bitType]?.type ?: CBasicType.int32_t
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member(cBasicType.valueLayoutName!!),
-                            member.name
-                        )
-                        updateSize(cBasicType.valueLayout!!.byteSize())
-                    }
-
-                    override fun visitFuncpointerType(
-                        index: Int,
-                        member: Element.Member,
-                        type: Element.FuncpointerType
-                    ) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                    override fun visitStructType(index: Int, member: Element.Member, type: Element.Struct) {
-                        val structInfo = getStructInfo(registry, member.type)
-                        memoryLayoutInitializer.addStatement(
-                            "%T.%N.withName(%S),",
-                            ClassName(VKFFI.structPackageName, member.type),
-                            "layout",
-                            member.name
-                        )
-                        updateSize(structInfo.size)
-                    }
-
-                    override fun visitUnionType(index: Int, member: Element.Member, type: Element.Union) {
-                        val unionInfo = getUnionInfo(registry, member.type)
-                        memoryLayoutInitializer.addStatement(
-                            "%T.%N.withName(%S),",
-                            ClassName(VKFFI.unionPackageName, member.type),
-                            "layout",
-                            member.name
-                        )
-                        updateSize(unionInfo.size)
-                    }
-
-                    override fun visitPointer(index: Int, member: Element.Member, type: Element.Type) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                    override fun visitArray(index: Int, member: Element.Member, type: Element.Type) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                })
-
+                visitStruct(registry, union, DefaultVisitor(registry, this))
                 finish()
             }
         }
@@ -259,103 +364,9 @@ class FFIGenContext(
     private val structInfoCache = mutableMapOf<String, StructInfo>()
     fun getStructInfo(registry: PatchedRegistry, name: String): StructInfo {
         return structInfoCache.getOrPut(name) {
-            StructInfo().apply {
+            StructInfo(ClassName(VKFFI.structPackageName, name)).apply {
                 val struct = registry.structTypes[name] ?: error("Struct $name not found")
-
-                visitStruct(registry, struct, object : MemberVisitor {
-                    override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
-                        val cBasicType = type.value
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member(cBasicType.valueLayoutName!!),
-                            member.name
-                        )
-                        updateSize(cBasicType.valueLayout!!.byteSize())
-                    }
-
-                    override fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                    override fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("JAVA_INT"),
-                            member.name
-                        )
-                        updateSize(4)
-                    }
-
-                    override fun visitFlagType(index: Int, member: Element.Member, type: Element.FlagType) {
-                        val cBasicType = registry.flagBitTypes[type.bitType]?.type ?: CBasicType.int32_t
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member(cBasicType.valueLayoutName!!),
-                            member.name
-                        )
-                        updateSize(cBasicType.valueLayout!!.byteSize())
-                    }
-
-                    override fun visitFuncpointerType(
-                        index: Int,
-                        member: Element.Member,
-                        type: Element.FuncpointerType
-                    ) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                    override fun visitStructType(index: Int, member: Element.Member, type: Element.Struct) {
-                        val structInfo = getStructInfo(registry, member.type)
-                        memoryLayoutInitializer.addStatement(
-                            "%T.%N.withName(%S),",
-                            ClassName(VKFFI.structPackageName, member.type),
-                            "layout",
-                            member.name
-                        )
-                        updateSize(structInfo.size)
-                    }
-
-                    override fun visitUnionType(index: Int, member: Element.Member, type: Element.Union) {
-                        val unionInfo = getUnionInfo(registry, member.type)
-                        memoryLayoutInitializer.addStatement(
-                            "%T.%N.withName(%S),",
-                            ClassName(VKFFI.unionPackageName, member.type),
-                            "layout",
-                            member.name
-                        )
-                        updateSize(unionInfo.size)
-                    }
-
-                    override fun visitPointer(index: Int, member: Element.Member, type: Element.Type) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                    override fun visitArray(index: Int, member: Element.Member, type: Element.Type) {
-                        memoryLayoutInitializer.addStatement(
-                            "%M.withName(%S),",
-                            ValueLayout::class.member("ADDRESS"),
-                            member.name
-                        )
-                        updateSize(8)
-                    }
-
-                })
-
+                visitStruct(registry, struct, DefaultVisitor(registry, this))
                 finish()
             }
         }

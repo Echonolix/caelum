@@ -1,3 +1,3 @@
 package org.echonolix.ktffi
 
-annotation class NativeType(val name: String)
+annotation class CType(val name: String)

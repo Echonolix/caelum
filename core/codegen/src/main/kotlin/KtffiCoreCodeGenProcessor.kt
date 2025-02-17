@@ -65,22 +65,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .returns(it.kotlinType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(segment, 0L, index) as %T)${it.fromBase}",
-                        cname,
-                        "arrayVarHandle",
-                        it.baseType.asTypeName()
-                    )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .returns(it.kotlinType.asTypeName())
-                    .addStatement(
-                        "return (%T.%N.get(segment, 0L, index.toLong()) as %T)${it.fromBase}",
+                        "return (%T.%N.get(_segment, 0L, index) as %T)${it.fromBase}",
                         cname,
                         "arrayVarHandle",
                         it.baseType.asTypeName()
@@ -95,21 +80,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .addParameter("value", it.kotlinType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(segment, 0L, index, value${it.toBase})",
-                        cname,
-                        "arrayVarHandle"
-                    )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement(
-                        "%T.%N.set(segment, 0L, index.toLong(), value${it.toBase})",
+                        "%T.%N.set(_segment, 0L, index, value${it.toBase})",
                         cname,
                         "arrayVarHandle"
                     )
@@ -124,7 +95,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("property", nullableAny)
                     .returns(it.kotlinType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(segment, 0L) as %T)${it.fromBase}",
+                        "return (%T.%N.get(_segment, 0L) as %T)${it.fromBase}",
                         cname,
                         "valueVarHandle",
                         it.baseType.asTypeName()
@@ -139,7 +110,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
                     .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement("%T.%N.set(segment, 0L, value${it.toBase})", cname, "valueVarHandle")
+                    .addStatement("%T.%N.set(_segment, 0L, value${it.toBase})", cname, "valueVarHandle")
                     .build()
             )
 
@@ -151,23 +122,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .returns(it.kotlinType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%N, address, index) as %T)${it.fromBase}",
-                        cname,
-                        "arrayVarHandle",
-                        "_\$OMNI_SEGMENT\$_",
-                        it.baseType.asTypeName()
-                    )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .returns(it.kotlinType.asTypeName())
-                    .addStatement(
-                        "return (%T.%N.get(%N, address, index.toLong()) as %T)${it.fromBase}",
+                        "return (%T.%N.get(%N, _address, index) as %T)${it.fromBase}",
                         cname,
                         "arrayVarHandle",
                         "_\$OMNI_SEGMENT\$_",
@@ -183,22 +138,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .addParameter("value", it.kotlinType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(%N, address, index, value${it.toBase})",
-                        cname,
-                        "arrayVarHandle",
-                        "_\$OMNI_SEGMENT\$_"
-                    )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement(
-                        "%T.%N.set(%N, address, index.toLong(), value${it.toBase})",
+                        "%T.%N.set(%N, _address, index, value${it.toBase})",
                         cname,
                         "arrayVarHandle",
                         "_\$OMNI_SEGMENT\$_"
@@ -214,7 +154,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("property", nullableAny)
                     .returns(it.kotlinType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%N, address) as %T)${it.fromBase}",
+                        "return (%T.%N.get(%N, _address) as %T)${it.fromBase}",
                         cname,
                         "valueVarHandle",
                         "_\$OMNI_SEGMENT\$_",
@@ -230,7 +170,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
                     .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement("return %T.%N.set(%N, address, value)", cname, "valueVarHandle", "_\$OMNI_SEGMENT\$_")
+                    .addStatement("return %T.%N.set(%N, _address, value)", cname, "valueVarHandle", "_\$OMNI_SEGMENT\$_")
                     .build()
             )
         }

@@ -95,7 +95,6 @@ fun genEnums(registry: PatchedRegistry) {
                 )
                 return@forEach
             }
-
             genCtx.newFile(FileSpec.builder(VKFFI.enumPackageName, enumType.name))
                 .genEnumType(enumType)
         }

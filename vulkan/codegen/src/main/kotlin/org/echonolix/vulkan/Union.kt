@@ -24,31 +24,34 @@ fun genUnion(registry: PatchedRegistry) {
                 .build()
         )
 
-    fun addUnion(struct: Element.Union) {
-        val structClass = TypeSpec.objectBuilder(struct.name)
-        with(structClass) {
-            val structInfo = genCtx.getUnionInfo(registry, struct.name)
-            superclass(VKFFI.vkUnionCname)
-            addSuperclassConstructorParameter(
-                CodeBlock.builder()
-                    .add("\n")
-                    .indent()
-                    .addStatement("%M(", MemoryLayout::class.member("unionLayout"))
-                    .add(structInfo.memoryLayoutInitializer.build())
-                    .add(")\n")
-                    .unindent()
-                    .build()
-            )
-        }
+    fun addUnion(union: Element.Union) {
+        val unionInfo = genCtx.getUnionInfo(registry, union.name)
+        val file = FileSpec.builder(VKFFI.unionPackageName, union.name)
+        file.addFunctions(unionInfo.topLevelFunctions)
+        file.addProperties(unionInfo.topLevelProperties)
 
-        genCtx.newFile(FileSpec.builder(VKFFI.unionPackageName, struct.name))
-            .addType(structClass.build())
+        val structClass = TypeSpec.objectBuilder(unionInfo.cname)
+        structClass.superclass(VKFFI.vkUnionCname)
+        structClass.addSuperclassConstructorParameter(
+            CodeBlock.builder()
+                .add("\n")
+                .indent()
+                .addStatement("%M(", MemoryLayout::class.member("unionLayout"))
+                .add(unionInfo.memoryLayoutInitializer.build())
+                .add(")\n")
+                .unindent()
+                .build()
+        )
+        structClass.addProperties(unionInfo.properties)
+
+        file.addType(structClass.build())
+        genCtx.newFile(file)
     }
 
     val aliasesFile = genCtx.newFile(FileSpec.builder(VKFFI.unionPackageName, "UnionAliases"))
 
     registry.unionTypes.forEach { (name, struct) ->
-        val aliasType = registry.aliasTypes[struct.name]
+        val aliasType = registry.aliasTypes[name]
         if (aliasType != null) {
             aliasesFile.addTypeAlias(
                 TypeAliasSpec.builder(struct.name, ClassName(VKFFI.unionPackageName, aliasType.name))

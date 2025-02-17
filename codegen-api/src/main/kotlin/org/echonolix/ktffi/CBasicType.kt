@@ -5,19 +5,27 @@ import com.squareup.kotlinpoet.asTypeName
 import java.lang.foreign.ValueLayout
 import kotlin.reflect.KClass
 
-enum class CBasicType(val kotlinType: KClass<*>, val literalSuffix: String, val valueLayout: ValueLayout?, val valueLayoutName: String?) {
+enum class CBasicType(
+    val kotlinType: KClass<*>,
+    val literalSuffix: String,
+    val valueLayout: ValueLayout?,
+    val valueLayoutName: String?,
+    val baseType: KClass<*> = kotlinType,
+    val fromBase: String ="",
+    val toBase: String = "",
+) {
     void(Unit::class, "", null, null),
     char(Char::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
     float(Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT"),
     double(Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE"),
     int8_t(Byte::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
-    uint8_t(UByte::class, "U", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
+    uint8_t(UByte::class, "U", ValueLayout.JAVA_BYTE, "JAVA_BYTE", Byte::class, ".toUByte()", ".toByte()"),
     int16_t(Short::class, "", ValueLayout.JAVA_SHORT, "JAVA_SHORT"),
-    uint16_t(UShort::class, "U", ValueLayout.JAVA_SHORT, "JAVA_SHORT"),
+    uint16_t(UShort::class, "U", ValueLayout.JAVA_SHORT, "JAVA_SHORT", Short::class, ".toUShort()", ".toShort()"),
     int32_t(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT"),
-    uint32_t(UInt::class, "U",    ValueLayout.JAVA_INT, "JAVA_INT"),
+    uint32_t(UInt::class, "U", ValueLayout.JAVA_INT, "JAVA_INT", Int::class, ".toUInt()", ".toInt()"),
     int64_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
-    uint64_t(ULong::class, "UL", ValueLayout.JAVA_LONG,  "JAVA_LONG"),
+    uint64_t(ULong::class, "UL", ValueLayout.JAVA_LONG, "JAVA_LONG", Long::class, ".toULong()", ".toLong()"),
     size_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
     int(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT");
 
@@ -41,6 +49,7 @@ enum class CBasicType(val kotlinType: KClass<*>, val literalSuffix: String, val 
                 else -> null
             }
         }
+
         fun fromString(type: String): CBasicType {
             return fromStringOrNull(type) ?: throw IllegalArgumentException("Unknown CBasicType: $type")
         }

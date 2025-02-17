@@ -7,7 +7,7 @@ import java.lang.foreign.StructLayout
 import java.lang.foreign.UnionLayout
 import java.lang.foreign.ValueLayout
 
-sealed class Type(open val layout: MemoryLayout) {
+sealed class NativeType(open val layout: MemoryLayout) {
     val arrayLayout: MemoryLayout = run {
         val layout = layout
         if (layout is StructLayout) {
@@ -26,78 +26,81 @@ sealed class Type(open val layout: MemoryLayout) {
             layout
         }
     }
+
+    @JvmField
+    val arrayByteOffsetHandle = arrayLayout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
 }
 
-abstract class Struct(override val layout: StructLayout) : Type(layout)
-abstract class Union(override val layout: UnionLayout) : Type(layout)
+abstract class NativeStruct(override val layout: StructLayout) : NativeType(layout)
+abstract class NativeUnion(override val layout: UnionLayout) : NativeType(layout)
 
 @JvmInline
-value class Pointer<T : Type>(
-    val address: Long,
+value class NativePointer<T : NativeType>(
+    val _address: Long,
 )
 
 @JvmInline
-value class Value<T : Type>(
-    val segment: MemorySegment,
+value class NativeValue<T : NativeType>(
+    val _segment: MemorySegment,
 ) {
-    fun ptr(): Pointer<T> = Pointer(segment.address())
+    fun ptr(): NativePointer<T> = NativePointer(_segment.address())
 }
 
-fun <T : Type> T.malloc(allocator: SegmentAllocator): Value<T> = Value(allocator.allocate(layout))
+fun <T : NativeType> T.malloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout))
 
 context(allocator: SegmentAllocator)
-fun <T : Type> T.malloc(): Value<T> = Value(allocator.allocate(layout))
+fun <T : NativeType> T.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
 
-fun <T : Type> T.calloc(allocator: SegmentAllocator): Value<T> = Value(allocator.allocate(layout).apply { fill(0) })
+fun <T : NativeType> T.calloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : Type> T.calloc(): Value<T> = Value(allocator.allocate(layout).apply { fill(0) })
+fun <T : NativeType> T.calloc(): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })
 
 @JvmInline
-value class Array<T : Type>(
-    val segment: MemorySegment,
+value class NativeArray<T : NativeType>(
+    val _segment: MemorySegment,
 ) {
-    fun ptr(): Pointer<T> = Pointer(segment.address())
+    fun ptr(): NativePointer<T> = NativePointer(_segment.address())
 }
 
 
-fun mallocArr(byteSize: Long, allocator: SegmentAllocator): Array<*> =
-    Array<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
+fun mallocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
+    NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
 
 context(allocator: SegmentAllocator)
-fun mallocArr(byteSize: Long): Array<*> = Array<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
+fun mallocArr(byteSize: Long): NativeArray<*> = NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
 
-fun callocArr(byteSize: Long, allocator: SegmentAllocator): Array<*> =
-    Array<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
-
-context(allocator: SegmentAllocator)
-fun callocArr(byteSize: Long): Array<*> =
-    Array<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
-
-
-fun <T : Type> T.mallocArr(count: Long, allocator: SegmentAllocator): Array<T> =
-    Array(allocator.allocate(layout, count))
-
-fun <T : Type> T.mallocArr(count: Int, allocator: SegmentAllocator): Array<T> =
-    Array(allocator.allocate(layout, count.toLong()))
+fun callocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
+    NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : Type> T.mallocArr(count: Long): Array<T> = Array(allocator.allocate(layout, count))
+fun callocArr(byteSize: Long): NativeArray<*> =
+    NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
+
+
+fun <T : NativeType> T.mallocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count))
+
+fun <T : NativeType> T.mallocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count.toLong()))
 
 context(allocator: SegmentAllocator)
-fun <T : Type> T.mallocArr(count: Int): Array<T> = Array(allocator.allocate(layout, count.toLong()))
-
-fun <T : Type> T.callocArr(count: Long, allocator: SegmentAllocator): Array<T> =
-    Array(allocator.allocate(layout, count).apply { fill(0) })
-
-fun <T : Type> T.callocArr(count: Int, allocator: SegmentAllocator): Array<T> =
-    Array(allocator.allocate(layout, count.toLong()).apply { fill(0) })
+fun <T : NativeType> T.mallocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count))
 
 context(allocator: SegmentAllocator)
-fun <T : Type> T.callocArr(count: Long): Array<T> = Array(allocator.allocate(layout, count).apply { fill(0) })
+fun <T : NativeType> T.mallocArr(count: Int): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count.toLong()))
+
+fun <T : NativeType> T.callocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count).apply { fill(0) })
+
+fun <T : NativeType> T.callocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
+    NativeArray(allocator.allocate(arrayLayout, count.toLong()).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : Type> T.callocArr(count: Int): Array<T> = Array(allocator.allocate(layout, count.toLong()).apply { fill(0) })
+fun <T : NativeType> T.callocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count).apply { fill(0) })
+
+context(allocator: SegmentAllocator)
+fun <T : NativeType> T.callocArr(count: Int): NativeArray<T> = NativeArray(allocator.allocate(arrayLayout, count.toLong()).apply { fill(0) })
 
 val `_$OMNI_SEGMENT$_` = MemorySegment.ofAddress(0L).reinterpret(Long.MAX_VALUE)
 

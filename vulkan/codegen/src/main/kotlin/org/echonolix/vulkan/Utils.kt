@@ -32,6 +32,7 @@ fun FileSpec.Builder.addSuppress() = apply {
             .addMember("%S", "PropertyName")
             .addMember("%S", "RedundantVisibilityModifier")
             .addMember("%S", "unused")
+            .addMember("%S", "NOTHING_TO_INLINE")
             .build()
     )
 }
@@ -78,7 +79,7 @@ interface MemberVisitor {
     fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType)
     fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType)
     fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType)
-    fun visitFlagType(index: Int, member: Element.Member, type: Element.FlagType)
+    fun visitFlagType(index: Int, member: Element.Member, type: Element.FlagType, flagBitType: Element.FlagBitType?)
     fun visitFuncpointerType(index: Int, member: Element.Member, type: Element.FuncpointerType)
     fun visitStructType(index: Int, member: Element.Member, type: Element.Struct)
     fun visitUnionType(index: Int, member: Element.Member, type: Element.Union)

@@ -105,7 +105,7 @@ class PatchedRegistry(registry: Registry) {
     val basicTypes = CBasicType.entries.associateWith { Element.BasicType(it.name, it) }
     val opaqueTypes = mutableMapOf<String, Element.OpaqueType>()
     val externalTypes = registryTypes.values.asSequence()
-        .filter { it.requires != null }
+        .filter { it.requires?.endsWith(".h") == true }
         .map { it.name!! }
         .toSet()
     val unusedTypes = mutableSetOf<String>()
@@ -501,6 +501,7 @@ class PatchedRegistry(registry: Registry) {
                         return@forEach
                     }
                     val xmlMember = member.tryParseXML<XMLMember>()!!
+                    if (xmlMember.api != null && !xmlMember.api.split(",").contains("vulkan")) return@forEach
                     val innerText = xmlMember.inner.map { it.contentString }
                     var type = xmlMember.type
                     var arrayLen: String? = null

@@ -25,24 +25,27 @@ fun genStruct(registry: PatchedRegistry) {
         )
 
     fun addStruct(struct: Element.Struct) {
-        val structClass = TypeSpec.objectBuilder(struct.name)
-        with(structClass) {
-            val structInfo = genCtx.getStructInfo(registry, struct.name)
-            superclass(VKFFI.vkStructCname)
-            addSuperclassConstructorParameter(
-                CodeBlock.builder()
-                    .add("\n")
-                    .indent()
-                    .addStatement("%M(", MemoryLayout::class.member("structLayout"))
-                    .add(structInfo.memoryLayoutInitializer.build())
-                    .add(")\n")
-                    .unindent()
-                    .build()
-            )
-        }
+        val structInfo = genCtx.getStructInfo(registry, struct.name)
+        val file = FileSpec.builder(VKFFI.structPackageName, struct.name)
+        file.addFunctions(structInfo.topLevelFunctions)
+        file.addProperties(structInfo.topLevelProperties)
 
-        genCtx.newFile(FileSpec.builder(VKFFI.structPackageName, struct.name))
-            .addType(structClass.build())
+        val structClass = TypeSpec.objectBuilder(structInfo.cname)
+        structClass.superclass(VKFFI.vkStructCname)
+        structClass.addSuperclassConstructorParameter(
+            CodeBlock.builder()
+                .add("\n")
+                .indent()
+                .addStatement("%M(", MemoryLayout::class.member("structLayout"))
+                .add(structInfo.memoryLayoutInitializer.build())
+                .add(")\n")
+                .unindent()
+                .build()
+        )
+        structClass.addProperties(structInfo.properties)
+
+        file.addType(structClass.build())
+        genCtx.newFile(file)
     }
 
     val aliasesFile = genCtx.newFile(FileSpec.builder(VKFFI.structPackageName, "StructAliases"))
