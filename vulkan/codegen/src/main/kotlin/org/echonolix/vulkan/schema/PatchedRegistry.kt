@@ -551,7 +551,7 @@ class PatchedRegistry(registry: Registry) {
                     unionType.docs = struct.comment
                     unionTypes[struct.name] = unionType
                 } else {
-                    val structType = Element.Struct(struct.name!!, members)
+                    val structType = Element.Struct(struct.name!!, members, struct.structextends?.split(",") ?: emptyList())
                     structType.docs = struct.comment
                     structTypes[struct.name] = structType
                 }
@@ -730,7 +730,7 @@ sealed class Element(val name: String) {
     }
 
     sealed class Group(name: String, val members: List<Member>) : Type(name)
-    class Struct(name: String, members: List<Member>) : Group(name, members)
+    class Struct(name: String, members: List<Member>, val extends: List<String>) : Group(name, members)
     class Union(name: String, members: List<Member>) : Group(name, members)
 }
 

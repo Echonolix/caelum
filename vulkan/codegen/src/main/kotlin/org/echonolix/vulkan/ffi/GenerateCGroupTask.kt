@@ -518,23 +518,30 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
 
         private fun pointer(member: Element.Member, type: Element.Type) {
             val layoutCode: CodeBlock
-            val constructTypeParameter: TypeName
-            val typeParameter: TypeName
+
+            val constructorType: TypeName
+            val pointerTargetCname: TypeName
 
             if (type is Element.BasicType) {
                 layoutCode = CodeBlock.of("%M", type.value.valueLayoutMember)
-                typeParameter = type.value.nativeTypeName
-                constructTypeParameter = if (type.value == CBasicType.void) {
-                    uint8_t::class.asTypeName()
+                if (type.value == CBasicType.void) {
+                    if (member.name == "pNext") {
+                        constructorType = KTFFICodegen.pointerCname
+                        pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(WildcardTypeName.producerOf(VKFFI.vkStructCname))
+                    } else {
+                        constructorType = KTFFICodegen.pointerCname.parameterizedBy(CBasicType.uint8_t.nativeTypeName)
+                        pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(type.value.nativeTypeName)
+                    }
                 } else {
-                    typeParameter
+                    constructorType = KTFFICodegen.pointerCname
+                    pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(type.value.nativeTypeName)
                 }
             } else {
                 val packageName = genCtx.getPackageName(type)
                 val elementCname = ClassName(packageName, type.name)
                 layoutCode = CodeBlock.of("%T.arrayLayout", elementCname)
-                typeParameter = elementCname
-                constructTypeParameter = typeParameter
+                constructorType = KTFFICodegen.pointerCname
+                pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(elementCname)
             }
 
             groupInfo.layoutInitializer.add(
@@ -558,8 +565,6 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .build()
             )
 
-            val constructorType = KTFFICodegen.pointerCname.parameterizedBy(constructTypeParameter)
-            val pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(typeParameter)
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, pointerTargetCname)
                     .addAnnotations(annotations)
