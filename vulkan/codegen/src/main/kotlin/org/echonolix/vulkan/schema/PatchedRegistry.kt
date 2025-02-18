@@ -84,8 +84,7 @@ class PatchedRegistry(registry: Registry) {
     val registryFeatures = registry.features.asSequence()
         .filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }
         .toList()
-    val registryExtensions = registry.extensions.extensions.asSequence()
-        .toList()
+    val registryExtensions = registry.extensions.extensions
     val registryEnums = registry.enums
     val registryTypes = registry.types.types
         .associate { type ->
@@ -673,7 +672,7 @@ class PatchedRegistry(registry: Registry) {
         }
     }
 
-   private fun removeStuff(toRemove: Set<String>) {
+    private fun removeStuff(toRemove: Set<String>) {
         this.allTypes.keys.removeAll(toRemove)
         this.allElements.keys.removeAll(toRemove)
         this.flagBitTypes.keys.removeAll(toRemove)
@@ -684,6 +683,7 @@ class PatchedRegistry(registry: Registry) {
         this.funcpointerTypeTypes.keys.removeAll(toRemove)
         this.structTypes.keys.removeAll(toRemove)
         this.unionTypes.keys.removeAll(toRemove)
+        this.groupTypes.keys.removeAll(toRemove)
     }
 }
 

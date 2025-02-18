@@ -480,24 +480,19 @@ class FFIGenContext(
         }
     }
 
-    private val groupInfoCache = ConcurrentHashMap<String, GroupInfo>()
     fun getUnionInfo(registry: PatchedRegistry, name: String): GroupInfo {
-        return groupInfoCache.computeIfAbsent(name) {
-            UnionInfo(ClassName(VKFFI.unionPackageName, name)).apply {
-                val union = registry.unionTypes[name] ?: error("Struct $name not found")
-                visitStruct(registry, union, DefaultVisitor(registry, this))
-                finish()
-            }
+        return UnionInfo(ClassName(VKFFI.unionPackageName, name)).apply {
+            val union = registry.unionTypes[name] ?: error("Struct $name not found")
+            visitStruct(registry, union, DefaultVisitor(registry, this))
+            finish()
         }
     }
 
     fun getStructInfo(registry: PatchedRegistry, name: String): GroupInfo {
-        return groupInfoCache.computeIfAbsent(name) {
-            StructInfo(ClassName(VKFFI.structPackageName, name)).apply {
-                val struct = registry.structTypes[name] ?: error("Struct $name not found")
-                visitStruct(registry, struct, DefaultVisitor(registry, this))
-                finish()
-            }
+        return StructInfo(ClassName(VKFFI.structPackageName, name)).apply {
+            val struct = registry.structTypes[name] ?: error("Struct $name not found")
+            visitStruct(registry, struct, DefaultVisitor(registry, this))
+            finish()
         }
     }
 

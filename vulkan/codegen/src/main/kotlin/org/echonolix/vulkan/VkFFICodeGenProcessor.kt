@@ -68,7 +68,9 @@ class VkFFICodeGenProcessor : KtgenProcessor {
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
+    val time = System.nanoTime()
     val outputDir = Path.of("vulkan/build/generated/ktgen")
     outputDir.deleteRecursively()
     VkFFICodeGenProcessor().process(emptyList(), outputDir)
+    println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
 }
