@@ -288,6 +288,11 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun array(member: Element.Member, type: Element.Type) {
+            if (groupInfo.type.name == "VkTransformMatrixKHR") {
+                //TODO: 2D array support
+                return
+            }
+
             val lengthCodeBlock: CodeBlock
             val lengthCodeBlockAnnotation: CodeBlock
 
