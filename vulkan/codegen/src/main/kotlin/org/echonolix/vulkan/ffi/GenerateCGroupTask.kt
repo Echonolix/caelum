@@ -303,16 +303,90 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun structOrUnion(member: Element.Member, type: Element.Group, info: GroupInfo) {
-            println(groupInfo.type)
-            println(member)
-            println(type)
-            println()
-
+            val groupCname = ClassName(info.cname.packageName, member.type)
             groupInfo.layoutInitializer.addStatement(
                 "%T.%N.withName(%S),",
-                ClassName(info.cname.packageName, member.type),
+                groupCname,
                 "layout",
                 member.name
+            )
+
+            val str = if (type is Element.Struct) "struct " else "union "
+            val annotations = listOf(
+                AnnotationSpec.builder(CType::class)
+                    .addMember("%S", str + member.type)
+                    .build(),
+            )
+            val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(groupCname)
+            groupInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, pointerCnameP)
+                    .addAnnotations(annotations)
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(groupInfo.valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long)",
+                                KTFFICodegen.pointerCname,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", pointerCnameP)
+                            .addStatement(
+                                "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long, %T.%N_byteSize)",
+                                MemorySegment::class.member("copy"),
+                                KTFFICodegen.omniSegment,
+                                KTFFICodegen.omniSegment,
+                                groupInfo.cname,
+                                member.name,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .build()
+                )
+            groupInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, pointerCnameP)
+                    .addAnnotations(annotations)
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(groupInfo.pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N_offsetHandle.invokeExact(_address, 0L) as Long)",
+                                KTFFICodegen.pointerCname,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", pointerCnameP)
+                            .addStatement(
+                                "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_address, 0L) as Long, %T.%N_byteSize)",
+                                MemorySegment::class.member("copy"),
+                                KTFFICodegen.omniSegment,
+                                KTFFICodegen.omniSegment,
+                                groupInfo.cname,
+                                member.name,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .build()
             )
         }
 
