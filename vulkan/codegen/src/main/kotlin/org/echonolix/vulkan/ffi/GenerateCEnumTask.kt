@@ -11,7 +11,6 @@ import java.util.concurrent.RecursiveAction
 class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry: PatchedRegistry) : RecursiveAction() {
     override fun compute() {
 //    val skipped = setOf("VkFormat")
-        val skipped = setOf("")
 
         val enumTypeList = registry.enumTypes.asSequence()
 //            .filter { (name, _) -> name !in skipped }

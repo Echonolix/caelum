@@ -53,9 +53,11 @@ class VkFFICodeGenProcessor : KtgenProcessor {
             override fun compute() {
                 val genEnumTask = GenerateCEnumTask(gc, patchedRegistry).fork()
                 val genGroupTask = GenerateCGroupTask(gc, patchedRegistry).fork()
+                val genFuncPointerTask = GenerateCFuncPointerTask(gc, patchedRegistry).fork()
 
                 genEnumTask.join()
                 genGroupTask.join()
+                genFuncPointerTask.join()
             }
         }.fork().join()
     }
@@ -63,7 +65,7 @@ class VkFFICodeGenProcessor : KtgenProcessor {
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
-//    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
+    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
     val time = System.nanoTime()
     val outputDir = Path.of("vulkan/build/generated/ktgen")
     outputDir.deleteRecursively()

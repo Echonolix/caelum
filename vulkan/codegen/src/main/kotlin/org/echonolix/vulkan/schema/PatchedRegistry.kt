@@ -309,7 +309,7 @@ class PatchedRegistry(registry: Registry) {
     val allStuff = (enumTypes + flagBitTypes + constantElements).toMutableMap()
     val allEnum = (enumTypes + flagBitTypes).toMutableMap()
 
-    val funcpointerTypeTypes = mutableMapOf<String, Element.FuncpointerType>()
+    val funcpointerTypes = mutableMapOf<String, Element.FuncpointerType>()
 
     init {
         val funcHeaderRegex = """typedef (.+) \(VKAPI_PTR \*<name>.+</name>\)\((?:void\);)?""".toRegex()
@@ -336,11 +336,11 @@ class PatchedRegistry(registry: Registry) {
                 val typeDefType = Element.TypeDef(typeDef.name, funcpointerType)
                 funcpointerType.docs = typeDef.comment
                 typeDefType.docs = typeDef.comment
-                funcpointerTypeTypes[typeDefType.name] = funcpointerType
+                funcpointerTypes[typeDefType.name] = funcpointerType
                 typedefs[typeDefType.name] = typeDefType
             }
 
-        funcpointerTypeTypes.toMap(allTypes)
+        funcpointerTypes.toMap(allTypes)
         allTypes.toMap(allElements)
     }
 
@@ -680,7 +680,7 @@ class PatchedRegistry(registry: Registry) {
         this.enumTypes.keys.removeAll(toRemove)
         this.allEnum.keys.removeAll(toRemove)
         this.allStuff.keys.removeAll(toRemove)
-        this.funcpointerTypeTypes.keys.removeAll(toRemove)
+        this.funcpointerTypes.keys.removeAll(toRemove)
         this.structTypes.keys.removeAll(toRemove)
         this.unionTypes.keys.removeAll(toRemove)
         this.groupTypes.keys.removeAll(toRemove)
@@ -720,7 +720,6 @@ sealed class Element(val name: String) {
     class EnumType(name: String) : CEnum(name, CBasicType.int32_t)
     class HandleType(name: String, val objectEnum: String, val parent: String?) : Type(name)
 
-
     class FuncpointerType(name: String, val returnType: String, val params: Map<String, String>) : Type(name)
 
     class Member(name: String, val type: String, val length: String?, val bits: Int, val xml: XMLMember) :
@@ -733,9 +732,6 @@ sealed class Element(val name: String) {
     sealed class Group(name: String, val members: List<Member>) : Type(name)
     class Struct(name: String, members: List<Member>) : Group(name, members)
     class Union(name: String, members: List<Member>) : Group(name, members)
-
-    class VulkanVersion(name: String, val version: String, val required: List<Element>) : Element(name)
-    class Extension(name: String, val specVersion: Int, val required: List<Element>) : Element(name)
 }
 
 @Serializable

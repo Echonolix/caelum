@@ -8,6 +8,7 @@ class FFIGenContext(val packageName: String, val outputDir: Path, val filter: (E
     val enumPackageName = "${packageName}.enums"
     val structPackageName = "${VKFFI.packageName}.structs"
     val unionPackageName = "${VKFFI.packageName}.unions"
+    val funcPointerPackageName = "${VKFFI.packageName}.funcptrs"
     val handlePackageName = "${VKFFI.packageName}.handles"
 
     fun getPackageName(type: Element.Type): String {
