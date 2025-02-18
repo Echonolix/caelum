@@ -261,42 +261,44 @@ class FFIGenContext(
                     )
                     .build()
             )
-//            structUnionInfo.topLevelProperties.add(
-//                PropertySpec.builder(member.name, cBasicType.typeName)
-//                    .addAnnotation(
-//                        AnnotationSpec.builder(CType::class)
-//                            .addMember("%S", member.type)
-//                            .build()
-//                    )
-//                    .tryAddKdoc(member)
-//                    .mutable()
-//                    .receiver(structUnionInfo.pointerCnameP)
-//                    .getter(
-//                        FunSpec.getterBuilder()
-//                            .addModifiers(KModifier.INLINE)
-//                            .addStatement(
-//                                "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
-//                                structUnionInfo.cname,
-//                                "${member.name}_valueVarHandle",
-//                                KTFFICodegen.omniSegment,
-//                                cBasicType.baseType.asTypeName()
-//                            )
-//                            .build()
-//                    )
-//                    .setter(
-//                        FunSpec.setterBuilder()
-//                            .addModifiers(KModifier.INLINE)
-//                            .addParameter("value", cBasicType.typeName)
-//                            .addStatement(
-//                                "%T.%N.set(%M, _address, value${cBasicType.toBase})",
-//                                structUnionInfo.cname,
-//                                "${member.name}_valueVarHandle",
-//                                KTFFICodegen.omniSegment
-//                            )
-//                            .build()
-//                    )
-//                    .build()
-//            )
+            structUnionInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, typeCname)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CType::class)
+                            .addMember("%S", member.type)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(structUnionInfo.pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T.fromInt((%T.%N.get(%M, _address) as %T))",
+                                typeCname,
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegen.omniSegment,
+                                cBasicType.baseType.asTypeName()
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", cBasicType.typeName)
+                            .addStatement(
+                                "%T.%N.set(%M, _address, %T.toInt(value))",
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegen.omniSegment,
+                                typeCname
+                            )
+                            .build()
+                    )
+                    .build()
+            )
         }
 
         private fun cbasicType(member: Element.Member, cBasicType: CBasicType) {
