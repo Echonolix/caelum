@@ -33,6 +33,7 @@ fun FileSpec.Builder.addSuppress() = apply {
             .addMember("%S", "RedundantVisibilityModifier")
             .addMember("%S", "unused")
             .addMember("%S", "NOTHING_TO_INLINE")
+            .addMember("%S", "RemoveExplicitTypeArguments")
             .build()
     )
 }

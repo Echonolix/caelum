@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import org.echonolix.ktffi.*
+import org.echonolix.ktffi.KTFFICodegen
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.foreign.MemoryLayout
@@ -259,6 +260,26 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         MemberVisitor {
 
         private fun common(member: Element.Member) {
+            groupInfo.properties.add(
+                PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
+                    .addAnnotation(JvmField::class)
+                    .initializer(
+                        "layout.varHandle(%M(%S))",
+                        MemoryLayout.PathElement::class.member("groupElement"),
+                        member.name
+                    )
+                    .build()
+            )
+            groupInfo.properties.add(
+                PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
+                    .addAnnotation(JvmField::class)
+                    .initializer(
+                        "layout.arrayElementVarHandle(%M(%S))",
+                        MemoryLayout.PathElement::class.member("groupElement"),
+                        member.name
+                    )
+                    .build()
+            )
             groupInfo.properties += PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
                 .addAnnotation(JvmField::class)
                 .initializer(
@@ -282,6 +303,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun structOrUnion(member: Element.Member, type: Element.Group, info: GroupInfo) {
+            // TODO: Support for nested structs
             groupInfo.layoutInitializer.addStatement(
                 "%T.%N.withName(%S),",
                 ClassName(info.cname.packageName, member.type),
@@ -334,19 +356,19 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 )
             }
 
+            val annotations = listOf(
+                AnnotationSpec.builder(CType::class)
+                    .addMember("%S", member.type)
+                    .build(),
+                AnnotationSpec.builder(CArrayType::class)
+                    .addMember(lengthCodeBlockAnnotation)
+                    .build()
+            )
+
             val pointerElementCname = KTFFICodegen.pointerCname.parameterizedBy(elementCname)
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, pointerElementCname)
-                    .addAnnotation(
-                        AnnotationSpec.builder(CType::class)
-                            .addMember("%S", member.type)
-                            .build()
-                    )
-                    .addAnnotation(
-                        AnnotationSpec.builder(CArrayLength::class)
-                            .addMember(lengthCodeBlockAnnotation)
-                            .build()
-                    )
+                    .addAnnotations(annotations)
                     .tryAddKdoc(member)
                     .mutable()
                     .receiver(groupInfo.valueCnameP)
@@ -381,16 +403,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             )
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, pointerElementCname)
-                    .addAnnotation(
-                        AnnotationSpec.builder(CType::class)
-                            .addMember("%S", member.type)
-                            .build()
-                    )
-                    .addAnnotation(
-                        AnnotationSpec.builder(CArrayLength::class)
-                            .addMember(lengthCodeBlockAnnotation)
-                            .build()
-                    )
+                    .addAnnotations(annotations)
                     .tryAddKdoc(member)
                     .mutable()
                     .receiver(groupInfo.pointerCnameP)
@@ -431,26 +444,110 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             println(type)
             println()
 
-            val layoutCode = if (type is Element.BasicType) {
-                CodeBlock.of("%M", type.value.valueLayoutMember)
+            val layoutCode: CodeBlock
+            val constructTypeParameter: TypeName
+            val typeParameter: TypeName
+
+            if (type is Element.BasicType) {
+                layoutCode = CodeBlock.of("%M", type.value.valueLayoutMember)
+                if (type.value == CBasicType.void) {
+                    typeParameter = WildcardTypeName.producerOf(ANY.copy(nullable = true))
+                    constructTypeParameter = uint8_t::class.asTypeName()
+                } else {
+                    typeParameter = type.value.typeName
+                    constructTypeParameter = typeParameter
+                }
             } else {
                 val packageName = genCtx.getPackageName(type)
                 val elementCname = ClassName(packageName, type.name)
-                CodeBlock.of("%T.arrayLayout", elementCname)
+                layoutCode = CodeBlock.of("%T.arrayLayout", elementCname)
+                typeParameter = elementCname
+                constructTypeParameter = typeParameter
             }
 
-
-            if (member.xml.len != null) {
-                println(member)
-                println(member.xml.len)
-                println(type)
-                println()
-            }
             groupInfo.layoutInitializer.add(
                 CodeBlock.builder()
                     .add("%M(", KTFFICodegen.pointerLayout)
                     .add(layoutCode)
                     .addStatement(").withName(%S),", member.name)
+                    .build()
+            )
+
+            val annotations = listOf(
+                AnnotationSpec.builder(CType::class)
+                    .addMember("%S", member.type)
+                    .build(),
+                AnnotationSpec.builder(CPointerType::class)
+                    .apply {
+                        if (member.xml.len != null) {
+                            addMember("lengthVariable = %S", member.xml.len)
+                        }
+                    }
+                    .build()
+            )
+
+            val constructorType = KTFFICodegen.pointerCname.parameterizedBy(constructTypeParameter)
+            val pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(typeParameter)
+            groupInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, pointerTargetCname)
+                    .addAnnotations(annotations)
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(groupInfo.valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N.get(_segment, 0L) as Long)",
+                                constructorType,
+                                groupInfo.cname,
+                                "${member.name}_valueVarHandle"
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", pointerTargetCname)
+                            .addStatement(
+                                "%T.%N.set(_segment, 0L, value._address)",
+                                groupInfo.cname,
+                                "${member.name}_valueVarHandle",
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            groupInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, pointerTargetCname)
+                    .addAnnotations(annotations)
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(groupInfo.pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N.get(%M, _address) as Long)",
+                                constructorType,
+                                groupInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                    KTFFICodegen.omniSegment
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", pointerTargetCname)
+                            .addStatement(
+                                "%T.%N.set(%M, _address, value._address)",
+                                groupInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegen.omniSegment
+                            )
+                            .build()
+                    )
                     .build()
             )
         }
@@ -613,26 +710,6 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun cbasicType(member: Element.Member, cBasicType: CBasicType) {
-            groupInfo.properties.add(
-                PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
-                    .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.varHandle(%M(%S))",
-                        MemoryLayout.PathElement::class.member("groupElement"),
-                        member.name
-                    )
-                    .build()
-            )
-            groupInfo.properties.add(
-                PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
-                    .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.arrayElementVarHandle(%M(%S))",
-                        MemoryLayout.PathElement::class.member("groupElement"),
-                        member.name
-                    )
-                    .build()
-            )
             groupInfo.layoutInitializer.addStatement(
                 "%M.withName(%S),",
                 cBasicType.valueLayoutMember,

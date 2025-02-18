@@ -5,8 +5,8 @@ annotation class CType(val name: String)
 @Target(AnnotationTarget.CLASS)
 annotation class CHandleType
 @Target(AnnotationTarget.PROPERTY)
-annotation class CArrayLength(val length: UInt)
+annotation class CArrayType(val length: UInt)
 @Target(AnnotationTarget.FUNCTION)
 annotation class CFunctionPointer
 @Target(AnnotationTarget.PROPERTY)
-annotation class CPointerLength(val name: String)
+annotation class CPointerType(val lengthVariable: String = "")
