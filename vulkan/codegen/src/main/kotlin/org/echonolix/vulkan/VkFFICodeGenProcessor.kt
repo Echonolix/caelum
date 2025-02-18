@@ -45,7 +45,7 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val patchedRegistry = PatchedRegistry(registry)
 
-        val gc = FFIGenContext(VKFFI.packageName, patchedRegistry.externalTypes + patchedRegistry.opaqueTypes.keys)
+        val gc = FFIGenContext()
 
         with(gc) {
             val enums = object : RecursiveAction() {
