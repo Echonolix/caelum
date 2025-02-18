@@ -303,7 +303,11 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun structOrUnion(member: Element.Member, type: Element.Group, info: GroupInfo) {
-            // TODO: Support for nested structs
+            println(groupInfo.type)
+            println(member)
+            println(type)
+            println()
+
             groupInfo.layoutInitializer.addStatement(
                 "%T.%N.withName(%S),",
                 ClassName(info.cname.packageName, member.type),
@@ -439,23 +443,17 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun pointer(member: Element.Member, type: Element.Type) {
-            println(groupInfo.type)
-            println(member)
-            println(type)
-            println()
-
             val layoutCode: CodeBlock
             val constructTypeParameter: TypeName
             val typeParameter: TypeName
 
             if (type is Element.BasicType) {
                 layoutCode = CodeBlock.of("%M", type.value.valueLayoutMember)
-                if (type.value == CBasicType.void) {
-                    typeParameter = WildcardTypeName.producerOf(ANY.copy(nullable = true))
-                    constructTypeParameter = uint8_t::class.asTypeName()
+                typeParameter = type.value.nativeTypeName
+                constructTypeParameter = if (type.value == CBasicType.void) {
+                    uint8_t::class.asTypeName()
                 } else {
-                    typeParameter = type.value.typeName
-                    constructTypeParameter = typeParameter
+                    typeParameter
                 }
             } else {
                 val packageName = genCtx.getPackageName(type)

@@ -1,10 +1,17 @@
 package org.echonolix.ktffi
 
 import java.lang.foreign.*
+import java.lang.invoke.MethodHandle
 import kotlin.jvm.optionals.getOrElse
 
-sealed class NativeType(open val layout: MemoryLayout) {
-    val arrayLayout: MemoryLayout = run {
+interface NativeType {
+    val layout: MemoryLayout
+    val arrayLayout: MemoryLayout
+    val arrayByteOffsetHandle: MethodHandle
+}
+
+sealed class NativeTypeImpl(override val layout: MemoryLayout) : NativeType {
+    final override val arrayLayout: MemoryLayout = run {
         val layout = layout
         if (layout is StructLayout) {
             val alignment = layout.byteAlignment()
@@ -23,12 +30,11 @@ sealed class NativeType(open val layout: MemoryLayout) {
         }
     }.withName("${layout.name().get()}[]")
 
-    @JvmField
-    val arrayByteOffsetHandle = arrayLayout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
+    final override val arrayByteOffsetHandle: MethodHandle = arrayLayout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
 }
 
-abstract class NativeStruct(override val layout: StructLayout) : NativeType(layout)
-abstract class NativeUnion(override val layout: UnionLayout) : NativeType(layout)
+abstract class NativeStruct(override val layout: StructLayout) : NativeTypeImpl(layout)
+abstract class NativeUnion(override val layout: UnionLayout) : NativeTypeImpl(layout)
 
 @JvmInline
 value class NativePointer<T : NativeType>(

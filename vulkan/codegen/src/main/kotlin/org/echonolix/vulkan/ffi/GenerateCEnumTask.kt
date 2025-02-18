@@ -3,8 +3,11 @@ package org.echonolix.vulkan.ffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import org.echonolix.ktffi.CBasicType
+import org.echonolix.ktffi.KTFFICodegen
+import org.echonolix.ktffi.NativeType
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
+import java.lang.foreign.MemoryLayout
 import java.lang.invoke.MethodHandle
 import java.util.concurrent.RecursiveAction
 
@@ -29,9 +32,44 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         val vkEnumFile = FileSpec.builder(VKFFI.vkEnumsCname)
             .addType(
                 TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
+                    .addSuperinterface(KTFFICodegen.typeCname)
                     .addTypeVariable(TypeVariableName("T"))
                     .addProperty(
                         PropertySpec.builder("value", TypeVariableName("T"))
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("nativeType", NativeType::class)
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("layout", MemoryLayout::class)
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addStatement("return nativeType.layout")
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("arrayLayout", MemoryLayout::class)
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addStatement("return nativeType.arrayLayout")
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("arrayByteOffsetHandle", MethodHandle::class)
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addStatement("return nativeType.arrayByteOffsetHandle")
+                                    .build()
+                            )
                             .build()
                     )
                     .addModifiers(KModifier.SEALED)
@@ -41,6 +79,16 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 TypeSpec.interfaceBuilder(VKFFI.vkEnumsCname)
                     .addModifiers(KModifier.SEALED)
                     .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
+                    .addProperty(
+                        PropertySpec.builder("nativeType", NativeType::class)
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addStatement("return %T", CBasicType.int32_t.nativeTypeName)
+                                    .build()
+                            )
+                            .build()
+                    )
                     .addProperty(
                         PropertySpec.builder("value", Int::class)
                             .addModifiers(KModifier.OVERRIDE)
@@ -53,6 +101,16 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                     .addModifiers(KModifier.SEALED)
                     .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                     .addProperty(
+                        PropertySpec.builder("nativeType", NativeType::class)
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addStatement("return %T", CBasicType.int32_t.nativeTypeName)
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .addProperty(
                         PropertySpec.builder("value", Int::class)
                             .addModifiers(KModifier.OVERRIDE)
                             .build()
@@ -63,6 +121,16 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 TypeSpec.interfaceBuilder(VKFFI.vkFlags64CNAME)
                     .addModifiers(KModifier.SEALED)
                     .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Long::class.asTypeName()))
+                    .addProperty(
+                        PropertySpec.builder("nativeType", NativeType::class)
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addStatement("return %T", CBasicType.int64_t.nativeTypeName)
+                                    .build()
+                            )
+                            .build()
+                    )
                     .addProperty(
                         PropertySpec.builder("value", Long::class)
                             .addModifiers(KModifier.OVERRIDE)
@@ -215,6 +283,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         )
 
         val companion = TypeSpec.companionObjectBuilder()
+        companion.addSuperinterface(KTFFICodegen.typeCname, CodeBlock.of("%T", enumKind.dataType.nativeTypeName))
         flagBitType?.entries?.values?.let { flagBitTypes ->
             flagBitTypes.forEach {
                 companion.addProperty(
@@ -283,6 +352,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 }
                 .addType(
                     TypeSpec.companionObjectBuilder()
+                        .addSuperinterface(KTFFICodegen.typeCname, CodeBlock.of("%T", CBasicType.int32_t.nativeTypeName))
                         .addFunction(
                             FunSpec.builder("fromInt")
                                 .addAnnotation(JvmStatic::class)

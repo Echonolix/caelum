@@ -1,8 +1,7 @@
 package org.echonolix.ktffi
 
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.asTypeName
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout
 import kotlin.reflect.KClass
@@ -13,7 +12,7 @@ enum class CBasicType(
     val valueLayout: ValueLayout,
     val valueLayoutName: String,
     val baseType: KClass<*> = kotlinType,
-    val fromBase: String ="",
+    val fromBase: String = "",
     val toBase: String = "",
 ) {
     void(Unit::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
@@ -33,6 +32,11 @@ enum class CBasicType(
 
     val typeName: TypeName = kotlinType.asTypeName()
     val valueLayoutMember = ValueLayout::class.member(valueLayoutName)
+    val nativeTypeName = if (name == "void") {
+        WildcardTypeName.producerOf(ANY.copy(nullable = true))
+    } else {
+        ClassName(KTFFICodegen.packageName, name)
+    }
 
     companion object {
         fun fromStringOrNull(type: String): CBasicType? {

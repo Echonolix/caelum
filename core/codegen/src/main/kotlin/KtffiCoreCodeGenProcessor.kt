@@ -26,6 +26,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .build()
             )
 
+        val superclass = ClassName(KTFFICodegen.packageName, "NativeTypeImpl")
         CBasicType.entries.forEach {
             val cname = ClassName(KTFFICodegen.packageName, it.name)
             val arrayCNameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
@@ -34,7 +35,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
                 TypeSpec.objectBuilder(cname)
-                    .superclass(KTFFICodegen.typeCname)
+                    .superclass(superclass)
                     .addSuperclassConstructorParameter("%M", ValueLayout::class.member(it.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
