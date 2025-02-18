@@ -552,7 +552,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 AnnotationSpec.builder(CPointerType::class)
                     .apply {
                         if (member.xml.len != null) {
-                            addMember("lengthVariable = %S", member.xml.len)
+                            addMember("lengthVariable = %S", member.xml.altlen ?: member.xml.len)
                         }
                     }
                     .build()
