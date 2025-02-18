@@ -97,6 +97,8 @@ fun genGroups(registry: PatchedRegistry) {
 
     registry.groupTypes.asSequence()
         .filter { (_, groupType) -> groupType.requiredBy!! == "Vulkan 1.0" }
+        .toList()
+        .parallelStream()
         .forEach { (name, groupType) ->
             addGroup(name, groupType)
         }

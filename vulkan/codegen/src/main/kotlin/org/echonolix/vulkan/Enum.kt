@@ -88,6 +88,8 @@ fun genEnums(registry: PatchedRegistry) {
     registry.enumTypes.asSequence()
         .filter { (name, _) -> name !in skipped }
         .filter { (_, enumType) -> enumType.requiredBy!! == "Vulkan 1.0" }
+        .toList()
+        .parallelStream()
         .forEach { (name, enumType) ->
             val aliasType = registry.aliasTypes[name]
             if (aliasType != null) {
@@ -106,6 +108,8 @@ fun genEnums(registry: PatchedRegistry) {
     registry.flagTypes.asSequence()
         .filter { (name, _) -> name !in skipped }
         .filter { (_, enumType) -> enumType.requiredBy!! == "Vulkan 1.0" }
+        .toList()
+        .parallelStream()
         .forEach { (name, flagType) ->
             val aliasType = registry.aliasTypes[name]
             if (aliasType != null) {
@@ -185,7 +189,7 @@ fun genEnums(registry: PatchedRegistry) {
                                     .addFunction(
                                         FunSpec.builder("toInt")
                                             .addAnnotation(JvmStatic::class)
-//                                            .addModifiers(KModifier.INLINE)
+                                            .addModifiers(KModifier.INLINE)
                                             .addParameter("value", thisCname)
                                             .returns(enumKind.dataType.kotlinType)
                                             .addStatement("return value.value")
@@ -194,7 +198,7 @@ fun genEnums(registry: PatchedRegistry) {
                                     .addFunction(
                                         FunSpec.builder("fromInt")
                                             .addAnnotation(JvmStatic::class)
-//                                            .addModifiers(KModifier.INLINE)
+                                            .addModifiers(KModifier.INLINE)
                                             .addParameter("value", enumKind.dataType.kotlinType)
                                             .returns(thisCname)
                                             .addStatement("return %T(value)", thisCname)

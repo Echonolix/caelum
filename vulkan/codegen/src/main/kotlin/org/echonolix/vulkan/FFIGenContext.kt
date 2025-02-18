@@ -13,6 +13,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import org.echonolix.ktffi.CBasicType
+import org.echonolix.ktffi.CHandleType
 import org.echonolix.ktffi.CType
 import org.echonolix.ktffi.KTFFICodegen
 import org.echonolix.vulkan.schema.Element
@@ -22,12 +23,14 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class FFIGenContext(
     val packageName: String,
     val whitelistTypes: Set<String>,
 ) {
-    val fileSpecs = mutableListOf<FileSpec.Builder>()
+    val fileSpecs = ConcurrentLinkedQueue<FileSpec.Builder>()
 
     fun newFile(fileSpec: FileSpec.Builder): FileSpec.Builder {
         fileSpec.addSuppress()
@@ -37,7 +40,7 @@ class FFIGenContext(
     }
 
     fun writeOutput(dir: Path) {
-        fileSpecs.parallelStream().forEach {
+        fileSpecs.toList().parallelStream().forEach {
             it.build().writeTo(dir)
         }
     }
@@ -150,7 +153,7 @@ class FFIGenContext(
             )
         }
 
-        private fun cbasicTypeAccess(member: Element.Member, cBasicType: CBasicType) {
+        private fun cbasicTypeAccess(member: Element.Member, cBasicType: CBasicType, block: PropertySpec.Builder.() -> Unit = {}) {
             structUnionInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
                     .addAnnotation(
@@ -158,6 +161,7 @@ class FFIGenContext(
                             .addMember("%S", member.type)
                             .build()
                     )
+                    .apply(block)
                     .tryAddKdoc(member)
                     .mutable()
                     .receiver(structUnionInfo.valueCnameP)
@@ -192,6 +196,7 @@ class FFIGenContext(
                             .addMember("%S", member.type)
                             .build()
                     )
+                    .apply(block)
                     .tryAddKdoc(member)
                     .mutable()
                     .receiver(structUnionInfo.pointerCnameP)
@@ -335,7 +340,11 @@ class FFIGenContext(
         }
 
         override fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType) {
-            pointer(member)
+            val cBasicType = CBasicType.uint64_t
+            cbasicType(member, cBasicType)
+            cbasicTypeAccess(member, cBasicType) {
+                addAnnotation(CHandleType::class)
+            }
         }
 
         override fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType) {
@@ -471,9 +480,9 @@ class FFIGenContext(
         }
     }
 
-    private val unionInfoCache = mutableMapOf<String, UnionInfo>()
-    fun getUnionInfo(registry: PatchedRegistry, name: String): UnionInfo {
-        return unionInfoCache.getOrPut(name) {
+    private val groupInfoCache = ConcurrentHashMap<String, GroupInfo>()
+    fun getUnionInfo(registry: PatchedRegistry, name: String): GroupInfo {
+        return groupInfoCache.computeIfAbsent(name) {
             UnionInfo(ClassName(VKFFI.unionPackageName, name)).apply {
                 val union = registry.unionTypes[name] ?: error("Struct $name not found")
                 visitStruct(registry, union, DefaultVisitor(registry, this))
@@ -482,9 +491,8 @@ class FFIGenContext(
         }
     }
 
-    private val structInfoCache = mutableMapOf<String, StructInfo>()
-    fun getStructInfo(registry: PatchedRegistry, name: String): StructInfo {
-        return structInfoCache.getOrPut(name) {
+    fun getStructInfo(registry: PatchedRegistry, name: String): GroupInfo {
+        return groupInfoCache.computeIfAbsent(name) {
             StructInfo(ClassName(VKFFI.structPackageName, name)).apply {
                 val struct = registry.structTypes[name] ?: error("Struct $name not found")
                 visitStruct(registry, struct, DefaultVisitor(registry, this))

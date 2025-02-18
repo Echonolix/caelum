@@ -12,6 +12,7 @@ import org.echonolix.ktgen.KtgenProcessor
 import org.echonolix.vulkan.schema.PatchedRegistry
 import org.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
+import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
@@ -47,8 +48,18 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val gc = FFIGenContext(VKFFI.packageName, patchedRegistry.externalTypes + patchedRegistry.opaqueTypes.keys)
 
         with(gc) {
-            genEnums(patchedRegistry)
-            genGroups(patchedRegistry)
+            val enums = object : RecursiveAction() {
+                override fun compute() {
+                    genEnums(patchedRegistry)
+                }
+            }.fork()
+            val groups = object : RecursiveAction() {
+                override fun compute() {
+                    genGroups(patchedRegistry)
+                }
+            }.fork()
+            enums.join()
+            groups.join()
         }
 
         gc.writeOutput(outputDir)
