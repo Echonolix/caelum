@@ -8,3 +8,5 @@ annotation class CHandleType
 annotation class CArrayLength(val length: UInt)
 @Target(AnnotationTarget.FUNCTION)
 annotation class CFunctionPointer
+@Target(AnnotationTarget.PROPERTY)
+annotation class CPointerLength(val name: String)

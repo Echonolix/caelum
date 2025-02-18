@@ -53,11 +53,11 @@ class VkFFICodeGenProcessor : KtgenProcessor {
             override fun compute() {
                 val genEnumTask = GenerateCEnumTask(gc, patchedRegistry).fork()
                 val genGroupTask = GenerateCGroupTask(gc, patchedRegistry).fork()
-                val genFuncPointerTask = GenerateCFuncPointerTask(gc, patchedRegistry).fork()
+//                val genFuncPointerTask = GenerateCFuncPointerTask(gc, patchedRegistry).fork()
 
                 genEnumTask.join()
                 genGroupTask.join()
-                genFuncPointerTask.join()
+//                genFuncPointerTask.join()
             }
         }.fork().join()
     }

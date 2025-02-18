@@ -1,20 +1,22 @@
 package org.echonolix.ktffi
 
+import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
+import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout
 import kotlin.reflect.KClass
 
 enum class CBasicType(
     val kotlinType: KClass<*>,
     val literalSuffix: String,
-    val valueLayout: ValueLayout?,
-    val valueLayoutName: String?,
+    val valueLayout: ValueLayout,
+    val valueLayoutName: String,
     val baseType: KClass<*> = kotlinType,
     val fromBase: String ="",
     val toBase: String = "",
 ) {
-    void(Unit::class, "", null, null),
+    void(Unit::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
     char(Char::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
     float(Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT"),
     double(Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE"),
@@ -30,6 +32,7 @@ enum class CBasicType(
     int(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT");
 
     val typeName: TypeName = kotlinType.asTypeName()
+    val valueLayoutMember = ValueLayout::class.member(valueLayoutName)
 
     companion object {
         fun fromStringOrNull(type: String): CBasicType? {
@@ -54,4 +57,8 @@ enum class CBasicType(
             return fromStringOrNull(type) ?: throw IllegalArgumentException("Unknown CBasicType: $type")
         }
     }
+}
+
+fun main() {
+    ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, ValueLayout.JAVA_BYTE))
 }

@@ -2,6 +2,7 @@ package org.echonolix.ktffi
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.MemberName.Companion.member
 
 object KTFFICodegen {
     const val packageName = "org.echonolix.ktffi"
@@ -13,4 +14,10 @@ object KTFFICodegen {
     val pointerCname = ClassName(packageName, "NativePointer")
 
     val omniSegment = MemberName(packageName, "_\$OMNI_SEGMENT\$_")
+    val helper = ClassName(packageName, "_\$Helper\$_")
+    val linker = helper.member("linker")
+    val loaderLookup = helper.member("loaderLookup")
+    val pointerLayout = helper.member("pointerLayout")
+    val symbolLookup = helper.member("symbolLookup")
+    val findSymbol = helper.member("findSymbol")
 }

@@ -1,6 +1,7 @@
 package org.echonolix.ktffi
 
 import java.lang.foreign.*
+import kotlin.jvm.optionals.getOrElse
 
 sealed class NativeType(open val layout: MemoryLayout) {
     val arrayLayout: MemoryLayout = run {
@@ -132,3 +133,41 @@ fun String.c_str(allocator: SegmentAllocator): NativeArray<char> = NativeArray(a
 
 context(allocator: SegmentAllocator)
 fun String.c_str(): NativeArray<char> = NativeArray(allocator.allocateFrom(this))
+
+
+object `_$Helper$_` {
+    @JvmField
+    val linker: Linker = Linker.nativeLinker()
+
+    @JvmField
+    val loaderLookup: SymbolLookup = SymbolLookup.loaderLookup()
+
+    @JvmField
+    val pointerLayout: AddressLayout =
+        ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, ValueLayout.JAVA_BYTE))
+
+    @JvmField
+    val symbolLookup: SymbolLookup = SymbolLookup { name ->
+        val inLoader = loaderLookup.find(name)
+        if (inLoader.isEmpty) {
+            loaderLookup.find(name)
+        } else {
+            inLoader
+        }
+    }
+
+    @JvmStatic
+    fun pointerLayout(elementLayout: MemoryLayout): AddressLayout {
+        return ValueLayout.ADDRESS.withTargetLayout(
+            MemoryLayout.sequenceLayout(
+                Long.MAX_VALUE / elementLayout.byteSize(),
+                elementLayout
+            )
+        )
+    }
+
+    @JvmStatic
+    public fun findSymbol(symbol: String): MemorySegment {
+        return symbolLookup.find(symbol).getOrElse { error("unable to find symbol $symbol") }
+    }
+}

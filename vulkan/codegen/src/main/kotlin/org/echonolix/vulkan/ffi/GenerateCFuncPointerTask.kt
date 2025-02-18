@@ -1,15 +1,9 @@
 package org.echonolix.vulkan.ffi
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.TypeAliasSpec
-import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.*
 import org.echonolix.ktffi.CFunctionPointer
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
-import java.io.File
 import java.util.concurrent.RecursiveAction
 
 class GenerateCFuncPointerTask(private val genCtx: FFIGenContext, private val registry: PatchedRegistry) :

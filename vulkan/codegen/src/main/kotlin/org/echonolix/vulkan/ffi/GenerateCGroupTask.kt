@@ -6,7 +6,10 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import org.echonolix.ktffi.*
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
-import java.lang.foreign.*
+import java.lang.foreign.MemoryLayout
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.StructLayout
+import java.lang.foreign.UnionLayout
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 import java.util.concurrent.RecursiveAction
@@ -315,7 +318,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 groupInfo.layoutInitializer.add(lengthCodeBlock)
                 groupInfo.layoutInitializer.addStatement(
                     ", %M).withName(%S),",
-                    ValueLayout::class.member(type.value.valueLayoutName!!),
+                    type.value.valueLayoutMember,
                     member.name
                 )
                 elementCname = ClassName(KTFFICodegen.packageName, type.value.name)
@@ -423,10 +426,32 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun pointer(member: Element.Member, type: Element.Type) {
-            groupInfo.layoutInitializer.addStatement(
-                "%M.withName(%S),",
-                ValueLayout::class.member("ADDRESS"),
-                member.name
+            println(groupInfo.type)
+            println(member)
+            println(type)
+            println()
+
+            val layoutCode = if (type is Element.BasicType) {
+                CodeBlock.of("%M", type.value.valueLayoutMember)
+            } else {
+                val packageName = genCtx.getPackageName(type)
+                val elementCname = ClassName(packageName, type.name)
+                CodeBlock.of("%T.arrayLayout", elementCname)
+            }
+
+
+            if (member.xml.len != null) {
+                println(member)
+                println(member.xml.len)
+                println(type)
+                println()
+            }
+            groupInfo.layoutInitializer.add(
+                CodeBlock.builder()
+                    .add("%M(", KTFFICodegen.pointerLayout)
+                    .add(layoutCode)
+                    .addStatement(").withName(%S),", member.name)
+                    .build()
             )
         }
 
@@ -610,7 +635,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             )
             groupInfo.layoutInitializer.addStatement(
                 "%M.withName(%S),",
-                ValueLayout::class.member(cBasicType.valueLayoutName!!),
+                cBasicType.valueLayoutMember,
                 member.name
             )
         }
@@ -620,7 +645,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         override fun visitOpaqueType(index: Int, member: Element.Member, name: String) {
-            println(groupInfo.type.requiredBy)
+            //TODO: Opaque type support
 //            println("Unsupported opaque type: <${member.type} ${member.name}>")
         }
 
