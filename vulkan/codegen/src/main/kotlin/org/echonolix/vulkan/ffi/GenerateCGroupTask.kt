@@ -65,13 +65,13 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             .map { (_, groupType) -> genGroupType(groupType) }
             .forEach { genCtx.writeOutput(it) }
 
-        val unionAliasesFile = FileSpec.builder(VKFFI.unionPackageName, "UnionAliases")
+        val unionAliasesFile = FileSpec.builder(genCtx.unionPackageName, "UnionAliases")
         genUnionAliasTask.join().forEach {
             unionAliasesFile.addTypeAlias(it)
         }
         genCtx.writeOutput(unionAliasesFile)
 
-        val structAliasesFile = FileSpec.builder(VKFFI.structPackageName, "StructAliases")
+        val structAliasesFile = FileSpec.builder(genCtx.structPackageName, "StructAliases")
         genStructAliasTask.join().forEach {
             structAliasesFile.addTypeAlias(it)
         }
@@ -85,12 +85,12 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         val memoryLayoutMember: MemberName
         when (groupType) {
             is Element.Struct -> {
-                packageName = VKFFI.structPackageName
+                packageName = genCtx.structPackageName
                 superCname = VKFFI.vkStructCname
                 memoryLayoutMember = MemoryLayout::class.member("structLayout")
             }
             is Element.Union -> {
-                packageName = VKFFI.unionPackageName
+                packageName = genCtx.unionPackageName
                 superCname = VKFFI.vkUnionCname
                 memoryLayoutMember = MemoryLayout::class.member("unionLayout")
             }
@@ -120,7 +120,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
     }
 
 
-    sealed class GroupInfo(val cname: ClassName) {
+    sealed class GroupInfo(val type: Element.Type, val cname: ClassName) {
         val arrayCnameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
         val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(cname)
         val valueCnameP = KTFFICodegen.valueCname.parameterizedBy(cname)
@@ -240,13 +240,13 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         abstract fun finish()
     }
 
-    class StructInfo(cname: ClassName) : GroupInfo(cname) {
+    class StructInfo(type: Element.Type, cname: ClassName) : GroupInfo(type, cname) {
         override fun finish() {
             layoutInitializer.unindent()
         }
     }
 
-    class UnionInfo(cname: ClassName) : GroupInfo(cname) {
+    class UnionInfo(type: Element.Type, cname: ClassName) : GroupInfo(type, cname) {
         override fun finish() {
             layoutInitializer.unindent()
         }
@@ -296,7 +296,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 lengthCodeBlock = CodeBlock.of("%L", lengthAsInt)
                 lengthCodeBlockAnnotation = CodeBlock.of("%LU", lengthAsInt)
             } else {
-                val memberName = MemberName(VKFFI.enumPackageName, member.length!!)
+                val memberName = MemberName(genCtx.enumPackageName, member.length!!)
                 lengthCodeBlock = CodeBlock.of("%M.toLong()", memberName)
                 lengthCodeBlockAnnotation = CodeBlock.of("%M", memberName)
             }
@@ -304,7 +304,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             val elementCname: ClassName
             if (type is Element.BasicType) {
                 if (type.value == CBasicType.char) {
-                    check(member.xml.len == "null-terminated")
+                    check(groupInfo.type.name == "VkPhysicalDeviceLayeredApiPropertiesKHR" || member.xml.len == "null-terminated")
                 }
                 groupInfo.layoutInitializer.add("%M(", MemoryLayout::class.member("sequenceLayout"))
                 groupInfo.layoutInitializer.add(lengthCodeBlock)
@@ -315,11 +315,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 )
                 elementCname = ClassName(KTFFICodegen.packageName, type.value.name)
             } else {
-                val packageName = when (type) {
-                    is Element.Struct -> VKFFI.structPackageName
-                    is Element.Union -> VKFFI.unionPackageName
-                    else -> error("Unsupported array type: $type")
-                }
+                val packageName = genCtx.getPackageName(type)
                 elementCname = ClassName(packageName, type.name)
                 groupInfo.layoutInitializer.add("%M(", MemoryLayout::class.member("sequenceLayout"))
                 groupInfo.layoutInitializer.add(lengthCodeBlock)
@@ -509,7 +505,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         private fun cenumTypeAccess(member: Element.Member, type: Element.Type, cBasicType: CBasicType) {
-            val typeCname = ClassName(VKFFI.enumPackageName, type.name)
+            val typeCname = ClassName(genCtx.enumPackageName, type.name)
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, typeCname)
                     .addAnnotation(
@@ -619,7 +615,8 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
         }
 
         override fun visitOpaqueType(index: Int, member: Element.Member, name: String) {
-            error("Unsupported type: <${member.type} ${member.name}>")
+            println(groupInfo.type.requiredBy)
+//            println("Unsupported opaque type: <${member.type} ${member.name}>")
         }
 
         override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
@@ -656,9 +653,9 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             member: Element.Member,
             type: Element.FuncpointerType
         ) {
-            println(member)
-            println(type)
-            println()
+//            println(member)
+//            println(type)
+//            println()
         }
 
         override fun visitStructType(index: Int, member: Element.Member, type: Element.Struct) {
@@ -681,6 +678,18 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
     }
 
     private fun visitStruct(registry: PatchedRegistry, struct: Element.Group, visitor: MemberVisitor) {
+        fun unTypeDef(type: Element.Type?): Element.Type? {
+            if (type == null) {
+                return null
+            }
+
+            var deTypeDef = type
+            while (deTypeDef is Element.TypeDef) {
+                deTypeDef = deTypeDef.value
+            }
+            return deTypeDef
+        }
+
         val typeText = struct.javaClass.simpleName.lowercase()
 
         for (i in struct.members.indices) {
@@ -698,21 +707,17 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 visitor.visit(member)
 
                 if (withoutStar.length == fixedType.length - 1) {
-                    visitor.visitPointer(i, member, registry.allTypes[withoutStar]!!)
+                    visitor.visitPointer(i, member, unTypeDef(registry.allTypes[withoutStar])!!)
                     return@runCatching
                 }
 
                 if (fixedType.endsWith("[]")) {
                     val withoutBrackets = fixedType.removeSuffix("[]")
-                    visitor.visitArray(i, member, registry.allTypes[withoutBrackets]!!)
+                    visitor.visitArray(i, member, unTypeDef(registry.allTypes[withoutBrackets])!!)
                     return@runCatching
                 }
 
-                var deTypeDef: Element.Type? = registry.allTypes[fixedType]
-                while (deTypeDef is Element.TypeDef) {
-                    deTypeDef = deTypeDef.value
-                }
-
+                val deTypeDef = unTypeDef(registry.allTypes[fixedType])
                 val basicType = deTypeDef as? Element.BasicType
                 if (basicType != null) {
                     visitor.visitBasicType(i, member, basicType)
@@ -771,16 +776,16 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
     }
 
     private fun getUnionInfo(registry: PatchedRegistry, name: String): GroupInfo {
-        return UnionInfo(ClassName(VKFFI.unionPackageName, name)).apply {
-            val union = registry.unionTypes[name] ?: error("Struct $name not found")
+        val union = registry.unionTypes[name] ?: error("Struct $name not found")
+        return UnionInfo(union, ClassName(genCtx.unionPackageName, name)).apply {
             visitStruct(registry, union, DefaultVisitor(registry, this))
             finish()
         }
     }
 
     private fun getStructInfo(registry: PatchedRegistry, name: String): GroupInfo {
-        return StructInfo(ClassName(VKFFI.structPackageName, name)).apply {
-            val struct = registry.structTypes[name] ?: error("Struct $name not found")
+        val struct = registry.structTypes[name] ?: error("Struct $name not found")
+        return StructInfo(struct, ClassName(genCtx.structPackageName, name)).apply {
             visitStruct(registry, struct, DefaultVisitor(registry, this))
             finish()
         }

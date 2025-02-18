@@ -97,6 +97,13 @@ object VKFFI {
         "VK_EXT_metal_objects",
         "VK_KHR_video_encode_quantization_map",
         "VK_NV_external_memory_win32",
-        "VK_NV_external_sci_sync"
+        "VK_NV_external_sci_sync",
+        "VK_KHR_video_maintenance2",
+        "VK_QNX_external_memory_screen_buffer",
+        "VK_EXT_metal_surface",
+        "VK_KHR_android_surface",
+        "VK_KHR_wayland_surface",
+        "VK_EXT_directfb_surface",
+        "VK_QNX_screen_surface",
     )
 }

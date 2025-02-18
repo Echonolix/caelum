@@ -73,7 +73,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
             )
         genCtx.writeOutput(vkEnumFile)
 
-        val constantsFile = FileSpec.builder(VKFFI.enumPackageName, "Constants")
+        val constantsFile = FileSpec.builder(genCtx.enumPackageName, "Constants")
         registry.constantElements.values.forEach {
             constantsFile.addProperty(
                 PropertySpec.builder(it.name, it.type.typeName)
@@ -99,13 +99,13 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
             .map { (_, enumType) -> genEnumType(enumType) }
             .forEach { genCtx.writeOutput(it) }
 
-        val enumTypeAliasesFile = FileSpec.builder(VKFFI.enumPackageName, "EnumTypeAliases")
+        val enumTypeAliasesFile = FileSpec.builder(genCtx.enumPackageName, "EnumTypeAliases")
         genEnumTypeAliasTask.join().forEach {
             enumTypeAliasesFile.addTypeAlias(it)
         }
         genCtx.writeOutput(enumTypeAliasesFile)
 
-        val flagTypeAliasesFile = FileSpec.builder(VKFFI.enumPackageName, "FlagTypeAliases")
+        val flagTypeAliasesFile = FileSpec.builder(genCtx.enumPackageName, "FlagTypeAliases")
         genFlagTypeAliasTask.join().forEach {
             flagTypeAliasesFile.addTypeAlias(it)
         }
@@ -178,7 +178,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
 
     private fun genFlagType(flagType: Element.FlagType): FileSpec.Builder {
         val flagBitType = registry.flagBitTypes[flagType.bitType]
-        val thisCname = ClassName(VKFFI.enumPackageName, flagType.name)
+        val thisCname = ClassName(genCtx.enumPackageName, flagType.name)
         val enumKind = if (flagBitType?.type == CBasicType.int64_t) EnumKind.FLAG64 else EnumKind.FLAG32
 
         val typeBuilder = TypeSpec.classBuilder(thisCname)
@@ -264,7 +264,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
     }
 
     private fun genEnumType(enumType: Element.EnumType): FileSpec.Builder {
-        val thisCname = ClassName(VKFFI.enumPackageName, enumType.name)
+        val thisCname = ClassName(genCtx.enumPackageName, enumType.name)
         val file = FileSpec.builder(thisCname)
         file.addType(
             TypeSpec.enumBuilder(thisCname)
@@ -276,7 +276,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                             entry.fixedName,
                             TypeSpec.anonymousClassBuilder()
                                 .tryAddKdoc(entry)
-                                .superclass(ClassName(VKFFI.enumPackageName, enumType.name))
+                                .superclass(ClassName(genCtx.enumPackageName, enumType.name))
                                 .addSuperclassConstructorParameter(entry.valueCode)
                                 .build()
                         )

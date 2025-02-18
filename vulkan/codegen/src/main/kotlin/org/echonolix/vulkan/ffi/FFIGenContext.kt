@@ -8,12 +8,15 @@ class FFIGenContext(val packageName: String, val outputDir: Path, val filter: (E
     val enumPackageName = "${packageName}.enums"
     val structPackageName = "${VKFFI.packageName}.structs"
     val unionPackageName = "${VKFFI.packageName}.unions"
+    val handlePackageName = "${VKFFI.packageName}.handles"
 
     fun getPackageName(type: Element.Type): String {
         return when (type) {
             is Element.CEnum -> enumPackageName
+            is Element.FlagType -> enumPackageName
             is Element.Struct -> structPackageName
             is Element.Union -> unionPackageName
+            is Element.HandleType -> handlePackageName
             else -> throw IllegalArgumentException("Unsupported type: $type")
         }
     }
