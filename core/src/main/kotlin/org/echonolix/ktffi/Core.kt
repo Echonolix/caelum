@@ -46,6 +46,8 @@ value class NativePointer<T : NativeType>(
     }
 }
 
+val nullptr: NativePointer<*> = NativePointer<uint8_t>(0L)
+
 @JvmInline
 value class NativeValue<T : NativeType>(
     val _segment: MemorySegment,
