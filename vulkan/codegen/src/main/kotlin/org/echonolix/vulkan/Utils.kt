@@ -64,7 +64,7 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: Element) = apply {
     }
     val sb = StringBuilder()
     if (docs != null) {
-        sb.append(docs)
+        sb.append(docs.removePrefix("//").trim())
         sb.append("\n\n")
     }
     if (since != null) {
