@@ -82,11 +82,9 @@ private val xmlTagRegex = """<[^>]+>(.+)</[^>]+>""".toRegex()
 class PatchedRegistry(registry: Registry) {
     val raw = registry
     val registryFeatures = registry.features.asSequence()
-        .filter { it.api.contains("vulkan") }
+        .filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }
         .toList()
     val registryExtensions = registry.extensions.extensions.asSequence()
-        .filter { it.author !in VKFFI.ignoredVendor }
-        .filter { it.supported.contains("vulkan") }
         .toList()
     val registryEnums = registry.enums
     val registryTypes = registry.types.types
@@ -482,6 +480,7 @@ class PatchedRegistry(registry: Registry) {
 
     val structTypes = mutableMapOf<String, Element.Struct>()
     val unionTypes = mutableMapOf<String, Element.Union>()
+    val groupTypes = mutableMapOf<String, Element.Group>()
 
     init {
         registryTypes.values.asSequence()
@@ -590,8 +589,9 @@ class PatchedRegistry(registry: Registry) {
                     .toList()
             )
         )
-        unionTypes.toMap(allTypes)
-        structTypes.toMap(allTypes)
+        unionTypes.toMap(groupTypes)
+        structTypes.toMap(groupTypes)
+        groupTypes.toMap(allTypes)
         allTypes.toMap(allElements)
     }
 
@@ -655,15 +655,22 @@ class PatchedRegistry(registry: Registry) {
             }
         }
 
+        val registryMap = raw.extensions.extensions.associateBy { it.name }
+
         val toRemove = allElements.asSequence()
             .filterNot { it.value is Element.BasicType }
             .filterNot { it.value is Element.BaseType }
             .filter {
                 it.value.requiredBy in VKFFI.skippedExtension
+                    || registryMap[it.value.requiredBy]?.author in VKFFI.ignoredVendor
             }
             .map { it.key }
             .toSet()
         removeStuff(toRemove)
+
+        allElements.values.forEach {
+            if (it.requiredBy == null) it.requiredBy = "Vulkan 1.0"
+        }
     }
 
    private fun removeStuff(toRemove: Set<String>) {
@@ -719,9 +726,9 @@ sealed class Element(val name: String) {
     class Member(name: String, val type: String, val maxCharLen: String?, val bits: Int, val xml: XMLMember) :
         Element(name)
 
-    sealed class StructUnion(name: String, val members: List<Member>) : Type(name)
-    class Struct(name: String, members: List<Member>) : StructUnion(name, members)
-    class Union(name: String, members: List<Member>) : StructUnion(name, members)
+    sealed class Group(name: String, val members: List<Member>) : Type(name)
+    class Struct(name: String, members: List<Member>) : Group(name, members)
+    class Union(name: String, members: List<Member>) : Group(name, members)
 
     class VulkanVersion(name: String, val version: String, val required: List<Element>) : Element(name)
     class Extension(name: String, val specVersion: Int, val required: List<Element>) : Element(name)

@@ -48,8 +48,7 @@ class VkFFICodeGenProcessor : KtgenProcessor {
 
         with(gc) {
             genEnums(patchedRegistry)
-            genUnion(patchedRegistry)
-            genStruct(patchedRegistry)
+            genGroups(patchedRegistry)
         }
 
         gc.writeOutput(outputDir)

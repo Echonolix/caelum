@@ -42,7 +42,7 @@ class FFIGenContext(
         }
     }
 
-    sealed class StructUnionInfo(val cname: ClassName) {
+    sealed class GroupInfo(val cname: ClassName) {
         val arrayCnameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
         val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(cname)
         val valueCnameP = KTFFICodegen.valueCname.parameterizedBy(cname)
@@ -109,20 +109,20 @@ class FFIGenContext(
         abstract fun finish()
     }
 
-    class StructInfo(cname: ClassName) : StructUnionInfo(cname) {
+    class StructInfo(cname: ClassName) : GroupInfo(cname) {
         override fun finish() {
             memoryLayoutInitializer.unindent()
         }
     }
 
-    class UnionInfo(cname: ClassName) : StructUnionInfo(cname) {
+    class UnionInfo(cname: ClassName) : GroupInfo(cname) {
         override fun finish() {
             memoryLayoutInitializer.unindent()
         }
     }
 
-    inner class DefaultVisitor(private val registry: PatchedRegistry, private val structUnionInfo: StructUnionInfo) : MemberVisitor  {
-        private fun StructUnionInfo.offsetProperty(member: Element.Member) {
+    inner class DefaultVisitor(private val registry: PatchedRegistry, private val structUnionInfo: GroupInfo) : MemberVisitor  {
+        private fun GroupInfo.offsetProperty(member: Element.Member) {
             properties += PropertySpec.builder("${member.name}_offset", Long::class)
                 .addAnnotation(JvmField::class)
                 .initializer("layout.byteOffset(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
@@ -133,7 +133,7 @@ class FFIGenContext(
             structUnionInfo.offsetProperty(member)
         }
 
-        private fun structOrUnion(member: Element.Member, type: Element.StructUnion, info: StructUnionInfo) {
+        private fun structOrUnion(member: Element.Member, type: Element.Group, info: GroupInfo) {
             structUnionInfo.memoryLayoutInitializer.addStatement(
                 "%T.%N.withName(%S),",
                 ClassName(info.cname.packageName, member.type),
@@ -150,19 +150,7 @@ class FFIGenContext(
             )
         }
 
-        private fun basicType(member: Element.Member, cBasicType: CBasicType) {
-            structUnionInfo.properties.add(
-                PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
-                    .addAnnotation(JvmField::class)
-                    .initializer("layout.varHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
-                    .build()
-            )
-            structUnionInfo.properties.add(
-                PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
-                    .addAnnotation(JvmField::class)
-                    .initializer("layout.arrayElementVarHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
-                    .build()
-            )
+        private fun cbasicTypeAccess(member: Element.Member, cBasicType: CBasicType) {
             structUnionInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
                     .addAnnotation(
@@ -197,7 +185,6 @@ class FFIGenContext(
                     )
                     .build()
             )
-
             structUnionInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
                     .addAnnotation(
@@ -234,6 +221,97 @@ class FFIGenContext(
                     )
                     .build()
             )
+        }
+
+        private fun cenumTypeAccess(member: Element.Member, type: Element.Type, cBasicType: CBasicType) {
+            val typeCname = ClassName(VKFFI.enumPackageName, type.name)
+            structUnionInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, typeCname)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CType::class)
+                            .addMember("%S", member.type)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(structUnionInfo.valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T.fromInt((%T.%N.get(_segment, 0L) as %T))",
+                                typeCname,
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                cBasicType.baseType.asTypeName()
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", cBasicType.typeName)
+                            .addStatement(
+                                "%T.%N.set(_segment, 0L, %T.toInt(value))",
+                                structUnionInfo.cname,
+                                "${member.name}_valueVarHandle",
+                                typeCname
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+//            structUnionInfo.topLevelProperties.add(
+//                PropertySpec.builder(member.name, cBasicType.typeName)
+//                    .addAnnotation(
+//                        AnnotationSpec.builder(CType::class)
+//                            .addMember("%S", member.type)
+//                            .build()
+//                    )
+//                    .tryAddKdoc(member)
+//                    .mutable()
+//                    .receiver(structUnionInfo.pointerCnameP)
+//                    .getter(
+//                        FunSpec.getterBuilder()
+//                            .addModifiers(KModifier.INLINE)
+//                            .addStatement(
+//                                "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
+//                                structUnionInfo.cname,
+//                                "${member.name}_valueVarHandle",
+//                                KTFFICodegen.omniSegment,
+//                                cBasicType.baseType.asTypeName()
+//                            )
+//                            .build()
+//                    )
+//                    .setter(
+//                        FunSpec.setterBuilder()
+//                            .addModifiers(KModifier.INLINE)
+//                            .addParameter("value", cBasicType.typeName)
+//                            .addStatement(
+//                                "%T.%N.set(%M, _address, value${cBasicType.toBase})",
+//                                structUnionInfo.cname,
+//                                "${member.name}_valueVarHandle",
+//                                KTFFICodegen.omniSegment
+//                            )
+//                            .build()
+//                    )
+//                    .build()
+//            )
+        }
+
+        private fun cbasicType(member: Element.Member, cBasicType: CBasicType) {
+            structUnionInfo.properties.add(
+                PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
+                    .addAnnotation(JvmField::class)
+                    .initializer("layout.varHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                    .build()
+            )
+            structUnionInfo.properties.add(
+                PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
+                    .addAnnotation(JvmField::class)
+                    .initializer("layout.arrayElementVarHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                    .build()
+            )
             structUnionInfo.memoryLayoutInitializer.addStatement(
                 "%M.withName(%S),",
                 ValueLayout::class.member(cBasicType.valueLayoutName!!),
@@ -250,7 +328,8 @@ class FFIGenContext(
         }
 
         override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
-            basicType(member, type.value)
+            cbasicType(member, type.value)
+            cbasicTypeAccess(member, type.value)
         }
 
         override fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType) {
@@ -258,7 +337,8 @@ class FFIGenContext(
         }
 
         override fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType) {
-            basicType(member, CBasicType.int32_t)
+            cbasicType(member, CBasicType.int32_t)
+            cenumTypeAccess(member, type, CBasicType.int32_t)
         }
 
         override fun visitFlagType(
@@ -267,7 +347,9 @@ class FFIGenContext(
             type: Element.FlagType,
             flagBitType: Element.FlagBitType?
         ) {
-            basicType(member, registry.flagBitTypes[type.bitType]?.type ?: CBasicType.int32_t)
+            val cBasicType = registry.flagBitTypes[type.bitType]?.type ?: CBasicType.int32_t
+            cbasicType(member, cBasicType)
+            cenumTypeAccess(member, type, cBasicType)
         }
 
         override fun visitFuncpointerType(
@@ -297,9 +379,8 @@ class FFIGenContext(
         }
     }
 
-    private fun visitStruct(registry: PatchedRegistry, struct: Element.StructUnion, visitor: MemberVisitor) {
+    private fun visitStruct(registry: PatchedRegistry, struct: Element.Group, visitor: MemberVisitor) {
         val typeText = struct.javaClass.simpleName.lowercase()
-//        println("$typeText ${struct.name}")
 
         for (i in struct.members.indices) {
             val member = struct.members[i]
@@ -407,6 +488,13 @@ class FFIGenContext(
                 visitStruct(registry, struct, DefaultVisitor(registry, this))
                 finish()
             }
+        }
+    }
+
+    fun getGroupInfo(registry: PatchedRegistry, group: Element.Group): GroupInfo {
+        return when (group) {
+            is Element.Struct -> getStructInfo(registry, group.name)
+            is Element.Union -> getUnionInfo(registry, group.name)
         }
     }
 }
