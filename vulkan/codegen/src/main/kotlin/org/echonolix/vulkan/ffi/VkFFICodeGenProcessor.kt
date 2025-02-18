@@ -1,4 +1,4 @@
-package org.echonolix.vulkan
+package org.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
@@ -45,24 +45,19 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val patchedRegistry = PatchedRegistry(registry)
 
-        val gc = FFIGenContext()
-
-        with(gc) {
-            val enums = object : RecursiveAction() {
-                override fun compute() {
-                    genEnums(patchedRegistry)
-                }
-            }.fork()
-            val groups = object : RecursiveAction() {
-                override fun compute() {
-                    genGroups(patchedRegistry)
-                }
-            }.fork()
-            enums.join()
-            groups.join()
+        val gc = FFIGenContext(VKFFI.packageName, outputDir) {
+            it.requiredBy!! == "Vulkan 1.0"
         }
 
-        gc.writeOutput(outputDir)
+        object : RecursiveAction() {
+            override fun compute() {
+                val genEnumTask = GenerateCEnumTask(gc, patchedRegistry).fork()
+                val genGroupTask = GenerateCGroupTask(gc, patchedRegistry).fork()
+
+                genEnumTask.join()
+                genGroupTask.join()
+            }
+        }.fork().join()
     }
 }
 

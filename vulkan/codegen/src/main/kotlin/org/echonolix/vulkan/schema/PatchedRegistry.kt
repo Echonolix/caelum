@@ -7,10 +7,10 @@ import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.util.CompactFragment
 import org.echonolix.ktffi.CBasicType
-import org.echonolix.vulkan.VKFFI
-import org.echonolix.vulkan.decOrHexToInt
-import org.echonolix.vulkan.pascalCaseToAllCaps
-import org.echonolix.vulkan.tryParseXML
+import org.echonolix.vulkan.ffi.VKFFI
+import org.echonolix.vulkan.ffi.decOrHexToInt
+import org.echonolix.vulkan.ffi.pascalCaseToAllCaps
+import org.echonolix.vulkan.ffi.tryParseXML
 
 private val enumTypeWhitelist = setOf(
     "VkResult",
@@ -692,7 +692,7 @@ sealed class Element(val name: String) {
     var docs: String? = null
 
     override fun toString(): String {
-        return "Type($name)"
+        return "${javaClass.simpleName}($name)"
     }
 
     sealed class Type(name: String) : Element(name)

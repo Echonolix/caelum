@@ -1,4 +1,4 @@
-package org.echonolix.vulkan
+package org.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.Documentable
