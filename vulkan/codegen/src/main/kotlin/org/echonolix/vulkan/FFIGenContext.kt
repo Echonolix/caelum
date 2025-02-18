@@ -1,29 +1,17 @@
 package org.echonolix.vulkan
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
-import org.echonolix.ktffi.CBasicType
-import org.echonolix.ktffi.CHandleType
-import org.echonolix.ktffi.CType
-import org.echonolix.ktffi.KTFFICodegen
+import org.echonolix.ktffi.*
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class FFIGenContext(
@@ -53,7 +41,7 @@ class FFIGenContext(
         val properties = mutableListOf<PropertySpec>()
         val topLevelProperties = mutableListOf<PropertySpec>()
         val topLevelFunctions = mutableListOf<FunSpec>()
-        val memoryLayoutInitializer = CodeBlock.builder().indent()
+        val layoutInitializer = CodeBlock.builder().indent()
 
         init {
             topLevelFunctions.add(
@@ -107,6 +95,59 @@ class FFIGenContext(
                     )
                     .build()
             )
+            topLevelFunctions.add(
+                FunSpec.builder("elementAddress")
+                    .receiver(pointerCnameP)
+                    .addModifiers(KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .returns(LONG)
+                    .addStatement(
+                        "return %T.arrayByteOffsetHandle.invokeExact(_address, index) as Long",
+                        cname
+                    )
+                    .build()
+            )
+            topLevelFunctions.add(
+                FunSpec.builder("get")
+                    .receiver(pointerCnameP)
+                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .returns(pointerCnameP)
+                    .addStatement(
+                        "return %T(elementAddress(index))",
+                        KTFFICodegen.pointerCname
+                    )
+                    .build()
+            )
+            topLevelFunctions.add(
+                FunSpec.builder("set")
+                    .receiver(pointerCnameP)
+                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .addParameter("value", valueCnameP)
+                    .addStatement(
+                        "%M(value._segment, 0L, %M, elementAddress(index), %T.arrayLayout.byteSize())",
+                        MemorySegment::class.member("copy"),
+                        KTFFICodegen.omniSegment,
+                        cname
+                    )
+                    .build()
+            )
+            topLevelFunctions.add(
+                FunSpec.builder("set")
+                    .receiver(pointerCnameP)
+                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addParameter("index", LONG)
+                    .addParameter("value", pointerCnameP)
+                    .addStatement(
+                        "%M(%M, value._address, %M, elementAddress(index), %T.arrayLayout.byteSize())",
+                        MemorySegment::class.member("copy"),
+                        KTFFICodegen.omniSegment,
+                        KTFFICodegen.omniSegment,
+                        cname
+                    )
+                    .build()
+            )
         }
 
         abstract fun finish()
@@ -114,30 +155,44 @@ class FFIGenContext(
 
     class StructInfo(cname: ClassName) : GroupInfo(cname) {
         override fun finish() {
-            memoryLayoutInitializer.unindent()
+            layoutInitializer.unindent()
         }
     }
 
     class UnionInfo(cname: ClassName) : GroupInfo(cname) {
         override fun finish() {
-            memoryLayoutInitializer.unindent()
+            layoutInitializer.unindent()
         }
     }
 
-    inner class DefaultVisitor(private val registry: PatchedRegistry, private val structUnionInfo: GroupInfo) : MemberVisitor  {
-        private fun GroupInfo.offsetProperty(member: Element.Member) {
-            properties += PropertySpec.builder("${member.name}_offset", Long::class)
+    inner class DefaultVisitor(private val registry: PatchedRegistry, private val groupInfo: GroupInfo) :
+        MemberVisitor {
+
+        private fun common(member: Element.Member) {
+            groupInfo.properties += PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
                 .addAnnotation(JvmField::class)
-                .initializer("layout.byteOffset(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                .initializer(
+                    "layout.byteOffsetHandle(%M(%S))",
+                    MemoryLayout.PathElement::class.member("groupElement"),
+                    member.name
+                )
+                .build()
+            groupInfo.properties += PropertySpec.builder("${member.name}_layout", MemoryLayout::class)
+                .addAnnotation(JvmField::class)
+                .initializer(
+                    "layout.select(%M(%S))",
+                    MemoryLayout.PathElement::class.member("groupElement"),
+                    member.name
+                )
+                .build()
+            groupInfo.properties += PropertySpec.builder("${member.name}_byteSize", Long::class)
+                .addAnnotation(JvmField::class)
+                .initializer("%N_layout.byteSize()", member.name)
                 .build()
         }
 
-        private fun common(member: Element.Member) {
-            structUnionInfo.offsetProperty(member)
-        }
-
         private fun structOrUnion(member: Element.Member, type: Element.Group, info: GroupInfo) {
-            structUnionInfo.memoryLayoutInitializer.addStatement(
+            groupInfo.layoutInitializer.addStatement(
                 "%T.%N.withName(%S),",
                 ClassName(info.cname.packageName, member.type),
                 "layout",
@@ -145,16 +200,154 @@ class FFIGenContext(
             )
         }
 
+        private fun array(member: Element.Member, type: Element.Type) {
+            val lengthCodeBlock: CodeBlock
+            val lengthCodeBlockAnnotation: CodeBlock
+
+            val lengthAsInt = member.length?.toIntOrNull()
+            if (lengthAsInt != null) {
+                lengthCodeBlock = CodeBlock.of("%L", lengthAsInt)
+                lengthCodeBlockAnnotation = CodeBlock.of("%LU", lengthAsInt)
+            } else {
+                val memberName = MemberName(VKFFI.enumPackageName, member.length!!)
+                lengthCodeBlock = CodeBlock.of("%M.toLong()", memberName)
+                lengthCodeBlockAnnotation = CodeBlock.of("%M", memberName)
+            }
+
+            val elementCname: ClassName
+            if (type is Element.BasicType) {
+                if (type.value == CBasicType.char) {
+                    check(member.xml.len == "null-terminated")
+                }
+                groupInfo.layoutInitializer.add("%M(", MemoryLayout::class.member("sequenceLayout"))
+                groupInfo.layoutInitializer.add(lengthCodeBlock)
+                groupInfo.layoutInitializer.addStatement(
+                    ", %M).withName(%S),",
+                    ValueLayout::class.member(type.value.valueLayoutName!!),
+                    member.name
+                )
+                elementCname = ClassName(KTFFICodegen.packageName, type.value.name)
+            } else {
+                val packageName = when (type) {
+                    is Element.Struct -> VKFFI.structPackageName
+                    is Element.Union -> VKFFI.unionPackageName
+                    else -> error("Unsupported array type: $type")
+                }
+                elementCname = ClassName(packageName, type.name)
+                groupInfo.layoutInitializer.add("%M(", MemoryLayout::class.member("sequenceLayout"))
+                groupInfo.layoutInitializer.add(lengthCodeBlock)
+                groupInfo.layoutInitializer.addStatement(
+                    ", %T.arrayLayout).withName(%S),",
+                    elementCname,
+                    member.name
+                )
+            }
+
+            val pointerElementCname = KTFFICodegen.pointerCname.parameterizedBy(elementCname)
+            groupInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, pointerElementCname)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CType::class)
+                            .addMember("%S", member.type)
+                            .build()
+                    )
+                    .addAnnotation(
+                        AnnotationSpec.builder(CArrayLength::class)
+                            .addMember(lengthCodeBlockAnnotation)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(groupInfo.valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long)",
+                                KTFFICodegen.pointerCname,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", pointerElementCname)
+                            .addStatement(
+                                "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long, %T.%N_byteSize)",
+                                MemorySegment::class.member("copy"),
+                                KTFFICodegen.omniSegment,
+                                KTFFICodegen.omniSegment,
+                                groupInfo.cname,
+                                member.name,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            groupInfo.topLevelProperties.add(
+                PropertySpec.builder(member.name, pointerElementCname)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CType::class)
+                            .addMember("%S", member.type)
+                            .build()
+                    )
+                    .addAnnotation(
+                        AnnotationSpec.builder(CArrayLength::class)
+                            .addMember(lengthCodeBlockAnnotation)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(groupInfo.pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N_offsetHandle.invokeExact(_address, 0L) as Long)",
+                                KTFFICodegen.pointerCname,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", pointerElementCname)
+                            .addStatement(
+                                "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_address, 0L) as Long, %T.%N_byteSize)",
+                                MemorySegment::class.member("copy"),
+                                KTFFICodegen.omniSegment,
+                                KTFFICodegen.omniSegment,
+                                groupInfo.cname,
+                                member.name,
+                                groupInfo.cname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+        }
+
         private fun pointer(member: Element.Member) {
-            structUnionInfo.memoryLayoutInitializer.addStatement(
+            groupInfo.layoutInitializer.addStatement(
                 "%M.withName(%S),",
                 ValueLayout::class.member("ADDRESS"),
                 member.name
             )
         }
 
-        private fun cbasicTypeAccess(member: Element.Member, cBasicType: CBasicType, block: PropertySpec.Builder.() -> Unit = {}) {
-            structUnionInfo.topLevelProperties.add(
+        private fun cbasicTypeAccess(
+            member: Element.Member,
+            cBasicType: CBasicType,
+            block: PropertySpec.Builder.() -> Unit = {}
+        ) {
+            groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
                     .addAnnotation(
                         AnnotationSpec.builder(CType::class)
@@ -164,13 +357,13 @@ class FFIGenContext(
                     .apply(block)
                     .tryAddKdoc(member)
                     .mutable()
-                    .receiver(structUnionInfo.valueCnameP)
+                    .receiver(groupInfo.valueCnameP)
                     .getter(
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return (%T.%N.get(_segment, 0L) as %T)${cBasicType.fromBase}",
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 cBasicType.baseType.asTypeName()
                             )
@@ -182,14 +375,14 @@ class FFIGenContext(
                             .addParameter("value", cBasicType.typeName)
                             .addStatement(
                                 "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                             )
                             .build()
                     )
                     .build()
             )
-            structUnionInfo.topLevelProperties.add(
+            groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.typeName)
                     .addAnnotation(
                         AnnotationSpec.builder(CType::class)
@@ -199,13 +392,13 @@ class FFIGenContext(
                     .apply(block)
                     .tryAddKdoc(member)
                     .mutable()
-                    .receiver(structUnionInfo.pointerCnameP)
+                    .receiver(groupInfo.pointerCnameP)
                     .getter(
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegen.omniSegment,
                                 cBasicType.baseType.asTypeName()
@@ -218,7 +411,7 @@ class FFIGenContext(
                             .addParameter("value", cBasicType.typeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, value${cBasicType.toBase})",
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegen.omniSegment
                             )
@@ -230,7 +423,7 @@ class FFIGenContext(
 
         private fun cenumTypeAccess(member: Element.Member, type: Element.Type, cBasicType: CBasicType) {
             val typeCname = ClassName(VKFFI.enumPackageName, type.name)
-            structUnionInfo.topLevelProperties.add(
+            groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, typeCname)
                     .addAnnotation(
                         AnnotationSpec.builder(CType::class)
@@ -239,14 +432,14 @@ class FFIGenContext(
                     )
                     .tryAddKdoc(member)
                     .mutable()
-                    .receiver(structUnionInfo.valueCnameP)
+                    .receiver(groupInfo.valueCnameP)
                     .getter(
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return %T.fromInt((%T.%N.get(_segment, 0L) as %T))",
                                 typeCname,
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 cBasicType.baseType.asTypeName()
                             )
@@ -258,7 +451,7 @@ class FFIGenContext(
                             .addParameter("value", cBasicType.typeName)
                             .addStatement(
                                 "%T.%N.set(_segment, 0L, %T.toInt(value))",
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 typeCname
                             )
@@ -266,7 +459,7 @@ class FFIGenContext(
                     )
                     .build()
             )
-            structUnionInfo.topLevelProperties.add(
+            groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, typeCname)
                     .addAnnotation(
                         AnnotationSpec.builder(CType::class)
@@ -275,14 +468,14 @@ class FFIGenContext(
                     )
                     .tryAddKdoc(member)
                     .mutable()
-                    .receiver(structUnionInfo.pointerCnameP)
+                    .receiver(groupInfo.pointerCnameP)
                     .getter(
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return %T.fromInt((%T.%N.get(%M, _address) as %T))",
                                 typeCname,
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegen.omniSegment,
                                 cBasicType.baseType.asTypeName()
@@ -295,7 +488,7 @@ class FFIGenContext(
                             .addParameter("value", cBasicType.typeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, %T.toInt(value))",
-                                structUnionInfo.cname,
+                                groupInfo.cname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegen.omniSegment,
                                 typeCname
@@ -307,19 +500,27 @@ class FFIGenContext(
         }
 
         private fun cbasicType(member: Element.Member, cBasicType: CBasicType) {
-            structUnionInfo.properties.add(
+            groupInfo.properties.add(
                 PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
                     .addAnnotation(JvmField::class)
-                    .initializer("layout.varHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                    .initializer(
+                        "layout.varHandle(%M(%S))",
+                        MemoryLayout.PathElement::class.member("groupElement"),
+                        member.name
+                    )
                     .build()
             )
-            structUnionInfo.properties.add(
+            groupInfo.properties.add(
                 PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
                     .addAnnotation(JvmField::class)
-                    .initializer("layout.arrayElementVarHandle(%M(%S))", MemoryLayout.PathElement::class.member("groupElement"), member.name)
+                    .initializer(
+                        "layout.arrayElementVarHandle(%M(%S))",
+                        MemoryLayout.PathElement::class.member("groupElement"),
+                        member.name
+                    )
                     .build()
             )
-            structUnionInfo.memoryLayoutInitializer.addStatement(
+            groupInfo.layoutInitializer.addStatement(
                 "%M.withName(%S),",
                 ValueLayout::class.member(cBasicType.valueLayoutName!!),
                 member.name
@@ -331,7 +532,7 @@ class FFIGenContext(
         }
 
         override fun visitOpaqueType(index: Int, member: Element.Member, name: String) {
-
+            error("Unsupported type: <${member.type} ${member.name}>")
         }
 
         override fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType) {
@@ -386,7 +587,7 @@ class FFIGenContext(
         }
 
         override fun visitArray(index: Int, member: Element.Member, type: Element.Type) {
-            pointer(member)
+            array(member, type)
         }
     }
 

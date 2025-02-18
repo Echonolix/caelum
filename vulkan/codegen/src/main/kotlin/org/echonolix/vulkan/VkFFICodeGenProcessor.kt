@@ -68,6 +68,7 @@ class VkFFICodeGenProcessor : KtgenProcessor {
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
+//    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
     val time = System.nanoTime()
     val outputDir = Path.of("vulkan/build/generated/ktgen")
     outputDir.deleteRecursively()

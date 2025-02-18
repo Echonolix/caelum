@@ -723,8 +723,12 @@ sealed class Element(val name: String) {
 
     class FuncpointerType(name: String, val returnType: String, val params: Map<String, String>) : Type(name)
 
-    class Member(name: String, val type: String, val maxCharLen: String?, val bits: Int, val xml: XMLMember) :
-        Element(name)
+    class Member(name: String, val type: String, val length: String?, val bits: Int, val xml: XMLMember) :
+        Element(name) {
+        override fun toString(): String {
+            return "$type $name"
+        }
+    }
 
     sealed class Group(name: String, val members: List<Member>) : Type(name)
     class Struct(name: String, members: List<Member>) : Group(name, members)

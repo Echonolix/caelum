@@ -115,3 +115,20 @@ val `_$OMNI_SEGMENT$_` = MemorySegment.ofAddress(0L).reinterpret(Long.MAX_VALUE)
 
 typealias char = int8_t
 typealias size_t = int64_t
+
+var NativeArray<char>.string: String
+    get() = _segment.getString(0L)
+    set(value) {
+        _segment.setString(0L, value)
+    }
+
+var NativePointer<char>.string: String
+    get() = `_$OMNI_SEGMENT$_`.getString(_address)
+    set(value) {
+        `_$OMNI_SEGMENT$_`.setString(_address, value)
+    }
+
+fun String.c_str(allocator: SegmentAllocator): NativeArray<char> = NativeArray(allocator.allocateFrom(this))
+
+context(allocator: SegmentAllocator)
+fun String.c_str(): NativeArray<char> = NativeArray(allocator.allocateFrom(this))

@@ -84,7 +84,7 @@ fun genGroups(registry: PatchedRegistry) {
                 .add("\n")
                 .indent()
                 .addStatement("%M(", memoryLayoutMember)
-                .add(groupInfo.memoryLayoutInitializer.build())
+                .add(groupInfo.layoutInitializer.build())
                 .add(")\n")
                 .unindent()
                 .build()
