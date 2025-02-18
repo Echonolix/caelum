@@ -112,7 +112,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 .indent()
                 .addStatement("%M(", memoryLayoutMember)
                 .add(groupInfo.layoutInitializer.build())
-                .add(")\n")
+                .add(").withName(%S)\n", groupType.name)
                 .unindent()
                 .build()
         )

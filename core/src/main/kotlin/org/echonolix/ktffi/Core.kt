@@ -21,7 +21,7 @@ sealed class NativeType(open val layout: MemoryLayout) {
         } else {
             layout
         }
-    }
+    }.withName("${layout.name().get()}[]")
 
     @JvmField
     val arrayByteOffsetHandle = arrayLayout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
