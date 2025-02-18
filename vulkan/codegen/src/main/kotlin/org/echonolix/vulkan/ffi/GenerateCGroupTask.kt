@@ -556,7 +556,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             block: PropertySpec.Builder.() -> Unit = {}
         ) {
             groupInfo.topLevelProperties.add(
-                PropertySpec.builder(member.name, cBasicType.typeName)
+                PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
                     .addAnnotation(
                         AnnotationSpec.builder(CType::class)
                             .addMember("%S", member.type)
@@ -580,7 +580,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .setter(
                         FunSpec.setterBuilder()
                             .addModifiers(KModifier.INLINE)
-                            .addParameter("value", cBasicType.typeName)
+                            .addParameter("value", cBasicType.kotlinTypeName)
                             .addStatement(
                                 "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
                                 groupInfo.cname,
@@ -591,7 +591,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .build()
             )
             groupInfo.topLevelProperties.add(
-                PropertySpec.builder(member.name, cBasicType.typeName)
+                PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
                     .addAnnotation(
                         AnnotationSpec.builder(CType::class)
                             .addMember("%S", member.type)
@@ -616,7 +616,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .setter(
                         FunSpec.setterBuilder()
                             .addModifiers(KModifier.INLINE)
-                            .addParameter("value", cBasicType.typeName)
+                            .addParameter("value", cBasicType.kotlinTypeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, value${cBasicType.toBase})",
                                 groupInfo.cname,
@@ -656,7 +656,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .setter(
                         FunSpec.setterBuilder()
                             .addModifiers(KModifier.INLINE)
-                            .addParameter("value", cBasicType.typeName)
+                            .addParameter("value", cBasicType.kotlinTypeName)
                             .addStatement(
                                 "%T.%N.set(_segment, 0L, %T.toInt(value))",
                                 groupInfo.cname,
@@ -693,7 +693,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .setter(
                         FunSpec.setterBuilder()
                             .addModifiers(KModifier.INLINE)
-                            .addParameter("value", cBasicType.typeName)
+                            .addParameter("value", cBasicType.kotlinTypeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, %T.toInt(value))",
                                 groupInfo.cname,

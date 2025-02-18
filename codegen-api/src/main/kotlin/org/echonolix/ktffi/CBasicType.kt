@@ -30,7 +30,7 @@ enum class CBasicType(
     size_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
     int(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT");
 
-    val typeName: TypeName = kotlinType.asTypeName()
+    val kotlinTypeName: TypeName = kotlinType.asTypeName()
     val valueLayoutMember = ValueLayout::class.member(valueLayoutName)
     val nativeTypeName = if (name == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))

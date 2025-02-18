@@ -143,7 +143,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         val constantsFile = FileSpec.builder(genCtx.enumPackageName, "Constants")
         registry.constantElements.values.forEach {
             constantsFile.addProperty(
-                PropertySpec.builder(it.name, it.type.typeName)
+                PropertySpec.builder(it.name, it.type.kotlinTypeName)
                     .tryAddKdoc(it)
                     .apply {
                         if (!it.value.toString().contains(".inv()")) {
@@ -190,11 +190,11 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
 
         primaryConstructor(
             FunSpec.constructorBuilder()
-                .addParameter("value", kind.dataType.typeName)
+                .addParameter("value", kind.dataType.kotlinTypeName)
                 .build()
         )
         addProperty(
-            PropertySpec.builder("value", kind.dataType.typeName)
+            PropertySpec.builder("value", kind.dataType.kotlinTypeName)
                 .addModifiers(KModifier.OVERRIDE)
                 .initializer("value")
                 .build()
@@ -248,17 +248,17 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         val thisCname = ClassName(genCtx.enumPackageName, flagType.name)
         val enumKind = if (flagBitType?.type == CBasicType.int64_t) EnumKind.FLAG64 else EnumKind.FLAG32
 
-        val typeBuilder = TypeSpec.classBuilder(thisCname)
-        typeBuilder.tryAddKdoc(flagType)
+        val type = TypeSpec.classBuilder(thisCname)
+        type.tryAddKdoc(flagType)
         if (flagBitType != null) {
-            typeBuilder.tryAddKdoc(flagBitType)
-            typeBuilder.addVkEnum(enumKind)
+            type.tryAddKdoc(flagBitType)
+            type.addVkEnum(enumKind)
         } else {
-            typeBuilder.addVkEnum(enumKind)
+            type.addVkEnum(enumKind)
         }
-        typeBuilder.addAnnotation(JvmInline::class)
-        typeBuilder.addModifiers(KModifier.VALUE)
-        typeBuilder.addFunction(
+        type.addAnnotation(JvmInline::class)
+        type.addModifiers(KModifier.VALUE)
+        type.addFunction(
             FunSpec.builder("plus")
                 .addModifiers(KModifier.OPERATOR)
                 .addParameter("other", thisCname)
@@ -266,7 +266,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 .addStatement("return %T(value or other.value)", thisCname)
                 .build()
         )
-        typeBuilder.addFunction(
+        type.addFunction(
             FunSpec.builder("minus")
                 .addModifiers(KModifier.OPERATOR)
                 .addParameter("other", thisCname)
@@ -274,7 +274,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 .addStatement("return %T(value and other.value.inv())", thisCname)
                 .build()
         )
-        typeBuilder.addFunction(
+        type.addFunction(
             FunSpec.builder("contains")
                 .addParameter("other", thisCname)
                 .returns(Boolean::class)
@@ -325,76 +325,132 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 .build()
         )
         companion.addMethodHandleFields(thisCname, enumKind)
-        typeBuilder.addType(companion.build())
 
-        return FileSpec.builder(thisCname)
-            .addType(typeBuilder.build())
+        val file = FileSpec.builder(thisCname)
+        file.addNativeAccess(thisCname, enumKind.dataType)
+        return file.addType(type.addType(companion.build()).build())
     }
 
     private fun genEnumType(enumType: Element.EnumType): FileSpec.Builder {
         val thisCname = ClassName(genCtx.enumPackageName, enumType.name)
-        val file = FileSpec.builder(thisCname)
-        file.addType(
-            TypeSpec.enumBuilder(thisCname)
-                .tryAddKdoc(enumType)
-                .addVkEnum(EnumKind.ENUM)
-                .apply {
-                    enumType.entries.values.forEach { entry ->
-                        addEnumConstant(
-                            entry.fixedName,
-                            TypeSpec.anonymousClassBuilder()
-                                .tryAddKdoc(entry)
-                                .superclass(ClassName(genCtx.enumPackageName, enumType.name))
-                                .addSuperclassConstructorParameter(entry.valueCode)
-                                .build()
-                        )
-                    }
+        val type = TypeSpec.enumBuilder(thisCname)
+        type.tryAddKdoc(enumType)
+        type.addVkEnum(EnumKind.ENUM)
+            .apply {
+                enumType.entries.values.forEach { entry ->
+                    addEnumConstant(
+                        entry.fixedName,
+                        TypeSpec.anonymousClassBuilder()
+                            .tryAddKdoc(entry)
+                            .superclass(ClassName(genCtx.enumPackageName, enumType.name))
+                            .addSuperclassConstructorParameter(entry.valueCode)
+                            .build()
+                    )
                 }
-                .addType(
-                    TypeSpec.companionObjectBuilder()
-                        .addSuperinterface(KTFFICodegen.typeCname, CodeBlock.of("%T", CBasicType.int32_t.nativeTypeName))
-                        .addFunction(
-                            FunSpec.builder("fromInt")
-                                .addAnnotation(JvmStatic::class)
-                                .addParameter(
-                                    "value",
-                                    EnumKind.ENUM.dataType.kotlinType
+            }
+
+        val companion = TypeSpec.companionObjectBuilder()
+        companion.addSuperinterface(KTFFICodegen.typeCname, CodeBlock.of("%T", CBasicType.int32_t.nativeTypeName))
+        companion.addFunction(
+            FunSpec.builder("fromInt")
+                .addAnnotation(JvmStatic::class)
+                .addParameter(
+                    "value",
+                    EnumKind.ENUM.dataType.kotlinType
+                )
+                .returns(thisCname)
+                .addCode(
+                    CodeBlock.builder()
+                        .beginControlFlow("return when (value)")
+                        .apply {
+                            enumType.entries.values.forEach { entry ->
+                                addStatement(
+                                    "%L -> %T.%N",
+                                    entry.valueNum,
+                                    thisCname,
+                                    entry.fixedName
                                 )
-                                .returns(thisCname)
-                                .apply {
-                                    addCode(
-                                        CodeBlock.builder()
-                                            .beginControlFlow("return when (value)")
-                                            .apply {
-                                                enumType.entries.values.forEach { entry ->
-                                                    addStatement(
-                                                        "%L -> %T.%N",
-                                                        entry.valueNum,
-                                                        thisCname,
-                                                        entry.fixedName
-                                                    )
-                                                }
-                                            }
-                                            .addStatement("else -> throw IllegalArgumentException(\"Unknown value: \$value\")")
-                                            .endControlFlow()
-                                            .build()
-                                    )
-                                }
-                                .build()
-                        )
-                        .addFunction(
-                            FunSpec.builder("toInt")
-                                .addAnnotation(JvmStatic::class)
-                                .addParameter("value", thisCname)
-                                .returns(EnumKind.ENUM.dataType.kotlinType)
-                                .addStatement("return value.value")
-                                .build()
-                        )
-                        .addMethodHandleFields(thisCname, EnumKind.ENUM)
+                            }
+                        }
+                        .addStatement("else -> throw IllegalArgumentException(\"Unknown value: \$value\")")
+                        .endControlFlow()
                         .build()
                 )
                 .build()
         )
-        return file
+        companion.addFunction(
+            FunSpec.builder("toInt")
+                .addAnnotation(JvmStatic::class)
+                .addParameter("value", thisCname)
+                .returns(EnumKind.ENUM.dataType.kotlinType)
+                .addStatement("return value.value")
+                .build()
+        )
+        companion.addMethodHandleFields(thisCname, EnumKind.ENUM)
+
+        val file = FileSpec.builder(thisCname)
+        file.addNativeAccess(thisCname, CBasicType.int32_t)
+        return file.addType(type.addType(companion.build()).build())
+    }
+
+    private fun FileSpec.Builder.addNativeAccess(thisCname: ClassName, baseType: CBasicType) {
+        val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(thisCname)
+        val arrayCnameP = KTFFICodegen.arrayCname.parameterizedBy(thisCname)
+        addFunction(
+            FunSpec.builder("get")
+                .receiver(arrayCnameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("index", LONG)
+                .returns(thisCname)
+                .addStatement(
+                    "return %T.fromInt(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
+                    thisCname,
+                    baseType.nativeTypeName,
+                    baseType.kotlinTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set")
+                .receiver(arrayCnameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("index", LONG)
+                .addParameter("value", thisCname)
+                .addStatement(
+                    "%T.arrayVarHandle.set(_segment, 0L, index, %T.toInt(value))",
+                    baseType.nativeTypeName,
+                    thisCname,
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("get")
+                .receiver(pointerCnameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("index", LONG)
+                .returns(thisCname)
+                .addStatement(
+                    "return %T.fromInt(%T.arrayVarHandle.get(%M, _address, index) as %T)",
+                    thisCname,
+                    baseType.nativeTypeName,
+                    KTFFICodegen.omniSegment,
+                    baseType.kotlinTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set")
+                .receiver(pointerCnameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("index", LONG)
+                .addParameter("value", thisCname)
+                .addStatement(
+                    "%T.arrayVarHandle.set(%M, _address, index, %T.toInt(value))",
+                    baseType.nativeTypeName,
+                    KTFFICodegen.omniSegment,
+                    thisCname
+                )
+                .build()
+        )
     }
 }
