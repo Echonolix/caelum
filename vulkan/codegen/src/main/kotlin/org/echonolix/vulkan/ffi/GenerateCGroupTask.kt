@@ -298,7 +298,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 .build()
             groupInfo.properties += PropertySpec.builder("${member.name}_byteSize", Long::class)
                 .addAnnotation(JvmField::class)
-                .initializer("%N_layout.byteSize()", member.name)
+                .initializer("%N.byteSize()", "${member.name}_layout")
                 .build()
         }
 
