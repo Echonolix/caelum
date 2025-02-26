@@ -4,7 +4,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import org.echonolix.ktffi.*
-import org.echonolix.ktffi.KTFFICodegen
+import org.echonolix.ktffi.KTFFICodegenHelper
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.foreign.MemoryLayout
@@ -38,7 +38,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             .addType(
                 TypeSpec.classBuilder(VKFFI.vkUnionCname)
                     .addModifiers(KModifier.SEALED)
-                    .superclass(KTFFICodegen.unionCname)
+                    .superclass(KTFFICodegenHelper.unionCname)
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
                             .addParameter("layout", UnionLayout::class)
@@ -53,7 +53,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             .addType(
                 TypeSpec.classBuilder(VKFFI.vkStructCname)
                     .addModifiers(KModifier.SEALED)
-                    .superclass(KTFFICodegen.structCname)
+                    .superclass(KTFFICodegenHelper.structCname)
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
                             .addParameter("layout", StructLayout::class)
@@ -125,9 +125,9 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
 
 
     sealed class GroupInfo(val type: Element.Type, val cname: ClassName) {
-        val arrayCnameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
-        val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(cname)
-        val valueCnameP = KTFFICodegen.valueCname.parameterizedBy(cname)
+        val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(cname)
+        val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(cname)
+        val valueCnameP = KTFFICodegenHelper.valueCname.parameterizedBy(cname)
 
         val properties = mutableListOf<PropertySpec>()
         val topLevelProperties = mutableListOf<PropertySpec>()
@@ -155,7 +155,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .returns(pointerCnameP)
                     .addStatement(
                         "return %T(elementAddress(index))",
-                        KTFFICodegen.pointerCname
+                        KTFFICodegenHelper.pointerCname
                     )
                     .build()
             )
@@ -181,7 +181,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .addStatement(
                         "%M(%M, value._address, _segment, elementAddress(index), %T.arrayLayout.byteSize())",
                         MemorySegment::class.member("copy"),
-                        KTFFICodegen.omniSegment,
+                        KTFFICodegenHelper.omniSegment,
                         cname
                     )
                     .build()
@@ -206,7 +206,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .returns(pointerCnameP)
                     .addStatement(
                         "return %T(elementAddress(index))",
-                        KTFFICodegen.pointerCname
+                        KTFFICodegenHelper.pointerCname
                     )
                     .build()
             )
@@ -219,7 +219,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .addStatement(
                         "%M(value._segment, 0L, %M, elementAddress(index), %T.arrayLayout.byteSize())",
                         MemorySegment::class.member("copy"),
-                        KTFFICodegen.omniSegment,
+                        KTFFICodegenHelper.omniSegment,
                         cname
                     )
                     .build()
@@ -233,8 +233,8 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .addStatement(
                         "%M(%M, value._address, %M, elementAddress(index), %T.arrayLayout.byteSize())",
                         MemorySegment::class.member("copy"),
-                        KTFFICodegen.omniSegment,
-                        KTFFICodegen.omniSegment,
+                        KTFFICodegenHelper.omniSegment,
+                        KTFFICodegenHelper.omniSegment,
                         cname
                     )
                     .build()
@@ -317,7 +317,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .addMember("%S", str + member.type)
                     .build(),
             )
-            val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(groupCname)
+            val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(groupCname)
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, pointerCnameP)
                     .addAnnotations(annotations)
@@ -329,7 +329,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return %T(%T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long)",
-                                KTFFICodegen.pointerCname,
+                                KTFFICodegenHelper.pointerCname,
                                 groupInfo.cname,
                                 member.name
                             )
@@ -342,8 +342,8 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addStatement(
                                 "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long, %T.%N_byteSize)",
                                 MemorySegment::class.member("copy"),
-                                KTFFICodegen.omniSegment,
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 groupInfo.cname,
                                 member.name,
                                 groupInfo.cname,
@@ -364,7 +364,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return %T(%T.%N_offsetHandle.invokeExact(_address, 0L) as Long)",
-                                KTFFICodegen.pointerCname,
+                                KTFFICodegenHelper.pointerCname,
                                 groupInfo.cname,
                                 member.name
                             )
@@ -377,8 +377,8 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addStatement(
                                 "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_address, 0L) as Long, %T.%N_byteSize)",
                                 MemorySegment::class.member("copy"),
-                                KTFFICodegen.omniSegment,
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 groupInfo.cname,
                                 member.name,
                                 groupInfo.cname,
@@ -421,7 +421,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     type.value.valueLayoutMember,
                     member.name
                 )
-                elementCname = ClassName(KTFFICodegen.packageName, type.value.name)
+                elementCname = ClassName(KTFFICodegenHelper.packageName, type.value.name)
             } else {
                 val packageName = genCtx.getPackageName(type)
                 elementCname = ClassName(packageName, type.name)
@@ -443,7 +443,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     .build()
             )
 
-            val pointerElementCname = KTFFICodegen.pointerCname.parameterizedBy(elementCname)
+            val pointerElementCname = KTFFICodegenHelper.pointerCname.parameterizedBy(elementCname)
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, pointerElementCname)
                     .addAnnotations(annotations)
@@ -455,7 +455,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return %T(%T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long)",
-                                KTFFICodegen.pointerCname,
+                                KTFFICodegenHelper.pointerCname,
                                 groupInfo.cname,
                                 member.name
                             )
@@ -468,8 +468,8 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addStatement(
                                 "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long, %T.%N_byteSize)",
                                 MemorySegment::class.member("copy"),
-                                KTFFICodegen.omniSegment,
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 groupInfo.cname,
                                 member.name,
                                 groupInfo.cname,
@@ -490,7 +490,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return %T(%T.%N_offsetHandle.invokeExact(_address, 0L) as Long)",
-                                KTFFICodegen.pointerCname,
+                                KTFFICodegenHelper.pointerCname,
                                 groupInfo.cname,
                                 member.name
                             )
@@ -503,8 +503,8 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addStatement(
                                 "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_address, 0L) as Long, %T.%N_byteSize)",
                                 MemorySegment::class.member("copy"),
-                                KTFFICodegen.omniSegment,
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 groupInfo.cname,
                                 member.name,
                                 groupInfo.cname,
@@ -526,27 +526,27 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 layoutCode = CodeBlock.of("%M", type.value.valueLayoutMember)
                 if (type.value == CBasicType.void) {
                     if (member.name == "pNext") {
-                        constructorType = KTFFICodegen.pointerCname
-                        pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(WildcardTypeName.producerOf(VKFFI.vkStructCname))
+                        constructorType = KTFFICodegenHelper.pointerCname
+                        pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(WildcardTypeName.producerOf(VKFFI.vkStructCname))
                     } else {
-                        constructorType = KTFFICodegen.pointerCname.parameterizedBy(CBasicType.uint8_t.nativeTypeName)
-                        pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(type.value.nativeTypeName)
+                        constructorType = KTFFICodegenHelper.pointerCname.parameterizedBy(CBasicType.uint8_t.nativeTypeName)
+                        pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(type.value.nativeTypeName)
                     }
                 } else {
-                    constructorType = KTFFICodegen.pointerCname
-                    pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(type.value.nativeTypeName)
+                    constructorType = KTFFICodegenHelper.pointerCname
+                    pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(type.value.nativeTypeName)
                 }
             } else {
                 val packageName = genCtx.getPackageName(type)
                 val elementCname = ClassName(packageName, type.name)
                 layoutCode = CodeBlock.of("%T.arrayLayout", elementCname)
-                constructorType = KTFFICodegen.pointerCname
-                pointerTargetCname = KTFFICodegen.pointerCname.parameterizedBy(elementCname)
+                constructorType = KTFFICodegenHelper.pointerCname
+                pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(elementCname)
             }
 
             groupInfo.layoutInitializer.add(
                 CodeBlock.builder()
-                    .add("%M(", KTFFICodegen.pointerLayout)
+                    .add("%M(", KTFFICodegenHelper.pointerLayout)
                     .add(layoutCode)
                     .addStatement(").withName(%S),", member.name)
                     .build()
@@ -609,7 +609,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                                 constructorType,
                                 groupInfo.cname,
                                 "${member.name}_valueVarHandle",
-                                    KTFFICodegen.omniSegment
+                                    KTFFICodegenHelper.omniSegment
                             )
                             .build()
                     )
@@ -621,7 +621,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                                 "%T.%N.set(%M, _address, value._address)",
                                 groupInfo.cname,
                                 "${member.name}_valueVarHandle",
-                                KTFFICodegen.omniSegment
+                                KTFFICodegenHelper.omniSegment
                             )
                             .build()
                     )
@@ -687,7 +687,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                                 "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
                                 groupInfo.cname,
                                 "${member.name}_valueVarHandle",
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 cBasicType.baseType.asTypeName()
                             )
                             .build()
@@ -700,7 +700,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                                 "%T.%N.set(%M, _address, value${cBasicType.toBase})",
                                 groupInfo.cname,
                                 "${member.name}_valueVarHandle",
-                                KTFFICodegen.omniSegment
+                                KTFFICodegenHelper.omniSegment
                             )
                             .build()
                     )
@@ -764,7 +764,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                                 typeCname,
                                 groupInfo.cname,
                                 "${member.name}_valueVarHandle",
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 cBasicType.baseType.asTypeName()
                             )
                             .build()
@@ -777,7 +777,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                                 "%T.%N.set(%M, _address, %T.toInt(value))",
                                 groupInfo.cname,
                                 "${member.name}_valueVarHandle",
-                                KTFFICodegen.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
                                 typeCname
                             )
                             .build()

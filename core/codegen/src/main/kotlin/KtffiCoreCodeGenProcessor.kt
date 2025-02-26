@@ -1,7 +1,7 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import org.echonolix.ktffi.KTFFICodegen
+import org.echonolix.ktffi.KTFFICodegenHelper
 import org.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
@@ -14,7 +14,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
         val validChars = ('a'..'z').toList()
         val random = Random(0)
 
-        val file = FileSpec.builder(KTFFICodegen.packageName, "CoreGenerated")
+        val file = FileSpec.builder(KTFFICodegenHelper.packageName, "CoreGenerated")
             .indent("    ")
             .addAnnotation(
                 AnnotationSpec.builder(Suppress::class)
@@ -26,12 +26,12 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .build()
             )
 
-        val superclass = ClassName(KTFFICodegen.packageName, "NativeTypeImpl")
+        val superclass = ClassName(KTFFICodegenHelper.packageName, "NativeTypeImpl")
         CBasicType.entries.forEach {
-            val cname = ClassName(KTFFICodegen.packageName, it.name)
-            val arrayCNameP = KTFFICodegen.arrayCname.parameterizedBy(cname)
-            val valueCNameP = KTFFICodegen.valueCname.parameterizedBy(cname)
-            val pointerCNameP = KTFFICodegen.pointerCname.parameterizedBy(cname)
+            val cname = ClassName(KTFFICodegenHelper.packageName, it.name)
+            val arrayCNameP = KTFFICodegenHelper.arrayCname.parameterizedBy(cname)
+            val valueCNameP = KTFFICodegenHelper.valueCname.parameterizedBy(cname)
+            val pointerCNameP = KTFFICodegenHelper.pointerCname.parameterizedBy(cname)
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
                 TypeSpec.objectBuilder(cname)
@@ -126,7 +126,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                         "return (%T.%N.get(%N, _address, index) as %T)${it.fromBase}",
                         cname,
                         "arrayVarHandle",
-                        "_\$OMNI_SEGMENT\$_",
+                        KTFFICodegenHelper.omniSegment,
                         it.baseType.asTypeName()
                     )
                     .build()
@@ -142,7 +142,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                         "%T.%N.set(%N, _address, index, value${it.toBase})",
                         cname,
                         "arrayVarHandle",
-                        "_\$OMNI_SEGMENT\$_"
+                        KTFFICodegenHelper.omniSegment
                     )
                     .build()
             )
@@ -158,7 +158,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                         "return (%T.%N.get(%N, _address) as %T)${it.fromBase}",
                         cname,
                         "valueVarHandle",
-                        "_\$OMNI_SEGMENT\$_",
+                        KTFFICodegenHelper.omniSegment,
                         it.baseType.asTypeName()
                     )
                     .build()
@@ -171,7 +171,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
                     .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement("return %T.%N.set(%N, _address, value)", cname, "valueVarHandle", "_\$OMNI_SEGMENT\$_")
+                    .addStatement("return %T.%N.set(%N, _address, value)", cname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
                     .build()
             )
         }

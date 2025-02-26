@@ -47,6 +47,7 @@ class VkFFICodeGenProcessor : KtgenProcessor {
 
         val gc = FFIGenContext(VKFFI.packageName, outputDir) {
             it.requiredBy!! == "Vulkan 1.0"
+//            true
         }
 
         object : RecursiveAction() {

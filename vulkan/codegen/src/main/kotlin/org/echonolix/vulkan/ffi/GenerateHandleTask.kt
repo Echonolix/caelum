@@ -2,8 +2,6 @@ package org.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import org.echonolix.ktffi.CBasicType
-import org.echonolix.ktffi.CFunctionPointer
-import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
 import java.util.concurrent.RecursiveAction
 

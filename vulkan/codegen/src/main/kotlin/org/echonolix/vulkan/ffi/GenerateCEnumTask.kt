@@ -3,7 +3,7 @@ package org.echonolix.vulkan.ffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import org.echonolix.ktffi.CBasicType
-import org.echonolix.ktffi.KTFFICodegen
+import org.echonolix.ktffi.KTFFICodegenHelper
 import org.echonolix.ktffi.NativeType
 import org.echonolix.vulkan.schema.Element
 import org.echonolix.vulkan.schema.PatchedRegistry
@@ -32,7 +32,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         val vkEnumFile = FileSpec.builder(VKFFI.vkEnumsCname)
             .addType(
                 TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
-                    .addSuperinterface(KTFFICodegen.typeCname)
+                    .addSuperinterface(KTFFICodegenHelper.typeCname)
                     .addTypeVariable(TypeVariableName("T"))
                     .addProperty(
                         PropertySpec.builder("value", TypeVariableName("T"))
@@ -283,7 +283,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         )
 
         val companion = TypeSpec.companionObjectBuilder()
-        companion.addSuperinterface(KTFFICodegen.typeCname, CodeBlock.of("%T", enumKind.dataType.nativeTypeName))
+        companion.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", enumKind.dataType.nativeTypeName))
         flagBitType?.entries?.values?.let { flagBitTypes ->
             flagBitTypes.forEach {
                 companion.addProperty(
@@ -350,7 +350,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
             }
 
         val companion = TypeSpec.companionObjectBuilder()
-        companion.addSuperinterface(KTFFICodegen.typeCname, CodeBlock.of("%T", CBasicType.int32_t.nativeTypeName))
+        companion.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", CBasicType.int32_t.nativeTypeName))
         companion.addFunction(
             FunSpec.builder("fromInt")
                 .addAnnotation(JvmStatic::class)
@@ -394,8 +394,8 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
     }
 
     private fun FileSpec.Builder.addNativeAccess(thisCname: ClassName, baseType: CBasicType) {
-        val pointerCnameP = KTFFICodegen.pointerCname.parameterizedBy(thisCname)
-        val arrayCnameP = KTFFICodegen.arrayCname.parameterizedBy(thisCname)
+        val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
+        val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
         addFunction(
             FunSpec.builder("get")
                 .receiver(arrayCnameP)
@@ -433,7 +433,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                     "return %T.fromInt(%T.arrayVarHandle.get(%M, _address, index) as %T)",
                     thisCname,
                     baseType.nativeTypeName,
-                    KTFFICodegen.omniSegment,
+                    KTFFICodegenHelper.omniSegment,
                     baseType.kotlinTypeName
                 )
                 .build()
@@ -447,7 +447,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
                 .addStatement(
                     "%T.arrayVarHandle.set(%M, _address, index, %T.toInt(value))",
                     baseType.nativeTypeName,
-                    KTFFICodegen.omniSegment,
+                    KTFFICodegenHelper.omniSegment,
                     thisCname
                 )
                 .build()
