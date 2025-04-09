@@ -9,7 +9,6 @@ interface ICElement {
     val name: String
     val kDoc: KDoc
     val annotations: List<AnnotationSpec>
-    val aliases: List<String>
 
     fun packageName(): String
     fun className(): ClassName
@@ -50,7 +49,6 @@ sealed class CElement : ICElement {
         return ClassName(packageName(), name)
     }
 
-    override val aliases = mutableListOf<String>()
     override val annotations = mutableListOf<AnnotationSpec>()
 }
 
@@ -151,6 +149,7 @@ sealed class CType : CElement() {
 
     sealed class EnumBase(val entryType: BasicType) : ValueType(entryType.baseType) {
         val entries = mutableListOf<CConst>()
+        val aliases = mutableMapOf<String, String>()
 
         override fun nativeType(): TypeName {
             return entryType.nativeType()
