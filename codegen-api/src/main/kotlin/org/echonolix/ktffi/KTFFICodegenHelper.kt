@@ -1,7 +1,6 @@
 package org.echonolix.ktffi
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.asClassName
 import java.lang.foreign.MemoryLayout
@@ -19,7 +18,7 @@ object KTFFICodegenHelper {
     val omniSegment = helper.member("_\$OMNI_SEGMENT\$_")
     val linker = helper.member("linker")
     val loaderLookup = helper.member("loaderLookup")
-    val pointerLayout = helper.member("pointerLayout")
+    val pointerLayoutMember = helper.member("pointerLayout")
     val symbolLookup = helper.member("symbolLookup")
     val findSymbol = helper.member("findSymbol")
 

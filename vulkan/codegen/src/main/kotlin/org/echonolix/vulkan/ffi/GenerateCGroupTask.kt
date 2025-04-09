@@ -546,7 +546,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
 
             groupInfo.layoutInitializer.add(
                 CodeBlock.builder()
-                    .add("%M(", KTFFICodegenHelper.pointerLayout)
+                    .add("%M(", KTFFICodegenHelper.pointerLayoutMember)
                     .add(layoutCode)
                     .addStatement(").withName(%S),", member.name)
                     .build()
