@@ -7,7 +7,7 @@ import kotlin.properties.Delegates
 interface ICElement {
     val ctx: KTFFICodegenContext
     val name: String
-    val docs: String
+    val kDoc: KDoc
     val annotations: List<AnnotationSpec>
     val aliases: List<String>
 
@@ -19,7 +19,9 @@ interface ICElement {
     }
 
     fun addKdocTo(builder: Documentable.Builder<*>) {
-        if (docs.isNotBlank()) builder.addKdoc(docs)
+        kDoc.toString().takeIf { it.isNotBlank() }?.let {
+            builder.addKdoc(it)
+        }
     }
 }
 
@@ -38,7 +40,7 @@ interface ITopLevelType : ITopLevelDeclaration {
 sealed class CElement : ICElement {
     override lateinit var ctx: KTFFICodegenContext
     override lateinit var name: String
-    override var docs = ""
+    override val kDoc: KDoc = KDoc()
 
     override fun packageName(): String {
         return ctx.getPackageName(this)
