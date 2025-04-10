@@ -1,7 +1,7 @@
 package org.echonolix.ktffi
 
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
-annotation class CType(val name: String)
+annotation class CTypeName(val name: String)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
 annotation class CHandleType
 @Target(AnnotationTarget.PROPERTY)

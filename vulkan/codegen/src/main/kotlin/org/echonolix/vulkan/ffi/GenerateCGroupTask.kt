@@ -313,7 +313,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
 
             val str = if (type is Element.Struct) "struct " else "union "
             val annotations = listOf(
-                AnnotationSpec.builder(CType::class)
+                AnnotationSpec.builder(CTypeName::class)
                     .addMember("%S", str + member.type)
                     .build(),
             )
@@ -435,7 +435,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             }
 
             val annotations = listOf(
-                AnnotationSpec.builder(CType::class)
+                AnnotationSpec.builder(CTypeName::class)
                     .addMember("%S", member.type)
                     .build(),
                 AnnotationSpec.builder(CArrayType::class)
@@ -553,7 +553,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             )
 
             val annotations = listOf(
-                AnnotationSpec.builder(CType::class)
+                AnnotationSpec.builder(CTypeName::class)
                     .addMember("%S", member.type)
                     .build(),
                 AnnotationSpec.builder(CPointerType::class)
@@ -637,7 +637,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
                     .addAnnotation(
-                        AnnotationSpec.builder(CType::class)
+                        AnnotationSpec.builder(CTypeName::class)
                             .addMember("%S", member.type)
                             .build()
                     )
@@ -672,7 +672,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
                     .addAnnotation(
-                        AnnotationSpec.builder(CType::class)
+                        AnnotationSpec.builder(CTypeName::class)
                             .addMember("%S", member.type)
                             .build()
                     )
@@ -713,7 +713,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, typeCname)
                     .addAnnotation(
-                        AnnotationSpec.builder(CType::class)
+                        AnnotationSpec.builder(CTypeName::class)
                             .addMember("%S", member.type)
                             .build()
                     )
@@ -749,7 +749,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, typeCname)
                     .addAnnotation(
-                        AnnotationSpec.builder(CType::class)
+                        AnnotationSpec.builder(CTypeName::class)
                             .addMember("%S", member.type)
                             .build()
                     )
