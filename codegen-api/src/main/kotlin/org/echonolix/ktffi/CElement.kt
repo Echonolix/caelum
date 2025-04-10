@@ -5,18 +5,21 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import kotlin.properties.Delegates
 
 interface ICElement {
-    val ctx: KTFFICodegenContext
     val name: String
     val kDoc: KDoc
     val annotations: List<AnnotationSpec>
 
+    context(ctx: KTFFICodegenContext)
     fun packageName(): String
+    context(ctx: KTFFICodegenContext)
     fun className(): ClassName
 
+    context(ctx: KTFFICodegenContext)
     fun addAnnotationTo(builder: Annotatable.Builder<*>) {
         builder.addAnnotations(annotations)
     }
 
+    context(ctx: KTFFICodegenContext)
     fun addKdocTo(builder: Documentable.Builder<*>) {
         kDoc.toString().takeIf { it.isNotBlank() }?.let {
             builder.addKdoc(it)
@@ -25,10 +28,12 @@ interface ICElement {
 }
 
 interface ITopLevelDeclaration : ICElement {
+    context(ctx: KTFFICodegenContext)
     fun generateImpl(builder: FileSpec.Builder)
 }
 
 interface ITopLevelType : ITopLevelDeclaration {
+    context(ctx: KTFFICodegenContext)
     fun generate() {
         val builder = FileSpec.builder(packageName(), name)
         generateImpl(builder)
@@ -36,15 +41,15 @@ interface ITopLevelType : ITopLevelDeclaration {
     }
 }
 
-sealed class CElement : ICElement {
-    override lateinit var ctx: KTFFICodegenContext
-    override lateinit var name: String
+sealed class CElement(override val name: String) : ICElement {
     override val kDoc: KDoc = KDoc()
 
+    context(ctx: KTFFICodegenContext)
     override fun packageName(): String {
         return ctx.getPackageName(this)
     }
 
+    context(ctx: KTFFICodegenContext)
     override fun className(): ClassName {
         return ClassName(packageName(), name)
     }
@@ -52,17 +57,23 @@ sealed class CElement : ICElement {
     override val annotations = mutableListOf<AnnotationSpec>()
 }
 
-sealed class CType : CElement() {
+sealed class CType(name: String) : CElement(name) {
+    context(ctx: KTFFICodegenContext)
     abstract fun nativeType(): TypeName
+    context(ctx: KTFFICodegenContext)
     abstract fun ktApiType(): TypeName
+    context(ctx: KTFFICodegenContext)
     abstract fun memoryLayout(): CodeBlock
 
+    context(ctx: KTFFICodegenContext)
     open fun typeObject(builder: TypeSpec.Builder) {
         addAnnotationTo(builder)
         addKdocTo(builder)
     }
 
-    sealed class ValueType(val baseType: CBasicType) : CType(), ITopLevelType {
+    sealed class ValueType(val baseType: CBasicType) : CType(baseType.name),
+        ITopLevelType {
+        context(ctx: KTFFICodegenContext)
         override fun generateImpl(builder: FileSpec.Builder) {
             val thisCname = className()
             val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
@@ -127,42 +138,67 @@ sealed class CType : CElement() {
     }
 
     class BasicType(baseType: CBasicType) : ValueType(baseType) {
+        context(ctx: KTFFICodegenContext)
         override fun typeObject(builder: TypeSpec.Builder) {
             super.typeObject(builder)
             builder.superclass(ClassName(KTFFICodegenHelper.packageName, "NativeTypeImpl"))
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return baseType.nativeTypeName
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return baseType.kotlinTypeName
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%M", baseType.valueLayoutMember)
         }
     }
 
-    sealed class CompositeType : CType()
+    sealed class CompositeType(name: String) : CType(name)
+
+    class TypeDef(name: String, dstType: CType): CompositeType(name) {
+        context(ctx: KTFFICodegenContext)
+        override fun nativeType(): TypeName {
+            TODO("Not yet implemented")
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun ktApiType(): TypeName {
+            TODO("Not yet implemented")
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun memoryLayout(): CodeBlock {
+            TODO("Not yet implemented")
+        }
+    }
 
     sealed class EnumBase(val entryType: BasicType) : ValueType(entryType.baseType) {
         val entries = mutableListOf<CConst>()
         val aliases = mutableMapOf<String, String>()
 
+        context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return entryType.nativeType()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return className()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%T.layout", entryType.className())
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun typeObject(builder: TypeSpec.Builder) {
             super.typeObject(builder)
             builder.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", entryType.className()))
@@ -172,39 +208,46 @@ sealed class CType : CElement() {
     open class Enum(entryType: BasicType) : EnumBase(entryType)
     open class Bitmask(entryType: BasicType) : EnumBase(entryType)
 
-    class CFunction : CompositeType(), ITopLevelType {
+    class CFunction(name: String) : CompositeType(name), ITopLevelType {
         lateinit var returnType: CType
         val parameters = mutableListOf<CDeclaration>()
 
+        context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return className()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             throw UnsupportedOperationException()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun generateImpl(builder: FileSpec.Builder) {
             TODO("Not yet implemented")
         }
     }
 
-    open class Array : CompositeType() {
+    open class Array(name: String) : CompositeType(name) {
         var length by Delegates.notNull<Int>()
         lateinit var elementType: CType
 
+        context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return elementType.nativeType()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of(
                 "%M(%T.layout)",
@@ -214,17 +257,20 @@ sealed class CType : CElement() {
         }
     }
 
-    open class Pointer : CompositeType() {
+    open class Pointer(name: String) : CompositeType(name) {
         open lateinit var elementType: CType
 
+        context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return LONG
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of(
                 "%M(%L)",
@@ -234,23 +280,27 @@ sealed class CType : CElement() {
         }
     }
 
-    class FunctionPointer : Pointer() {
+    class FunctionPointer(name: String) : Pointer(name) {
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%M", KTFFICodegenHelper.pointerLayoutMember)
         }
     }
 
-    sealed class Group : CompositeType(), ITopLevelType {
+    sealed class Group(name: String) : CompositeType(name), ITopLevelType {
         val members = mutableListOf<CDeclaration>()
 
+        context(ctx: KTFFICodegenContext)
         final override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
         }
 
+        context(ctx: KTFFICodegenContext)
         final override fun ktApiType(): TypeName {
             return KTFFICodegenHelper.pointerCname.parameterizedBy(className())
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             val builder = CodeBlock.builder()
             members.forEach {
@@ -260,7 +310,8 @@ sealed class CType : CElement() {
         }
     }
 
-    class Struct : Group() {
+    class Struct(name: String) : Group(name) {
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.builder()
                 .add("\n")
@@ -274,12 +325,14 @@ sealed class CType : CElement() {
                 .build()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun generateImpl(builder: FileSpec.Builder) {
             TODO("Not yet implemented")
         }
     }
 
-    class Union : Group() {
+    class Union(name: String) : Group(name) {
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.builder()
                 .add("\n")
@@ -293,16 +346,17 @@ sealed class CType : CElement() {
                 .build()
         }
 
+        context(ctx: KTFFICodegenContext)
         override fun generateImpl(builder: FileSpec.Builder) {
             TODO("Not yet implemented")
         }
     }
 }
 
-open class CDeclaration : CElement() {
+open class CDeclaration(name: String) : CElement(name) {
     lateinit var type: CType
 }
 
-open class CConst : CDeclaration() {
+open class CConst(name: String) : CDeclaration(name) {
     lateinit var valueInitializer: CodeBlock
 }

@@ -37,7 +37,7 @@ enum class CBasicType(
         ClassName(KTFFICodegenHelper.packageName, name)
     }
 
-    val cType by lazy { CType.BasicType(this) }
+    val cType by lazy { CType.BasicType() }
 
     companion object {
         fun fromStringOrNull(type: String): CBasicType? {
