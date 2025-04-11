@@ -131,7 +131,7 @@ data class Registry(
         data class Enum(
             val name: String,
             @XmlElement(false) val api: API?,
-            @XmlElement(false) val type: CBasicType?,
+            @XmlElement(false) val type: CBasicType<*>?,
             val value: String?,
             val protect: String?,
             val extends: String?,

@@ -632,7 +632,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
 
         private fun cbasicTypeAccess(
             member: Element.Member,
-            cBasicType: CBasicType,
+            cBasicType: CBasicType<*>,
             block: PropertySpec.Builder.() -> Unit = {}
         ) {
             groupInfo.topLevelProperties.add(
@@ -709,7 +709,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             )
         }
 
-        private fun cenumTypeAccess(member: Element.Member, type: Element.Type, cBasicType: CBasicType) {
+        private fun cenumTypeAccess(member: Element.Member, type: Element.Type, cBasicType: CBasicType<*>) {
             val typeCname = ClassName(genCtx.enumPackageName, type.name)
             groupInfo.topLevelProperties.add(
                 PropertySpec.builder(member.name, typeCname)
@@ -787,7 +787,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             )
         }
 
-        private fun cbasicType(member: Element.Member, cBasicType: CBasicType) {
+        private fun cbasicType(member: Element.Member, cBasicType: CBasicType<*>) {
             groupInfo.layoutInitializer.addStatement(
                 "%M.withName(%S),",
                 cBasicType.valueLayoutMember,

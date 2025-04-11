@@ -12,7 +12,7 @@ sealed class Element(val name: String) {
     }
 
     sealed class Type(name: String) : Element(name)
-    sealed class CEnum(name: String, val type: CBasicType) : Type(name) {
+    sealed class CEnum(name: String, val type: CBasicType<*>) : Type(name) {
         val entries = mutableMapOf<String, Entry>()
         val aliases = mutableMapOf<String, Alias>()
 
@@ -20,11 +20,11 @@ sealed class Element(val name: String) {
         class Alias(name: String, val value: String) : Element(name)
     }
 
-    class Constant(name: String, val type: CBasicType, val value: CodeBlock) : Element(name)
+    class Constant(name: String, val type: CBasicType<*>, val value: CodeBlock) : Element(name)
     class Define(name: String, val value: String) : Element(name)
 
     class OpaqueType(name: String) : Type(name)
-    class BasicType(name: String, val value: CBasicType) : Type(name)
+    class BasicType(name: String, val value: CBasicType<*>) : Type(name)
     class BaseType(name: String, val value: TypeDef) : Type(name)
     class TypeDef(name: String, val value: Type) : Type(name)
 
@@ -32,7 +32,7 @@ sealed class Element(val name: String) {
         val unused get() = bitType == null
     }
 
-    class FlagBitType(name: String, type: CBasicType, val bitmaskType: FlagType?) : CEnum(name, type)
+    class FlagBitType(name: String, type: CBasicType<*>, val bitmaskType: FlagType?) : CEnum(name, type)
     class EnumType(name: String) : CEnum(name, CBasicType.int32_t)
     class HandleType(name: String, val objectEnum: String, val parent: String?) : Type(name)
 

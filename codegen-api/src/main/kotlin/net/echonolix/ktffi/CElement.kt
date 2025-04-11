@@ -34,18 +34,46 @@ interface CElement : Comparable<CElement> {
 //        }
 //    }
 
+    fun toSimpleString(): String {
+        return toString()
+    }
+
     sealed class Impl(override val name: String) : CElement {
         override val tags: TagStorage = TagStorage()
 
         override fun compareTo(other: CElement): Int {
             return this.javaClass.simpleName.compareTo(other.javaClass.simpleName)
         }
+    }
+}
 
-        open fun toSimpleString(): String {
-            return toString()
+sealed class CExpression<T: Any>(val type: CType, val value: T): CElement.Impl(value.toString()) {
+    class Const<T: Any>(val basicType: CBasicType<T>, value: T) : CExpression<T>(basicType.cType, value) {
+        override fun toString(): String {
+            return value.toString()
+        }
+    }
+    class Reference(val const: CConst) : CExpression<CConst>(const.type, const) {
+        override fun toString(): String {
+            return const.name
         }
     }
 }
+class CConstExpression(val valueInitializer: CodeBlock): CElement.Impl(valueInitializer.toString())
+
+interface CDeclaration : CElement {
+    val type: CType
+    open class Impl(name: String, override val type: CType) : CElement.Impl(name), CDeclaration {
+        override fun toString(): String {
+            return "${type.toSimpleString()} $name;"
+        }
+    }
+
+    interface TopLevel : CDeclaration
+}
+
+open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type)
+class CTopLevelConst(name: String, expression: CExpression<*>): CConst(name, expression), CDeclaration.TopLevel
 
 context(ctx: KTFFICodegenContext)
 fun CElement.packageName(): String {
@@ -57,10 +85,6 @@ fun CElement.className(): ClassName {
     return ClassName(packageName(), name)
 }
 
-//interface ITopLevelDeclaration : CElement {
-//    context(ctx: KTFFICodegenContext)
-//    fun generateImpl(builder: FileSpec.Builder)
-//}
 //
 //interface ITopLevelType : ITopLevelDeclaration {
 //    context(ctx: KTFFICodegenContext)
@@ -87,7 +111,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
 //        addKdocTo(builder)
 //    }
 
-    sealed class ValueType(val baseType: CBasicType) : CType(baseType.name) {
+    sealed class ValueType(val baseType: CBasicType<*>) : CType(baseType.name) {
 //        context(ctx: KTFFICodegenContext)
 //        override fun generateImpl(builder: FileSpec.Builder) {
 //            val thisCname = className()
@@ -152,7 +176,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
 //        }
     }
 
-    class BasicType(baseType: CBasicType) : ValueType(baseType) {
+    class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
 //        context(ctx: KTFFICodegenContext)
 //        override fun typeObject(builder: TypeSpec.Builder) {
 //            super.typeObject(builder)
@@ -176,7 +200,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
         override fun compareTo(other: CElement): Int {
             if (other is BasicType) {
-                return this.baseType.ordinal.compareTo(other.baseType.ordinal)
+                return this.baseType.index.compareTo(other.baseType.index)
             }
             return super.compareTo(other)
         }
@@ -274,7 +298,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
                 } else {
                     append(" (\n    ")
                     if (entries.isNotEmpty()) {
-                        append(entries.values.joinToString(",\n    ") { "${it.name}=${it.valueInitializer}" })
+                        append(entries.values.joinToString(",\n    ") { "${it.name}=${it.expression}" })
                         if (aliases.isNotEmpty()) {
                             append(",\n    ")
                         }
@@ -295,7 +319,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
     open class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType)
     open class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType)
 
-    class Function(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name) {
+    class Function(name: String, val returnType: CType, val parameters: List<Parameter>) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -334,6 +358,8 @@ sealed class CType(name: String) : CElement.Impl(name) {
         override fun toSimpleString(): String {
             return name
         }
+
+        class Parameter(name: String, type: CType) : CDeclaration.Impl(name, type)
     }
 
     open class Array(name: String) : CompositeType(name) {
@@ -488,11 +514,3 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 }
-
-open class CDeclaration(name: String, val type: CType) : CElement.Impl(name) {
-    override fun toString(): String {
-        return "${type.toSimpleString()} $name"
-    }
-}
-
-open class CConst(name: String, type: CType, val valueInitializer: CodeBlock) : CDeclaration(name, type)

@@ -66,7 +66,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 funcPointerParameterRegex.matchEntire(it)
                     ?: throw IllegalStateException("Cannot resolve func pointer parameter for: ${xmlTypeDefType.name}")
             }.map { it.groupValues }.map {
-                CDeclaration(it[2], resolveType(it[1]))
+                CType.Function.Parameter(it[2], resolveType(it[1]))
             }.toList()
         val func = CType.Function("VkFunc${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         addToCache(func)
@@ -102,44 +102,11 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             val xmlMember = xmlMember.tryParseXML<XMLMember>()!!
             if (xmlMember.api != null && !xmlMember.api.split(",").contains("vulkan")) return@forEach
             val innerText = xmlMember.inner.map { it.contentString }
-            var typeStr = xmlMember.type
             var arrayLen: String? = null
             var bits = -1
-            when (innerText.size) {
-                0 -> {}
-                1 -> {
-                    val firstText = innerText[0]
-                    when (firstText[0]) {
-                        '*' -> {
-                            typeStr = "$typeStr*"
-                        }
-                        '[' -> {
-                            typeStr = "$typeStr[]"
-                            arrayLen = firstText.substring(1, firstText.length - 1)
-                        }
-                        ':' -> {
-                            bits = firstText.substring(1).toInt()
-                        }
-                        else -> {
-                            error("Unexpected inner text: $firstText")
-                        }
-                    }
-                }
-                2 -> {
-                    val firstText = innerText[0]
-                    val secondText = innerText[1]
-                    check(secondText[0] == '*')
-                    typeStr = "$firstText$typeStr*"
-                }
-                3 -> {
-                    val firstText = innerText[0]
-                    val secondText = innerText[1]
-                    check(firstText == "[")
-                    typeStr = "$typeStr[]"
-                    arrayLen = xmlTagRegex.matchEntire(secondText)!!.groupValues[1]
-                }
-            }
-            val member = CDeclaration(
+            val typeStr = xmlMember.inner.toXmlTagFreeString()
+            println(typeStr)
+            val member = CType.Function.Parameter(
                 xmlMember.name,
                 resolveType("void"),
             )

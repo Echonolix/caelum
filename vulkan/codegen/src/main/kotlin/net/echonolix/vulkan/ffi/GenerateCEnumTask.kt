@@ -180,7 +180,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         genCtx.writeOutput(flagTypeAliasesFile)
     }
 
-    private enum class EnumKind(val cname: ClassName, val dataType: CBasicType) {
+    private enum class EnumKind(val cname: ClassName, val dataType: CBasicType<*>) {
         ENUM(VKFFI.vkEnumsCname, CBasicType.int32_t),
         FLAG32(VKFFI.vkFlags32CNAME, CBasicType.int32_t),
         FLAG64(VKFFI.vkFlags64CNAME, CBasicType.int64_t)
@@ -394,7 +394,7 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
         return file.addType(type.addType(companion.build()).build())
     }
 
-    private fun FileSpec.Builder.addNativeAccess(thisCname: ClassName, baseType: CBasicType) {
+    private fun FileSpec.Builder.addNativeAccess(thisCname: ClassName, baseType: CBasicType<*>) {
         val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
         val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
         addFunction(

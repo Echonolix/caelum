@@ -49,9 +49,10 @@ class VkFFICodeGenProcessor : KtgenProcessor {
 //                ctx.resolveType(it.name!!)
 //            }
         filteredRegistry.structTypes.values.forEach {
-            println(ctx.resolveType(it.name!!))
+            ctx.resolveType(it.name!!)
+//                .let(::println)
         }
-        ctx.allElement.values.sorted().forEach(::println)
+//        ctx.allElement.values.sorted().forEach(::println)
 
 //        val patchedRegistry = PatchedRegistry(registry)
 //
