@@ -16,8 +16,6 @@ enum class CBasicType(
 ) {
     void(Unit::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
     char(Char::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
-    float(Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT"),
-    double(Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE"),
     int8_t(Byte::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE"),
     uint8_t(UByte::class, "U", ValueLayout.JAVA_BYTE, "JAVA_BYTE", Byte::class, ".toUByte()", ".toByte()"),
     int16_t(Short::class, "", ValueLayout.JAVA_SHORT, "JAVA_SHORT"),
@@ -27,7 +25,9 @@ enum class CBasicType(
     int(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT"),
     int64_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
     uint64_t(ULong::class, "UL", ValueLayout.JAVA_LONG, "JAVA_LONG", Long::class, ".toULong()", ".toLong()"),
-    size_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG");
+    size_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
+    float(Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT"),
+    double(Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE");
 
     val kotlinTypeName: TypeName = kotlinType.asTypeName()
     val valueLayoutMember = ValueLayout::class.member(valueLayoutName)
@@ -48,16 +48,18 @@ enum class CBasicType(
             return when (type) {
                 "void" -> void
                 "char" -> char
-                "float" -> float
-                "double" -> double
                 "int8_t" -> int8_t
                 "uint8_t" -> uint8_t
                 "int16_t" -> int16_t
                 "uint16_t" -> uint16_t
+                "int32_t" -> int32_t
                 "uint32_t" -> uint32_t
+                "int" -> int
+                "int64_t" -> int64_t
                 "uint64_t" -> uint64_t
                 "size_t" -> size_t
-                "int" -> int
+                "float" -> float
+                "double" -> double
                 else -> null
             }
         }

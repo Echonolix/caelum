@@ -2,6 +2,7 @@ package org.echonolix.ktffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import java.util.Collections
 import kotlin.properties.Delegates
 
 interface CElement : Comparable<CElement> {
@@ -217,9 +218,9 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    sealed class EnumBase(val entryType: BasicType) : ValueType(entryType.baseType) {
-        val entries = mutableListOf<CConst>()
-        val aliases = mutableMapOf<String, String>()
+    sealed class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
+        val entries: Map<String, CConst> = Collections.synchronizedMap(mutableMapOf())
+        val aliases: Map<String, String> = Collections.synchronizedMap(mutableMapOf())
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -243,8 +244,8 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    open class Enum(entryType: BasicType) : EnumBase(entryType)
-    open class Bitmask(entryType: BasicType) : EnumBase(entryType)
+    open class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType)
+    open class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType)
 
     class Function(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name),
         ITopLevelType {
@@ -321,8 +322,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    sealed class Group(name: String) : CompositeType(name), ITopLevelType {
-        val members = mutableListOf<CDeclaration>()
+    sealed class Group(name: String, val members: List<CDeclaration>) : CompositeType(name), ITopLevelType {
 
         context(ctx: KTFFICodegenContext)
         final override fun nativeType(): TypeName {
@@ -344,7 +344,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    class Struct(name: String) : Group(name) {
+    class Struct(name: String, members: List<CDeclaration>) : Group(name, members) {
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.builder()
@@ -365,7 +365,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    class Union(name: String) : Group(name) {
+    class Union(name: String, members: List<CDeclaration>) : Group(name, members) {
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.builder()

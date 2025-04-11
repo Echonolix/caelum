@@ -8,7 +8,7 @@ class FilteredRegistry(registry: Registry) {
     val registryFeatures =
         registry.features.asSequence().filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }.toList()
     val registryExtensions = registry.extensions.extensions
-    val registryEnums = registry.enums
+    val enums = registry.enums.associateBy { it.name }
     val registryTypes = registry.types.types.associate { type ->
         val name = type.name ?: type.inner.firstNotNullOf {
             it.tryParseXML<XMLName>()?.value
