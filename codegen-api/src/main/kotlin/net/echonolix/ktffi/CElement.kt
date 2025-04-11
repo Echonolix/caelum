@@ -242,6 +242,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
             super.typeObject(builder)
             builder.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", entryType.className()))
         }
+
+        override fun toString(): String {
+            return "enum $name"
+        }
     }
 
     open class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType)
@@ -267,6 +271,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
         context(ctx: KTFFICodegenContext)
         override fun generateImpl(builder: FileSpec.Builder) {
             TODO("Not yet implemented")
+        }
+
+        override fun toString(): String {
+            return "$returnType $name(${parameters.joinToString(", ")})"
         }
     }
 
@@ -363,6 +371,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
         override fun generateImpl(builder: FileSpec.Builder) {
             TODO("Not yet implemented")
         }
+
+        override fun toString(): String {
+            return "struct $name(${members.joinToString(", ")})"
+        }
     }
 
     class Union(name: String, members: List<CDeclaration>) : Group(name, members) {
@@ -387,5 +399,9 @@ sealed class CType(name: String) : CElement.Impl(name) {
     }
 }
 
-open class CDeclaration(name: String, val type: CType) : CElement.Impl(name)
+open class CDeclaration(name: String, val type: CType) : CElement.Impl(name) {
+    override fun toString(): String {
+        return "$type $name"
+    }
+}
 open class CConst(name: String, type: CType, val valueInitializer: CodeBlock) : CDeclaration(name, type)
