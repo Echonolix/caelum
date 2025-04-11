@@ -141,7 +141,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             val member = CDeclaration(
                 xmlMember.name,
-                resolveType(typeStr),
+                resolveType("void"),
             )
 //            member.docs = comment
             comment = null

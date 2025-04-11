@@ -2,29 +2,40 @@ package net.echonolix.ktffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import java.util.Collections
+import java.util.*
 import kotlin.properties.Delegates
+
+interface Tag<K : Tag.Key> {
+    interface Key
+}
+
+class TagStorage {
+    private val backingMap = mutableMapOf<Tag.Key, Tag<*>>()
+    @Suppress("UNCHECKED_CAST")
+
+    operator fun <T : Tag.Key> get(key: T) = backingMap[key] as Tag<T>?
+    operator fun <T : Tag.Key> set(key: T, value: Tag<T>) { backingMap[key] = value }
+}
 
 interface CElement : Comparable<CElement> {
     val name: String
-    val kDoc: KDoc
-    val annotations: List<AnnotationSpec>
+//    val annotations: List<AnnotationSpec>
+    val tags: TagStorage
 
-    context(ctx: KTFFICodegenContext)
-    fun addAnnotationTo(builder: Annotatable.Builder<*>) {
-        builder.addAnnotations(annotations)
-    }
-
-    context(ctx: KTFFICodegenContext)
-    fun addKdocTo(builder: Documentable.Builder<*>) {
-        kDoc.toString().takeIf { it.isNotBlank() }?.let {
-            builder.addKdoc(it)
-        }
-    }
+//    context(ctx: KTFFICodegenContext)
+//    fun addAnnotationTo(builder: Annotatable.Builder<*>) {
+//        builder.addAnnotations(annotations)
+//    }
+//
+//    context(ctx: KTFFICodegenContext)
+//    fun addKdocTo(builder: Documentable.Builder<*>) {
+//        kDoc.toString().takeIf { it.isNotBlank() }?.let {
+//            builder.addKdoc(it)
+//        }
+//    }
 
     sealed class Impl(override val name: String) : CElement {
-        override val kDoc: KDoc = KDoc()
-        override val annotations = mutableListOf<AnnotationSpec>()
+        override val tags: TagStorage = TagStorage()
 
         override fun compareTo(other: CElement): Int {
             return this.javaClass.simpleName.compareTo(other.javaClass.simpleName)
@@ -46,19 +57,19 @@ fun CElement.className(): ClassName {
     return ClassName(packageName(), name)
 }
 
-interface ITopLevelDeclaration : CElement {
-    context(ctx: KTFFICodegenContext)
-    fun generateImpl(builder: FileSpec.Builder)
-}
-
-interface ITopLevelType : ITopLevelDeclaration {
-    context(ctx: KTFFICodegenContext)
-    fun generate() {
-        val builder = FileSpec.builder(packageName(), name)
-        generateImpl(builder)
-        ctx.writeOutput(builder)
-    }
-}
+//interface ITopLevelDeclaration : CElement {
+//    context(ctx: KTFFICodegenContext)
+//    fun generateImpl(builder: FileSpec.Builder)
+//}
+//
+//interface ITopLevelType : ITopLevelDeclaration {
+//    context(ctx: KTFFICodegenContext)
+//    fun generate() {
+//        val builder = FileSpec.builder(packageName(), name)
+//        generateImpl(builder)
+//        ctx.writeOutput(builder)
+//    }
+//}
 
 sealed class CType(name: String) : CElement.Impl(name) {
     context(ctx: KTFFICodegenContext)
@@ -70,84 +81,83 @@ sealed class CType(name: String) : CElement.Impl(name) {
     context(ctx: KTFFICodegenContext)
     abstract fun memoryLayout(): CodeBlock
 
-    context(ctx: KTFFICodegenContext)
-    open fun typeObject(builder: TypeSpec.Builder) {
-        addAnnotationTo(builder)
-        addKdocTo(builder)
-    }
+//    context(ctx: KTFFICodegenContext)
+//    open fun typeObject(builder: TypeSpec.Builder) {
+//        addAnnotationTo(builder)
+//        addKdocTo(builder)
+//    }
 
-    sealed class ValueType(val baseType: CBasicType) : CType(baseType.name),
-        ITopLevelType {
-        context(ctx: KTFFICodegenContext)
-        override fun generateImpl(builder: FileSpec.Builder) {
-            val thisCname = className()
-            val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
-            val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
-            builder.addFunction(
-                FunSpec.builder("get")
-                    .receiver(arrayCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", LONG)
-                    .returns(thisCname)
-                    .addStatement(
-                        "return %T.fromNative(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
-                        thisCname,
-                        baseType.nativeTypeName,
-                        baseType.kotlinTypeName
-                    )
-                    .build()
-            )
-            builder.addFunction(
-                FunSpec.builder("set")
-                    .receiver(arrayCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", LONG)
-                    .addParameter("value", thisCname)
-                    .addStatement(
-                        "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNative(value))",
-                        baseType.nativeTypeName,
-                        thisCname,
-                    )
-                    .build()
-            )
-            builder.addFunction(
-                FunSpec.builder("get")
-                    .receiver(pointerCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", LONG)
-                    .returns(thisCname)
-                    .addStatement(
-                        "return %T.fromNative(%T.arrayVarHandle.get(%M, _address, index) as %T)",
-                        thisCname,
-                        baseType.nativeTypeName,
-                        KTFFICodegenHelper.omniSegment,
-                        baseType.kotlinTypeName
-                    )
-                    .build()
-            )
-            builder.addFunction(
-                FunSpec.builder("set")
-                    .receiver(pointerCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", LONG)
-                    .addParameter("value", thisCname)
-                    .addStatement(
-                        "%T.arrayVarHandle.set(%M, _address, index, %T.toNative(value))",
-                        baseType.nativeTypeName,
-                        KTFFICodegenHelper.omniSegment,
-                        thisCname
-                    )
-                    .build()
-            )
-        }
+    sealed class ValueType(val baseType: CBasicType) : CType(baseType.name) {
+//        context(ctx: KTFFICodegenContext)
+//        override fun generateImpl(builder: FileSpec.Builder) {
+//            val thisCname = className()
+//            val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
+//            val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
+//            builder.addFunction(
+//                FunSpec.builder("get")
+//                    .receiver(arrayCnameP)
+//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+//                    .addParameter("index", LONG)
+//                    .returns(thisCname)
+//                    .addStatement(
+//                        "return %T.fromNative(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
+//                        thisCname,
+//                        baseType.nativeTypeName,
+//                        baseType.kotlinTypeName
+//                    )
+//                    .build()
+//            )
+//            builder.addFunction(
+//                FunSpec.builder("set")
+//                    .receiver(arrayCnameP)
+//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+//                    .addParameter("index", LONG)
+//                    .addParameter("value", thisCname)
+//                    .addStatement(
+//                        "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNative(value))",
+//                        baseType.nativeTypeName,
+//                        thisCname,
+//                    )
+//                    .build()
+//            )
+//            builder.addFunction(
+//                FunSpec.builder("get")
+//                    .receiver(pointerCnameP)
+//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+//                    .addParameter("index", LONG)
+//                    .returns(thisCname)
+//                    .addStatement(
+//                        "return %T.fromNative(%T.arrayVarHandle.get(%M, _address, index) as %T)",
+//                        thisCname,
+//                        baseType.nativeTypeName,
+//                        KTFFICodegenHelper.omniSegment,
+//                        baseType.kotlinTypeName
+//                    )
+//                    .build()
+//            )
+//            builder.addFunction(
+//                FunSpec.builder("set")
+//                    .receiver(pointerCnameP)
+//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+//                    .addParameter("index", LONG)
+//                    .addParameter("value", thisCname)
+//                    .addStatement(
+//                        "%T.arrayVarHandle.set(%M, _address, index, %T.toNative(value))",
+//                        baseType.nativeTypeName,
+//                        KTFFICodegenHelper.omniSegment,
+//                        thisCname
+//                    )
+//                    .build()
+//            )
+//        }
     }
 
     class BasicType(baseType: CBasicType) : ValueType(baseType) {
-        context(ctx: KTFFICodegenContext)
-        override fun typeObject(builder: TypeSpec.Builder) {
-            super.typeObject(builder)
-            builder.superclass(ClassName(KTFFICodegenHelper.packageName, "NativeTypeImpl"))
-        }
+//        context(ctx: KTFFICodegenContext)
+//        override fun typeObject(builder: TypeSpec.Builder) {
+//            super.typeObject(builder)
+//            builder.superclass(ClassName(KTFFICodegenHelper.packageName, "NativeTypeImpl"))
+//        }
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -249,11 +259,11 @@ sealed class CType(name: String) : CElement.Impl(name) {
             return CodeBlock.of("%T.layout", entryType.className())
         }
 
-        context(ctx: KTFFICodegenContext)
-        override fun typeObject(builder: TypeSpec.Builder) {
-            super.typeObject(builder)
-            builder.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", entryType.className()))
-        }
+//        context(ctx: KTFFICodegenContext)
+//        override fun typeObject(builder: TypeSpec.Builder) {
+//            super.typeObject(builder)
+//            builder.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", entryType.className()))
+//        }
 
         override fun toString(): String {
             return buildString {
@@ -285,8 +295,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
     open class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType)
     open class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType)
 
-    class Function(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name),
-        ITopLevelType {
+    class Function(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -302,10 +311,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
             throw UnsupportedOperationException()
         }
 
-        context(ctx: KTFFICodegenContext)
-        override fun generateImpl(builder: FileSpec.Builder) {
-            TODO("Not yet implemented")
-        }
+//        context(ctx: KTFFICodegenContext)
+//        override fun generateImpl(builder: FileSpec.Builder) {
+//            TODO("Not yet implemented")
+//        }
 
         override fun toString(): String {
             return buildString {
@@ -383,7 +392,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    sealed class Group(name: String, val members: List<CDeclaration>) : CompositeType(name), ITopLevelType {
+    sealed class Group(name: String, val members: List<CDeclaration>) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         final override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -436,10 +445,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
                 .build()
         }
 
-        context(ctx: KTFFICodegenContext)
-        override fun generateImpl(builder: FileSpec.Builder) {
-            TODO("Not yet implemented")
-        }
+//        context(ctx: KTFFICodegenContext)
+//        override fun generateImpl(builder: FileSpec.Builder) {
+//            TODO("Not yet implemented")
+//        }
 
         override fun toString(): String {
             return "struct ${super.toString()}"
@@ -465,10 +474,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
                 .build()
         }
 
-        context(ctx: KTFFICodegenContext)
-        override fun generateImpl(builder: FileSpec.Builder) {
-            TODO("Not yet implemented")
-        }
+//        context(ctx: KTFFICodegenContext)
+//        override fun generateImpl(builder: FileSpec.Builder) {
+//            TODO("Not yet implemented")
+//        }
 
         override fun toString(): String {
             return "union ${super.toString()}"
