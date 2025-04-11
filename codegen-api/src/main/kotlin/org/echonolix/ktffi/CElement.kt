@@ -246,7 +246,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
     open class Enum(entryType: BasicType) : EnumBase(entryType)
     open class Bitmask(entryType: BasicType) : EnumBase(entryType)
 
-    class CFunction(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name),
+    class Function(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name),
         ITopLevelType {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -314,7 +314,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    class FunctionPointer(override val elementType: CFunction) : Pointer(elementType) {
+    class FunctionPointer(override val elementType: Function) : Pointer(elementType) {
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%M", KTFFICodegenHelper.pointerLayoutMember)
@@ -387,10 +387,5 @@ sealed class CType(name: String) : CElement.Impl(name) {
     }
 }
 
-open class CDeclaration(name: String) : CElement.Impl(name) {
-    lateinit var type: CType
-}
-
-open class CConst(name: String) : CDeclaration(name) {
-    lateinit var valueInitializer: CodeBlock
-}
+open class CDeclaration(name: String, val type: CType) : CElement.Impl(name)
+open class CConst(name: String, type: CType, val valueInitializer: CodeBlock) : CDeclaration(name, type)

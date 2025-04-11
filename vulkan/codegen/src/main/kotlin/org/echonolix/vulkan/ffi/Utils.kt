@@ -45,6 +45,18 @@ inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
     }.getOrNull()
 }
 
+private val xmlTagRegex = Regex("<[^>]+>")
+
+fun String.toXMLTagFreeString(): String {
+    return replace(xmlTagRegex, "")
+}
+
+fun String.removeContinuousSpaces(): String {
+    return replace("\\s+".toRegex(), " ")
+}
+
+fun List<CompactFragment>.toXmlTagFreeString() = joinToString(" ") { it.contentString.toXMLTagFreeString() }
+
 fun String.pascalCaseToAllCaps() = buildString {
     append(this@pascalCaseToAllCaps[0])
     for (i in 1..<this@pascalCaseToAllCaps.length) {

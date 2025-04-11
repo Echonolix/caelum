@@ -17,7 +17,12 @@ class FilteredRegistry(registry: Registry) {
     }
     val typeDefTypes = registryTypes.values.asSequence()
         .filter { it.name !in VKFFI.typedefBlackList }
+        .filter { it.category != Registry.Types.Type.Category.funcpointer }
         .filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
+        .associateBy { it.name!! }
+
+    val funcPointerTypes = registryTypes.values.asSequence()
+        .filter { it.category == Registry.Types.Type.Category.funcpointer }
         .associateBy { it.name!! }
 
     val externalTypeNames =

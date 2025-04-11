@@ -14,7 +14,7 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
     abstract fun resolvePackageName(element: CElement): String
     protected abstract fun resolveTypeImpl(cTypeStr: String): CType
 
-    private fun addToCache(element: CElement) {
+    fun addToCache(element: CElement) {
         if (element is CType) {
             allTypes0[element.name] = element
         }
@@ -22,17 +22,17 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
     }
 
     private fun resolveType0(cTypeStr: String): CType {
-            if (cTypeStr.last() == '*') {
-                return CType.Pointer(resolveType(cTypeStr.dropLast(1)))
-            }
-            CBasicType.Companion.fromStringOrNull(cTypeStr)?.let {
-                return it.cType
-            }
-            return resolveTypeImpl(cTypeStr)
+        if (cTypeStr.last() == '*') {
+            return CType.Pointer(resolveType(cTypeStr.dropLast(1)))
+        }
+        CBasicType.Companion.fromStringOrNull(cTypeStr)?.let {
+            return it.cType
+        }
+        return resolveTypeImpl(cTypeStr)
     }
 
     fun resolveType(cTypeStr: String): CType {
-        return resolveType0((cTypeStr)).also(::addToCache)
+        return resolveType0(cTypeStr.trim()).also(::addToCache)
     }
 
     fun writeOutput(fileSpec: FileSpec.Builder) {
