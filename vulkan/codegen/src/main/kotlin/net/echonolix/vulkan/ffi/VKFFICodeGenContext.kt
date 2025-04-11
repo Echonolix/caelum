@@ -4,6 +4,8 @@ import com.squareup.kotlinpoet.CodeBlock
 import net.echonolix.ktffi.*
 import net.echonolix.vulkan.schema.FilteredRegistry
 import net.echonolix.vulkan.schema.Registry
+import net.echonolix.vulkan.schema.XMLComment
+import net.echonolix.vulkan.schema.XMLMember
 import java.nio.file.Path
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
@@ -26,18 +28,18 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     }
 
     private val cTypeNameRegex = """[a-zA-Z_][a-zA-Z0-9_]*""".toRegex()
-    private val cTypeRegex = """(?:const\s+)?(${cTypeNameRegex.pattern}(?:\s*(?:\*|\[.*?])\s*)*)""".toRegex()
+    private val cTypeRegex = """(?:(?:const|struct|union)\s+)?(${cTypeNameRegex.pattern}(?:\s*(?:\*|\[.*?])\s*)*)""".toRegex()
     private val typeDefRegex = """\s*typedef\s+${cTypeRegex.pattern}\s+(${cTypeNameRegex.pattern})\s*;""".toRegex()
 
-    private fun resolveTypeDef(typeDefType: Registry.Types.Type): CType.TypeDef {
-        typeDefType.name!!
-        val typeDefStr = typeDefType.inner.toXmlTagFreeString()
+    private fun resolveTypeDef(xmlTypeDefType: Registry.Types.Type): CType.TypeDef {
+        xmlTypeDefType.name!!
+        val typeDefStr = xmlTypeDefType.inner.toXmlTagFreeString()
         val matchResult =
             typeDefRegex.matchEntire(typeDefStr) ?: throw IllegalStateException("Cannot resolve typedef: $typeDefStr")
         val (dstTypeStr, srcTypeStr) = matchResult.destructured
-        assert(srcTypeStr == typeDefType.name)
+        assert(srcTypeStr == xmlTypeDefType.name)
         val dstType = resolveType(dstTypeStr)
-        return CType.TypeDef(typeDefType.name, dstType)
+        return CType.TypeDef(xmlTypeDefType.name, dstType)
     }
 
     private val funcPointerHeaderRegex =
@@ -46,14 +48,14 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     private val funcPointerParameterRegex =
         """\s*${cTypeRegex.pattern}\s+(${cTypeNameRegex.pattern})\s*""".toRegex()
 
-    private fun resolveFuncPointerType(typeDefType: Registry.Types.Type): CType.TypeDef {
-        assert(typeDefType.category == Registry.Types.Type.Category.funcpointer)
-        typeDefType.name!!
-        val funcStrLines = typeDefType.inner.toXmlTagFreeString().lines()
+    private fun resolveFuncPointerType(xmlTypeDefType: Registry.Types.Type): CType.TypeDef {
+        assert(xmlTypeDefType.category == Registry.Types.Type.Category.funcpointer)
+        xmlTypeDefType.name!!
+        val funcStrLines = xmlTypeDefType.inner.toXmlTagFreeString().lines()
         val headerMatchResult = funcPointerHeaderRegex.matchEntire(funcStrLines.first()) ?: throw IllegalStateException(
-            "Cannot resolve func pointer header for: ${typeDefType.name}"
+            "Cannot resolve func pointer header for: ${xmlTypeDefType.name}"
         )
-        assert(typeDefType.name == headerMatchResult.groupValues[2])
+        assert(xmlTypeDefType.name == headerMatchResult.groupValues[2])
         val returnTypeStr = headerMatchResult.groupValues[1]
         val returnType = resolveType(returnTypeStr)
         val parameters = funcStrLines.asSequence()
@@ -62,33 +64,90 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             .filter { it.isNotBlank() }
             .map {
                 funcPointerParameterRegex.matchEntire(it)
-                    ?: throw IllegalStateException("Cannot resolve func pointer parameter for: ${typeDefType.name}")
+                    ?: throw IllegalStateException("Cannot resolve func pointer parameter for: ${xmlTypeDefType.name}")
             }.map { it.groupValues }.map {
                 CDeclaration(it[2], resolveType(it[1]))
             }.toList()
-        val func = CType.Function("VkFunc${typeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
+        val func = CType.Function("VkFunc${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         addToCache(func)
         val funcPointer = CType.Pointer(func)
         addToCache(func)
-        return CType.TypeDef(typeDefType.name, funcPointer)
+        return CType.TypeDef(xmlTypeDefType.name, funcPointer)
     }
 
-    private fun resolveEnum(enums: Registry.Enums): CType.EnumBase {
-        val enumBase = when (enums.type) {
-            Registry.Enums.Type.enum -> CType.Enum(enums.name, CBasicType.uint32_t.cType)
+    private fun resolveEnum(xmlEnums: Registry.Enums): CType.EnumBase {
+        val enumBase = when (xmlEnums.type) {
+            Registry.Enums.Type.enum -> CType.Enum(xmlEnums.name, CBasicType.uint32_t.cType)
             Registry.Enums.Type.bitmask -> {
-                val entryType = if (enums.bitwidth == 64) CBasicType.uint64_t.cType else CBasicType.uint32_t.cType
-                CType.Enum(enums.name, entryType)
+                val entryType = if (xmlEnums.bitwidth == 64) CBasicType.uint64_t.cType else CBasicType.uint32_t.cType
+                CType.Enum(xmlEnums.name, entryType)
             }
-            else -> throw IllegalStateException("Unsupported enum type: ${enums.type}")
+            else -> throw IllegalStateException("Unsupported enum type: ${xmlEnums.type}")
         }
         // TODO: add enum values
         return enumBase
     }
+    private val xmlTagRegex = """<[^>]+>(.+)</[^>]+>""".toRegex()
 
-    private fun resolveStruct(struct: Registry.Types.Type): CType.Struct {
-        val struct = CType.Struct(struct.name!!, mutableListOf())
-        // TODO: add struct members
+    private fun resolveStruct(xmlStruct: Registry.Types.Type): CType.Struct {
+        var comment: String? = null
+        val members = mutableListOf<CDeclaration>()
+        xmlStruct.inner.forEach { xmlMember ->
+            val xmlComment = xmlMember.tryParseXML<XMLComment>()
+            if (xmlComment != null) {
+                check(comment == null)
+                comment = xmlComment.value
+                return@forEach
+            }
+            val xmlMember = xmlMember.tryParseXML<XMLMember>()!!
+            if (xmlMember.api != null && !xmlMember.api.split(",").contains("vulkan")) return@forEach
+            val innerText = xmlMember.inner.map { it.contentString }
+            var typeStr = xmlMember.type
+            var arrayLen: String? = null
+            var bits = -1
+            when (innerText.size) {
+                0 -> {}
+                1 -> {
+                    val firstText = innerText[0]
+                    when (firstText[0]) {
+                        '*' -> {
+                            typeStr = "$typeStr*"
+                        }
+                        '[' -> {
+                            typeStr = "$typeStr[]"
+                            arrayLen = firstText.substring(1, firstText.length - 1)
+                        }
+                        ':' -> {
+                            bits = firstText.substring(1).toInt()
+                        }
+                        else -> {
+                            error("Unexpected inner text: $firstText")
+                        }
+                    }
+                }
+                2 -> {
+                    val firstText = innerText[0]
+                    val secondText = innerText[1]
+                    check(secondText[0] == '*')
+                    typeStr = "$firstText$typeStr*"
+                }
+                3 -> {
+                    val firstText = innerText[0]
+                    val secondText = innerText[1]
+                    check(firstText == "[")
+                    typeStr = "$typeStr[]"
+                    arrayLen = xmlTagRegex.matchEntire(secondText)!!.groupValues[1]
+                }
+            }
+            val member = CDeclaration(
+                xmlMember.name,
+                resolveType(typeStr),
+            )
+//            member.docs = comment
+            comment = null
+            members.add(member)
+        }
+        val struct = CType.Struct(xmlStruct.name!!, members)
         return struct
     }
 
