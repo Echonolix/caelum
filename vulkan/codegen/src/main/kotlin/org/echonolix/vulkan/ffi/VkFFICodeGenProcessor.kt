@@ -45,10 +45,7 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val patchedRegistry = PatchedRegistry(registry)
 
-        val gc = FFIGenContext(VKFFI.packageName, outputDir) {
-            it.requiredBy!! == "Vulkan 1.0"
-//            true
-        }
+        val gc = VKFFICodeGenContext(VKFFI.packageName, outputDir)
 
         object : RecursiveAction() {
             override fun compute() {
