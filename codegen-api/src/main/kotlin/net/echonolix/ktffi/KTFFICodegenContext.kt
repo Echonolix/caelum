@@ -21,18 +21,17 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
         allElement0[element.name] = element
     }
 
-    private fun resolveType0(cTypeStr: String): CType {
-        if (cTypeStr.last() == '*') {
-            return CType.Pointer(resolveType(cTypeStr.dropLast(1)))
-        }
-        CBasicType.Companion.fromStringOrNull(cTypeStr)?.let {
-            return it.cType
-        }
-        return resolveTypeImpl(cTypeStr)
-    }
-
     fun resolveType(cTypeStr: String): CType {
-        return resolveType0(cTypeStr.trim()).also(::addToCache)
+        val trimStr = cTypeStr.trim()
+        return allTypes[trimStr] ?: run {
+            if (trimStr.last() == '*') {
+                return CType.Pointer(resolveType(trimStr.dropLast(1)))
+            }
+            CBasicType.Companion.fromStringOrNull(trimStr)?.let {
+                return it.cType
+            }
+            resolveTypeImpl(trimStr)
+        }.also(::addToCache)
     }
 
     fun writeOutput(fileSpec: FileSpec.Builder) {

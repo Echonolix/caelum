@@ -44,11 +44,11 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
-        filteredRegistry.funcPointerTypes.values.asSequence()
+        filteredRegistry.funcPointerTypes.values
             .forEach {
-                println(ctx.resolveType(it.name!!))
+                ctx.resolveType(it.name!!)
             }
-//        ctx.allElement.values.sorted().forEach(::println)
+        ctx.allElement.values.sorted().forEach(::println)
 
 //        val patchedRegistry = PatchedRegistry(registry)
 //
