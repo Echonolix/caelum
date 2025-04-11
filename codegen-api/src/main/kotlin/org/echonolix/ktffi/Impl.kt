@@ -4,15 +4,10 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import kotlin.properties.Delegates
 
-interface ICElement {
+interface CElement {
     val name: String
     val kDoc: KDoc
     val annotations: List<AnnotationSpec>
-
-    context(ctx: KTFFICodegenContext)
-    fun packageName(): String
-    context(ctx: KTFFICodegenContext)
-    fun className(): ClassName
 
     context(ctx: KTFFICodegenContext)
     fun addAnnotationTo(builder: Annotatable.Builder<*>) {
@@ -25,9 +20,25 @@ interface ICElement {
             builder.addKdoc(it)
         }
     }
+
+    sealed class Impl(override val name: String) : CElement {
+        override val kDoc: KDoc = KDoc()
+
+        override val annotations = mutableListOf<AnnotationSpec>()
+    }
 }
 
-interface ITopLevelDeclaration : ICElement {
+context(ctx: KTFFICodegenContext)
+fun CElement.packageName(): String {
+    return ctx.resolvePackageName(this)
+}
+
+context(ctx: KTFFICodegenContext)
+fun CElement.className(): ClassName {
+    return ClassName(packageName(), name)
+}
+
+interface ITopLevelDeclaration : CElement {
     context(ctx: KTFFICodegenContext)
     fun generateImpl(builder: FileSpec.Builder)
 }
@@ -41,23 +52,7 @@ interface ITopLevelType : ITopLevelDeclaration {
     }
 }
 
-sealed class CElement(override val name: String) : ICElement {
-    override val kDoc: KDoc = KDoc()
-
-    context(ctx: KTFFICodegenContext)
-    override fun packageName(): String {
-        return ctx.getPackageName(this)
-    }
-
-    context(ctx: KTFFICodegenContext)
-    override fun className(): ClassName {
-        return ClassName(packageName(), name)
-    }
-
-    override val annotations = mutableListOf<AnnotationSpec>()
-}
-
-sealed class CType(name: String) : CElement(name) {
+sealed class CType(name: String) : CElement.Impl(name) {
     context(ctx: KTFFICodegenContext)
     abstract fun nativeType(): TypeName
     context(ctx: KTFFICodegenContext)
@@ -162,6 +157,18 @@ sealed class CType(name: String) : CElement(name) {
 
     sealed class CompositeType(name: String) : CType(name)
 
+    abstract class Handle(name: String, val baseType: BasicType): CompositeType(name) {
+        context(ctx: KTFFICodegenContext)
+        override fun nativeType(): TypeName {
+            return baseType.nativeType()
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun ktApiType(): TypeName {
+            return this.className()
+        }
+    }
+
     class TypeDef(name: String, dstType: CType): CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -208,10 +215,7 @@ sealed class CType(name: String) : CElement(name) {
     open class Enum(entryType: BasicType) : EnumBase(entryType)
     open class Bitmask(entryType: BasicType) : EnumBase(entryType)
 
-    class CFunction(name: String) : CompositeType(name), ITopLevelType {
-        lateinit var returnType: CType
-        val parameters = mutableListOf<CDeclaration>()
-
+    class CFunction(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name), ITopLevelType {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -257,9 +261,7 @@ sealed class CType(name: String) : CElement(name) {
         }
     }
 
-    open class Pointer(name: String) : CompositeType(name) {
-        open lateinit var elementType: CType
-
+    open class Pointer(open val elementType: CType) : CompositeType(elementType.name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return LONG
@@ -280,7 +282,7 @@ sealed class CType(name: String) : CElement(name) {
         }
     }
 
-    class FunctionPointer(name: String) : Pointer(name) {
+    class FunctionPointer(override val elementType: CFunction) : Pointer(elementType) {
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%M", KTFFICodegenHelper.pointerLayoutMember)
@@ -353,7 +355,7 @@ sealed class CType(name: String) : CElement(name) {
     }
 }
 
-open class CDeclaration(name: String) : CElement(name) {
+open class CDeclaration(name: String) : CElement.Impl(name) {
     lateinit var type: CType
 }
 
