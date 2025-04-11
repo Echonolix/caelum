@@ -25,6 +25,14 @@ class FilteredRegistry(registry: Registry) {
         .filter { it.category == Registry.Types.Type.Category.funcpointer }
         .associateBy { it.name!! }
 
+    val structTypes = registryTypes.values.asSequence()
+        .filter { it.category == Registry.Types.Type.Category.struct }
+        .associateBy { it.name!! }
+
+    val handleTypes = registryTypes.values.asSequence()
+        .filter { it.category == Registry.Types.Type.Category.handle }
+        .associateBy { it.name!! }
+
     val externalTypeNames =
         registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()
 }

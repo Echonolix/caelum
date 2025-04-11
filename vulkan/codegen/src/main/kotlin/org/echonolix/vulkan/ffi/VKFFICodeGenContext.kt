@@ -1,17 +1,10 @@
 package org.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.CodeBlock
-import org.echonolix.ktffi.CBasicType
-import org.echonolix.ktffi.CConst
-import org.echonolix.ktffi.CDeclaration
-import org.echonolix.ktffi.CElement
-import org.echonolix.ktffi.CType
-import org.echonolix.ktffi.KTFFICodegenContext
-import org.echonolix.vulkan.schema.Element
+import org.echonolix.ktffi.*
 import org.echonolix.vulkan.schema.FilteredRegistry
 import org.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
-import kotlin.collections.set
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     KTFFICodegenContext(basePkgName, outputDir) {
@@ -34,8 +27,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
     private val cTypeNameRegex = """[a-zA-Z_][a-zA-Z0-9_]*""".toRegex()
     private val cTypeRegex = """(?:const\s+)?(${cTypeNameRegex.pattern}(?:\s*(?:\*|\[.*?])\s*)*)""".toRegex()
-    private val typeDefRegex =
-        """\s*typedef\s+${cTypeRegex.pattern}\s+(${cTypeNameRegex.pattern})\s*;""".toRegex()
+    private val typeDefRegex = """\s*typedef\s+${cTypeRegex.pattern}\s+(${cTypeNameRegex.pattern})\s*;""".toRegex()
 
     private fun resolveTypeDef(typeDefType: Registry.Types.Type): CType.TypeDef {
         typeDefType.name!!
@@ -50,8 +42,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
     private val funcPointerHeaderRegex =
         """\s*typedef\s+${cTypeRegex.pattern}\s+\(VKAPI_PTR\s*\*\s+(${cTypeNameRegex.pattern})\s*\)\((?:void\);)?""".toRegex()
+    private val funcPointerParamSplitRegex = """\s*(?:,|\);)\s*""".toRegex()
     private val funcPointerParameterRegex =
-        """\s*${cTypeRegex.pattern}\s+(${cTypeNameRegex.pattern})\s*(?:.|\);)""".toRegex()
+        """\s*${cTypeRegex.pattern}\s+(${cTypeNameRegex.pattern})\s*""".toRegex()
 
     private fun resolveFuncPointerType(typeDefType: Registry.Types.Type): CType.TypeDef {
         assert(typeDefType.category == Registry.Types.Type.Category.funcpointer)
@@ -65,15 +58,14 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         val returnType = resolveType(returnTypeStr)
         val parameters = funcStrLines.asSequence()
             .drop(1)
+            .flatMap { it.split(funcPointerParamSplitRegex) }
+            .filter { it.isNotBlank() }
             .map {
                 funcPointerParameterRegex.matchEntire(it)
                     ?: throw IllegalStateException("Cannot resolve func pointer parameter for: ${typeDefType.name}")
-            }
-            .map { it.groupValues }
-            .map {
+            }.map { it.groupValues }.map {
                 CDeclaration(it[2], resolveType(it[1]))
-            }
-            .toList()
+            }.toList()
         val func = CType.Function("VkFunc${typeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         addToCache(func)
         val funcPointer = CType.Pointer(func)
@@ -90,8 +82,22 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             else -> throw IllegalStateException("Unsupported enum type: ${enums.type}")
         }
-        //TODO: add enum values
+        // TODO: add enum values
         return enumBase
+    }
+
+    private fun resolveStruct(struct: Registry.Types.Type): CType.Struct {
+        val struct = CType.Struct(struct.name!!, mutableListOf())
+        // TODO: add struct members
+        return struct
+    }
+
+    private fun resolveHandle(handle: Registry.Types.Type): CType.Handle {
+        return object : CType.Handle(handle.name!!, CBasicType.size_t.cType) {
+            context(ctx: KTFFICodegenContext) override fun memoryLayout(): CodeBlock {
+                TODO("Not yet implemented")
+            }
+        }
     }
 
     override fun resolveTypeImpl(cTypeStr: String): CType {
@@ -105,6 +111,14 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
         registry.enums[cTypeStr]?.let {
             return resolveEnum(it)
+        }
+
+        registry.structTypes[cTypeStr]?.let {
+            return resolveStruct(it)
+        }
+
+        registry.handleTypes[cTypeStr]?.let {
+            return resolveHandle(it)
         }
 
         throw kotlin.IllegalStateException("Cannot resolve type: $cTypeStr")
