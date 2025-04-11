@@ -26,12 +26,12 @@ interface CElement : Comparable<CElement> {
         override val kDoc: KDoc = KDoc()
         override val annotations = mutableListOf<AnnotationSpec>()
 
-        override fun toString(): String {
-            return name
-        }
-
         override fun compareTo(other: CElement): Int {
             return this.javaClass.simpleName.compareTo(other.javaClass.simpleName)
+        }
+
+        open fun toSimpleString(): String {
+            return toString()
         }
     }
 }
@@ -170,6 +170,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
             }
             return super.compareTo(other)
         }
+
+        override fun toString(): String {
+            return name
+        }
     }
 
     sealed class CompositeType(name: String) : CType(name)
@@ -183,6 +187,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return this.className()
+        }
+
+        override fun toString(): String {
+            return "handle $name"
         }
     }
 
@@ -203,7 +211,11 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
 
         override fun toString(): String {
-            return "typedef ${dstType.name} $name"
+            return "typedef ${dstType.name} $name;"
+        }
+
+        override fun toSimpleString(): String {
+            return name
         }
 
         override fun compareTo(other: CElement): Int {
@@ -244,6 +256,28 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
 
         override fun toString(): String {
+            return buildString {
+                append("enum ")
+                append(name)
+                if (entries.isEmpty() && aliases.isEmpty()) {
+                    append(" {};")
+                } else {
+                    append(" (\n    ")
+                    if (entries.isNotEmpty()) {
+                        append(entries.values.joinToString(",\n    ") { "${it.name}=${it.valueInitializer}" })
+                        if (aliases.isNotEmpty()) {
+                            append(",\n    ")
+                        }
+                    }
+                    if (aliases.isNotEmpty()) {
+                        append(aliases.entries.joinToString(",\n    ") { "${it.key}=${it.value}" })
+                    }
+                    append("\n);")
+                }
+            }
+        }
+
+        override fun toSimpleString(): String {
             return "enum $name"
         }
     }
@@ -274,7 +308,22 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
 
         override fun toString(): String {
-            return "$returnType $name(${parameters.joinToString(", ")})"
+            return buildString {
+                append(returnType.toSimpleString())
+                append(' ')
+                append(name)
+                if (parameters.isEmpty()) {
+                    append("();")
+                } else {
+                    append("(\n    ")
+                    append(parameters.joinToString(",\n    ") { it.toSimpleString() })
+                    append("\n);")
+                }
+            }
+        }
+
+        override fun toSimpleString(): String {
+            return name
         }
     }
 
@@ -321,6 +370,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
                 elementType.memoryLayout()
             )
         }
+
+        override fun toString(): String {
+            return name
+        }
     }
 
     class FunctionPointer(override val elementType: Function) : Pointer(elementType) {
@@ -331,7 +384,6 @@ sealed class CType(name: String) : CElement.Impl(name) {
     }
 
     sealed class Group(name: String, val members: List<CDeclaration>) : CompositeType(name), ITopLevelType {
-
         context(ctx: KTFFICodegenContext)
         final override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -349,6 +401,23 @@ sealed class CType(name: String) : CElement.Impl(name) {
                 builder.addStatement("%T.layout.withName(%S),", it.className(), it.name)
             }
             return builder.build()
+        }
+
+        override fun toString(): String {
+            return buildString {
+                append(name)
+                if (members.isEmpty()) {
+                    append(" {};")
+                } else {
+                    append(" {\n    ")
+                    append(members.joinToString(",\n    ") { it.toSimpleString() })
+                    append("\n};")
+                }
+            }
+        }
+
+        override fun toSimpleString(): String {
+            return name
         }
     }
 
@@ -373,7 +442,11 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
 
         override fun toString(): String {
-            return "struct $name(${members.joinToString(", ")})"
+            return "struct ${super.toString()}"
+        }
+
+        override fun toSimpleString(): String {
+            return "struct ${super.toSimpleString()}"
         }
     }
 
@@ -396,12 +469,21 @@ sealed class CType(name: String) : CElement.Impl(name) {
         override fun generateImpl(builder: FileSpec.Builder) {
             TODO("Not yet implemented")
         }
+
+        override fun toString(): String {
+            return "union ${super.toString()}"
+        }
+
+        override fun toSimpleString(): String {
+            return "union ${super.toSimpleString()}"
+        }
     }
 }
 
 open class CDeclaration(name: String, val type: CType) : CElement.Impl(name) {
     override fun toString(): String {
-        return "$type $name"
+        return "${type.toSimpleString()} $name"
     }
 }
+
 open class CConst(name: String, type: CType, val valueInitializer: CodeBlock) : CDeclaration(name, type)
