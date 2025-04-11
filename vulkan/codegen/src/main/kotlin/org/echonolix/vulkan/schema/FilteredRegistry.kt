@@ -1,8 +1,9 @@
 package org.echonolix.vulkan.schema
 
+import org.echonolix.vulkan.ffi.VKFFI
 import org.echonolix.vulkan.ffi.tryParseXML
 
-class NewPatchedRegistry(registry: Registry) {
+class FilteredRegistry(registry: Registry) {
     val raw = registry
     val registryFeatures =
         registry.features.asSequence().filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }.toList()
@@ -14,8 +15,11 @@ class NewPatchedRegistry(registry: Registry) {
         }
         name to type.copy(name = name)
     }
-    private val registryTypesWithTypeDef =
-        registryTypes.values.filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
+    val typeDefTypes = registryTypes.values.asSequence()
+        .filter { it.name !in VKFFI.typedefBlackList }
+        .filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
+        .associateBy { it.name!! }
+
     val externalTypeNames =
         registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()
 }

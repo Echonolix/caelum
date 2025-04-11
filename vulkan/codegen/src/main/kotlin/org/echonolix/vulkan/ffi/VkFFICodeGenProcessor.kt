@@ -9,10 +9,9 @@ import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import org.echonolix.ktgen.KtgenProcessor
-import org.echonolix.vulkan.schema.PatchedRegistry
+import org.echonolix.vulkan.schema.FilteredRegistry
 import org.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
-import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
@@ -43,25 +42,41 @@ class VkFFICodeGenProcessor : KtgenProcessor {
             }
         }
         val registry = xml.decodeFromString<Registry>(registryText)
-        val patchedRegistry = PatchedRegistry(registry)
-
-        val gc = FFIGenContext(VKFFI.packageName, outputDir) {
-            true
-        }
-
-        object : RecursiveAction() {
-            override fun compute() {
-                val genEnumTask = GenerateCEnumTask(gc, patchedRegistry).fork()
-                val genGroupTask = GenerateCGroupTask(gc, patchedRegistry).fork()
-                val genFuncPointerTask = GenerateCFuncPointerTask(gc, patchedRegistry).fork()
-                val genHandleTask = GenerateHandleTask(gc, patchedRegistry).fork()
-
-                genEnumTask.join()
-                genGroupTask.join()
-                genFuncPointerTask.join()
-                genHandleTask.join()
+        val filteredRegistry = FilteredRegistry(registry)
+        val allowedCategory = setOf(
+            Registry.Types.Type.Category.basetype,
+        )
+        val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
+        filteredRegistry.typeDefTypes.values.asSequence()
+            .filter {
+                it.category in allowedCategory
             }
-        }.fork().join()
+            .map {
+                ctx.resolveType(it.name!!)
+            }
+            .forEach {
+                println(it)
+            }
+
+//        val patchedRegistry = PatchedRegistry(registry)
+//
+//        val gc = FFIGenContext(VKFFI.packageName, outputDir) {
+//            true
+//        }
+//
+//        object : RecursiveAction() {
+//            override fun compute() {
+//                val genEnumTask = GenerateCEnumTask(gc, patchedRegistry).fork()
+//                val genGroupTask = GenerateCGroupTask(gc, patchedRegistry).fork()
+//                val genFuncPointerTask = GenerateCFuncPointerTask(gc, patchedRegistry).fork()
+//                val genHandleTask = GenerateHandleTask(gc, patchedRegistry).fork()
+//
+//                genEnumTask.join()
+//                genGroupTask.join()
+//                genFuncPointerTask.join()
+//                genHandleTask.join()
+//            }
+//        }.fork().join()
     }
 }
 

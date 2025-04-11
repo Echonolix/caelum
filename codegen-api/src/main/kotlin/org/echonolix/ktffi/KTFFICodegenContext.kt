@@ -5,7 +5,7 @@ import java.nio.file.Path
 
 abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path) {
     abstract fun resolvePackageName(element: CElement): String
-    abstract fun resolveTypeImpl(cTypeStr: String): CType
+    protected abstract fun resolveTypeImpl(cTypeStr: String): CType
 
     fun resolveType(cTypeStr: String): CType {
         if (cTypeStr.last() == '*') {

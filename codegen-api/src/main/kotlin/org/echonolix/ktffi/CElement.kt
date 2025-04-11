@@ -23,8 +23,11 @@ interface CElement {
 
     sealed class Impl(override val name: String) : CElement {
         override val kDoc: KDoc = KDoc()
-
         override val annotations = mutableListOf<AnnotationSpec>()
+
+        override fun toString(): String {
+            return "${javaClass.simpleName} $name"
+        }
     }
 }
 
@@ -55,8 +58,10 @@ interface ITopLevelType : ITopLevelDeclaration {
 sealed class CType(name: String) : CElement.Impl(name) {
     context(ctx: KTFFICodegenContext)
     abstract fun nativeType(): TypeName
+
     context(ctx: KTFFICodegenContext)
     abstract fun ktApiType(): TypeName
+
     context(ctx: KTFFICodegenContext)
     abstract fun memoryLayout(): CodeBlock
 
@@ -157,7 +162,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
     sealed class CompositeType(name: String) : CType(name)
 
-    abstract class Handle(name: String, val baseType: BasicType): CompositeType(name) {
+    abstract class Handle(name: String, val baseType: BasicType) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return baseType.nativeType()
@@ -169,7 +174,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    class TypeDef(name: String, dstType: CType): CompositeType(name) {
+    class TypeDef(name: String, val dstType: CType) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             TODO("Not yet implemented")
@@ -183,6 +188,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
             TODO("Not yet implemented")
+        }
+
+        override fun toString(): String {
+            return "typedef ${dstType.name} $name"
         }
     }
 
@@ -215,7 +224,8 @@ sealed class CType(name: String) : CElement.Impl(name) {
     open class Enum(entryType: BasicType) : EnumBase(entryType)
     open class Bitmask(entryType: BasicType) : EnumBase(entryType)
 
-    class CFunction(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name), ITopLevelType {
+    class CFunction(name: String, val returnType: CType, val parameters: List<CDeclaration>) : CompositeType(name),
+        ITopLevelType {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -261,7 +271,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    open class Pointer(open val elementType: CType) : CompositeType(elementType.name) {
+    open class Pointer(open val elementType: CType) : CompositeType("${elementType.name}*") {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return LONG

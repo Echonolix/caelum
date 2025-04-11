@@ -72,6 +72,18 @@ object VKFFI {
     val methodHandlesCname = MethodHandles::class.asClassName()
     val methodTypeCname = MethodType::class.asClassName()
 
+    val typedefBlackList = setOf(
+        "ANativeWindow",
+            "AHardwareBuffer",
+            "CAMetalLayer",
+            "MTLDevice_id",
+            "MTLCommandQueue_id",
+            "MTLBuffer_id",
+            "MTLTexture_id",
+            "MTLSharedEvent_id",
+            "IOSurfaceRef"
+    )
+
     val skippedExtension = setOf(
         "VK_KHR_win32_surface",
         "VK_KHR_xlib_surface",
