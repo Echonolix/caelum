@@ -60,7 +60,7 @@ var NativeArray<char>.string: String
     }
 
 var NativePointer<char>.string: String
-    get() = `_$OMNI_SEGMENT$_`.getString(_address)
+    get() = APIHelper.`_$OMNI_SEGMENT$_`.getString(_address)
     set(value) {
-        `_$OMNI_SEGMENT$_`.setString(_address, value)
+        APIHelper.`_$OMNI_SEGMENT$_`.setString(_address, value)
     }

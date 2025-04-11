@@ -123,7 +123,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .returns(it.kotlinType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%N, _address, index) as %T)${it.fromBase}",
+                        "return (%T.%N.get(%M, _address, index) as %T)${it.fromBase}",
                         cname,
                         "arrayVarHandle",
                         KTFFICodegenHelper.omniSegment,
@@ -139,7 +139,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .addParameter("value", it.kotlinType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(%N, _address, index, value${it.toBase})",
+                        "%T.%N.set(%M, _address, index, value${it.toBase})",
                         cname,
                         "arrayVarHandle",
                         KTFFICodegenHelper.omniSegment
@@ -155,7 +155,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("property", nullableAny)
                     .returns(it.kotlinType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%N, _address) as %T)${it.fromBase}",
+                        "return (%T.%N.get(%M, _address) as %T)${it.fromBase}",
                         cname,
                         "valueVarHandle",
                         KTFFICodegenHelper.omniSegment,
@@ -171,7 +171,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
                     .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement("return %T.%N.set(%N, _address, value)", cname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
+                    .addStatement("return %T.%N.set(%M, _address, value)", cname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
                     .build()
             )
         }
