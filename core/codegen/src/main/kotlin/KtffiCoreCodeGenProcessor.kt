@@ -1,8 +1,8 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import org.echonolix.ktffi.KTFFICodegenHelper
-import org.echonolix.ktgen.KtgenProcessor
+import net.echonolix.ktffi.KTFFICodegenHelper
+import net.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
 import java.nio.file.Path

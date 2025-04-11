@@ -1,5 +1,5 @@
 allprojects {
-    group = "org.echonolix"
+    group = "net.echonolix"
     version = "1.0-SNAPSHOT"
 
     repositories {
@@ -9,7 +9,7 @@ allprojects {
 
 plugins {
     kotlin("jvm") apply false
-    id("org.echonolix.ktgen") apply false
+    id("net.echonolix.ktgen") apply false
 }
 
 subprojects {

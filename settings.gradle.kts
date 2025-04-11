@@ -1,7 +1,7 @@
 includeBuild("../ktgen") {
     dependencySubstitution {
-        substitute(module("org.echonolix:ktgen-api")).using(project(":api"))
-        substitute(module("org.echonolix:ktgen-runtime")).using(project(":runtime"))
+        substitute(module("net.echonolix:ktgen-api")).using(project(":api"))
+        substitute(module("net.echonolix:ktgen-runtime")).using(project(":runtime"))
     }
 }
 

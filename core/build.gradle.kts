@@ -1,5 +1,5 @@
 plugins {
-    id("org.echonolix.ktgen")
+    id("net.echonolix.ktgen")
 }
 
 dependencies {

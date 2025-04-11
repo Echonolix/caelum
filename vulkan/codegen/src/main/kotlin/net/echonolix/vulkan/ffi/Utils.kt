@@ -1,0 +1,103 @@
+package net.echonolix.vulkan.ffi
+
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.Documentable
+import com.squareup.kotlinpoet.FileSpec
+import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.util.CompactFragment
+import net.echonolix.vulkan.schema.Element
+
+fun String.decOrHexToInt(): Int = if (startsWith("0x")) {
+    substring(2).toInt(16)
+} else {
+    toInt(10)
+}
+
+fun String.decOrHexToULong(): ULong = if (startsWith("0x")) {
+    substring(2).toULong(16)
+} else {
+    toULong(10)
+}
+
+fun String.decOrHexToUInt(): UInt = if (startsWith("0x")) {
+    substring(2).toUInt(16)
+} else {
+    toUInt(10)
+}
+
+fun FileSpec.Builder.addSuppress() = apply {
+    addAnnotation(
+        AnnotationSpec.builder(Suppress::class)
+            .addMember("%S", "RemoveRedundantQualifierName")
+            .addMember("%S", "PropertyName")
+            .addMember("%S", "RedundantVisibilityModifier")
+            .addMember("%S", "unused")
+            .addMember("%S", "NOTHING_TO_INLINE")
+            .addMember("%S", "RemoveExplicitTypeArguments")
+            .build()
+    )
+}
+
+
+inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
+    return runCatching {
+        XML.decodeFromString<T>(this.contentString)
+    }.getOrNull()
+}
+
+private val xmlTagRegex = Regex("<[^>]+>")
+
+fun String.toXMLTagFreeString(): String {
+    return replace(xmlTagRegex, "")
+}
+
+fun String.removeContinuousSpaces(): String {
+    return replace("\\s+".toRegex(), " ")
+}
+
+fun List<CompactFragment>.toXmlTagFreeString() = joinToString(" ") { it.contentString.toXMLTagFreeString() }
+
+fun String.pascalCaseToAllCaps() = buildString {
+    append(this@pascalCaseToAllCaps[0])
+    for (i in 1..<this@pascalCaseToAllCaps.length) {
+        val last = this@pascalCaseToAllCaps[i - 1]
+        val c = this@pascalCaseToAllCaps[i]
+        if (c.isUpperCase() && !last.isUpperCase()) {
+            append('_')
+        }
+        append(c.uppercaseChar())
+    }
+}
+
+fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: Element) = apply {
+    val docs = element.docs
+    val since = element.requiredBy
+    if (docs == null && since == null) {
+        return@apply
+    }
+    val sb = StringBuilder()
+    if (docs != null) {
+        sb.append(docs.removePrefix("//").trim())
+        sb.append("\n\n")
+    }
+    if (since != null) {
+        sb.append("@since: ")
+        sb.append(since)
+    }
+
+    addKdoc(sb.toString())
+}
+
+interface MemberVisitor {
+    fun visit(member: Element.Member)
+    fun visitOpaqueType(index: Int, member: Element.Member, name: String)
+    fun visitBasicType(index: Int, member: Element.Member, type: Element.BasicType)
+    fun visitHandleType(index: Int, member: Element.Member, type: Element.HandleType)
+    fun visitEnumType(index: Int, member: Element.Member, type: Element.EnumType)
+    fun visitFlagType(index: Int, member: Element.Member, type: Element.FlagType, flagBitType: Element.FlagBitType?)
+    fun visitFuncpointerType(index: Int, member: Element.Member, type: Element.FuncpointerType)
+    fun visitStructType(index: Int, member: Element.Member, type: Element.Struct)
+    fun visitUnionType(index: Int, member: Element.Member, type: Element.Union)
+    fun visitPointer(index: Int, member: Element.Member, type: Element.Type)
+    fun visitArray(index: Int, member: Element.Member, type: Element.Type)
+}
