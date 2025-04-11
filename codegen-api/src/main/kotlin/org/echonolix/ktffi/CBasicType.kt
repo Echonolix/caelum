@@ -24,10 +24,10 @@ enum class CBasicType(
     uint16_t(UShort::class, "U", ValueLayout.JAVA_SHORT, "JAVA_SHORT", Short::class, ".toUShort()", ".toShort()"),
     int32_t(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT"),
     uint32_t(UInt::class, "U", ValueLayout.JAVA_INT, "JAVA_INT", Int::class, ".toUInt()", ".toInt()"),
+    int(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT"),
     int64_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
     uint64_t(ULong::class, "UL", ValueLayout.JAVA_LONG, "JAVA_LONG", Long::class, ".toULong()", ".toLong()"),
-    size_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG"),
-    int(Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT");
+    size_t(Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG");
 
     val kotlinTypeName: TypeName = kotlinType.asTypeName()
     val valueLayoutMember = ValueLayout::class.member(valueLayoutName)

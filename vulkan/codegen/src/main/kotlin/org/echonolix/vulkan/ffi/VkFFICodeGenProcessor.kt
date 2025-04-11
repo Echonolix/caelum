@@ -45,18 +45,18 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val filteredRegistry = FilteredRegistry(registry)
         val allowedCategory = setOf(
             Registry.Types.Type.Category.basetype,
+            Registry.Types.Type.Category.bitmask,
+            Registry.Types.Type.Category.enum
         )
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
         filteredRegistry.typeDefTypes.values.asSequence()
             .filter {
                 it.category in allowedCategory
             }
-            .map {
+            .forEach {
                 ctx.resolveType(it.name!!)
             }
-            .forEach {
-                println(it)
-            }
+        ctx.allElement.values.sorted().forEach(::println)
 
 //        val patchedRegistry = PatchedRegistry(registry)
 //

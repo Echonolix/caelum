@@ -4,7 +4,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import kotlin.properties.Delegates
 
-interface CElement {
+interface CElement : Comparable<CElement> {
     val name: String
     val kDoc: KDoc
     val annotations: List<AnnotationSpec>
@@ -26,7 +26,11 @@ interface CElement {
         override val annotations = mutableListOf<AnnotationSpec>()
 
         override fun toString(): String {
-            return "${javaClass.simpleName} $name"
+            return name
+        }
+
+        override fun compareTo(other: CElement): Int {
+            return this.javaClass.simpleName.compareTo(other.javaClass.simpleName)
         }
     }
 }
@@ -158,6 +162,13 @@ sealed class CType(name: String) : CElement.Impl(name) {
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%M", baseType.valueLayoutMember)
         }
+
+        override fun compareTo(other: CElement): Int {
+            if (other is BasicType) {
+                return this.baseType.ordinal.compareTo(other.baseType.ordinal)
+            }
+            return super.compareTo(other)
+        }
     }
 
     sealed class CompositeType(name: String) : CType(name)
@@ -192,6 +203,17 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
         override fun toString(): String {
             return "typedef ${dstType.name} $name"
+        }
+
+        override fun compareTo(other: CElement): Int {
+            if (other is TypeDef) {
+                var v = this.dstType.compareTo(other.dstType)
+                if (v == 0) {
+                    v = this.name.compareTo(other.name)
+                }
+                return v
+            }
+            return super.compareTo(other)
         }
     }
 
