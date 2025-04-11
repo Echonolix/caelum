@@ -3,9 +3,11 @@ package org.echonolix.vulkan.ffi
 import org.echonolix.ktffi.CElement
 import org.echonolix.ktffi.CType
 import org.echonolix.ktffi.KTFFICodegenContext
+import org.echonolix.vulkan.schema.NewPatchedRegistry
 import java.nio.file.Path
 
-class VKFFICodeGenContext(basePkgName: String, outputDir: Path) : KTFFICodegenContext(basePkgName, outputDir) {
+class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val pRegistry: NewPatchedRegistry) :
+    KTFFICodegenContext(basePkgName, outputDir) {
     val enumPackageName = "${basePkgName}.enums"
     val structPackageName = "${basePkgName}.structs"
     val unionPackageName = "${basePkgName}.unions"

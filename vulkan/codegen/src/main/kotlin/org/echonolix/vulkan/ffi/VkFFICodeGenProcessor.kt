@@ -45,7 +45,9 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val patchedRegistry = PatchedRegistry(registry)
 
-        val gc = VKFFICodeGenContext(VKFFI.packageName, outputDir)
+        val gc = FFIGenContext(VKFFI.packageName, outputDir) {
+            true
+        }
 
         object : RecursiveAction() {
             override fun compute() {
