@@ -29,6 +29,10 @@ class FilteredRegistry(registry: Registry) {
         .filter { it.category == Registry.Types.Type.Category.struct }
         .associateBy { it.name!! }
 
+    val unionTypes = registryTypes.values.asSequence()
+        .filter { it.category == Registry.Types.Type.Category.union }
+        .associateBy { it.name!! }
+
     val handleTypes = registryTypes.values.asSequence()
         .filter { it.category == Registry.Types.Type.Category.handle }
         .associateBy { it.name!! }

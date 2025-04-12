@@ -7,12 +7,11 @@ import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.util.CompactFragment
 import net.echonolix.ktffi.CBasicType
+import net.echonolix.ktffi.decOrHexToInt
+import net.echonolix.ktffi.pascalCaseToAllCaps
 import net.echonolix.vulkan.ffi.VKFFI
-import net.echonolix.vulkan.ffi.decOrHexToInt
-import net.echonolix.vulkan.ffi.pascalCaseToAllCaps
 import net.echonolix.vulkan.ffi.tryParseXML
 import kotlin.collections.get
-import kotlin.text.get
 
 private val enumTypeWhitelist = setOf(
     "VkResult",

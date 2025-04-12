@@ -43,36 +43,21 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         }
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
+        val skipped = setOf("Header boilerplate", "API version macros")
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
-//        filteredRegistry.funcPointerTypes.values
-//            .forEach {
-//                ctx.resolveType(it.name!!)
-//            }
-        filteredRegistry.structTypes.values.forEach {
-            ctx.resolveType(it.name!!)
-//                .let(::println)
-        }
-//        ctx.allElement.values.sorted().forEach(::println)
-
-//        val patchedRegistry = PatchedRegistry(registry)
-//
-//        val gc = FFIGenContext(VKFFI.packageName, outputDir) {
-//            true
-//        }
-//
-//        object : RecursiveAction() {
-//            override fun compute() {
-//                val genEnumTask = GenerateCEnumTask(gc, patchedRegistry).fork()
-//                val genGroupTask = GenerateCGroupTask(gc, patchedRegistry).fork()
-//                val genFuncPointerTask = GenerateCFuncPointerTask(gc, patchedRegistry).fork()
-//                val genHandleTask = GenerateHandleTask(gc, patchedRegistry).fork()
-//
-//                genEnumTask.join()
-//                genGroupTask.join()
-//                genFuncPointerTask.join()
-//                genHandleTask.join()
-//            }
-//        }.fork().join()
+        ctx.resolveElement("VK_API_VERSION_1_0")
+        filteredRegistry.registryFeatures.asSequence()
+            .flatMap { it.require }
+            .filter { it.comment !in skipped }
+            .forEach { require ->
+                require.types.forEach {
+                    ctx.resolveElement(it.name)
+                }
+//                require.enums.forEach {
+//                    ctx.resolveType(it.name)
+//                }
+            }
+        ctx.allElement.values.sorted().forEach(::println)
     }
 }
 

@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.FileSpec
+import net.echonolix.ktffi.addSuppress
 import net.echonolix.vulkan.schema.Element
 import java.nio.file.Path
 
