@@ -83,12 +83,12 @@ interface CDeclaration : CElement {
     interface TopLevel : CDeclaration
 }
 
-open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type)
-class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel {
+open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type) {
     override fun toString(): String {
-        return "${type.toSimpleString()} $name;"
+        return "${type.toSimpleString()} $name = $expression;"
     }
 }
+class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel
 
 context(ctx: KTFFICodegenContext)
 fun CElement.packageName(): String {
