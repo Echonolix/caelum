@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
+import net.echonolix.ktffi.CType
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -45,18 +46,19 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
-//        ctx.resolveElement("VK_API_VERSION_1_0")
-        ctx.resolveElement("VkTransformMatrixKHR")
-        ctx.resolveElement("VkInstanceCreateInfo")
-//        filteredRegistry.registryFeatures.asSequence()
-//            .flatMap { it.require }
-//            .filter { it.comment !in skipped }
-//            .forEach { require ->
-//                require.types.forEach {
-//                    ctx.resolveElement(it.name)
-//                }
-//            }
-        ctx.allElement.values.sorted().forEach {
+        ctx.resolveElement("VK_API_VERSION_1_0")
+        filteredRegistry.registryFeatures.asSequence()
+            .flatMap { it.require }
+            .filter { it.comment !in skipped }
+            .forEach { require ->
+                require.types.forEach {
+                    ctx.resolveElement(it.name)
+                }
+            }
+        ctx.allElement.values.asSequence()
+            .filterIsInstance<CType.EnumBase>()
+            .sorted()
+            .forEach {
             println(it)
         }
     }

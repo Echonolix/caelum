@@ -279,8 +279,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
     }
 
     sealed class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
-        val entries: Map<String, CConst> = Collections.synchronizedMap(mutableMapOf())
-        val aliases: Map<String, String> = Collections.synchronizedMap(mutableMapOf())
+        val entries: MutableMap<String, CConst> = Collections.synchronizedMap(mutableMapOf())
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -307,19 +306,11 @@ sealed class CType(name: String) : CElement.Impl(name) {
             return buildString {
                 append("enum ")
                 append(name)
-                if (entries.isEmpty() && aliases.isEmpty()) {
+                if (entries.isEmpty()) {
                     append(" {};")
                 } else {
                     append(" (\n    ")
-                    if (entries.isNotEmpty()) {
-                        append(entries.values.joinToString(",\n    ") { "${it.name}=${it.expression}" })
-                        if (aliases.isNotEmpty()) {
-                            append(",\n    ")
-                        }
-                    }
-                    if (aliases.isNotEmpty()) {
-                        append(aliases.entries.joinToString(",\n    ") { "${it.key}=${it.value}" })
-                    }
+                    append(entries.values.joinToString(",\n    ") { "${it.name} = ${it.expression}" })
                     append("\n);")
                 }
             }

@@ -7,6 +7,7 @@ import net.echonolix.vulkan.schema.Registry
 import net.echonolix.vulkan.schema.XMLComment
 import net.echonolix.vulkan.schema.XMLMember
 import java.nio.file.Path
+import kotlin.collections.set
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     KTFFICodegenContext(basePkgName, outputDir) {
@@ -67,20 +68,100 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return CType.TypeDef(xmlTypeDefType.name, funcPointer)
     }
 
+    private fun CType.EnumBase.addEntry(xmlEnum: Registry.Enums.Enum, extensionNum: Int? = null) {
+        val type = entryType.baseType
+        val expression = if (xmlEnum.alias != null) {
+            CExpression.Reference(entries[xmlEnum.alias]!!)
+        } else {
+            val literalSuffix = type.literalSuffix
+            val valueCode: CodeBlock
+            val valueNum: Number
+            when {
+                xmlEnum.bitpos != null -> {
+                    valueCode = CodeBlock.of("1$literalSuffix shl %L", xmlEnum.bitpos)
+                    valueNum = if (type == CBasicType.uint32_t) 1 shl xmlEnum.bitpos else 1L shl xmlEnum.bitpos
+                }
+                xmlEnum.value != null -> {
+                    valueCode = CodeBlock.of("%L$literalSuffix", xmlEnum.value)
+                    valueNum = xmlEnum.value.decOrHexToInt()
+                }
+                else -> {
+                    val extNumber = xmlEnum.extnumber?.decOrHexToInt() ?: extensionNum!!
+                    val sign = if (xmlEnum.dir == "-") -1 else 1
+                    val offset = xmlEnum.offset!!.decOrHexToInt()
+                    valueNum = sign * ((extNumber - 1) * VKFFI.VK_EXT_ENUM_BLOCKSIZE + offset + VKFFI.VK_EXT_ENUM_BASE)
+                    valueCode = CodeBlock.of(
+                        "%L$literalSuffix",
+                        valueNum
+                    )
+                }
+            }
+            CExpression.Const(type, valueCode)
+        }
+//        fun String.removeVendorTag(): String {
+//            VKFFI.VENDOR_TAGS.forEach {
+//                val suffix = "_$it"
+//                if (endsWith(suffix)) {
+//                    return removeSuffix(suffix)
+//                }
+//            }
+//            return this
+//        }
+
+//        val allCaps = name.pascalCaseToAllCaps()
+//        val split = allCaps.split("_FLAG_BITS".toRegex())
+//        val suffix = if (split.size == 2) "_BIT" else ""
+
+//        val prefix = if (split.size == 2) {
+//            var temp = split[0] + "_"
+//            if (name.contains("FlagBits2")) {
+//                temp += "2_"
+//            }
+//            temp
+//        } else {
+////            allCaps.removeVendorTag() + "_"
+//            ""
+//        }
+
+        var fixedEnumName = xmlEnum.name
+//        if (this.name != "VkVendorId") {
+//            fixedEnumName = fixedEnumName.removeVendorTag()
+//        }
+//        if (this.name !in enumTypeWhitelist && !fixedEnumName.contains("RESERVED")) {
+//            check(fixedEnumName.startsWith(prefix)) {
+//                "Expected $fixedEnumName to start with $prefix"
+//            }
+//        }
+//        if (xmlEnum.name !in enumWhitelist) {
+//            check(fixedEnumName.endsWith(suffix)) {
+//                "Expected $fixedEnumName to end with $suffix"
+//            }
+//        }
+//        fixedEnumName = fixedEnumName.removePrefix(prefix)/*.removeSuffix(suffix)*/
+        val entry = CTopLevelConst(fixedEnumName, expression)
+        addToCache(entry)
+        xmlEnum.comment?.let {
+            entry.tags[ElementCommentTag] = ElementCommentTag(it)
+        }
+        entries[fixedEnumName] = entry
+    }
+
+
     private fun resolveEnum(xmlEnums: Registry.Enums): CType.EnumBase {
         val enumBase = when (xmlEnums.type) {
             Registry.Enums.Type.enum -> CType.Enum(xmlEnums.name, CBasicType.uint32_t.cType)
             Registry.Enums.Type.bitmask -> {
-                val entryType = if (xmlEnums.bitwidth == 64) CBasicType.uint64_t.cType else CBasicType.uint32_t.cType
+                val entryType = if (xmlEnums.bitwidth == 64) CBasicType.int64_t.cType else CBasicType.int32_t.cType
                 CType.Enum(xmlEnums.name, entryType)
             }
             else -> throw IllegalStateException("Unsupported enum type: ${xmlEnums.type}")
         }
-        // TODO: add enum values
+        xmlEnums.enums.forEach {
+            enumBase.addEntry(it)
+        }
         return enumBase
     }
 
-    private val xmlTagRegex = """<[^>]+>(.+)</[^>]+>""".toRegex()
     private val intBitRegex = """:(\d+)""".toRegex()
 
     private fun resolveGroupMembers(xmlGroupType: Registry.Types.Type): List<CType.Group.Member> {
@@ -194,7 +275,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
-            val expression = CExpression.Const(CBasicType.uint32_t, CodeBlock.of(apiVersionBits.toHexString(HexFormat.UpperCase)))
+            val expression =
+                CExpression.Const(CBasicType.uint32_t, CodeBlock.of(apiVersionBits.toHexString(HexFormat.UpperCase)))
             return CTopLevelConst(it.value, expression)
         }
 
