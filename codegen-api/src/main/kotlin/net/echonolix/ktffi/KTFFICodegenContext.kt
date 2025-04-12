@@ -33,10 +33,14 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
         return expressions[trimStr] ?: run {
             runCatching {
                 resolveElement(trimStr)
-            }.mapCatching {
-                (it as? CConst)?.let {
-                    CExpression.Reference(it)
-                } ?: throw IllegalStateException("Not a const: $trimStr")
+            }.mapCatching { element ->
+                (element as? CExpression)?.let {
+                    return@mapCatching it
+                }
+                (element as? CConst)?.let {
+                    return@mapCatching CExpression.Reference(it)
+                }
+                throw IllegalStateException("Not a const: $trimStr")
             }.getOrElse {
                 CExpression.Const(CBasicType.int32_t, CodeBlock.of(trimStr))
             }

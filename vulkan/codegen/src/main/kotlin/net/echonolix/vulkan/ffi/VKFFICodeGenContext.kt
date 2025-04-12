@@ -8,7 +8,6 @@ import net.echonolix.vulkan.schema.XMLComment
 import net.echonolix.vulkan.schema.XMLMember
 import java.nio.file.Path
 import kotlin.collections.set
-import kotlin.math.E
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     KTFFICodegenContext(basePkgName, outputDir) {
@@ -69,10 +68,11 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return CType.TypeDef(xmlTypeDefType.name, funcPointer)
     }
 
-    private fun CType.EnumBase.addEntry(xmlEnum: Registry.Enums.Enum, extensionNum: Int? = null) {
+    private fun CType.EnumBase.addEntry(xmlEnum: Registry.Enums.Enum): CType.EnumBase.Entry {
         val type = entryType.baseType
         val expression = if (xmlEnum.alias != null) {
-            CExpression.Reference(entries[xmlEnum.alias]!!)
+            val dstEntry = entries[xmlEnum.alias] ?: resolveElement(xmlEnum.alias) as CType.EnumBase.Entry
+            CExpression.Reference(dstEntry)
         } else {
             val literalSuffix = type.literalSuffix
             val valueCode: CodeBlock
@@ -87,7 +87,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                     valueNum = xmlEnum.value.decOrHexToInt()
                 }
                 else -> {
-                    val extNumber = xmlEnum.extnumber?.decOrHexToInt() ?: extensionNum!!
+                    val extNumber = xmlEnum.extnumber!!.decOrHexToInt()
                     val sign = if (xmlEnum.dir == "-") -1 else 1
                     val offset = xmlEnum.offset!!.decOrHexToInt()
                     valueNum = sign * ((extNumber - 1) * VKFFI.VK_EXT_ENUM_BLOCKSIZE + offset + VKFFI.VK_EXT_ENUM_BASE)
@@ -145,8 +145,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             entry.tags[ElementCommentTag] = ElementCommentTag(it)
         }
         entries[fixedEnumName] = entry
+        return entry
     }
-
 
     private fun resolveEnum(xmlEnums: Registry.Enums, enumName: String): CType.EnumBase {
         val enumBase = when (xmlEnums.type) {
@@ -233,7 +233,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             val (num) = it.destructured
             valueStr = valueStr.replaceRange(it.range, "($num).inv()")
         }
-        val const = CTopLevelConst(constType.name, CExpression.Const(constType.type!!, CodeBlock.of(valueStr)))
+        val type = constType.type ?: CBasicType.int32_t
+        val const = CTopLevelConst(constType.name, CExpression.Const(type, CodeBlock.of(valueStr)))
         addToCache(const)
         return const
     }
@@ -266,6 +267,25 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             function.tags[ElementCommentTag] = ElementCommentTag(it)
         }
         return function
+    }
+
+    private fun resolveExtEnum(xmlEnum: Registry.Enums.Enum): CElement {
+        return when {
+            xmlEnum.extends != null -> {
+                val enumTypeStr = xmlEnum.extends
+                val enumType = resolveType(enumTypeStr) as CType.EnumBase
+                enumType.addEntry(xmlEnum)
+            }
+            xmlEnum.alias != null -> {
+                CTopLevelConst(xmlEnum.name, CExpression.Reference(resolveElement(xmlEnum.alias) as CConst))
+            }
+            xmlEnum.value != null -> {
+                resolveConst(xmlEnum)
+            }
+            else -> {
+                throw IllegalStateException("Cannot resolve ext enum: ${xmlEnum.name}")
+            }
+        }
     }
 
     override fun resolveElementImpl(cElementStr: String): CElement {
@@ -319,6 +339,10 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return resolveCommand(commandType)
         }
 
+        registry.extEnums[cElementStr]?.let { extEnum ->
+            return resolveExtEnum(extEnum)
+        }
+
         @OptIn(ExperimentalStdlibApi::class)
         vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured
@@ -326,6 +350,13 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             val expression =
                 CExpression.Const(CBasicType.uint32_t, CodeBlock.of(apiVersionBits.toHexString(HexFormat.UpperCase)))
             return CTopLevelConst(it.value, expression)
+        }
+
+        if (CSyntax.intLiteralRegex.matches(cElementStr)) {
+            return CExpression.Const(
+                CBasicType.uint32_t,
+                CodeBlock.of(cElementStr)
+            )
         }
 
         throw IllegalStateException("Cannot resolve type: $cElementStr")

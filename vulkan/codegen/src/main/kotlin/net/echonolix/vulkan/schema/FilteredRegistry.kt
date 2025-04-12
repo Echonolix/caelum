@@ -2,13 +2,18 @@ package net.echonolix.vulkan.schema
 
 import net.echonolix.vulkan.ffi.VKFFI
 import net.echonolix.vulkan.ffi.tryParseXML
+import kotlin.sequences.filter
 
 class FilteredRegistry(registry: Registry) {
     val raw = registry
     val registryFeatures = registry.features.asSequence()
         .filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }
         .toList()
-    val registryExtensions = registry.extensions.extensions
+    val registryExtensions = registry.extensions.extensions.asSequence()
+        .filter { it.platform == null }
+        .filter { it.name !in VKFFI.skippedExtension }
+        .filter { extension -> VKFFI.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
+        .toList()
     val registryTypes = registry.types.types.associate { type ->
         val name = type.name ?: type.inner.firstNotNullOf {
             it.tryParseXML<XMLName>()?.value
@@ -58,6 +63,22 @@ class FilteredRegistry(registry: Registry) {
     val commands = registry.commands.asSequence()
         .flatMap { it.commands }
         .associateBy { it.proto?.name ?: it.name }
+
+    val extEnums = (
+        registryFeatures
+            .flatMap { it.require }
+            .flatMap { it.enums } +
+            registryExtensions.flatMap { extension ->
+                extension.require.asSequence()
+                    .flatMap { it.enums }
+                    .map { it.copy(extnumber = extension.number.toString()) }
+            }
+        )
+        .filter { it.api == null || it.api == API.vulkan }
+        .sortedWith(compareBy<Registry.Enums.Enum> {
+            it.alias != null || it.value != null
+        })
+        .associateBy { it.name }
 
 //    val externalTypeNames =
 //        registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()

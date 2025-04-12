@@ -10,6 +10,7 @@ import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import net.echonolix.ktgen.KtgenProcessor
+import net.echonolix.vulkan.schema.API
 import net.echonolix.vulkan.schema.FilteredRegistry
 import net.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
@@ -44,37 +45,31 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         }
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
-        val skipped = setOf("Header boilerplate", "API version macros")
+        val skipped = setOf("Header boilerplate", "API version macros", "API constants")
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
         ctx.resolveElement("VK_API_VERSION_1_0")
-        filteredRegistry.registryFeatures.asSequence()
-            .flatMap { it.require }
-            .filter { it.comment !in skipped }
-            .forEach { require ->
-                require.types.forEach {
-                    ctx.resolveElement(it.name)
+        fun processRequire(requires: List<Registry.Feature.Require>,) {
+            requires.asSequence()
+                .filter { it.comment !in skipped }
+                .forEach { require ->
+                    require.types.forEach {
+                        ctx.resolveElement(it.name)
+                    }
+                    require.commands.forEach {
+                        ctx.resolveElement(it.name)
+                    }
+                    require.enums.asSequence()
+                        .filter { it.api == null || it.api == API.vulkan }
+                        .forEach {
+                            ctx.resolveElement(it.name)
+                        }
                 }
-                require.commands.forEach {
-                    ctx.resolveElement(it.name)
-                }
-            }
-        filteredRegistry.registryExtensions.asSequence()
-            .filter { it.platform == null }
-            .filter { it.name !in VKFFI.skippedExtension }
-            .filter { extension -> VKFFI.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
-            .flatMap { it.require }
-            .filter { it.comment !in skipped }
-            .forEach { require ->
-                require.types.forEach {
-                    ctx.resolveElement(it.name)
-                }
-                require.commands.forEach {
-                    ctx.resolveElement(it.name)
-                }
-            }
+        }
+        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
         ctx.allElement.values.asSequence()
-            .filterIsInstance<CType.Function>()
-            .filter { it.name.startsWith("VkCmd") }
+            .filterIsInstance<CType.EnumBase>()
+//            .filter { it.name.startsWith("VkCmd") }
             .sorted()
             .forEach {
                 println(it)
