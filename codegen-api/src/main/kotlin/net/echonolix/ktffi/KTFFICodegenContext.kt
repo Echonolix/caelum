@@ -49,35 +49,39 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
     }
 
     fun resolveElement(cElementStr: String): CElement {
-        val trimStr = cElementStr
-            .trim()
-            .removeContinuousSpaces()
-        return allTypes[trimStr] ?: run {
-            CSyntax.pointerOrArrayRegex.find(trimStr)?.let {
-                return when {
-                    it.value.endsWith("*") -> {
-                        CType.Pointer {
-                            resolveType(trimStr.removeRange(it.range))
+        try {
+            val trimStr = cElementStr
+                .trim()
+                .removeContinuousSpaces()
+            return allTypes[trimStr] ?: run {
+                CSyntax.pointerOrArrayRegex.find(trimStr)?.let {
+                    return when {
+                        it.value.endsWith("*") -> {
+                            CType.Pointer {
+                                resolveType(trimStr.removeRange(it.range))
+                            }
+                        }
+                        it.value.isEmpty() -> {
+                            CType.Array(
+                                resolveType(trimStr.removeRange(it.range)),
+                            )
+                        }
+                        else -> {
+                            CType.Array.Sized(
+                                resolveType(trimStr.removeRange(it.range)),
+                                resolveExpression(it.value.removeSurrounding("[", "]"))
+                            )
                         }
                     }
-                    it.value.isEmpty() -> {
-                        CType.Array(
-                            resolveType(trimStr.removeRange(it.range)),
-                        )
-                    }
-                    else -> {
-                        CType.Array.Sized(
-                            resolveType(trimStr.removeRange(it.range)),
-                            resolveExpression(it.value.removeSurrounding("[", "]"))
-                        )
-                    }
                 }
-            }
-            CBasicType.Companion.fromStringOrNull(trimStr)?.let {
-                return it.cType
-            }
-            resolveElementImpl(trimStr)
-        }.also(::addToCache)
+                CBasicType.Companion.fromStringOrNull(trimStr)?.let {
+                    return it.cType
+                }
+                resolveElementImpl(trimStr)
+            }.also(::addToCache)
+        } catch (e: RuntimeException) {
+            throw IllegalStateException("Error resolving element: $cElementStr", e)
+        }
     }
 
     fun writeOutput(fileSpec: FileSpec.Builder) {

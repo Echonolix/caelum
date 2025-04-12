@@ -147,12 +147,12 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     }
 
 
-    private fun resolveEnum(xmlEnums: Registry.Enums): CType.EnumBase {
+    private fun resolveEnum(xmlEnums: Registry.Enums, enumName: String): CType.EnumBase {
         val enumBase = when (xmlEnums.type) {
-            Registry.Enums.Type.enum -> CType.Enum(xmlEnums.name, CBasicType.uint32_t.cType)
+            Registry.Enums.Type.enum -> CType.Enum(enumName, CBasicType.uint32_t.cType)
             Registry.Enums.Type.bitmask -> {
                 val entryType = if (xmlEnums.bitwidth == 64) CBasicType.int64_t.cType else CBasicType.int32_t.cType
-                CType.Enum(xmlEnums.name, entryType)
+                CType.Enum(enumName, entryType)
             }
             else -> throw IllegalStateException("Unsupported enum type: ${xmlEnums.type}")
         }
@@ -182,7 +182,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 bits = it.groupValues[1].toInt()
                 typeStr = typeStr.replaceRange(it.range, "")
             }
-            typeStr = CSyntax.typeRegex.matchEntire(typeStr)?.groupValues?.get(1)
+            typeStr = CSyntax.typeRegex.matchEntire(typeStr.trim())?.groupValues?.get(1)
                 ?: throw IllegalStateException("Cannot resolve struct member type: $typeStr")
             val member = CType.Group.Member(
                 xmlMember.name,
@@ -251,8 +251,18 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return resolveFuncPointerType(it)
         }
 
+        registry.bitmaskTypes[cElementStr]?.let { bitmaskType ->
+            val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Enum(bitmaskType.name!!, CBasicType.uint32_t.cType)
+            val bitEnumXml = registry.enums[bitEnumTypeName] ?: throw IllegalStateException("Cannot find bit enum type: $bitEnumTypeName")
+            return resolveEnum(bitEnumXml, bitmaskType.name!!)
+        }
+
         registry.enumTypes[cElementStr]?.let {
-            return resolveEnum(it)
+            if (it.alias != null) {
+                return CType.TypeDef(it.name!!, resolveType(it.alias))
+            }
+            val enumXml = registry.enums[it.name] ?: throw IllegalStateException("Cannot find enum type: ${it.name}")
+            return resolveEnum(enumXml, it.name!!)
         }
 
         registry.structTypes[cElementStr]?.let {
@@ -270,7 +280,6 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         registry.constants[cElementStr]?.let {
             return resolveConst(it)
         }
-
         @OptIn(ExperimentalStdlibApi::class)
         vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured

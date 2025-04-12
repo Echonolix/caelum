@@ -15,14 +15,23 @@ class FilteredRegistry(registry: Registry) {
         name to type.copy(name = name)
     }
     val typeDefTypes = registryTypes.values.asSequence()
-        .filter { it.name !in VKFFI.typedefBlackList }
         .filter { it.category != Registry.Types.Type.Category.funcpointer }
+        .filter { it.category != Registry.Types.Type.Category.bitmask }
+        .filter { it.name !in VKFFI.typedefBlackList }
         .filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
         .associateBy { it.name!! }
 
-    val enumTypes = registry.enums.asSequence()
+    val enums = registry.enums.asSequence()
         .filter { it.type != Registry.Enums.Type.constants }
         .associateBy { it.name }
+
+    val enumTypes = registryTypes.asSequence()
+        .filter { it.value.category == Registry.Types.Type.Category.enum }
+        .associate { it.toPair() }
+
+    val bitmaskTypes = registryTypes.asSequence()
+        .filter { it.value.category == Registry.Types.Type.Category.bitmask }
+        .associate { it.toPair() }
 
     val funcPointerTypes = registryTypes.values.asSequence()
         .filter { it.category == Registry.Types.Type.Category.funcpointer }
