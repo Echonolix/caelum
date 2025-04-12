@@ -142,7 +142,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         val entry = this.Entry(fixedEnumName, expression)
         addToCache(entry)
         xmlEnum.comment?.let {
-            entry.tags[ElementCommentTag] = ElementCommentTag(it)
+            entry.tags.set(ElementCommentTag(it))
         }
         entries[fixedEnumName] = entry
         return entry
@@ -190,16 +190,16 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 resolveType(typeStr),
             )
             if (bits != -1) {
-                member.tags[BitWidthTag] = BitWidthTag(bits)
+                member.tags.set(BitWidthTag(bits))
             }
             (xmlMember.altlen ?: xmlMember.len)?.let {
-                member.tags[LenTag] = LenTag(it)
+                member.tags.set(LenTag(it))
             }
             xmlMember.comment?.let {
-                member.tags[ElementCommentTag] = ElementCommentTag(it)
+                member.tags.set(ElementCommentTag(it))
             }
             lineComment?.let {
-                member.tags[LineCommentTag] = LineCommentTag(it)
+                member.tags.set(LineCommentTag(it))
             }
             lineComment = null
             members.add(member)
@@ -271,7 +271,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             .toList()
         val function = CType.Function(funcName, returnType, parameters)
         xmlCommand.comment?.let {
-            function.tags[ElementCommentTag] = ElementCommentTag(it)
+            function.tags.set(ElementCommentTag(it))
         }
         return function
     }

@@ -4,19 +4,21 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.util.*
 
-interface Tag<K : Tag.Key> {
-    interface Key
-}
+interface Tag
 
 class TagStorage {
-    private val backingMap = mutableMapOf<Tag.Key, Tag<*>>()
+    private val backingMap = mutableMapOf<Class<out Tag>, Tag>()
 
     @Suppress("UNCHECKED_CAST")
-
-    operator fun <T : Tag.Key> get(key: T) = backingMap[key] as Tag<T>?
-    operator fun <T : Tag.Key> set(key: T, value: Tag<T>) {
-        backingMap[key] = value
+    fun <T : Tag> get(clazz: Class<T>): T? {
+        return backingMap[clazz] as? T
     }
+    fun <T : Tag> set(clazz: Class<T>, value: T) {
+        backingMap[clazz] = value
+    }
+
+    inline fun <reified T : Tag> get() = get(T::class.java)
+    inline fun <reified T : Tag> set(value: T) = set(T::class.java, value)
 }
 
 interface CElement : Comparable<CElement> {
