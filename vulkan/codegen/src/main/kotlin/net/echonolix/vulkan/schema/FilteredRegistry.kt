@@ -8,7 +8,6 @@ class FilteredRegistry(registry: Registry) {
     val registryFeatures =
         registry.features.asSequence().filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }.toList()
     val registryExtensions = registry.extensions.extensions
-    val enums = registry.enums.associateBy { it.name }
     val registryTypes = registry.types.types.associate { type ->
         val name = type.name ?: type.inner.firstNotNullOf {
             it.tryParseXML<XMLName>()?.value
@@ -20,6 +19,10 @@ class FilteredRegistry(registry: Registry) {
         .filter { it.category != Registry.Types.Type.Category.funcpointer }
         .filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
         .associateBy { it.name!! }
+
+    val enumTypes = registry.enums.asSequence()
+        .filter { it.type != Registry.Enums.Type.constants }
+        .associateBy { it.name }
 
     val funcPointerTypes = registryTypes.values.asSequence()
         .filter { it.category == Registry.Types.Type.Category.funcpointer }
@@ -36,6 +39,11 @@ class FilteredRegistry(registry: Registry) {
     val handleTypes = registryTypes.values.asSequence()
         .filter { it.category == Registry.Types.Type.Category.handle }
         .associateBy { it.name!! }
+
+    val constants = registry.enums.asSequence()
+        .filter { it.type == Registry.Enums.Type.constants }
+        .flatMap { it.enums }
+        .associateBy { it.name }
 
     val externalTypeNames =
         registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()

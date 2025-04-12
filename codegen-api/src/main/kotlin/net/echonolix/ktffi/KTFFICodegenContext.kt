@@ -1,17 +1,19 @@
 package net.echonolix.ktffi
 
+import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import java.lang.IllegalStateException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path) {
     private val allElement0 = ConcurrentHashMap<String, CElement>()
     private val allTypes0 = ConcurrentHashMap<String, CType>()
-    private val expressions = ConcurrentHashMap<String, CExpression<*>>()
+    private val expressions = ConcurrentHashMap<String, CExpression>()
 
     val allElement: Map<String, CElement> get() = allElement0
     val allTypes: Map<String, CType> get() = allTypes0
-    val allExpressions: Map<String, CExpression<*>> get() = expressions
+    val allExpressions: Map<String, CExpression> get() = expressions
 
     abstract fun resolvePackageName(element: CElement): String
     protected abstract fun resolveElementImpl(cElementStr: String): CElement
@@ -20,16 +22,24 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
         if (element is CType) {
             allTypes0[element.name] = element
         }
-        if (element is CExpression<*>) {
+        if (element is CExpression) {
             expressions[element.name] = element
         }
         allElement0[element.name] = element
     }
 
-    fun resolveExpression(expressionStr: String): CExpression<*> {
+    fun resolveExpression(expressionStr: String): CExpression {
         val trimStr = expressionStr.trim().removeContinuousSpaces()
         return expressions[trimStr] ?: run {
-            CExpression.Const(CBasicType.void, Unit)
+            runCatching {
+                resolveElement(trimStr)
+            }.mapCatching {
+                (it as? CConst)?.let {
+                    CExpression.Reference(it)
+                } ?: throw IllegalStateException("Not a const: $trimStr")
+            }.getOrElse {
+                CExpression.Const(CBasicType.int32_t, CodeBlock.of(trimStr))
+            }
         }.also(::addToCache)
     }
 

@@ -2,7 +2,6 @@ package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.CodeBlock
 import net.echonolix.ktffi.*
-import net.echonolix.vulkan.schema.Element
 import net.echonolix.vulkan.schema.FilteredRegistry
 import net.echonolix.vulkan.schema.Registry
 import net.echonolix.vulkan.schema.XMLComment
@@ -144,6 +143,19 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
     }
 
+    private val invIntLiteralRegex = """~(${CSyntax.intLiteralRegex})""".toRegex()
+
+    private fun resolveConst(constType: Registry.Enums.Enum): CTopLevelConst {
+        var valueStr = constType.value!!
+        invIntLiteralRegex.find(valueStr)?.let {
+            val (num) = it.destructured
+            valueStr = valueStr.replaceRange(it.range, "($num).inv()")
+        }
+        val const = CTopLevelConst(constType.name, CExpression.Const(constType.type!!, CodeBlock.of(valueStr)))
+        addToCache(const)
+        return const
+    }
+
     private val vkVersionConstRegex = """VK_API_VERSION_(\d+)_(\d+)""".toRegex()
     private fun makeApiVersion(variant: UInt, major: UInt, minor: UInt, patch: UInt): UInt {
         return (variant shl 29) or (major shl 22) or (minor shl 12) or patch
@@ -158,7 +170,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return resolveFuncPointerType(it)
         }
 
-        registry.enums[cElementStr]?.let {
+        registry.enumTypes[cElementStr]?.let {
             return resolveEnum(it)
         }
 
@@ -174,10 +186,15 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return resolveHandle(it)
         }
 
+        registry.constants[cElementStr]?.let {
+            return resolveConst(it)
+        }
+
+        @OptIn(ExperimentalStdlibApi::class)
         vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
-            val expression = CExpression.Const(CBasicType.uint32_t, apiVersionBits)
+            val expression = CExpression.Const(CBasicType.uint32_t, CodeBlock.of(apiVersionBits.toHexString(HexFormat.UpperCase)))
             return CTopLevelConst(it.value, expression)
         }
 

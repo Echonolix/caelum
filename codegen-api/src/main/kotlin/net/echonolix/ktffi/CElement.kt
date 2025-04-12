@@ -3,7 +3,6 @@ package net.echonolix.ktffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.util.*
-import kotlin.properties.Delegates
 
 interface Tag<K : Tag.Key> {
     interface Key
@@ -55,14 +54,14 @@ interface CElement : Comparable<CElement> {
     }
 }
 
-sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl(value.toString()) {
-    class Const<T : Any>(val basicType: CBasicType<T>, value: T) : CExpression<T>(basicType.cType, value) {
+sealed class CExpression(val type: CType, val value: Any) : CElement.Impl(value.toString()) {
+    class Const(type: CBasicType<*>, value: CodeBlock) : CExpression(type.cType, value) {
         override fun toString(): String {
             return value.toString()
         }
     }
 
-    class Reference(val const: CConst) : CExpression<CConst>(const.type, const) {
+    class Reference(val const: CConst) : CExpression(const.type, const) {
         override fun toString(): String {
             return const.name
         }
@@ -83,12 +82,12 @@ interface CDeclaration : CElement {
     interface TopLevel : CDeclaration
 }
 
-open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type) {
+open class CConst(name: String, val expression: CExpression) : CDeclaration.Impl(name, expression.type) {
     override fun toString(): String {
         return "${type.toSimpleString()} $name = $expression;"
     }
 }
-class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel
+class CTopLevelConst(name: String, expression: CExpression) : CConst(name, expression), CDeclaration.TopLevel
 
 context(ctx: KTFFICodegenContext)
 fun CElement.packageName(): String {
@@ -403,7 +402,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
             return name
         }
 
-        class Sized(elementType: CType, val length: CExpression<*>) : Array(elementType) {
+        class Sized(elementType: CType, val length: CExpression) : Array(elementType) {
             override fun compositeName(parentStr: String): String {
                 return elementType.compositeName("[$length]$parentStr")
             }
