@@ -12,7 +12,7 @@ import java.lang.invoke.MethodHandle
 import java.util.concurrent.RecursiveAction
 import kotlin.collections.get
 
-class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry: PatchedRegistry) : RecursiveAction() {
+class GenerateCEnumTaskOld(private val genCtx: FFIGenContext, private val registry: PatchedRegistry) : RecursiveAction() {
     override fun compute() {
 //    val skipped = setOf("VkFormat")
 

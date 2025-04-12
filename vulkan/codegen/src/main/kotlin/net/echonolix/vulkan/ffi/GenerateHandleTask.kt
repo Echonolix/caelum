@@ -10,16 +10,11 @@ import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.NativeType
 import net.echonolix.ktffi.className
 import net.echonolix.ktffi.memberName
-import java.util.Properties
-import java.util.concurrent.RecursiveAction
 
-class GenerateHandleTask(private val ctx: VKFFICodeGenContext) : RecursiveAction() {
-    override fun compute() {
-        ctx.compute()
-    }
-
-    private fun VKFFICodeGenContext.compute() {
-        val typeAlias = GenTypeAliasTask(this, ctx.allHandles).fork()
+class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
+    override fun VKFFICodeGenContext.compute() {
+        val handles = ctx.filterType<CType.Handle>()
+        val typeAlias = GenTypeAliasTask(this, handles).fork()
         val vkHandleCname = ClassName(ctx.handlePackageName, "VkHandle")
 
         val objTypeCname = resolveType("VkObjectType").className()
@@ -32,9 +27,8 @@ class GenerateHandleTask(private val ctx: VKFFICodeGenContext) : RecursiveAction
             )
         ctx.writeOutput(vkHandleFile)
 
-        ctx.allTypes.entries.parallelStream()
-            .filter { it.value is CType.Handle }
-            .filter { it.key == it.value.name }
+        handles.parallelStream()
+            .filter { (name, dstType) -> name == dstType.name }
             .map { (_, type) ->
                 type as VkHandle
                 val cname = type.className()
@@ -55,12 +49,8 @@ class GenerateHandleTask(private val ctx: VKFFICodeGenContext) : RecursiveAction
                             .build()
                     )
             }
-            .forEach { ctx.writeOutput(it) }
+            .forEach(ctx::writeOutput)
 
-        val typeAliasesFile = FileSpec.builder(ctx.handlePackageName, "TypeAliases")
-        typeAlias.join().forEach {
-            typeAliasesFile.addTypeAlias(it)
-        }
-        ctx.writeOutput(typeAliasesFile)
+       typeAlias.joinAndWriteOutput(ctx.handlePackageName)
     }
 }

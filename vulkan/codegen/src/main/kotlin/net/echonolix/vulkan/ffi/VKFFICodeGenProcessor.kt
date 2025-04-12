@@ -1,7 +1,6 @@
 package net.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
-import net.echonolix.ktffi.CType
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -85,7 +84,9 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 extensions.join()
 
                 val handle = GenerateHandleTask(ctx).fork()
+                val enum = GenerateEnumTask(ctx).fork()
                 handle.join()
+                enum.join()
             }
         }.fork().join()
     }
@@ -94,9 +95,11 @@ class VKFFICodeGenProcessor : KtgenProcessor {
 @OptIn(ExperimentalPathApi::class)
 fun main() {
 //    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
-    val time = System.nanoTime()
-    val outputDir = Path.of("vulkan/build/generated/ktgen")
-    outputDir.deleteRecursively()
-    VKFFICodeGenProcessor().process(emptyList(), outputDir)
-    println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
+//    repeat(20) {
+        val outputDir = Path.of("vulkan/build/generated/ktgen")
+        outputDir.deleteRecursively()
+        val time = System.nanoTime()
+        VKFFICodeGenProcessor().process(emptyList(), outputDir)
+        println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
+//    }
 }

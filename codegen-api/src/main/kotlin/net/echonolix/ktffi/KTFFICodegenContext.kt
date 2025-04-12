@@ -7,49 +7,44 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path) {
-    private val allElement0 = ConcurrentHashMap<String, CElement>()
-    private val allTypes0 = ConcurrentHashMap<String, CType>()
-    private val allHandles0 = ConcurrentHashMap<String, CType.Handle>()
-    private val expressions = ConcurrentHashMap<String, CExpression>()
+    private val allElements0 = ConcurrentHashMap<String, CElement>()
+    val allElements: Map<String, CElement>
+        get() = allElements0
 
-    val allElement: Map<String, CElement> get() = allElement0
-    val allTypes: Map<String, CType> get() = allTypes0
-    val allHandles: Map<String, CType.Handle> get() = allHandles0
+    @Suppress("UNCHECKED_CAST")
+    inline fun <reified T> filterType(): List<Pair<String, T>> {
+        return allElements.entries.parallelStream()
+            .filter { it.value is T }
+            .map { it.key to (it.value as T) }
+            .toList()
+    }
 
     abstract fun resolvePackageName(element: CElement): String
     protected abstract fun resolveElementImpl(cElementStr: String): CElement
 
     fun addToCache(name: String, element: CElement) {
-        if (element is CType) {
-            allTypes0[name] = element
-        }
-        if (element is CExpression) {
-            expressions[name] = element
-        }
-        if (element is CType.Handle) {
-            allHandles0[name] = element
-        }
-        allElement0[name] = element
+        allElements0[name] = element
     }
 
-    fun resolveExpression(expressionStr: String): CExpression {
+    fun resolveExpression(expressionStr: String): CExpression<*> {
         val trimStr = expressionStr.trim().removeContinuousSpaces()
-        return expressions[trimStr] ?: run {
-            runCatching {
-                resolveElement(trimStr)
-            }.mapCatching { element ->
-                (element as? CExpression)?.let {
-                    return@mapCatching it
-                }
-                (element as? CConst)?.let {
-                    return@mapCatching CExpression.Reference(it)
-                }
-                throw IllegalStateException("Not a const: $trimStr")
-            }.getOrElse {
-                CExpression.Const(CBasicType.int32_t, CodeBlock.of(trimStr))
+        return runCatching {
+            resolveElement(trimStr)
+        }.mapCatching { element ->
+            (element as? CExpression<*>)?.let {
+                return@mapCatching it
             }
-        }.also {
-            expressions[trimStr] = it
+            (element as? CConst)?.let {
+                return@mapCatching CExpression.Reference(it)
+            }
+            throw IllegalStateException("Not a const: $trimStr")
+        }.getOrElse {
+            val quoteRemoved = trimStr.removeSurrounding("\"")
+            if (quoteRemoved.length == trimStr.length) {
+                CExpression.Const(CBasicType.int32_t, CodeBlock.of(trimStr))
+            } else {
+                CExpression.StringLiteral( trimStr)
+            }
         }
     }
 
@@ -63,7 +58,7 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             val trimStr = cElementStr
                 .trim()
                 .removeContinuousSpaces()
-            return allTypes[trimStr] ?: run {
+            return allElements0[trimStr] ?: run {
                 CSyntax.pointerOrArrayRegex.find(trimStr)?.let {
                     return when {
                         it.value.endsWith("*") -> {

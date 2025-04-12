@@ -13,6 +13,7 @@ class TagStorage {
     fun <T : Tag> get(clazz: Class<T>): T? {
         return backingMap[clazz] as? T
     }
+
     fun <T : Tag> set(clazz: Class<T>, value: T) {
         backingMap[clazz] = value
     }
@@ -58,16 +59,36 @@ interface CElement : Comparable<CElement> {
     interface TopLevel : CElement
 }
 
-sealed class CExpression(val type: CType, val value: Any) : CElement.Impl(value.toString()) {
-    class Const(type: CBasicType<*>, value: CodeBlock) : CExpression(type.cType, value) {
+sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl(value.toString()) {
+    abstract fun codeBlock(): CodeBlock
+
+    class Const(type: CBasicType<*>, value: CodeBlock) : CExpression<CodeBlock>(type.cType, value) {
+        override fun codeBlock(): CodeBlock {
+            return value
+        }
+
         override fun toString(): String {
             return value.toString()
         }
     }
 
-    class Reference(val const: CConst) : CExpression(const.type, const) {
+    class StringLiteral(value: String) : CExpression<String>(CType.Pointer(CBasicType.char::cType), value) {
+        override fun codeBlock(): CodeBlock {
+            return CodeBlock.of("%S", value)
+        }
+
         override fun toString(): String {
-            return const.name
+            return value
+        }
+    }
+
+    class Reference(const: CConst) : CExpression<CConst>(const.type, const) {
+        override fun codeBlock(): CodeBlock {
+            return value.expression.codeBlock()
+        }
+
+        override fun toString(): String {
+            return value.name
         }
     }
 }
@@ -86,12 +107,13 @@ interface CDeclaration : CElement {
     interface TopLevel : CDeclaration, CElement.TopLevel
 }
 
-open class CConst(name: String, val expression: CExpression) : CDeclaration.Impl(name, expression.type) {
+open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type) {
     override fun toString(): String {
         return "${type.toSimpleString()} $name = $expression;"
     }
 }
-open class CTopLevelConst(name: String, expression: CExpression) : CConst(name, expression), CDeclaration.TopLevel
+
+open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel
 
 //
 //interface ITopLevelType : ITopLevelDeclaration {
@@ -318,7 +340,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
             return name
         }
 
-        inner class Entry(name: String, expression: CExpression) : CTopLevelConst(name, expression) {
+        inner class Entry(name: String, expression: CExpression<*>) : CTopLevelConst(name, expression) {
             val parent get() = this@EnumBase
         }
     }
@@ -411,11 +433,12 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         override fun toString(): String {
             return name
         }
+
         override fun compositeName(parentStr: String): String {
             return elementType.compositeName("$parentStr[]")
         }
 
-        class Sized(elementType: CType, val length: CExpression) : Array(elementType) {
+        class Sized(elementType: CType, val length: CExpression<*>) : Array(elementType) {
             override fun compositeName(parentStr: String): String {
                 return elementType.compositeName("$parentStr[$length]")
             }

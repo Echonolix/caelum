@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.Documentable
+import net.echonolix.ktffi.CElement
 import net.echonolix.ktffi.removeContinuousSpaces
 import net.echonolix.ktffi.toXMLTagFreeString
 import net.echonolix.vulkan.schema.Element
@@ -21,6 +22,25 @@ fun List<CompactFragment>.toXmlTagFreeString() =
 fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: Element) = apply {
     val docs = element.docs
     val since = element.requiredBy
+    if (docs == null && since == null) {
+        return@apply
+    }
+    val sb = StringBuilder()
+    if (docs != null) {
+        sb.append(docs.removePrefix("//").trim())
+        sb.append("\n\n")
+    }
+    if (since != null) {
+        sb.append("@since: ")
+        sb.append(since)
+    }
+
+    addKdoc(sb.toString())
+}
+
+fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
+    val docs = element.tags.get<ElementCommentTag>()?.comment
+    val since = element.tags.get<RequiredByTag>()?.requiredBy
     if (docs == null && since == null) {
         return@apply
     }

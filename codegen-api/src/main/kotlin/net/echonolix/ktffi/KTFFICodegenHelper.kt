@@ -1,10 +1,14 @@
 package net.echonolix.ktffi
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.asClassName
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout
+import java.lang.invoke.MethodHandles
+import kotlin.reflect.KFunction
+import kotlin.reflect.jvm.javaMethod
 
 object KTFFICodegenHelper {
     const val packageName = "net.echonolix.ktffi"
@@ -31,4 +35,7 @@ object KTFFICodegenHelper {
 
     val valueLayoutCname = ValueLayout::class.asClassName()
     val addressLayoutMember = valueLayoutCname.member("ADDRESS")
+
+    val methodHandlesCname = MethodHandles::class.asClassName()
+    val javaMethodMemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
 }

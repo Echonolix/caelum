@@ -150,7 +150,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
     private fun resolveEnum(xmlEnums: Registry.Enums, enumName: String): CType.EnumBase {
         val enumBase = when (xmlEnums.type) {
-            Registry.Enums.Type.enum -> CType.Enum(enumName, CBasicType.uint32_t.cType)
+            Registry.Enums.Type.enum -> CType.Enum(enumName, CBasicType.int32_t.cType)
             Registry.Enums.Type.bitmask -> {
                 val entryType = if (xmlEnums.bitwidth == 64) CBasicType.int64_t.cType else CBasicType.int32_t.cType
                 CType.Enum(enumName, entryType)
@@ -240,8 +240,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             val (num) = it.destructured
             valueStr = valueStr.replaceRange(it.range, "($num).inv()")
         }
-        val type = constType.type ?: CBasicType.int32_t
-        val const = CTopLevelConst(constType.name, CExpression.Const(type, CodeBlock.of(valueStr)))
+        val const = CTopLevelConst(constType.name, resolveExpression(valueStr))
         addToCache(constType.name, const)
         return const
     }
@@ -359,7 +358,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
             val expression =
-                CExpression.Const(CBasicType.uint32_t, CodeBlock.of(apiVersionBits.toHexString(HexFormat.UpperCase)))
+                CExpression.Const(CBasicType.uint32_t, CodeBlock.of("${apiVersionBits.toHexString(HexFormat.UpperCase)}U"))
             return CTopLevelConst(it.value, expression)
         }
 
