@@ -13,6 +13,7 @@ import kotlin.reflect.jvm.javaMethod
 object KTFFICodegenHelper {
     const val packageName = "net.echonolix.ktffi"
     val typeCname = ClassName(packageName, "NativeType")
+    val typeImplCname = typeCname.nestedClass("Impl")
     val structCname = ClassName(packageName, "NativeStruct")
     val unionCname = ClassName(packageName, "NativeUnion")
     val arrayCname = ClassName(packageName, "NativeArray")
