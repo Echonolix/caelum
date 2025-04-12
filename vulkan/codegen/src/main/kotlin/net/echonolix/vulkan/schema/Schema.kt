@@ -194,6 +194,7 @@ data class Registry(
             @XmlSerialName("param")
             data class Param(
                 @XmlElement(false) val api: API? = null,
+                @XmlElement val name: String?,
                 val optional: Boolean = false,
                 val externsync: Boolean = false,
                 val len: String? = null,

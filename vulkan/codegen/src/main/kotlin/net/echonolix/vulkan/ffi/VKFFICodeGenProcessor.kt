@@ -15,7 +15,6 @@ import net.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
-import kotlin.streams.asStream
 
 class VKFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: List<Path>, outputDir: Path) {
@@ -55,6 +54,9 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 require.types.forEach {
                     ctx.resolveElement(it.name)
                 }
+                require.commands.forEach {
+                    ctx.resolveElement(it.name)
+                }
             }
         filteredRegistry.registryExtensions.asSequence()
             .filter { it.platform == null }
@@ -66,8 +68,13 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 require.types.forEach {
                     ctx.resolveElement(it.name)
                 }
+                require.commands.forEach {
+                    ctx.resolveElement(it.name)
+                }
             }
         ctx.allElement.values.asSequence()
+            .filterIsInstance<CType.Function>()
+            .filter { it.name.startsWith("VkCmd") }
             .sorted()
             .forEach {
                 println(it)

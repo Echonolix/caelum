@@ -87,7 +87,7 @@ open class CConst(name: String, val expression: CExpression) : CDeclaration.Impl
         return "${type.toSimpleString()} $name = $expression;"
     }
 }
-class CTopLevelConst(name: String, expression: CExpression) : CConst(name, expression), CDeclaration.TopLevel
+open class CTopLevelConst(name: String, expression: CExpression) : CConst(name, expression), CDeclaration.TopLevel
 
 context(ctx: KTFFICodegenContext)
 fun CElement.packageName(): String {
@@ -279,7 +279,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
     }
 
     abstract class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
-        val entries: MutableMap<String, CConst> = Collections.synchronizedMap(mutableMapOf())
+        val entries: MutableMap<String, Entry> = Collections.synchronizedMap(mutableMapOf())
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -317,6 +317,10 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
         override fun toSimpleString(): String {
             return name
+        }
+
+        inner class Entry(name: String, expression: CExpression) : CTopLevelConst(name, expression) {
+            val parent get() = this@EnumBase
         }
     }
 

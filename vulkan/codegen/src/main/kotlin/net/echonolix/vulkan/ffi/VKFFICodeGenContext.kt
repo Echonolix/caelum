@@ -8,6 +8,7 @@ import net.echonolix.vulkan.schema.XMLComment
 import net.echonolix.vulkan.schema.XMLMember
 import java.nio.file.Path
 import kotlin.collections.set
+import kotlin.math.E
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     KTFFICodegenContext(basePkgName, outputDir) {
@@ -61,7 +62,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }.map { it.groupValues }.map {
                 CType.Function.Parameter(it[2], resolveType(it[1]))
             }.toList()
-        val func = CType.Function("VkFunc${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
+        val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         addToCache(func)
         val funcPointer = CType.FunctionPointer(func)
         addToCache(func)
@@ -138,7 +139,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 //            }
 //        }
 //        fixedEnumName = fixedEnumName.removePrefix(prefix)/*.removeSuffix(suffix)*/
-        val entry = CTopLevelConst(fixedEnumName, expression)
+        val entry = this.Entry(fixedEnumName, expression)
         addToCache(entry)
         xmlEnum.comment?.let {
             entry.tags[ElementCommentTag] = ElementCommentTag(it)
@@ -242,6 +243,31 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return (variant shl 29) or (major shl 22) or (minor shl 12) or patch
     }
 
+    private fun resolveCommand(xmlCommand: Registry.Commands.Command): CType.Function {
+        xmlCommand.proto!!
+        val cmdName = xmlCommand.proto.name
+        val funcName = "VkCmd${cmdName.removePrefix("vk")}"
+        val returnTypeStr = xmlCommand.proto.type
+        val returnType = resolveType(returnTypeStr)
+        val parameters = xmlCommand.params.asSequence()
+            .filter {
+                it.name != null
+            }.map {
+                it.name!!
+                val innerStr = it.inner.toXmlTagFreeString()
+                val matchEntire = CSyntax.typeRegex.matchEntire(innerStr)
+                    ?: throw IllegalStateException("Cannot resolve function parameter for: $cmdName")
+                val (typeStr) = matchEntire.destructured
+                CType.Function.Parameter(it.name, resolveType(typeStr))
+            }
+            .toList()
+        val function = CType.Function(funcName, returnType, parameters)
+        xmlCommand.comment?.let {
+            function.tags[ElementCommentTag] = ElementCommentTag(it)
+        }
+        return function
+    }
+
     override fun resolveElementImpl(cElementStr: String): CElement {
         registry.registryTypes[cElementStr]?.alias?.let {
             return CType.TypeDef(cElementStr, resolveType(it))
@@ -284,6 +310,13 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
         registry.constants[cElementStr]?.let {
             return resolveConst(it)
+        }
+
+        registry.commands[cElementStr]?.let { commandType ->
+            commandType.alias?.let {
+                return CType.TypeDef(cElementStr, resolveType(it))
+            }
+            return resolveCommand(commandType)
         }
 
         @OptIn(ExperimentalStdlibApi::class)

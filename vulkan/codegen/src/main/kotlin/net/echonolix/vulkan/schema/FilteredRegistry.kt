@@ -5,8 +5,9 @@ import net.echonolix.vulkan.ffi.tryParseXML
 
 class FilteredRegistry(registry: Registry) {
     val raw = registry
-    val registryFeatures =
-        registry.features.asSequence().filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }.toList()
+    val registryFeatures = registry.features.asSequence()
+        .filter { it.api.isEmpty() || it.api.split(',').contains("vulkan") }
+        .toList()
     val registryExtensions = registry.extensions.extensions
     val registryTypes = registry.types.types.associate { type ->
         val name = type.name ?: type.inner.firstNotNullOf {
@@ -54,6 +55,10 @@ class FilteredRegistry(registry: Registry) {
         .flatMap { it.enums }
         .associateBy { it.name }
 
-    val externalTypeNames =
-        registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()
+    val commands = registry.commands.asSequence()
+        .flatMap { it.commands }
+        .associateBy { it.proto?.name ?: it.name }
+
+//    val externalTypeNames =
+//        registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()
 }
