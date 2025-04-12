@@ -15,7 +15,7 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
-class VkFFICodeGenProcessor : KtgenProcessor {
+class VKFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: List<Path>, outputDir: Path) {
         val registryText = javaClass.getResource("/vk.xml")!!.readText()
         val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs")
@@ -68,6 +68,6 @@ fun main() {
     val time = System.nanoTime()
     val outputDir = Path.of("vulkan/build/generated/ktgen")
     outputDir.deleteRecursively()
-    VkFFICodeGenProcessor().process(emptyList(), outputDir)
+    VKFFICodeGenProcessor().process(emptyList(), outputDir)
     println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
 }
