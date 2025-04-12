@@ -54,6 +54,8 @@ interface CElement : Comparable<CElement> {
             return this.javaClass.simpleName.compareTo(other.javaClass.simpleName)
         }
     }
+
+    interface TopLevel : CElement
 }
 
 sealed class CExpression(val type: CType, val value: Any) : CElement.Impl(value.toString()) {
@@ -81,7 +83,7 @@ interface CDeclaration : CElement {
         }
     }
 
-    interface TopLevel : CDeclaration
+    interface TopLevel : CDeclaration, CElement.TopLevel
 }
 
 open class CConst(name: String, val expression: CExpression) : CDeclaration.Impl(name, expression.type) {
@@ -90,16 +92,6 @@ open class CConst(name: String, val expression: CExpression) : CDeclaration.Impl
     }
 }
 open class CTopLevelConst(name: String, expression: CExpression) : CConst(name, expression), CDeclaration.TopLevel
-
-context(ctx: KTFFICodegenContext)
-fun CElement.packageName(): String {
-    return ctx.resolvePackageName(this)
-}
-
-context(ctx: KTFFICodegenContext)
-fun CElement.className(): ClassName {
-    return ClassName(packageName(), name)
-}
 
 //
 //interface ITopLevelType : ITopLevelDeclaration {
@@ -111,7 +103,7 @@ fun CElement.className(): ClassName {
 //    }
 //}
 
-sealed class CType(name: String) : CElement.Impl(name) {
+sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     context(ctx: KTFFICodegenContext)
     abstract fun nativeType(): TypeName
 
@@ -241,7 +233,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
-            return CodeBlock.of("%M", KTFFICodegenHelper.addressLayoutMember)
+            return CodeBlock.of("%M", CBasicType.uint64_t.valueLayoutMember)
         }
 
         override fun toString(): String {
@@ -340,6 +332,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
             return "enum ${super.toSimpleString()}"
         }
     }
+
     class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType) {
         override fun toString(): String {
             return "bitmask ${super.toString()}"
@@ -483,7 +476,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         override fun memoryLayout(): CodeBlock {
             val builder = CodeBlock.builder()
             members.forEach {
-                builder.addStatement("%T.layout.withName(%S),", it.className(), it.name)
+                builder.addStatement("%T.layout.withName(%S),", it.type.className(), it.name)
             }
             return builder.build()
         }

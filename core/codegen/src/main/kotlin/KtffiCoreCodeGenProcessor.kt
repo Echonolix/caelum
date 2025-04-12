@@ -26,7 +26,7 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
                     .build()
             )
 
-        val superclass = ClassName(KTFFICodegenHelper.packageName, "NativeTypeImpl")
+        val superclass = ClassName(KTFFICodegenHelper.packageName, "NativeType", "Impl")
         CBasicType.entries.forEach {
             val cname = ClassName(KTFFICodegenHelper.packageName, it.name)
             val arrayCNameP = KTFFICodegenHelper.arrayCname.parameterizedBy(cname)

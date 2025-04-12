@@ -27,13 +27,13 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
             .filter { (_, type) -> genCtx.filter(type) }
             .map { it.toPair() }
             .toList()
-        val genUnionAliasTask = GenTypeAliasTask(genCtx, unionList).fork()
+        val genUnionAliasTask = GenTypeAliasTaskOld(genCtx, unionList).fork()
 
         val structList = registry.flagTypes.asSequence()
             .filter { (_, type) -> genCtx.filter(type) }
             .map { it.toPair() }
             .toList()
-        val genStructAliasTask = GenTypeAliasTask(genCtx, structList).fork()
+        val genStructAliasTask = GenTypeAliasTaskOld(genCtx, structList).fork()
 
         val vkUnionFile = FileSpec.builder(VKFFI.vkUnionCname)
             .addType(

@@ -21,14 +21,14 @@ class GenerateCEnumTask(private val genCtx: FFIGenContext, private val registry:
             .filter { (_, type) -> genCtx.filter(type) }
             .map { it.toPair() }
             .toList()
-        val genEnumTypeAliasTask = GenTypeAliasTask(genCtx, enumTypeList).fork()
+        val genEnumTypeAliasTask = GenTypeAliasTaskOld(genCtx, enumTypeList).fork()
 
         val flagTypeList = registry.flagTypes.asSequence()
 //            .filter { (name, _) -> name !in skipped }
             .filter { (_, type) -> genCtx.filter(type) }
             .map { it.toPair() }
             .toList()
-        val genFlagTypeAliasTask = GenTypeAliasTask(genCtx, flagTypeList).fork()
+        val genFlagTypeAliasTask = GenTypeAliasTaskOld(genCtx, flagTypeList).fork()
 
         val vkEnumFile = FileSpec.builder(VKFFI.vkEnumsCname)
             .addType(

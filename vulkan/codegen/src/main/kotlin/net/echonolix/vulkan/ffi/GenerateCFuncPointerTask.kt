@@ -14,7 +14,7 @@ class GenerateCFuncPointerTask(private val genCtx: FFIGenContext, private val re
             .filter { (_, type) -> genCtx.filter(type) }
             .map { it.toPair() }
             .toList()
-        val genTypeAliasTask = GenTypeAliasTask(genCtx, funcPtrList).fork()
+        val genTypeAliasTask = GenTypeAliasTaskOld(genCtx, funcPtrList).fork()
 
         funcPtrList.parallelStream()
             .filter { (name, type) -> name == type.name }

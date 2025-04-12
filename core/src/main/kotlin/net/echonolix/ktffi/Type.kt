@@ -9,17 +9,17 @@ import java.lang.invoke.MethodHandle
 interface NativeType {
     val layout: MemoryLayout
     val arrayByteOffsetHandle: MethodHandle
+
+    abstract class Impl(override val layout: MemoryLayout) : NativeType {
+        final override val arrayByteOffsetHandle: MethodHandle =
+            layout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
+    }
 }
 
-sealed class NativeTypeImpl(override val layout: MemoryLayout) : NativeType {
-    final override val arrayByteOffsetHandle: MethodHandle =
-        layout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
-}
-
-abstract class NativeStruct(override val layout: StructLayout) : NativeTypeImpl(layout)
-abstract class NativeUnion(override val layout: UnionLayout) : NativeTypeImpl(layout)
+abstract class NativeStruct(override val layout: StructLayout) : NativeType.Impl(layout)
+abstract class NativeUnion(override val layout: UnionLayout) : NativeType.Impl(layout)
 abstract class NativeFunction(val returnType: NativeType?, vararg parameters: NativeType) :
-    NativeTypeImpl(ValueLayout.JAVA_BYTE) {
+    NativeType.Impl(ValueLayout.JAVA_BYTE) {
 
     val functionDescriptor = if (returnType == null) {
         FunctionDescriptor.ofVoid(

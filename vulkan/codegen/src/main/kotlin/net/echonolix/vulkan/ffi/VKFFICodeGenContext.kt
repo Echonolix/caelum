@@ -62,9 +62,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 CType.Function.Parameter(it[2], resolveType(it[1]))
             }.toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
-        addToCache(func)
+        addToCache(func.name, func)
         val funcPointer = CType.FunctionPointer(func)
-        addToCache(func)
+        addToCache(funcPointer.name, func)
         return CType.TypeDef(xmlTypeDefType.name, funcPointer)
     }
 
@@ -140,7 +140,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 //        }
 //        fixedEnumName = fixedEnumName.removePrefix(prefix)/*.removeSuffix(suffix)*/
         val entry = this.Entry(fixedEnumName, expression)
-        addToCache(entry)
+        addToCache(fixedEnumName, entry)
         xmlEnum.comment?.let {
             entry.tags.set(ElementCommentTag(it))
         }
@@ -242,7 +242,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
         val type = constType.type ?: CBasicType.int32_t
         val const = CTopLevelConst(constType.name, CExpression.Const(type, CodeBlock.of(valueStr)))
-        addToCache(const)
+        addToCache(constType.name, const)
         return const
     }
 
@@ -297,7 +297,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
     override fun resolveElementImpl(cElementStr: String): CElement {
         registry.registryTypes[cElementStr]?.alias?.let {
-            return CType.TypeDef(cElementStr, resolveType(it))
+            return resolveType(it)
         }
 
         registry.typeDefTypes[cElementStr]?.let {
@@ -345,7 +345,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
         registry.commands[cElementStr]?.let { commandType ->
             commandType.alias?.let {
-                return CType.TypeDef(cElementStr, resolveType(it))
+                return resolveType(it)
             }
             return resolveCommand(commandType)
         }

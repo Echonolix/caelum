@@ -14,6 +14,7 @@ import net.echonolix.vulkan.schema.API
 import net.echonolix.vulkan.schema.FilteredRegistry
 import net.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
+import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
@@ -47,39 +48,52 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros", "API constants")
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
-        ctx.resolveElement("VK_API_VERSION_1_0")
-        fun processRequire(requires: List<Registry.Feature.Require>,) {
-            requires.asSequence()
-                .filter { it.comment !in skipped }
-                .forEach { require ->
-                    require.types.forEach {
-                        ctx.resolveElement(it.name)
-                    }
-                    require.commands.forEach {
-                        ctx.resolveElement(it.name)
-                    }
-                    require.enums.asSequence()
-                        .filter { it.api == null || it.api == API.vulkan }
-                        .forEach {
-                            ctx.resolveElement(it.name)
+
+        object : RecursiveAction() {
+            override fun compute() {
+                fun processRequire(requires: List<Registry.Feature.Require>,) {
+                    requires.asSequence()
+                        .filter { it.comment !in skipped }
+                        .forEach { require ->
+                            require.types.forEach {
+                                ctx.resolveElement(it.name)
+                            }
+                            require.commands.forEach {
+                                ctx.resolveElement(it.name)
+                            }
+                            require.enums.asSequence()
+                                .filter { it.api == null || it.api == API.vulkan }
+                                .forEach {
+                                    ctx.resolveElement(it.name)
+                                }
                         }
                 }
-        }
-        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
-        ctx.allElement.values.asSequence()
-            .filterIsInstance<CType.Handle>()
-//            .filter { it.name.startsWith("VkCmd") }
-            .sorted()
-            .forEach {
-                println(it)
+                val core = object : RecursiveAction() {
+                    override fun compute() {
+                        filteredRegistry.registryFeatures.parallelStream()
+                            .forEach { processRequire(it.require) }
+                    }
+                }.fork()
+                val extensions = object : RecursiveAction() {
+                    override fun compute() {
+                        filteredRegistry.registryExtensions.parallelStream()
+                            .forEach { processRequire(it.require) }
+                    }
+                }.fork()
+                ctx.resolveElement("VK_API_VERSION_1_0")
+                core.join()
+                extensions.join()
+
+                val handle = GenerateHandleTask(ctx).fork()
+                handle.join()
             }
+        }.fork().join()
     }
 }
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
-    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
+//    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
     val time = System.nanoTime()
     val outputDir = Path.of("vulkan/build/generated/ktgen")
     outputDir.deleteRecursively()
