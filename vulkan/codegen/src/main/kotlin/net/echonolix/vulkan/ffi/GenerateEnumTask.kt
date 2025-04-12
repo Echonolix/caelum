@@ -1,5 +1,6 @@
 package net.echonolix.vulkan.ffi
 
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -8,6 +9,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LONG
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
 import com.squareup.kotlinpoet.asTypeName
@@ -17,7 +19,6 @@ import net.echonolix.ktffi.CTopLevelConst
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
-import java.lang.foreign.MemoryLayout
 import java.lang.invoke.MethodHandle
 
 class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
@@ -98,26 +99,6 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                             PropertySpec.builder("nativeType", NativeType::class)
                                 .build()
                         )
-                        .addProperty(
-                            PropertySpec.builder("layout", MemoryLayout::class)
-                                .addModifiers(KModifier.OVERRIDE)
-                                .getter(
-                                    FunSpec.getterBuilder()
-                                        .addStatement("return nativeType.layout")
-                                        .build()
-                                )
-                                .build()
-                        )
-                        .addProperty(
-                            PropertySpec.builder("arrayByteOffsetHandle", MethodHandle::class)
-                                .addModifiers(KModifier.OVERRIDE)
-                                .getter(
-                                    FunSpec.getterBuilder()
-                                        .addStatement("return nativeType.arrayByteOffsetHandle")
-                                        .build()
-                                )
-                                .build()
-                        )
                         .addModifiers(KModifier.SEALED)
                         .build()
                 )
@@ -189,15 +170,24 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             val constantsFile = FileSpec.builder(ctx.enumPackageName, "Constants")
             constantsFile.addProperties(
                 ctx.filterType<CTopLevelConst>().parallelStream()
+                    .sorted(
+                        compareBy<Pair<String, CTopLevelConst>> { (_, const) ->
+                            const.expression is CExpression.StringLiteral
+                        }.thenBy { (_, const) ->
+                            const.expression is CExpression.Const
+                        }.reversed()
+                    )
                     .filter { (_, const) -> const.javaClass == CTopLevelConst::class.java }
                     .map { (_, const) ->
                         val initCode = const.expression.codeBlock()
-                        PropertySpec.builder(const.name, const.type.ktApiType())
-                            .apply {
-                                if (!initCode.toString().contains(".inv()")) {
-                                    addModifiers(KModifier.CONST)
-                                }
-                            }
+                        val constType = const.type
+                        val type = if (constType is CType.Pointer) {
+                            STRING
+                        } else {
+                            constType.ktApiType()
+                        }
+                        PropertySpec.builder(const.name, type)
+                            .addModifiers(KModifier.CONST)
                             .initializer(initCode)
                             .build()
                     }
@@ -236,7 +226,11 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addModifiers(KModifier.PRIVATE)
                 .initializer(
                     CodeBlock.builder()
-                        .add("%T.lookup().unreflect(::fromInt.%M)", VKFFI.methodHandlesCname, KTFFICodegenHelper.javaMethodMemberName)
+                        .add(
+                            "%T.lookup().unreflect(::fromInt.%M)",
+                            VKFFI.methodHandlesCname,
+                            KTFFICodegenHelper.javaMethodMemberName
+                        )
                         .build()
                 )
                 .build()
@@ -246,7 +240,11 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addModifiers(KModifier.PRIVATE)
                 .initializer(
                     CodeBlock.builder()
-                        .add("%T.lookup().unreflect(::toInt.%M)", VKFFI.methodHandlesCname, KTFFICodegenHelper.javaMethodMemberName)
+                        .add(
+                            "%T.lookup().unreflect(::toInt.%M)",
+                            VKFFI.methodHandlesCname,
+                            KTFFICodegenHelper.javaMethodMemberName
+                        )
                         .build()
                 )
                 .build()
@@ -342,7 +340,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 //        return file.addType(type.addType(companion.build()).build())
 //    }
 
-    private fun genEnumType(enumType: CType.Enum): FileSpec.Builder {
+    private fun VKFFICodeGenContext.genEnumType(enumType: CType.Enum): FileSpec.Builder {
         val thisCname = ClassName(ctx.enumPackageName, enumType.name)
         val type = TypeSpec.enumBuilder(thisCname)
         val enumEntryBaseType = enumType.baseType
@@ -350,35 +348,56 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         type.tryAddKdoc(enumType)
         type.addVkEnum(EnumKind.ENUM, enumEntryBaseType)
-            .apply {
-                enumType.entries.values.asSequence()
-                    .forEach { entry ->
-                        val expression = entry.expression
-                        when (expression) {
-                            is CExpression.Const -> {
-                                addEnumConstant(
-                                    entry.name,
-                                    TypeSpec.anonymousClassBuilder()
-                                        .tryAddKdoc(entry)
-                                        .superclass(ClassName(ctx.enumPackageName, enumType.name))
-                                        .addSuperclassConstructorParameter(entry.expression.codeBlock())
-                                        .build()
-                                )
-                            }
-                            is CExpression.Reference -> {
-                                companion.addProperty(
-                                    PropertySpec.builder(entry.name, thisCname)
-                                        .initializer("%N", expression.value.name)
-                                        .tryAddKdoc(entry)
-                                        .build()
-                                )
-                            }
-                            else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
-                        }
+        type.addProperty(
+            PropertySpec.builder("descriptor", KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname))
+                .addModifiers(KModifier.OVERRIDE)
+                .getter(
+                    FunSpec.getterBuilder()
+                        .addStatement("return Companion")
+                        .build()
+                )
+                .build()
+        )
+        enumType.entries.values.asSequence()
+            .forEach { entry ->
+                val expression = entry.expression
+                when (expression) {
+                    is CExpression.Const -> {
+                        type.addEnumConstant(
+                            entry.name,
+                            TypeSpec.anonymousClassBuilder()
+                                .tryAddKdoc(entry)
+                                .superclass(ClassName(ctx.enumPackageName, enumType.name))
+                                .addSuperclassConstructorParameter(entry.expression.codeBlock())
+                                .build()
+                        )
                     }
+                    is CExpression.Reference -> {
+                        companion.addProperty(
+                            PropertySpec.builder(entry.name, thisCname)
+                                .initializer("%N", expression.value.name)
+                                .tryAddKdoc(entry)
+                                .build()
+                        )
+                    }
+                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+                }
             }
 
-        companion.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", CBasicType.int32_t.nativeTypeName))
+        companion.addAnnotation(
+            AnnotationSpec.builder(Suppress::class)
+                .addMember("%S", "UNCHECKED_CAST")
+                .build()
+        )
+        companion.addSuperinterface(
+            KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname),
+            CodeBlock.of(
+                "%T.descriptor as %T<%T>",
+                enumEntryBaseType.nativeTypeName,
+                KTFFICodegenHelper.typeDescriptorCname,
+                thisCname
+            )
+        )
         companion.addFunction(
             FunSpec.builder("fromInt")
                 .addAnnotation(JvmStatic::class)

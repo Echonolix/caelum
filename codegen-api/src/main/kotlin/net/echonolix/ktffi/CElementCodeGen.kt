@@ -13,8 +13,3 @@ context(ctx: KTFFICodegenContext)
 fun CElement.TopLevel.className(): ClassName {
     return ClassName(packageName(), name)
 }
-
-context(ctx: KTFFICodegenContext)
-fun CType.EnumBase.Entry.memberName(): MemberName {
-    return parent.className().member(name)
-}

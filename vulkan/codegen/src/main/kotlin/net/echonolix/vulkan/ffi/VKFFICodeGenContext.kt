@@ -24,6 +24,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             is CType.Struct -> structPackageName
             is CType.Union -> unionPackageName
             is CType.Handle -> handlePackageName
+            is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
+            is CTopLevelConst -> enumPackageName
             else -> throw IllegalArgumentException("Unsupported element: $element")
         }
     }
@@ -153,7 +155,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             Registry.Enums.Type.enum -> CType.Enum(enumName, CBasicType.int32_t.cType)
             Registry.Enums.Type.bitmask -> {
                 val entryType = if (xmlEnums.bitwidth == 64) CBasicType.int64_t.cType else CBasicType.int32_t.cType
-                CType.Enum(enumName, entryType)
+                CType.Bitmask(enumName, entryType)
             }
             else -> throw IllegalStateException("Unsupported enum type: ${xmlEnums.type}")
         }
@@ -232,15 +234,11 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
     }
 
-    private val invIntLiteralRegex = """~(${CSyntax.intLiteralRegex})""".toRegex()
-
     private fun resolveConst(constType: Registry.Enums.Enum): CTopLevelConst {
-        var valueStr = constType.value!!
-        invIntLiteralRegex.find(valueStr)?.let {
-            val (num) = it.destructured
-            valueStr = valueStr.replaceRange(it.range, "($num).inv()")
-        }
-        val const = CTopLevelConst(constType.name, resolveExpression(valueStr))
+        val valueStr = constType.value!!
+        val expression = constType.type?.let { CExpression.Const(it, it.codeBlock(valueStr)) }
+            ?: resolveExpression(valueStr)
+        val const = CTopLevelConst(constType.name, expression)
         addToCache(constType.name, const)
         return const
     }
@@ -283,7 +281,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 enumType.addEntry(xmlEnum)
             }
             xmlEnum.alias != null -> {
-                CTopLevelConst(xmlEnum.name, CExpression.Reference(resolveElement(xmlEnum.alias) as CConst))
+                CTopLevelConst(xmlEnum.name, CExpression.Reference(resolveElement(xmlEnum.alias) as CTopLevelConst))
             }
             xmlEnum.value != null -> {
                 resolveConst(xmlEnum)
@@ -308,7 +306,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
 
         registry.bitmaskTypes[cElementStr]?.let { bitmaskType ->
-            val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Enum(
+            val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Bitmask(
                 bitmaskType.name!!,
                 CBasicType.uint32_t.cType
             )
@@ -318,7 +316,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
 
         registry.enumTypes[cElementStr]?.let {
-            val xmlEnumType = registry.enums[it.name] ?: throw IllegalStateException("Cannot find enum type: ${it.name}")
+            val xmlEnumType =
+                registry.enums[it.name] ?: throw IllegalStateException("Cannot find enum type: ${it.name}")
             return resolveEnum(xmlEnumType, it.name!!)
         }
 
@@ -358,13 +357,16 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
             val expression =
-                CExpression.Const(CBasicType.uint32_t, CodeBlock.of("${apiVersionBits.toHexString(HexFormat.UpperCase)}U"))
+                CExpression.Const(
+                    CBasicType.uint32_t,
+                    CodeBlock.of("${apiVersionBits.toLiteralHexString()}U")
+                )
             return CTopLevelConst(it.value, expression)
         }
 
         if (CSyntax.intLiteralRegex.matches(cElementStr)) {
             return CExpression.Const(
-                CBasicType.uint32_t,
+                CBasicType.int32_t,
                 CodeBlock.of(cElementStr)
             )
         }

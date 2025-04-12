@@ -12,6 +12,7 @@ import kotlinx.serialization.encoding.Encoder
 import java.lang.foreign.ValueLayout
 import kotlin.reflect.KClass
 
+@OptIn(ExperimentalStdlibApi::class)
 @Serializable(with = CBasicType.Serializer::class)
 @Suppress("ClassName")
 sealed class CBasicType<T : Any>(
@@ -53,7 +54,21 @@ sealed class CBasicType<T : Any>(
         ".toShort()"
     )
 
-    object int32_t : CBasicType<Int>("int32_t", 6, Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT")
+    object int32_t : CBasicType<Int>("int32_t", 6, Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT") {
+        override fun codeBlock(valueStr: String): CodeBlock {
+            return valueStr.toIntOrNull()?.let {
+                CodeBlock.of("%L", it)
+            } ?: run {
+                var fixedStr = valueStr
+                invIntLiteralRegex.find(fixedStr)?.let {
+                    val (_, num, suffix) = it.destructured
+                    fixedStr = fixedStr.replaceRange(it.range, "${num.toInt().inv().toLiteralHexString()}$suffix")
+                }
+                CodeBlock.of(fixedStr)
+            }
+        }
+    }
+
     object uint32_t : CBasicType<UInt>(
         "uint32_t",
         7,
@@ -64,10 +79,43 @@ sealed class CBasicType<T : Any>(
         Int::class,
         ".toUInt()",
         ".toInt()"
-    )
+    ) {
+        override fun codeBlock(valueStr: String): CodeBlock {
+            return valueStr.toIntOrNull()?.let {
+                CodeBlock.of("%L$literalSuffix", it)
+            } ?: run {
+                var fixedStr = valueStr
+                invIntLiteralRegex.find(fixedStr)?.let {
+                    val (_, num, suffix) = it.destructured
+                    fixedStr = fixedStr.replaceRange(it.range, "${num.toUInt().inv().toLiteralHexString()}$suffix")
+                }
+                CodeBlock.of(fixedStr)
+            }
+        }
+    }
 
-    object int : CBasicType<Int>("int", 8, Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT")
-    object int64_t : CBasicType<Long>("int64_t", 9, Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG")
+    object int : CBasicType<Int>("int", 8, Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT") {
+        override fun codeBlock(valueStr: String): CodeBlock {
+            return int32_t.codeBlock(valueStr)
+        }
+    }
+
+    object int64_t : CBasicType<Long>("int64_t", 9, Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG") {
+        override fun codeBlock(valueStr: String): CodeBlock {
+            return valueStr.toLongOrNull()?.let {
+                CodeBlock.of("%L$literalSuffix", it)
+            } ?: run {
+                var fixedStr = valueStr
+                invIntLiteralRegex.find(fixedStr)?.let {
+                    val (_, num, suffix) = it.destructured
+                    fixedStr = fixedStr.replaceRange(it.range, "${num.toLong().inv().toLiteralHexString()}$suffix")
+                }
+                fixedStr = fixedStr.replace("LL", "L")
+                CodeBlock.of(fixedStr)
+            }
+        }
+    }
+
     object uint64_t : CBasicType<ULong>(
         "uint64_t",
         10,
@@ -78,10 +126,28 @@ sealed class CBasicType<T : Any>(
         Long::class,
         ".toULong()",
         ".toLong()"
-    )
+    ) {
+        override fun codeBlock(valueStr: String): CodeBlock {
+            return valueStr.toLongOrNull()?.let {
+                CodeBlock.of("%L$literalSuffix", it)
+            } ?: run {
+                var fixedStr = valueStr
+                invIntLiteralRegex.find(fixedStr)?.let {
+                    val (_, num, suffix) = it.destructured
+                    fixedStr = fixedStr.replaceRange(it.range, "${num.toULong().inv().toLiteralHexString()}$suffix")
+                }
+                fixedStr = fixedStr.replace("LL", "L")
+                CodeBlock.of(fixedStr)
+            }
+        }
+    }
 
     object size_t : CBasicType<Long>("size_t", 11, Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG")
-    object float : CBasicType<Float>("float", 12, Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT")
+    object float : CBasicType<Float>("float", 12, Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT") {
+        override fun codeBlock(valueStr: String): CodeBlock {
+            return CodeBlock.of(valueStr)
+        }
+    }
     object double : CBasicType<Double>("double", 12, Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE")
 
     val kotlinTypeName: TypeName = kotlinType.asTypeName()
@@ -91,14 +157,16 @@ sealed class CBasicType<T : Any>(
     } else {
         ClassName(KTFFICodegenHelper.packageName, name)
     }
-    
-    fun codeBlock(value: T): CodeBlock {
-        return CodeBlock.of("%L$literalSuffix", value)
+
+    open fun codeBlock(valueStr: String): CodeBlock {
+        throw UnsupportedOperationException("Not implemented for $name")
     }
 
     val cType by lazy { CType.BasicType(this) }
 
     companion object {
+        private val invIntLiteralRegex = """~${CSyntax.intLiteralRegex}""".toRegex()
+
         val ENTRIES by lazy {
             listOf(
                 void,

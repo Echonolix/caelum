@@ -1,19 +1,16 @@
 package net.echonolix.vulkan
 
-import net.echonolix.ktffi.NativeStruct
 import net.echonolix.ktffi.malloc
+import net.echonolix.vulkan.enums.VkObjectType
 import java.lang.foreign.Arena
-import java.lang.foreign.MemoryLayout
-
-object Foo : NativeStruct(MemoryLayout.structLayout())
 
 fun main() {
 //    @Suppress("UNCHECKED_CAST")
-//    with(Arena.global()) {
-//        val a = VkPipelineShaderStageCreateInfo.malloc()
-//        val b = VkShaderModuleCreateInfo.malloc()
-//        val foo = Foo.malloc()
-//        a.pNext = b.ptr()
-//        a.pNext = foo.ptr()
+//    with(Arena.ofAuto()) {
+//        var a by VkObjectType.malloc()
+//        a = VkObjectType.VK_OBJECT_TYPE_EVENT
+//        println(a)
+//        a = VkObjectType.VK_OBJECT_TYPE_IMAGE
+//        println(a)
 //    }
 }

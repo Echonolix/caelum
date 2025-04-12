@@ -15,13 +15,13 @@ value class NativeValue<T : NativeType>(
     }
 }
 
-fun <T : NativeType> T.malloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout))
+fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
+fun <T : NativeType> TypeDescriptor<T>.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
 
-fun <T : NativeType> T.calloc(allocator: SegmentAllocator): NativeValue<T> =
+fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator): NativeValue<T> =
     NativeValue(allocator.allocate(layout).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.calloc(): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })
+fun <T : NativeType> TypeDescriptor<T>.calloc(): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })

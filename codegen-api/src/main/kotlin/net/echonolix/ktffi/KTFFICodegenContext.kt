@@ -34,16 +34,16 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             (element as? CExpression<*>)?.let {
                 return@mapCatching it
             }
-            (element as? CConst)?.let {
+            (element as? CTopLevelConst)?.let {
                 return@mapCatching CExpression.Reference(it)
             }
             throw IllegalStateException("Not a const: $trimStr")
         }.getOrElse {
             val quoteRemoved = trimStr.removeSurrounding("\"")
             if (quoteRemoved.length == trimStr.length) {
-                CExpression.Const(CBasicType.int32_t, CodeBlock.of(trimStr))
+                CExpression.Const(CBasicType.int32_t, CBasicType.int32_t.codeBlock(trimStr))
             } else {
-                CExpression.StringLiteral( trimStr)
+                CExpression.StringLiteral( quoteRemoved)
             }
         }
     }

@@ -26,31 +26,31 @@ fun callocArr(byteSize: Long): NativeArray<*> =
     NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
 
 
-fun <T : NativeType> T.mallocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count))
 
-fun <T : NativeType> T.mallocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.mallocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(layout, count))
+fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(layout, count))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.mallocArr(count: Int): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
-fun <T : NativeType> T.callocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count).apply { fill(0) })
 
-fun <T : NativeType> T.callocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.callocArr(count: Long): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> T.callocArr(count: Int): NativeArray<T> =
+fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
 var NativeArray<char>.string: String

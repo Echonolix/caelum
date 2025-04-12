@@ -1,6 +1,7 @@
 package net.echonolix.ktffi
 
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.util.*
 
@@ -60,9 +61,11 @@ interface CElement : Comparable<CElement> {
 }
 
 sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl(value.toString()) {
+    context(ctx: KTFFICodegenContext)
     abstract fun codeBlock(): CodeBlock
 
     class Const(type: CBasicType<*>, value: CodeBlock) : CExpression<CodeBlock>(type.cType, value) {
+        context(ctx: KTFFICodegenContext)
         override fun codeBlock(): CodeBlock {
             return value
         }
@@ -73,6 +76,7 @@ sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl
     }
 
     class StringLiteral(value: String) : CExpression<String>(CType.Pointer(CBasicType.char::cType), value) {
+        context(ctx: KTFFICodegenContext)
         override fun codeBlock(): CodeBlock {
             return CodeBlock.of("%S", value)
         }
@@ -82,9 +86,10 @@ sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl
         }
     }
 
-    class Reference(const: CConst) : CExpression<CConst>(const.type, const) {
+    class Reference(const: CTopLevelConst) : CExpression<CTopLevelConst>(const.type, const) {
+        context(ctx: KTFFICodegenContext)
         override fun codeBlock(): CodeBlock {
-            return value.expression.codeBlock()
+            return CodeBlock.of("%M", value.memberName())
         }
 
         override fun toString(): String {
@@ -104,7 +109,10 @@ interface CDeclaration : CElement {
         }
     }
 
-    interface TopLevel : CDeclaration, CElement.TopLevel
+    interface TopLevel : CDeclaration, CElement.TopLevel {
+        context(ctx: KTFFICodegenContext)
+        fun memberName(): MemberName
+    }
 }
 
 open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type) {
@@ -113,7 +121,12 @@ open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.I
     }
 }
 
-open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel
+open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel {
+    context(ctx: KTFFICodegenContext)
+    override fun memberName(): MemberName {
+        return MemberName(packageName(), name)
+    }
+}
 
 //
 //interface ITopLevelType : ITopLevelDeclaration {
@@ -342,6 +355,11 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
         inner class Entry(name: String, expression: CExpression<*>) : CTopLevelConst(name, expression) {
             val parent get() = this@EnumBase
+
+            context(ctx: KTFFICodegenContext)
+            override fun memberName(): MemberName {
+                return parent.className().member(name)
+            }
         }
     }
 

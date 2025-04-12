@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
+import net.echonolix.ktffi.CTopLevelConst
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -45,9 +46,13 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         }
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
-        val skipped = setOf("Header boilerplate", "API version macros", "API constants")
+        val skipped = setOf("Header boilerplate", "API version macros")
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
-
+//        with(ctx) {
+//            val a = ctx.resolveElement("VK_MAX_GLOBAL_PRIORITY_SIZE") as CTopLevelConst
+//            println(a.expression.codeBlock())
+//        }
+//        return
         object : RecursiveAction() {
             override fun compute() {
                 fun processRequire(requires: List<Registry.Feature.Require>,) {
@@ -97,7 +102,7 @@ fun main() {
 //    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
 //    repeat(20) {
         val outputDir = Path.of("vulkan/build/generated/ktgen")
-        outputDir.deleteRecursively()
+//        outputDir.deleteRecursively()
         val time = System.nanoTime()
         VKFFICodeGenProcessor().process(emptyList(), outputDir)
         println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))

@@ -12,7 +12,6 @@ import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
 import net.echonolix.ktffi.className
 import net.echonolix.ktffi.decap
-import net.echonolix.ktffi.memberName
 
 class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     fun CType.Handle.variableName(): String {

@@ -34,18 +34,18 @@ class KtffiCoreCodeGenProcessor : KtgenProcessor {
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
                 TypeSpec.objectBuilder(cname)
-                    .superclass(KTFFICodegenHelper.typeImplCname)
+                    .superclass(KTFFICodegenHelper.typeImplCname.parameterizedBy(cname))
                     .addSuperclassConstructorParameter("%M", ValueLayout::class.member(it.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
                             .addAnnotation(JvmField::class)
-                            .initializer("%N.%N()", "layout", "varHandle")
+                            .initializer("descriptor.layout.varHandle()")
                             .build()
                     )
                     .addProperty(
                         PropertySpec.builder("arrayVarHandle", VarHandle::class)
                             .addAnnotation(JvmField::class)
-                            .initializer("%N.%N()", "layout", "arrayElementVarHandle")
+                            .initializer("descriptor.layout.arrayElementVarHandle()")
                             .build()
                     )
                     .build()

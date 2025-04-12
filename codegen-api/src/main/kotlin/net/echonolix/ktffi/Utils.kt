@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package net.echonolix.ktffi
 
 import com.squareup.kotlinpoet.AnnotationSpec
@@ -59,3 +61,13 @@ fun String.pascalCaseToAllCaps() = buildString {
 fun String.decap(): String {
     return replaceFirstChar { it.lowercase() }
 }
+
+private val hexFormat = HexFormat {
+    upperCase = true
+    number.prefix = "0x"
+}
+
+fun Int.toLiteralHexString() = toHexString(hexFormat)
+fun UInt.toLiteralHexString() = toHexString(hexFormat)
+fun ULong.toLiteralHexString() = toHexString(hexFormat)
+fun Long.toLiteralHexString() = toHexString(hexFormat)
