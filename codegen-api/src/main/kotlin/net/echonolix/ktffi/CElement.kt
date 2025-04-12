@@ -278,7 +278,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
     }
 
-    sealed class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
+    abstract class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
         val entries: MutableMap<String, CConst> = Collections.synchronizedMap(mutableMapOf())
 
         context(ctx: KTFFICodegenContext)
@@ -304,7 +304,6 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
         override fun toString(): String {
             return buildString {
-                append("enum ")
                 append(name)
                 if (entries.isEmpty()) {
                     append(" {};")
@@ -317,12 +316,28 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
 
         override fun toSimpleString(): String {
-            return "enum $name"
+            return name
         }
     }
 
-    open class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType)
-    open class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType)
+    class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType) {
+        override fun toString(): String {
+            return "enum ${super.toString()}"
+        }
+
+        override fun toSimpleString(): String {
+            return "enum ${super.toSimpleString()}"
+        }
+    }
+    class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType) {
+        override fun toString(): String {
+            return "bitmask ${super.toString()}"
+        }
+
+        override fun toSimpleString(): String {
+            return "bitmask ${super.toSimpleString()}"
+        }
+    }
 
     class Function(name: String, val returnType: CType, val parameters: List<Parameter>) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
