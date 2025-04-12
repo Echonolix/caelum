@@ -217,11 +217,18 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return union
     }
 
-    private fun resolveHandle(handle: Registry.Types.Type): CType.Handle {
-        return object : CType.Handle(handle.name!!, CBasicType.size_t.cType) {
-            context(ctx: KTFFICodegenContext) override fun memoryLayout(): CodeBlock {
-                TODO("Not yet implemented")
-            }
+    private fun resolveHandle(handle: Registry.Types.Type): VkHandle {
+        handle.name ?: throw IllegalStateException("Handle name is null")
+        val xmlType = handle.inner[0].contentString.toXMLTagFreeString()
+        val parent = handle.parent?.let {
+            resolveElement(it) as? VkHandle ?: throw IllegalStateException("Parent $it is not a handle")
+        }
+        val objectEnum = resolveElement(handle.objtypeenum!!) as? CType.EnumBase.Entry
+            ?: throw IllegalStateException("Cannot find object type enum for handle ${handle.name}")
+        return when (xmlType) {
+            "VK_DEFINE_HANDLE" -> VkDispatchableHandle(handle.name, parent, objectEnum)
+            "VK_DEFINE_NON_DISPATCHABLE_HANDLE" -> VkHandle(handle.name, parent, objectEnum)
+            else -> throw IllegalStateException("Unexpected handle type $xmlType for ${handle.name}")
         }
     }
 
@@ -312,8 +319,12 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
 
         registry.enumTypes[cElementStr]?.let {
-            val enumXml = registry.enums[it.name] ?: throw IllegalStateException("Cannot find enum type: ${it.name}")
-            return resolveEnum(enumXml, it.name!!)
+            val xmlEnumType = registry.enums[it.name] ?: throw IllegalStateException("Cannot find enum type: ${it.name}")
+            return resolveEnum(xmlEnumType, it.name!!)
+        }
+
+        registry.enumsValueTypeName[cElementStr]?.let { xmlEnumType ->
+            return resolveEnum(xmlEnumType, xmlEnumType.name).entries[cElementStr]!!
         }
 
         registry.structTypes[cElementStr]?.let {

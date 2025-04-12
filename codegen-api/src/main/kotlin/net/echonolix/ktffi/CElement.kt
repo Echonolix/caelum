@@ -226,15 +226,20 @@ sealed class CType(name: String) : CElement.Impl(name) {
 
     sealed class CompositeType(name: String) : CType(name)
 
-    abstract class Handle(name: String, val baseType: BasicType) : CompositeType(name) {
+    abstract class Handle(name: String) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
-            return baseType.nativeType()
+            return LONG
         }
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return this.className()
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun memoryLayout(): CodeBlock {
+            return CodeBlock.of("%M", KTFFICodegenHelper.addressLayoutMember)
         }
 
         override fun toString(): String {

@@ -85,7 +85,7 @@ sealed class CBasicType<T : Any>(
     object double : CBasicType<Double>("double", 12, Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE")
 
     val kotlinTypeName: TypeName = kotlinType.asTypeName()
-    val valueLayoutMember = ValueLayout::class.member(valueLayoutName)
+    val valueLayoutMember = KTFFICodegenHelper.valueLayoutCname.member(valueLayoutName)
     val nativeTypeName = if (name == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))
     } else {

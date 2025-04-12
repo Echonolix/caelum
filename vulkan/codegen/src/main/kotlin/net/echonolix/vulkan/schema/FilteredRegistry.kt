@@ -35,6 +35,15 @@ class FilteredRegistry(registry: Registry) {
         .filter { it.value.category == Registry.Types.Type.Category.enum }
         .associate { it.toPair() }
 
+    val enumsValueTypeName = enums.values.asSequence()
+        .filter { it.type == Registry.Enums.Type.enum }
+        .flatMap { enumType ->
+            enumType.enums.map {
+                it.name to enumType
+            }
+        }
+        .toMap()
+
     val bitmaskTypes = registryTypes.asSequence()
         .filter { it.value.category == Registry.Types.Type.Category.bitmask }
         .associate { it.toPair() }

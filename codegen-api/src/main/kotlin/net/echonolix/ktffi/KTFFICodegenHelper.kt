@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.asClassName
 import java.lang.foreign.MemoryLayout
+import java.lang.foreign.ValueLayout
 
 object KTFFICodegenHelper {
     const val packageName = "net.echonolix.ktffi"
@@ -27,4 +28,7 @@ object KTFFICodegenHelper {
     val unionLayout = memoryLayoutCname.member("unionLayout")
     val sequenceLayout = memoryLayoutCname.member("sequenceLayout")
     val paddingLayout = memoryLayoutCname.member("paddingLayout")
+
+    val valueLayoutCname = ValueLayout::class.asClassName()
+    val addressLayoutMember = valueLayoutCname.member("ADDRESS")
 }

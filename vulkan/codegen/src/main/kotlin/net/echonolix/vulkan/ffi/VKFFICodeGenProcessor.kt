@@ -68,7 +68,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
         filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
         ctx.allElement.values.asSequence()
-            .filterIsInstance<CType.EnumBase>()
+            .filterIsInstance<CType.Handle>()
 //            .filter { it.name.startsWith("VkCmd") }
             .sorted()
             .forEach {
