@@ -45,19 +45,20 @@ class VkFFICodeGenProcessor : KtgenProcessor {
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
         val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
-        ctx.resolveElement("VK_API_VERSION_1_0")
-        filteredRegistry.registryFeatures.asSequence()
-            .flatMap { it.require }
-            .filter { it.comment !in skipped }
-            .forEach { require ->
-                require.types.forEach {
-                    ctx.resolveElement(it.name)
-                }
-//                require.enums.forEach {
-//                    ctx.resolveType(it.name)
+//        ctx.resolveElement("VK_API_VERSION_1_0")
+        ctx.resolveElement("VkTransformMatrixKHR")
+        ctx.resolveElement("VkInstanceCreateInfo")
+//        filteredRegistry.registryFeatures.asSequence()
+//            .flatMap { it.require }
+//            .filter { it.comment !in skipped }
+//            .forEach { require ->
+//                require.types.forEach {
+//                    ctx.resolveElement(it.name)
 //                }
-            }
-        ctx.allElement.values.sorted().forEach(::println)
+//            }
+        ctx.allElement.values.sorted().forEach {
+            println(it)
+        }
     }
 }
 

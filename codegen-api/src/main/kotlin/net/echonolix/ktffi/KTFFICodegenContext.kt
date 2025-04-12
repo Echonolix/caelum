@@ -54,20 +54,20 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             .removeContinuousSpaces()
         return allTypes[trimStr] ?: run {
             CSyntax.pointerOrArrayRegex.find(trimStr)?.let {
-                return when (it.value) {
-                    "*" -> {
+                return when {
+                    it.value.endsWith("*") -> {
                         CType.Pointer {
                             resolveType(trimStr.removeRange(it.range))
                         }
                     }
-                    "" -> {
+                    it.value.isEmpty() -> {
                         CType.Array(
-                            resolveType(trimStr.substring(0, it.range.first)),
+                            resolveType(trimStr.removeRange(it.range)),
                         )
                     }
                     else -> {
                         CType.Array.Sized(
-                            resolveType(trimStr.substring(0, it.range.first)),
+                            resolveType(trimStr.removeRange(it.range)),
                             resolveExpression(it.value.removeSurrounding("[", "]"))
                         )
                     }

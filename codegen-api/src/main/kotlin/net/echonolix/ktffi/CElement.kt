@@ -401,10 +401,13 @@ sealed class CType(name: String) : CElement.Impl(name) {
         override fun toString(): String {
             return name
         }
+        override fun compositeName(parentStr: String): String {
+            return elementType.compositeName("$parentStr[]")
+        }
 
         class Sized(elementType: CType, val length: CExpression) : Array(elementType) {
             override fun compositeName(parentStr: String): String {
-                return elementType.compositeName("[$length]$parentStr")
+                return elementType.compositeName("$parentStr[$length]")
             }
         }
     }
@@ -437,7 +440,7 @@ sealed class CType(name: String) : CElement.Impl(name) {
         }
 
         override fun compositeName(parentStr: String): String {
-            return elementType.compositeName("*$parentStr")
+            return elementType.compositeName("$parentStr*")
         }
     }
 

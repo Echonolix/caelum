@@ -198,6 +198,6 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return CTopLevelConst(it.value, expression)
         }
 
-        throw kotlin.IllegalStateException("Cannot resolve type: $cElementStr")
+        throw IllegalStateException("Cannot resolve type: $cElementStr")
     }
 }
