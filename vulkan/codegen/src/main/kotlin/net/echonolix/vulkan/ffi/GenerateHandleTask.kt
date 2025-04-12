@@ -9,6 +9,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.NativeType
 import net.echonolix.ktffi.className
+import net.echonolix.ktffi.decap
 import net.echonolix.ktffi.memberName
 
 class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
@@ -32,10 +33,11 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             .map { (_, type) ->
                 type as VkHandle
                 val cname = type.className()
+                val superType = type.parent?.className()?.nestedClass("Child") ?: vkHandleCname
                 FileSpec.builder(cname)
                     .addType(
                         TypeSpec.interfaceBuilder(cname)
-                            .addSuperinterface(type.parent?.className() ?: vkHandleCname)
+                            .addSuperinterface(superType)
                             .addProperty(
                                 PropertySpec.builder("objectType", objTypeCname)
                                     .addModifiers(KModifier.OVERRIDE)
@@ -46,11 +48,17 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                     )
                                     .build()
                             )
+                            .addType(
+                                TypeSpec.interfaceBuilder("Child")
+                                    .addSuperinterface(superType)
+                                    .addProperty(type.name.removePrefix("Vk").decap(), cname)
+                                    .build()
+                            )
                             .build()
                     )
             }
             .forEach(ctx::writeOutput)
 
-       typeAlias.joinAndWriteOutput(ctx.handlePackageName)
+        typeAlias.joinAndWriteOutput(ctx.handlePackageName)
     }
 }

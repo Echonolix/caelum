@@ -55,3 +55,7 @@ fun String.pascalCaseToAllCaps() = buildString {
         append(c.uppercaseChar())
     }
 }
+
+fun String.decap(): String {
+    return replaceFirstChar { it.lowercase() }
+}
