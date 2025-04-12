@@ -2,6 +2,7 @@ package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.CodeBlock
 import net.echonolix.ktffi.*
+import net.echonolix.vulkan.schema.Element
 import net.echonolix.vulkan.schema.FilteredRegistry
 import net.echonolix.vulkan.schema.Registry
 import net.echonolix.vulkan.schema.XMLComment
@@ -84,18 +85,17 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     private val intBitRegex = """:(\d+)""".toRegex()
 
     private fun resolveGroupMembers(xmlGroupType: Registry.Types.Type): List<CType.Group.Member> {
-        var comment: String? = null
+        var lineComment: String? = null
         val members = mutableListOf<CType.Group.Member>()
         xmlGroupType.inner.forEach { xmlMember ->
             val xmlComment = xmlMember.tryParseXML<XMLComment>()
             if (xmlComment != null) {
-                check(comment == null)
-                comment = xmlComment.value
+                check(lineComment == null)
+                lineComment = xmlComment.value
                 return@forEach
             }
             val xmlMember = xmlMember.tryParseXML<XMLMember>()!!
             if (xmlMember.api != null && !xmlMember.api.split(",").contains("vulkan")) return@forEach
-            val innerText = xmlMember.inner.map { it.contentString }
             var bits = -1
             var typeStr = xmlMember.inner.toXmlTagFreeString()
             intBitRegex.find(typeStr)?.let {
@@ -114,8 +114,13 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             (xmlMember.altlen ?: xmlMember.len)?.let {
                 member.tags[LenTag] = LenTag(it)
             }
-//            member.docs = comment
-            comment = null
+            xmlMember.comment?.let {
+                member.tags[ElementCommentTag] = ElementCommentTag(it)
+            }
+            lineComment?.let {
+                member.tags[LineCommentTag] = LineCommentTag(it)
+            }
+            lineComment = null
             members.add(member)
         }
         return members

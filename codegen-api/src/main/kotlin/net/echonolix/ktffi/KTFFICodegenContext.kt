@@ -46,7 +46,9 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             CSyntax.pointerOrArrayRegex.find(trimStr)?.let {
                 return when (it.value) {
                     "*" -> {
-                        CType.Pointer { resolveType(trimStr.removeRange(it.range)) }
+                        CType.Pointer {
+                            resolveType(trimStr.removeRange(it.range))
+                        }
                     }
                     "" -> {
                         CType.Array(
