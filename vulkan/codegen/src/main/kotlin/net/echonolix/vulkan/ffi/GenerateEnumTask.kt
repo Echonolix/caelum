@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
+import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import net.echonolix.ktffi.CBasicType
 import net.echonolix.ktffi.CExpression
@@ -20,6 +21,7 @@ import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
 import java.lang.invoke.MethodHandle
+import kotlin.random.Random
 
 class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
@@ -442,9 +444,22 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return file.addType(type.addType(companion.build()).build())
     }
 
+    private val validChars = ('a'..'z').toList()
+
     private fun FileSpec.Builder.addNativeAccess(thisCname: ClassName, baseType: CBasicType<*>) {
+        val random = Random(0)
+
+        fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
+            .addMember("%S",
+                "${thisCname.simpleName}_${base}_${(0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")}"
+            )
+            .build()
+
         val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
         val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
+        val valueCNameP = KTFFICodegenHelper.valueCname.parameterizedBy(thisCname)
+        val nullableAny = Any::class.asClassName().copy(nullable = true)
+
         addFunction(
             FunSpec.builder("get")
                 .receiver(arrayCnameP)
@@ -497,6 +512,70 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     "%T.arrayVarHandle.set(%M, _address, index, %T.toInt(value))",
                     baseType.nativeTypeName,
                     KTFFICodegenHelper.omniSegment,
+                    thisCname
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getValue")
+                .addAnnotation(randomName("getValue"))
+                .receiver(pointerCnameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .returns(thisCname)
+                .addStatement(
+                    "return %T.fromInt(%T.valueVarHandle.get(%M, _address) as %T)",
+                    thisCname,
+                    baseType.nativeTypeName,
+                    KTFFICodegenHelper.omniSegment,
+                    baseType.kotlinTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("setValue")
+                .addAnnotation(randomName("setValue"))
+                .receiver(pointerCnameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .addParameter("value", thisCname)
+                .addStatement(
+                    "%T.valueVarHandle.set(%M, _address, %T.toInt(value))",
+                    baseType.nativeTypeName,
+                    KTFFICodegenHelper.omniSegment,
+                    thisCname
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getValue")
+                .addAnnotation(randomName("getValue"))
+                .receiver(valueCNameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .returns(thisCname)
+                .addStatement(
+                    "return %T.fromInt(%T.valueVarHandle.get(_segment, 0L) as %T)",
+                    thisCname,
+                    baseType.nativeTypeName,
+                    baseType.kotlinTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("setValue")
+                .addAnnotation(randomName("setValue"))
+                .receiver(valueCNameP)
+                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .addParameter("value", thisCname)
+                .addStatement(
+                    "%T.valueVarHandle.set(_segment, 0L, %T.toInt(value))",
+                    baseType.nativeTypeName,
                     thisCname
                 )
                 .build()
