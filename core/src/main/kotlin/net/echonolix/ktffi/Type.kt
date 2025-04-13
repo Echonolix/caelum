@@ -5,7 +5,6 @@ import java.lang.foreign.StructLayout
 import java.lang.foreign.UnionLayout
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandle
-import kotlin.math.max
 
 interface TypeDescriptor<T : NativeType> {
     val layout: MemoryLayout
