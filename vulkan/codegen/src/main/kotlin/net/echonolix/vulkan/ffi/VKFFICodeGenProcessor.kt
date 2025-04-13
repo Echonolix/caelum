@@ -88,6 +88,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 function.join()
             }
         }.fork().join()
+//        GenerateFunctionTask(ctx).invoke()
 
         return ctx.outputFiles
     }

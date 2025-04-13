@@ -2,10 +2,7 @@ package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.CodeBlock
 import net.echonolix.ktffi.*
-import net.echonolix.vulkan.schema.FilteredRegistry
-import net.echonolix.vulkan.schema.Registry
-import net.echonolix.vulkan.schema.XMLComment
-import net.echonolix.vulkan.schema.XMLMember
+import net.echonolix.vulkan.schema.*
 import java.nio.file.Path
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
@@ -55,7 +52,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             .map {
                 CSyntax.funcPointerParameterRegex.matchEntire(it)
                     ?: throw IllegalStateException("Cannot resolve func pointer parameter for: ${xmlTypeDefType.name}")
-            }.map { it.groupValues }.map {
+            }
+            .map { it.groupValues }
+            .map {
                 CType.Function.Parameter(it[2], resolveType(it[1]))
             }.toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
@@ -255,9 +254,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         val returnTypeStr = xmlCommand.proto.type
         val returnType = resolveType(returnTypeStr)
         val parameters = xmlCommand.params.asSequence()
-            .filter {
-                it.name != null
-            }.map {
+            .filter { it.name != null }
+            .filter { it.api == null || it.api == API.vulkan }
+            .map {
                 it.name!!
                 val innerStr = it.inner.toXmlTagFreeString()
                 val matchEntire = CSyntax.typeRegex.matchEntire(innerStr)

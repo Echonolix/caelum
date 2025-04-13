@@ -61,9 +61,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             structTypes.parallelStream()
                 .filter { (name, type) -> name == type.name }
-                .map { (_, structType) ->
-                    genGroupType(structType)
-                }
+                .map { (_, structType) -> genGroupType(structType) }
                 .forEach(ctx::writeOutput)
 
             typeAlias.joinAndWriteOutput(VKFFI.structPackageName)
@@ -77,9 +75,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             unionTypes.parallelStream()
                 .filter { (name, type) -> name == type.name }
-                .map { (_, enumType) ->
-                    genGroupType(enumType)
-                }
+                .map { (_, enumType) -> genGroupType(enumType) }
                 .forEach(ctx::writeOutput)
 
             typeAlias.joinAndWriteOutput(VKFFI.unionPackageName)
@@ -345,9 +341,9 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         fun CType.Group.Member.valueMemberOffset(): CodeBlock {
             return CodeBlock.builder()
                 .addStatement(
-                    "%T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long",
+                    "%T.%N.invokeExact(_segment.address(), 0L) as Long",
                     thisCname,
-                    this.name
+                    "${this.name}_offsetHandle"
                 )
                 .build()
         }
@@ -355,9 +351,9 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         fun CType.Group.Member.pointerMemberOffset(): CodeBlock {
             return CodeBlock.builder()
                 .addStatement(
-                    "%T.%N_offsetHandle.invokeExact(%M, _address) as Long",
+                    "%T.%N.invokeExact(%M, _address) as Long",
                     thisCname,
-                    this.name,
+                    "${this.name}_offsetHandle",
                     KTFFICodegenHelper.omniSegment
                 )
                 .build()
@@ -405,9 +401,9 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                     )
                                     .add(valueMemberOffset)
                                     .add(
-                                        ", %T.%N_byteSize)",
+                                        ", %T.%N)",
                                         thisCname,
-                                        member.name
+                                        "${member.name}_byteSize"
                                     )
                                     .build()
                             )
@@ -450,9 +446,9 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                     )
                                     .add(pointerMemberOffset)
                                     .add(
-                                        ", %T.%N_byteSize)",
+                                        ", %T.%N)",
                                         thisCname,
-                                        member.name
+                                        "${member.name}_byteSize"
                                     )
                                     .build()
                             )
@@ -590,7 +586,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         fun arrayAccess(member: CType.Group.Member, memberType: CType.Array) {
             val eType = memberType.elementType
-            val memberPointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(eType.className())
+            val memberPointerCnameP = memberType.ktApiType()
             val cTypeNameAnnotation = AnnotationSpec.builder(CTypeName::class)
                 .addMember("%S", memberType.toSimpleString())
                 .build()

@@ -368,6 +368,16 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: KTFFICodegenContext)
+        override fun packageName(): String {
+            throw UnsupportedOperationException("Array isn't a top level type")
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun className(): ClassName {
+            throw UnsupportedOperationException("Array isn't a top level type")
+        }
+
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of(
                 "%M(%L)",
@@ -473,7 +483,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         final override fun ktApiType(): TypeName {
-            return KTFFICodegenHelper.pointerCname.parameterizedBy(className())
+            return className()
         }
 
         context(ctx: KTFFICodegenContext)
