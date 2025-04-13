@@ -10,7 +10,7 @@ import java.util.Random
 import kotlin.reflect.KClass
 
 class KTFFICoreCodeGenProcessor : KtgenProcessor {
-    override fun process(inputs: List<Path>, outputDir: Path) {
+    override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val validChars = ('a'..'z').toList()
         val random = Random(0)
 
@@ -174,8 +174,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .build()
             )
         }
-
-        file.build().writeTo(outputDir)
+        return setOf(file.build().writeTo(outputDir))
     }
 
     private enum class CBasicType(

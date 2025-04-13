@@ -21,7 +21,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
-        val vkHandleCname = ClassName(ctx.handlePackageName, "VkHandle")
+        val vkHandleCname = ClassName(VKFFI.handlePackageName, "VkHandle")
 
         val objTypeCname = resolveType("VkObjectType").className()
         val vkHandleFile = FileSpec.builder(vkHandleCname)
@@ -106,6 +106,6 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             }
             .forEach(ctx::writeOutput)
 
-        typeAlias.joinAndWriteOutput(ctx.handlePackageName)
+        typeAlias.joinAndWriteOutput(VKFFI.handlePackageName)
     }
 }

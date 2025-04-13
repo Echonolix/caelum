@@ -56,17 +56,20 @@ object VKFFI {
         "ANDROID", "HUAWEI"
     )
 
-    val packageName = "net.echonolix.vulkan"
-    val enumPackageName = "$packageName.enums"
-    val vkEnumBaseCname = ClassName(enumPackageName, "VkEnumBase")
-    val vkEnumsCname = ClassName(enumPackageName, "VkEnums")
-    val vkFlags32CNAME = ClassName(enumPackageName, "VkFlags")
-    val vkFlags64CNAME = ClassName(enumPackageName, "VkFlags64")
+    val basePkgName = "net.echonolix.vulkan"
+    val enumPackageName = "${basePkgName}.enums"
+    val flagPackageName = "${basePkgName}.flags"
+    val structPackageName = "${basePkgName}.structs"
+    val unionPackageName = "${basePkgName}.unions"
+    val funcPointerPackageName = "${basePkgName}.funcptrs"
+    val handlePackageName = "${basePkgName}.handles"
 
-    val structPackageName = "$packageName.structs"
+
+    val vkEnumBaseCname = ClassName(basePkgName, "VkEnumBase")
+    val vkEnumCname = ClassName(enumPackageName, "VkEnum")
+    val vkFlags32CNAME = ClassName(flagPackageName, "VkFlags32")
+    val vkFlags64CNAME = ClassName(flagPackageName, "VkFlags64")
     val vkStructCname = ClassName(structPackageName, "VkStruct")
-
-    val unionPackageName = "$packageName.unions"
     val vkUnionCname = ClassName(unionPackageName, "VkUnion")
 
     val methodHandlesCname = MethodHandles::class.asClassName()

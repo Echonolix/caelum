@@ -20,6 +20,7 @@ import net.echonolix.ktffi.CTopLevelConst
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
+import net.echonolix.ktffi.className
 import java.lang.invoke.MethodHandle
 import kotlin.random.Random
 
@@ -27,47 +28,11 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val constants = ConstantsTask().fork()
         val enum = EnumTask().fork()
-
-//    val skipped = setOf("VkFormat")
-
-//        val enumTypeList = registry.enumTypes.asSequence()
-////            .filter { (name, _) -> name !in skipped }
-//            .filter { (_, type) -> ctx.filter(type) }
-//            .map { it.toPair() }
-//            .toList()
-//        val genEnumTypeAliasTask = GenTypeAliasTaskOld(ctx, enumTypeList).fork()
-//
-//        val flagTypeList = registry.flagTypes.asSequence()
-////            .filter { (name, _) -> name !in skipped }
-//            .filter { (_, type) -> ctx.filter(type) }
-//            .map { it.toPair() }
-//            .toList()
-//        val genFlagTypeAliasTask = GenTypeAliasTaskOld(ctx, flagTypeList).fork()
-//
-//        flagTypeList.parallelStream()
-//            .filter { (name, type) -> name == type.name }
-//            .map { (_, flagType) -> genFlagType(flagType) }
-//            .forEach { ctx.writeOutput(it) }
-//
-//        enumTypeList.parallelStream()
-//            .filter { (name, type) -> name == type.name }
-//            .map { (_, enumType) -> genEnumType(enumType) }
-//            .forEach { ctx.writeOutput(it) }
-//
-//        val enumTypeAliasesFile = FileSpec.builder(ctx.enumPackageName, "EnumTypeAliases")
-//        genEnumTypeAliasTask.join().forEach {
-//            enumTypeAliasesFile.addTypeAlias(it)
-//        }
-//        ctx.writeOutput(enumTypeAliasesFile)
-//
-//        val flagTypeAliasesFile = FileSpec.builder(ctx.enumPackageName, "FlagTypeAliases")
-//        genFlagTypeAliasTask.join().forEach {
-//            flagTypeAliasesFile.addTypeAlias(it)
-//        }
-//        ctx.writeOutput(flagTypeAliasesFile)
+        val bitmask = BitmaskTask().fork()
 
         constants.join()
         enum.join()
+        bitmask.join()
     }
 
     private inner class EnumTask : VKFFITask<Unit>(ctx) {
@@ -82,13 +47,29 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 }
                 .forEach(ctx::writeOutput)
 
-            typeAlias.joinAndWriteOutput(ctx.enumPackageName)
+            typeAlias.joinAndWriteOutput(VKFFI.enumPackageName)
+        }
+    }
+
+    private inner class BitmaskTask : VKFFITask<Unit>(ctx) {
+        override fun VKFFICodeGenContext.compute() {
+            val flagTypes = ctx.filterType<CType.Bitmask>()
+            val typeAlias = GenTypeAliasTask(this, flagTypes).fork()
+
+            flagTypes.parallelStream()
+                .filter { (name, type) -> name == type.name }
+                .map { (_, flagType) ->
+                    genFlagType(flagType)
+                }
+                .forEach(ctx::writeOutput)
+
+            typeAlias.joinAndWriteOutput(VKFFI.flagPackageName)
         }
     }
 
     private inner class ConstantsTask : VKFFITask<Unit>(ctx) {
         override fun VKFFICodeGenContext.compute() {
-            val vkEnumFile = FileSpec.builder(VKFFI.vkEnumsCname)
+            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCname)
                 .addType(
                     TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
                         .addSuperinterface(KTFFICodegenHelper.typeCname)
@@ -101,11 +82,12 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                             PropertySpec.builder("nativeType", NativeType::class)
                                 .build()
                         )
-                        .addModifiers(KModifier.SEALED)
                         .build()
                 )
+            ctx.writeOutput(vkEnumBaseFile)
+            val vkEnumFile = FileSpec.builder(VKFFI.vkEnumCname)
                 .addType(
-                    TypeSpec.interfaceBuilder(VKFFI.vkEnumsCname)
+                    TypeSpec.interfaceBuilder(VKFFI.vkEnumCname)
                         .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
@@ -125,6 +107,9 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         )
                         .build()
                 )
+            ctx.writeOutput(vkEnumFile)
+
+            val vkFlagFile = FileSpec.builder(VKFFI.flagPackageName, "VkFlags")
                 .addType(
                     TypeSpec.interfaceBuilder(VKFFI.vkFlags32CNAME)
                         .addModifiers(KModifier.SEALED)
@@ -167,9 +152,9 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         )
                         .build()
                 )
-            ctx.writeOutput(vkEnumFile)
+            ctx.writeOutput(vkFlagFile)
 
-            val constantsFile = FileSpec.builder(ctx.enumPackageName, "Constants")
+            val constantsFile = FileSpec.builder(VKFFI.basePkgName, "Constants")
             constantsFile.addProperties(
                 ctx.filterType<CTopLevelConst>().parallelStream()
                     .sorted(
@@ -199,15 +184,21 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
     }
 
-    private enum class EnumKind(val cname: ClassName) {
-        ENUM(VKFFI.vkEnumsCname),
-        FLAG32(VKFFI.vkFlags32CNAME),
-        FLAG64(VKFFI.vkFlags64CNAME)
-    }
-
-    private fun TypeSpec.Builder.addVkEnum(kind: EnumKind, baseType: CBasicType<*>): TypeSpec.Builder {
-        addSuperinterface(kind.cname)
-
+    context(ctx: VKFFICodeGenContext)
+    private fun TypeSpec.Builder.addSuper(enumBase: CType.EnumBase): TypeSpec.Builder {
+        val baseType = enumBase.baseType
+        val superCname = when (enumBase) {
+            is CType.Enum -> VKFFI.vkEnumBaseCname
+            is CType.Bitmask -> {
+                when (baseType) {
+                    CBasicType.int32_t -> VKFFI.vkFlags32CNAME
+                    CBasicType.int64_t -> VKFFI.vkFlags64CNAME
+                    else -> throw IllegalArgumentException("Unsupported base type: $baseType")
+                }
+            }
+            else -> throw IllegalArgumentException("Unsupported enum base type: $enumBase")
+        }
+        addSuperinterface(superCname)
         primaryConstructor(
             FunSpec.constructorBuilder()
                 .addParameter("value", baseType.kotlinTypeName)
@@ -217,6 +208,16 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             PropertySpec.builder("value", baseType.kotlinTypeName)
                 .addModifiers(KModifier.OVERRIDE)
                 .initializer("value")
+                .build()
+        )
+        addProperty(
+            PropertySpec.builder("descriptor", KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(enumBase.className()))
+                .addModifiers(KModifier.OVERRIDE)
+                .getter(
+                    FunSpec.getterBuilder()
+                        .addStatement("return Companion")
+                        .build()
+                )
                 .build()
         )
         return this
@@ -254,47 +255,63 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return this
     }
 
-//    private fun genFlagType(flagType: Element.FlagType): FileSpec.Builder {
-//        val flagBitType = registry.flagBitTypes[flagType.bitType]
-//        val thisCname = ClassName(ctx.enumPackageName, flagType.name)
-//        val enumKind = if (flagBitType?.type == CBasicType.int64_t) EnumKind.FLAG64 else EnumKind.FLAG32
-//
-//        val type = TypeSpec.classBuilder(thisCname)
-//        type.tryAddKdoc(flagType)
-//        if (flagBitType != null) {
-//            type.tryAddKdoc(flagBitType)
-//            type.addVkEnum(enumKind)
-//        } else {
-//            type.addVkEnum(enumKind)
-//        }
-//        type.addAnnotation(JvmInline::class)
-//        type.addModifiers(KModifier.VALUE)
-//        type.addFunction(
-//            FunSpec.builder("plus")
-//                .addModifiers(KModifier.OPERATOR)
-//                .addParameter("other", thisCname)
-//                .returns(thisCname)
-//                .addStatement("return %T(value or other.value)", thisCname)
-//                .build()
-//        )
-//        type.addFunction(
-//            FunSpec.builder("minus")
-//                .addModifiers(KModifier.OPERATOR)
-//                .addParameter("other", thisCname)
-//                .returns(thisCname)
-//                .addStatement("return %T(value and other.value.inv())", thisCname)
-//                .build()
-//        )
-//        type.addFunction(
-//            FunSpec.builder("contains")
-//                .addParameter("other", thisCname)
-//                .returns(Boolean::class)
-//                .addStatement("return (value and other.value == other.value)")
-//                .build()
-//        )
-//
-//        val companion = TypeSpec.companionObjectBuilder()
-//        companion.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", enumKind.dataType.nativeTypeName))
+    private fun VKFFICodeGenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
+        val thisCname = flagType.className()
+
+        val type = TypeSpec.classBuilder(thisCname)
+        type.tryAddKdoc(flagType)
+        type.addSuper(flagType)
+
+        type.addAnnotation(JvmInline::class)
+        type.addModifiers(KModifier.VALUE)
+        type.addFunction(
+            FunSpec.builder("plus")
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("other", thisCname)
+                .returns(thisCname)
+                .addStatement("return %T(value or other.value)", thisCname)
+                .build()
+        )
+        type.addFunction(
+            FunSpec.builder("minus")
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("other", thisCname)
+                .returns(thisCname)
+                .addStatement("return %T(value and other.value.inv())", thisCname)
+                .build()
+        )
+        type.addFunction(
+            FunSpec.builder("contains")
+                .addParameter("other", thisCname)
+                .returns(Boolean::class)
+                .addStatement("return (value and other.value == other.value)")
+                .build()
+        )
+
+
+        val companion = TypeSpec.companionObjectBuilder()
+        companion.addCompanionSuper(flagType)
+        companion.addFunction(
+            FunSpec.builder("toInt")
+                .addAnnotation(JvmStatic::class)
+                .addModifiers(KModifier.INLINE)
+                .addParameter("value", thisCname)
+                .returns(flagType.baseType.kotlinTypeName)
+                .addStatement("return value.value")
+                .build()
+        )
+        companion.addFunction(
+            FunSpec.builder("fromInt")
+                .addAnnotation(JvmStatic::class)
+                .addModifiers(KModifier.INLINE)
+                .addParameter("value", flagType.baseType.kotlinTypeName)
+                .returns(thisCname)
+                .addStatement("return %T(value)", thisCname)
+                .build()
+        )
+        companion.addMethodHandleFields()
+
+
 //        flagBitType?.entries?.values?.let { flagBitTypes ->
 //            flagBitTypes.forEach {
 //                companion.addProperty(
@@ -316,96 +333,27 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 //                )
 //            }
 //        }
-//
-//        companion.addFunction(
-//            FunSpec.builder("toInt")
-//                .addAnnotation(JvmStatic::class)
-//                .addModifiers(KModifier.INLINE)
-//                .addParameter("value", thisCname)
-//                .returns(enumKind.dataType.kotlinType)
-//                .addStatement("return value.value")
-//                .build()
-//        )
-//        companion.addFunction(
-//            FunSpec.builder("fromInt")
-//                .addAnnotation(JvmStatic::class)
-//                .addModifiers(KModifier.INLINE)
-//                .addParameter("value", enumKind.dataType.kotlinType)
-//                .returns(thisCname)
-//                .addStatement("return %T(value)", thisCname)
-//                .build()
-//        )
-//        companion.addMethodHandleFields(thisCname, enumKind)
-//
-//        val file = FileSpec.builder(thisCname)
-//        file.addNativeAccess(thisCname, enumKind.dataType)
-//        return file.addType(type.addType(companion.build()).build())
-//    }
+
+        val file = FileSpec.builder(thisCname)
+        file.addNativeAccess(thisCname, flagType.baseType)
+        return file.addType(type.addType(companion.build()).build())
+    }
 
     private fun VKFFICodeGenContext.genEnumType(enumType: CType.Enum): FileSpec.Builder {
-        val thisCname = ClassName(ctx.enumPackageName, enumType.name)
+        val thisCname = enumType.className()
+
         val type = TypeSpec.enumBuilder(thisCname)
-        val enumEntryBaseType = enumType.baseType
-        val companion = TypeSpec.companionObjectBuilder()
-
         type.tryAddKdoc(enumType)
-        type.addVkEnum(EnumKind.ENUM, enumEntryBaseType)
-        type.addProperty(
-            PropertySpec.builder("descriptor", KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname))
-                .addModifiers(KModifier.OVERRIDE)
-                .getter(
-                    FunSpec.getterBuilder()
-                        .addStatement("return Companion")
-                        .build()
-                )
-                .build()
-        )
-        enumType.entries.values.asSequence()
-            .forEach { entry ->
-                val expression = entry.expression
-                when (expression) {
-                    is CExpression.Const -> {
-                        type.addEnumConstant(
-                            entry.name,
-                            TypeSpec.anonymousClassBuilder()
-                                .tryAddKdoc(entry)
-                                .superclass(ClassName(ctx.enumPackageName, enumType.name))
-                                .addSuperclassConstructorParameter(entry.expression.codeBlock())
-                                .build()
-                        )
-                    }
-                    is CExpression.Reference -> {
-                        companion.addProperty(
-                            PropertySpec.builder(entry.name, thisCname)
-                                .initializer("%N", expression.value.name)
-                                .tryAddKdoc(entry)
-                                .build()
-                        )
-                    }
-                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
-                }
-            }
+        type.addSuper(enumType)
 
-        companion.addAnnotation(
-            AnnotationSpec.builder(Suppress::class)
-                .addMember("%S", "UNCHECKED_CAST")
-                .build()
-        )
-        companion.addSuperinterface(
-            KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname),
-            CodeBlock.of(
-                "%T.descriptor as %T<%T>",
-                enumEntryBaseType.nativeTypeName,
-                KTFFICodegenHelper.typeDescriptorCname,
-                thisCname
-            )
-        )
+        val companion = TypeSpec.companionObjectBuilder()
+        companion.addCompanionSuper(enumType)
         companion.addFunction(
             FunSpec.builder("fromInt")
                 .addAnnotation(JvmStatic::class)
                 .addParameter(
                     "value",
-                    enumEntryBaseType.kotlinTypeName
+                    enumType.baseType.kotlinTypeName
                 )
                 .returns(thisCname)
                 .addCode(
@@ -433,27 +381,73 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             FunSpec.builder("toInt")
                 .addAnnotation(JvmStatic::class)
                 .addParameter("value", thisCname)
-                .returns(enumEntryBaseType.kotlinTypeName)
+                .returns(enumType.baseType.kotlinTypeName)
                 .addStatement("return value.value")
                 .build()
         )
         companion.addMethodHandleFields()
 
+        enumType.entries.values.asSequence()
+            .forEach { entry ->
+                val expression = entry.expression
+                when (expression) {
+                    is CExpression.Const -> {
+                        type.addEnumConstant(
+                            entry.name,
+                            TypeSpec.anonymousClassBuilder()
+                                .tryAddKdoc(entry)
+                                .superclass(thisCname)
+                                .addSuperclassConstructorParameter(entry.expression.codeBlock())
+                                .build()
+                        )
+                    }
+                    is CExpression.Reference -> {
+                        companion.addProperty(
+                            PropertySpec.builder(entry.name, thisCname)
+                                .initializer("%N", expression.value.name)
+                                .tryAddKdoc(entry)
+                                .build()
+                        )
+                    }
+                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+                }
+            }
+
         val file = FileSpec.builder(thisCname)
-        file.addNativeAccess(thisCname, enumEntryBaseType)
+        file.addNativeAccess(thisCname, enumType.baseType)
         return file.addType(type.addType(companion.build()).build())
     }
 
     private val validChars = ('a'..'z').toList()
 
+    context(ctx: VKFFICodeGenContext)
+    private fun TypeSpec.Builder.addCompanionSuper(enumBase: CType.EnumBase) {
+        addAnnotation(
+            AnnotationSpec.builder(Suppress::class)
+                .addMember("%S", "UNCHECKED_CAST")
+                .build()
+        )
+        val thisCname = enumBase.className()
+        addSuperinterface(
+            KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname),
+            CodeBlock.of(
+                "%T.descriptor as %T<%T>",
+                enumBase.baseType.nativeTypeName,
+                KTFFICodegenHelper.typeDescriptorCname,
+                thisCname
+            )
+        )
+    }
+
     private fun FileSpec.Builder.addNativeAccess(thisCname: ClassName, baseType: CBasicType<*>) {
         val random = Random(0)
 
-        fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
-            .addMember("%S",
-                "${thisCname.simpleName}_${base}_${(0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")}"
-            )
-            .build()
+        fun randomName(base: String): AnnotationSpec {
+            val randomChars = (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
+            return AnnotationSpec.builder(JvmName::class)
+                .addMember("%S", "${thisCname.simpleName}_${base}_$randomChars")
+                .build()
+        }
 
         val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
         val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)

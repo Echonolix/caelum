@@ -299,7 +299,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return resolveFuncPointerType(it)
         }
 
-        registry.bitmaskTypes[cElementStr.replace("Bits", "")]?.let { bitmaskType ->
+        registry.bitmaskTypes[cElementStr.replace("Bits", "s")]?.let { bitmaskType ->
             val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Bitmask(
                 bitmaskType.name!!,
                 CBasicType.int32_t.cType

@@ -1,15 +1,19 @@
 package net.echonolix.ktffi
 
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
-import java.lang.IllegalStateException
 import java.nio.file.Path
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path) {
     private val allElements0 = ConcurrentHashMap<String, CElement>()
     val allElements: Map<String, CElement>
         get() = allElements0
+
+    private val outputFiles0 = ConcurrentLinkedQueue<Path>()
+    val outputFiles: Set<Path>
+        get() = outputFiles0.toSet()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T> filterType(): List<Pair<String, T>> {
@@ -94,6 +98,6 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
     fun writeOutput(fileSpec: FileSpec.Builder) {
         fileSpec.addSuppress()
         fileSpec.indent("    ")
-        fileSpec.build().writeTo(outputDir)
+        outputFiles0.add(fileSpec.build().writeTo(outputDir))
     }
 }

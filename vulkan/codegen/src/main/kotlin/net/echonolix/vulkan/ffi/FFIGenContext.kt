@@ -7,10 +7,10 @@ import java.nio.file.Path
 
 class FFIGenContext(val packageName: String, val outputDir: Path, val filter: (Element.Type) -> Boolean) {
     val enumPackageName = "${packageName}.enums"
-    val structPackageName = "${VKFFI.packageName}.structs"
-    val unionPackageName = "${VKFFI.packageName}.unions"
-    val funcPointerPackageName = "${VKFFI.packageName}.funcptrs"
-    val handlePackageName = "${VKFFI.packageName}.handles"
+    val structPackageName = "${VKFFI.basePkgName}.structs"
+    val unionPackageName = "${VKFFI.basePkgName}.unions"
+    val funcPointerPackageName = "${VKFFI.basePkgName}.funcptrs"
+    val handlePackageName = "${VKFFI.basePkgName}.handles"
 
     fun getPackageName(type: Element.Type): String {
         return when (type) {

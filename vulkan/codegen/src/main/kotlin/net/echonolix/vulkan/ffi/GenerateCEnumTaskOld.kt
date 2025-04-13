@@ -30,7 +30,7 @@ class GenerateCEnumTaskOld(private val genCtx: FFIGenContext, private val regist
             .toList()
         val genFlagTypeAliasTask = GenTypeAliasTaskOld(genCtx, flagTypeList).fork()
 
-        val vkEnumFile = FileSpec.builder(VKFFI.vkEnumsCname)
+        val vkEnumFile = FileSpec.builder(VKFFI.vkEnumCname)
             .addType(
                 TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
                     .addSuperinterface(KTFFICodegenHelper.typeCname)
@@ -77,7 +77,7 @@ class GenerateCEnumTaskOld(private val genCtx: FFIGenContext, private val regist
                     .build()
             )
             .addType(
-                TypeSpec.interfaceBuilder(VKFFI.vkEnumsCname)
+                TypeSpec.interfaceBuilder(VKFFI.vkEnumCname)
                     .addModifiers(KModifier.SEALED)
                     .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                     .addProperty(
@@ -181,7 +181,7 @@ class GenerateCEnumTaskOld(private val genCtx: FFIGenContext, private val regist
     }
 
     private enum class EnumKind(val cname: ClassName, val dataType: CBasicType<*>) {
-        ENUM(VKFFI.vkEnumsCname, CBasicType.int32_t),
+        ENUM(VKFFI.vkEnumCname, CBasicType.int32_t),
         FLAG32(VKFFI.vkFlags32CNAME, CBasicType.int32_t),
         FLAG64(VKFFI.vkFlags64CNAME, CBasicType.int64_t)
     }
