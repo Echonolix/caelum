@@ -445,6 +445,16 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
     class FunctionPointer(override val elementType: Function) : Pointer({ elementType }) {
         context(ctx: KTFFICodegenContext)
+        override fun packageName(): String {
+            return ctx.resolvePackageName(this)
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun className(): ClassName {
+            return ClassName(packageName(), name.removeSuffix("*"))
+        }
+
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of("%M", KTFFICodegenHelper.pointerLayoutMember)
         }

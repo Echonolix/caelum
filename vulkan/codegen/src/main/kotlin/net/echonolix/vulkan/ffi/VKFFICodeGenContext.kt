@@ -13,6 +13,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     KTFFICodegenContext(basePkgName, outputDir) {
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
+            is CType.FunctionPointer -> VKFFI.functionPackageName
             is CType.Enum -> VKFFI.enumPackageName
             is CType.Bitmask -> VKFFI.flagPackageName
             is CType.Struct -> VKFFI.structPackageName
@@ -20,7 +21,6 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             is CType.Handle -> VKFFI.handlePackageName
             is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
             is CType.TypeDef -> VKFFI.basePkgName
-            is CType.FunctionPointer -> VKFFI.functionPackageName
             is CTopLevelConst -> basePkgName
             else -> throw IllegalArgumentException("Unsupported element: $element")
         }
