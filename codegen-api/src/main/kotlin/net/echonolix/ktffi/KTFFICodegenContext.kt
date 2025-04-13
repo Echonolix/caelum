@@ -5,6 +5,7 @@ import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.stream.Stream
 
 abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path) {
     private val allElements0 = ConcurrentHashMap<String, CElement>()
@@ -16,11 +17,15 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
         get() = outputFiles0.toSet()
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T> filterType(): List<Pair<String, T>> {
+    inline fun <reified T> filterTypeStream(): Stream<Pair<String, T>> {
         return allElements.entries.parallelStream()
             .filter { it.value is T }
             .map { it.key to (it.value as T) }
-            .toList()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    inline fun <reified T> filterType(): List<Pair<String, T>> {
+        return filterTypeStream<T>().toList()
     }
 
     abstract fun resolvePackageName(element: CElement): String

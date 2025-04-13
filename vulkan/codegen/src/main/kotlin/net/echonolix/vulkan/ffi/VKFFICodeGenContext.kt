@@ -153,7 +153,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             else -> throw IllegalStateException("Unsupported enum type: ${xmlEnums.type}")
         }
-        xmlEnums.enums.forEach {
+        xmlEnums.enums.asSequence()
+            .filter { it.deprecated.isNullOrBlank() }
+            .forEach {
             enumBase.addEntry(it)
         }
         return enumBase

@@ -12,5 +12,5 @@ object CSyntax {
     val funcPointerParamSplitRegex = """\s*(?:,|\);)\s*""".toRegex()
     val funcPointerParameterRegex =
         """\s*${typeRegex.pattern}\s+(${nameRegex.pattern})\s*""".toRegex()
-    val intLiteralRegex = """((0x[\dA-F]+|0b[01]+|\d+)(U?(?:LL)?))""".toRegex(RegexOption.IGNORE_CASE)
+    val intLiteralRegex = """((0x[\dA-F]+|0b[01]+|\d+)(U?(?:L{1,2})?))""".toRegex(RegexOption.IGNORE_CASE)
 }
