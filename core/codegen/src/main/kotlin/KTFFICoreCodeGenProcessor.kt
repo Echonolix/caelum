@@ -27,14 +27,14 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
             )
 
         CBasicType.entries.forEach {
-            val cname = ClassName(KTFFICodegenHelper.packageName, it.name)
-            val arrayCNameP = KTFFICodegenHelper.arrayCname.parameterizedBy(cname)
-            val valueCNameP = KTFFICodegenHelper.valueCname.parameterizedBy(cname)
-            val pointerCNameP = KTFFICodegenHelper.pointerCname.parameterizedBy(cname)
+            val thisCname = ClassName(KTFFICodegenHelper.packageName, it.name)
+            val arrayCNameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
+            val valueCNameP = KTFFICodegenHelper.valueCname.parameterizedBy(thisCname)
+            val pointerCNameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
-                TypeSpec.objectBuilder(cname)
-                    .superclass(KTFFICodegenHelper.typeImplCname.parameterizedBy(cname))
+                TypeSpec.objectBuilder(thisCname)
+                    .superclass(KTFFICodegenHelper.typeImplCname.parameterizedBy(thisCname))
                     .addSuperclassConstructorParameter("%M", ValueLayout::class.member(it.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
@@ -53,7 +53,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
 
             fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
                 .addMember("%S",
-                    "${cname.simpleName}_${base}_${(0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")}"
+                    "${thisCname.simpleName}_${base}_${(0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")}"
                 )
                 .build()
 
@@ -63,12 +63,12 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(arrayCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .returns(it.kotlinType.asTypeName())
+                    .returns(it.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(_segment, 0L, index) as %T)${it.fromBase}",
-                        cname,
+                        "return (%T.%N.get(_segment, 0L, index) as %T)${it.fromNativeData}",
+                        thisCname,
                         "arrayVarHandle",
-                        it.baseType.asTypeName()
+                        it.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -78,10 +78,10 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(arrayCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .addParameter("value", it.kotlinType.asTypeName())
+                    .addParameter("value", it.ktApiType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(_segment, 0L, index, value${it.toBase})",
-                        cname,
+                        "%T.%N.set(_segment, 0L, index, value${it.toNativeData})",
+                        thisCname,
                         "arrayVarHandle"
                     )
                     .build()
@@ -93,12 +93,12 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .returns(it.kotlinType.asTypeName())
+                    .returns(it.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(_segment, 0L) as %T)${it.fromBase}",
-                        cname,
+                        "return (%T.%N.get(_segment, 0L) as %T)${it.fromNativeData}",
+                        thisCname,
                         "valueVarHandle",
-                        it.baseType.asTypeName()
+                        it.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -109,8 +109,8 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement("%T.%N.set(_segment, 0L, value${it.toBase})", cname, "valueVarHandle")
+                    .addParameter("value", it.ktApiType.asTypeName())
+                    .addStatement("%T.%N.set(_segment, 0L, value${it.toNativeData})", thisCname, "valueVarHandle")
                     .build()
             )
 
@@ -120,13 +120,13 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(pointerCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .returns(it.kotlinType.asTypeName())
+                    .returns(it.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%M, _address, index) as %T)${it.fromBase}",
-                        cname,
+                        "return (%T.%N.get(%M, _address, index) as %T)${it.fromNativeData}",
+                        thisCname,
                         "arrayVarHandle",
                         KTFFICodegenHelper.omniSegment,
-                        it.baseType.asTypeName()
+                        it.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -136,10 +136,10 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(pointerCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .addParameter("value", it.kotlinType.asTypeName())
+                    .addParameter("value", it.ktApiType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(%M, _address, index, value${it.toBase})",
-                        cname,
+                        "%T.%N.set(%M, _address, index, value${it.toNativeData})",
+                        thisCname,
                         "arrayVarHandle",
                         KTFFICodegenHelper.omniSegment
                     )
@@ -152,13 +152,13 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .returns(it.kotlinType.asTypeName())
+                    .returns(it.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%M, _address) as %T)${it.fromBase}",
-                        cname,
+                        "return (%T.%N.get(%M, _address) as %T)${it.fromNativeData}",
+                        thisCname,
                         "valueVarHandle",
                         KTFFICodegenHelper.omniSegment,
-                        it.baseType.asTypeName()
+                        it.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -169,8 +169,8 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .addParameter("value", it.kotlinType.asTypeName())
-                    .addStatement("return %T.%N.set(%M, _address, value)", cname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
+                    .addParameter("value", it.ktApiType.asTypeName())
+                    .addStatement("return %T.%N.set(%M, _address, value)", thisCname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
                     .build()
             )
         }
@@ -178,92 +178,59 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
     }
 
     private enum class CBasicType(
-        val kotlinType: KClass<*>,
-        val literalSuffix: String,
-        val valueLayout: ValueLayout,
-        val valueLayoutType: KClass<*>,
+        val ktApiType: KClass<*>,
         val valueLayoutName: String,
-        val baseType: KClass<*> = kotlinType,
-        val toBase: String = "",
-        val fromBase: String = ""
+        val nativeDataType: KClass<*> = ktApiType,
+        val toNativeData: String = "",
+        val fromNativeData: String = ""
     ) {
-        float(
+        NativeFloat(
             Float::class,
-            "F",
-            ValueLayout.JAVA_FLOAT,
-            ValueLayout.OfFloat::class,
             "JAVA_FLOAT"
         ),
-        double(
+        NativeDouble(
             Double::class,
-            "",
-            ValueLayout.JAVA_DOUBLE,
-            ValueLayout.OfDouble::class,
             "JAVA_DOUBLE"
         ),
-        int8_t(
+        NativeInt8(
             Byte::class,
-            "",
-            ValueLayout.JAVA_BYTE,
-            ValueLayout.OfByte::class,
             "JAVA_BYTE"
         ),
-        uint8_t(
+        NativeUInt8(
             UByte::class,
-            "U",
-            ValueLayout.JAVA_BYTE,
-            ValueLayout.OfByte::class,
             "JAVA_BYTE",
             Byte::class,
             ".toByte()",
             ".toUByte()"
         ),
-        int16_t(
+        NativeInt16(
             Short::class,
-            "",
-            ValueLayout.JAVA_SHORT,
-            ValueLayout.OfShort::class,
             "JAVA_SHORT"
         ),
-        uint16_t(
+        NativeUInt16(
             UShort::class,
-            "U",
-            ValueLayout.JAVA_SHORT,
-            ValueLayout.OfShort::class,
             "JAVA_SHORT",
             Short::class,
             ".toShort()",
             ".toUShort()"
         ),
-        int32_t(
+        NativeInt32(
             Int::class,
-            "",
-            ValueLayout.JAVA_INT,
-            ValueLayout.OfInt::class,
             "JAVA_INT"
         ),
-        uint32_t(
+        NativeUInt32(
             UInt::class,
-            "U",
-            ValueLayout.JAVA_INT,
-            ValueLayout.OfInt::class,
             "JAVA_INT",
             Int::class,
             ".toInt()",
             ".toUInt()"
         ),
-        int64_t(
+        NativeInt64(
             Long::class,
-            "L",
-            ValueLayout.JAVA_LONG,
-            ValueLayout.OfLong::class,
             "JAVA_LONG"
         ),
-        uint64_t(
+        NativeUInt64(
             ULong::class,
-            "UL",
-            ValueLayout.JAVA_LONG,
-            ValueLayout.OfLong::class,
             "JAVA_LONG",
             Long::class,
             ".toLong()",

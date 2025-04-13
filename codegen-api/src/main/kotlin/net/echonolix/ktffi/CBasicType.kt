@@ -16,7 +16,8 @@ import kotlin.reflect.KClass
 @Serializable(with = CBasicType.Serializer::class)
 @Suppress("ClassName")
 sealed class CBasicType<T : Any>(
-    val name: String,
+    val cTypeNameStr: String,
+    val ktffiTypeNameStr: String,
     val index: Int,
     val kotlinType: KClass<T>,
     val literalSuffix: String,
@@ -26,11 +27,39 @@ sealed class CBasicType<T : Any>(
     val fromBase: String = "",
     val toBase: String = "",
 ) {
-    object void : CBasicType<Unit>("void", 0, Unit::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE")
-    object char : CBasicType<Char>("char", 1, Char::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE")
-    object int8_t : CBasicType<Byte>("int8_t", 2, Byte::class, "", ValueLayout.JAVA_BYTE, "JAVA_BYTE")
+    object void : CBasicType<Unit>(
+        "void",
+        "NativeVoid",
+        0,
+        Unit::class,
+        "",
+        ValueLayout.JAVA_BYTE,
+        "JAVA_BYTE"
+    )
+
+    object char : CBasicType<Char>(
+        "char",
+        "NativeChar",
+        1,
+        Char::class,
+        "",
+        ValueLayout.JAVA_BYTE,
+        "JAVA_BYTE"
+    )
+
+    object int8_t : CBasicType<Byte>(
+        "int8_t",
+        "NativeInt8",
+        2,
+        Byte::class,
+        "",
+        ValueLayout.JAVA_BYTE,
+        "JAVA_BYTE"
+    )
+
     object uint8_t : CBasicType<UByte>(
         "uint8_t",
+        "NativeUInt8",
         3,
         UByte::class,
         "U",
@@ -41,9 +70,19 @@ sealed class CBasicType<T : Any>(
         ".toByte()"
     )
 
-    object int16_t : CBasicType<Short>("int16_t", 4, Short::class, "", ValueLayout.JAVA_SHORT, "JAVA_SHORT")
+    object int16_t : CBasicType<Short>(
+        "int16_t",
+        "NativeInt16",
+        4,
+        Short::class,
+        "",
+        ValueLayout.JAVA_SHORT,
+        "JAVA_SHORT"
+    )
+
     object uint16_t : CBasicType<UShort>(
         "uint16_t",
+        "NativeUInt16",
         5,
         UShort::class,
         "U",
@@ -54,7 +93,15 @@ sealed class CBasicType<T : Any>(
         ".toShort()"
     )
 
-    object int32_t : CBasicType<Int>("int32_t", 6, Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT") {
+    object int32_t : CBasicType<Int>(
+        "int32_t",
+        "NativeInt32",
+        6,
+        Int::class,
+        "",
+        ValueLayout.JAVA_INT,
+        "JAVA_INT"
+    ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return valueStr.toIntOrNull()?.let {
                 CodeBlock.of("%L", it)
@@ -71,6 +118,7 @@ sealed class CBasicType<T : Any>(
 
     object uint32_t : CBasicType<UInt>(
         "uint32_t",
+        "NativeUInt32",
         7,
         UInt::class,
         "U",
@@ -94,13 +142,30 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object int : CBasicType<Int>("int", 8, Int::class, "", ValueLayout.JAVA_INT, "JAVA_INT") {
+    object int : CBasicType<Int>(
+        "int",
+        "NativeInt",
+        8,
+        Int::class,
+        "",
+        ValueLayout.JAVA_INT,
+        "JAVA_INT"
+    ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return int32_t.codeBlock(valueStr)
         }
     }
 
-    object int64_t : CBasicType<Long>("int64_t", 9, Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG") {
+    object int64_t :
+        CBasicType<Long>(
+            "int64_t",
+            "NativeInt64",
+            9,
+            Long::class,
+            "L",
+            ValueLayout.JAVA_LONG,
+            "JAVA_LONG"
+        ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return valueStr.toLongOrNull()?.let {
                 CodeBlock.of("%L$literalSuffix", it)
@@ -118,6 +183,7 @@ sealed class CBasicType<T : Any>(
 
     object uint64_t : CBasicType<ULong>(
         "uint64_t",
+        "NativeUInt64",
         10,
         ULong::class,
         "UL",
@@ -142,24 +208,50 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object size_t : CBasicType<Long>("size_t", 11, Long::class, "L", ValueLayout.JAVA_LONG, "JAVA_LONG")
-    object float : CBasicType<Float>("float", 12, Float::class, "F", ValueLayout.JAVA_FLOAT, "JAVA_FLOAT") {
+    object size_t : CBasicType<Long>(
+        "size_t",
+        "NativeSize",
+        11,
+        Long::class,
+        "L",
+        ValueLayout.JAVA_LONG,
+        "JAVA_LONG"
+    )
+
+    object float : CBasicType<Float>(
+        "float",
+        "NativeFloat",
+        12,
+        Float::class,
+        "F",
+        ValueLayout.JAVA_FLOAT,
+        "JAVA_FLOAT"
+    ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return CodeBlock.of(valueStr)
         }
     }
-    object double : CBasicType<Double>("double", 12, Double::class, "", ValueLayout.JAVA_DOUBLE, "JAVA_DOUBLE")
+
+    object double : CBasicType<Double>(
+        "double",
+        "NativeDouble",
+        12,
+        Double::class,
+        "",
+        ValueLayout.JAVA_DOUBLE,
+        "JAVA_DOUBLE"
+    )
 
     val kotlinTypeName: TypeName = kotlinType.asTypeName()
     val valueLayoutMember = KTFFICodegenHelper.valueLayoutCname.member(valueLayoutName)
-    val ktffiNativeTypeName = if (name == "void") {
+    val ktffiTypeTName = if (cTypeNameStr == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))
     } else {
-        ClassName(KTFFICodegenHelper.packageName, name)
+        ClassName(KTFFICodegenHelper.packageName, ktffiTypeNameStr)
     }
 
     open fun codeBlock(valueStr: String): CodeBlock {
-        throw UnsupportedOperationException("Not implemented for $name")
+        throw UnsupportedOperationException("Not implemented for $cTypeNameStr")
     }
 
     val cType by lazy { CType.BasicType(this) }
@@ -216,14 +308,12 @@ sealed class CBasicType<T : Any>(
     }
 
     object Serializer : KSerializer<CBasicType<*>> {
-        override val descriptor: SerialDescriptor =
-            PrimitiveSerialDescriptor("type", PrimitiveKind.STRING)
+        override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("type", PrimitiveKind.STRING)
 
         override fun serialize(
-            encoder: Encoder,
-            value: CBasicType<*>
+            encoder: Encoder, value: CBasicType<*>
         ) {
-            encoder.encodeString(value.name)
+            encoder.encodeString(value.cTypeNameStr)
         }
 
         override fun deserialize(decoder: Decoder): CBasicType<*> {

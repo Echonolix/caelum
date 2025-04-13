@@ -97,7 +97,7 @@ class PatchedRegistry(registry: Registry) {
     private val typesWithTypeDef =
         registryTypes.values.filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
 
-    val basicTypes = CBasicType.ENTRIES.associateWith { Element.BasicType(it.name, it) }
+    val basicTypes = CBasicType.ENTRIES.associateWith { Element.BasicType(it.cTypeNameStr, it) }
     val opaqueTypes = mutableMapOf<String, Element.OpaqueType>()
     val externalTypes = registryTypes.values.asSequence()
         .filter { it.requires?.endsWith(".h") == true }

@@ -410,7 +410,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                 lengthCodeBlockAnnotation = CodeBlock.of("%M", memberName)
             }
 
-            val elementCname: ClassName
+            val elementCname: TypeName
             if (type is Element.BasicType) {
                 if (type.value == CBasicType.char) {
                     check(groupInfo.type.name == "VkPhysicalDeviceLayeredApiPropertiesKHR" || member.xml.len == "null-terminated")
@@ -422,7 +422,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                     type.value.valueLayoutMember,
                     member.name
                 )
-                elementCname = ClassName(KTFFICodegenHelper.packageName, type.value.name)
+                elementCname = type.value.ktffiTypeTName
             } else {
                 val packageName = genCtx.getPackageName(type)
                 elementCname = ClassName(packageName, type.name)
@@ -530,12 +530,12 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                         constructorType = KTFFICodegenHelper.pointerCname
                         pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(WildcardTypeName.producerOf(VKFFI.vkStructCname))
                     } else {
-                        constructorType = KTFFICodegenHelper.pointerCname.parameterizedBy(CBasicType.uint8_t.ktffiNativeTypeName)
-                        pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(type.value.ktffiNativeTypeName)
+                        constructorType = KTFFICodegenHelper.pointerCname.parameterizedBy(CBasicType.uint8_t.ktffiTypeTName)
+                        pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(type.value.ktffiTypeTName)
                     }
                 } else {
                     constructorType = KTFFICodegenHelper.pointerCname
-                    pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(type.value.ktffiNativeTypeName)
+                    pointerTargetCname = KTFFICodegenHelper.pointerCname.parameterizedBy(type.value.ktffiTypeTName)
                 }
             } else {
                 val packageName = genCtx.getPackageName(type)

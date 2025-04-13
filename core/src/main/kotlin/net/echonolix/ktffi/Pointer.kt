@@ -21,4 +21,4 @@ value class NativePointer<T : NativeType>(
     }
 }
 
-val nullptr: NativePointer<*> = NativePointer<uint8_t>(0L)
+val nullptr: NativePointer<*> = NativePointer<NativeChar>(0L)

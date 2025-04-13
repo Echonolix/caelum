@@ -58,24 +58,34 @@ abstract class NativeUnion<T : NativeType> private constructor(override val layo
     )
 }
 
-abstract class NativeFunction<T : NativeType>(val returnType: NativeType?, vararg parameters: NativeType) :
-    NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
+interface NativeFunction : NativeType {
 
-    val functionDescriptor = if (returnType == null) {
-        FunctionDescriptor.ofVoid(
-            *parameters.map { it.typeDescriptor.layout }.toTypedArray()
-        )
-    } else {
-        FunctionDescriptor.of(
-            returnType.typeDescriptor.layout,
-            *parameters.map { it.typeDescriptor.layout }.toTypedArray()
-        )
-    }
+    abstract class TypeDescriptorImpl<T : NativeFunction>(val returnType: NativeType?, vararg parameters: NativeType) :
+        NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
 
-    fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
-        return Linker.nativeLinker().downcallHandle(
-            functionAddress,
-            functionDescriptor
-        )
+        val functionDescriptor = if (returnType == null) {
+            FunctionDescriptor.ofVoid(
+                *parameters.map { it.typeDescriptor.layout }.toTypedArray()
+            )
+        } else {
+            FunctionDescriptor.of(
+                returnType.typeDescriptor.layout,
+                *parameters.map { it.typeDescriptor.layout }.toTypedArray()
+            )
+        }
+
+        fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
+            return Linker.nativeLinker().downcallHandle(
+                functionAddress,
+                functionDescriptor
+            )
+        }
+
+//        fun upcallStub(function: T): MemorySegment {
+//            return Linker.nativeLinker().upcallStub(
+//                function,
+//                functionDescriptor
+//            )
+//        }
     }
 }

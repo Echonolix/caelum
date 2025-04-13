@@ -13,17 +13,17 @@ value class NativeArray<T : NativeType>(
 
 
 fun mallocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
-    NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
+    NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
 
 context(allocator: SegmentAllocator)
-fun mallocArr(byteSize: Long): NativeArray<*> = NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
+fun mallocArr(byteSize: Long): NativeArray<*> = NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
 
 fun callocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
-    NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
+    NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
 fun callocArr(byteSize: Long): NativeArray<*> =
-    NativeArray<int8_t>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
+    NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
 
 
 fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
@@ -53,13 +53,13 @@ context(allocator: SegmentAllocator)
 fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-var NativeArray<char>.string: String
+var NativeArray<NativeChar>.string: String
     get() = _segment.getString(0L)
     set(value) {
         _segment.setString(0L, value)
     }
 
-var NativePointer<char>.string: String
+var NativePointer<NativeChar>.string: String
     get() = APIHelper.`_$OMNI_SEGMENT$_`.getString(_address)
     set(value) {
         APIHelper.`_$OMNI_SEGMENT$_`.setString(_address, value)

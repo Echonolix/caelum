@@ -373,7 +373,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             } else if (memberType is CType.Pointer) {
                 val eType = memberType.elementType
                 if (eType is CType.BasicType && eType.baseType == CBasicType.void) {
-                    fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.ktffiNativeTypeName)
+                    fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.ktffiTypeTName)
                 }
             }
 
@@ -551,7 +551,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             when (memberType) {
                 is CType.BasicType -> {
-                    basicTypeAccess(member, memberType.baseType, memberType.baseType.name)
+                    basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr)
                 }
                 is CType.Handle, is CType.EnumBase -> {
                     commonAccess(member)
