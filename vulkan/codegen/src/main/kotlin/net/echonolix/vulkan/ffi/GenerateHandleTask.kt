@@ -2,6 +2,7 @@ package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import net.echonolix.ktffi.CBasicType
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
@@ -23,13 +24,14 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             .addType(
                 TypeSpec.interfaceBuilder(VKFFI.vkHandleCname)
                     .addSuperinterface(NativeType::class)
+                    .addProperty("handle", CBasicType.int64_t.kotlinTypeName)
                     .addProperty("objectType", objTypeCname)
                     .addType(
                         TypeSpec.classBuilder(vkTypeDescriptorCname)
                             .addModifiers(KModifier.ABSTRACT)
                             .addTypeVariable(typeVariable)
                             .superclass(KTFFICodegenHelper.typeDescriptorImplCname.parameterizedBy(typeVariable))
-                            .addSuperclassConstructorParameter("%M", KTFFICodegenHelper.addressLayoutMember)
+                            .addSuperclassConstructorParameter("%M", CBasicType.int64_t.valueLayoutMember)
                             .build()
                     )
                     .build()
@@ -41,12 +43,16 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             .map { (_, type) ->
                 type as VkHandle
                 val thisCname = type.className()
-                val superType = type.parent?.className()?.nestedClass("Child") ?: VKFFI.vkHandleCname
                 val thisTypeDescriptor = KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname)
                 FileSpec.builder(thisCname)
                     .addType(
                         TypeSpec.interfaceBuilder(thisCname)
-                            .addSuperinterface(superType)
+                            .addSuperinterface(VKFFI.vkHandleCname)
+                            .apply {
+                                type.parent?.className()?.nestedClass("Child")?.let {
+                                    addSuperinterface(it)
+                                }
+                            }
                             .addProperty(
                                 PropertySpec.builder("objectType", objTypeCname)
                                     .addModifiers(KModifier.OVERRIDE)
@@ -80,9 +86,16 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                                     .initializer(CodeBlock.of(parentVariableName))
                                                     .build()
                                             )
+                                            addProperty(
+                                                PropertySpec.builder("handle", CBasicType.int64_t.kotlinTypeName)
+                                                    .addModifiers(KModifier.OVERRIDE)
+                                                    .initializer(CodeBlock.of("handle"))
+                                                    .build()
+                                            )
                                             primaryConstructor(
                                                 FunSpec.constructorBuilder()
                                                     .addParameter(parentVariableName, type.parent.className())
+                                                    .addParameter("handle", CBasicType.int64_t.kotlinTypeName)
                                                     .build()
                                             )
                                             val grandparent = type.parent.parent
@@ -102,31 +115,15 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                             )
                                         }
                                     }
-                                    .addProperty(
-                                        PropertySpec.builder("objectType", objTypeCname)
-                                            .addModifiers(KModifier.OVERRIDE)
-                                            .getter(
-                                                FunSpec.getterBuilder()
-                                                    .addStatement("return super<%T>.objectType", thisCname)
-                                                    .build()
-                                            )
-                                            .build()
-                                    )
-                                    .addProperty(
-                                        PropertySpec.builder("typeDescriptor", thisTypeDescriptor)
-                                            .addModifiers(KModifier.OVERRIDE)
-                                            .getter(
-                                                FunSpec.getterBuilder()
-                                                    .addStatement("return super<%T>.typeDescriptor", thisCname)
-                                                    .build()
-                                            )
-                                            .build()
-                                    )
                                     .build()
                             )
                             .addType(
                                 TypeSpec.interfaceBuilder("Child")
-                                    .addSuperinterface(superType)
+                                    .apply {
+                                        type.parent?.className()?.nestedClass("Child")?.let {
+                                            addSuperinterface(it)
+                                        }
+                                    }
                                     .addProperty(type.variableName(), thisCname)
                                     .build()
                             )
