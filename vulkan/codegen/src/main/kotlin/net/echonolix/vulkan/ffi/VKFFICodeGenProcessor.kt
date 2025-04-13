@@ -50,46 +50,35 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
         val ctx = VKFFICodeGenContext(VKFFI.basePkgName, outputDir, filteredRegistry)
-        object : RecursiveAction() {
-            override fun compute() {
-                fun processRequire(requires: List<Registry.Feature.Require>) {
-                    requires.asSequence()
-                        .filter { it.comment !in skipped }
-                        .forEach { require ->
-                            require.types.forEach {
-                                ctx.resolveElement(it.name)
-                            }
-                            require.commands.forEach {
-                                ctx.resolveElement(it.name)
-                            }
-                            require.enums.asSequence()
-                                .filter { it.api == null || it.api == API.vulkan }
-                                .forEach {
-                                    ctx.resolveElement(it.name)
-                                }
+        fun processRequire(requires: List<Registry.Feature.Require>) {
+            requires.asSequence()
+                .filter { it.comment !in skipped }
+                .forEach { require ->
+                    require.types.forEach {
+                        ctx.resolveElement(it.name)
+                    }
+                    require.commands.forEach {
+                        ctx.resolveElement(it.name)
+                    }
+                    require.enums.asSequence()
+                        .filter { it.api == null || it.api == API.vulkan }
+                        .forEach {
+                            ctx.resolveElement(it.name)
                         }
                 }
+        }
 
-                val core = object : RecursiveAction() {
-                    override fun compute() {
-                        filteredRegistry.registryFeatures.parallelStream()
-                            .forEach { processRequire(it.require) }
-                    }
-                }.fork()
-                val extensions = object : RecursiveAction() {
-                    override fun compute() {
-                        filteredRegistry.registryExtensions.parallelStream()
-                            .forEach { processRequire(it.require) }
-                    }
-                }.fork()
-                ctx.resolveElement("VK_API_VERSION_1_0")
-                core.join()
-                extensions.join()
-
+        ctx.resolveElement("VK_API_VERSION_1_0")
+        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+        object : RecursiveAction() {
+            override fun compute() {
                 val handle = GenerateHandleTask(ctx).fork()
                 val enum = GenerateEnumTask(ctx).fork()
+                val group = GenerateGroupTask(ctx).fork()
                 handle.join()
                 enum.join()
+                group.join()
             }
         }.fork().join()
 

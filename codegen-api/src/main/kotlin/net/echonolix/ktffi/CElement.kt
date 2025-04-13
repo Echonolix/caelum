@@ -3,7 +3,6 @@ package net.echonolix.ktffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 interface Tag
@@ -26,21 +25,7 @@ class TagStorage {
 
 interface CElement : Comparable<CElement> {
     val name: String
-
-    //    val annotations: List<AnnotationSpec>
     val tags: TagStorage
-
-//    context(ctx: KTFFICodegenContext)
-//    fun addAnnotationTo(builder: Annotatable.Builder<*>) {
-//        builder.addAnnotations(annotations)
-//    }
-//
-//    context(ctx: KTFFICodegenContext)
-//    fun addKdocTo(builder: Documentable.Builder<*>) {
-//        kDoc.toString().takeIf { it.isNotBlank() }?.let {
-//            builder.addKdoc(it)
-//        }
-//    }
 
     fun toSimpleString(): String {
         return toString()
@@ -129,16 +114,6 @@ open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(nam
     }
 }
 
-//
-//interface ITopLevelType : ITopLevelDeclaration {
-//    context(ctx: KTFFICodegenContext)
-//    fun generate() {
-//        val builder = FileSpec.builder(packageName(), name)
-//        generateImpl(builder)
-//        ctx.writeOutput(builder)
-//    }
-//}
-
 sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     context(ctx: KTFFICodegenContext)
     abstract fun nativeType(): TypeName
@@ -147,86 +122,16 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     abstract fun ktApiType(): TypeName
 
     context(ctx: KTFFICodegenContext)
-    abstract fun memoryLayout(): CodeBlock
+    abstract fun memoryLayoutDeep(): CodeBlock
 
-//    context(ctx: KTFFICodegenContext)
-//    open fun typeObject(builder: TypeSpec.Builder) {
-//        addAnnotationTo(builder)
-//        addKdocTo(builder)
-//    }
-
-    sealed class ValueType(val baseType: CBasicType<*>) : CType(baseType.name) {
-//        context(ctx: KTFFICodegenContext)
-//        override fun generateImpl(builder: FileSpec.Builder) {
-//            val thisCname = className()
-//            val pointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
-//            val arrayCnameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
-//            builder.addFunction(
-//                FunSpec.builder("get")
-//                    .receiver(arrayCnameP)
-//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-//                    .addParameter("index", LONG)
-//                    .returns(thisCname)
-//                    .addStatement(
-//                        "return %T.fromNative(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
-//                        thisCname,
-//                        baseType.nativeTypeName,
-//                        baseType.kotlinTypeName
-//                    )
-//                    .build()
-//            )
-//            builder.addFunction(
-//                FunSpec.builder("set")
-//                    .receiver(arrayCnameP)
-//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-//                    .addParameter("index", LONG)
-//                    .addParameter("value", thisCname)
-//                    .addStatement(
-//                        "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNative(value))",
-//                        baseType.nativeTypeName,
-//                        thisCname,
-//                    )
-//                    .build()
-//            )
-//            builder.addFunction(
-//                FunSpec.builder("get")
-//                    .receiver(pointerCnameP)
-//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-//                    .addParameter("index", LONG)
-//                    .returns(thisCname)
-//                    .addStatement(
-//                        "return %T.fromNative(%T.arrayVarHandle.get(%M, _address, index) as %T)",
-//                        thisCname,
-//                        baseType.nativeTypeName,
-//                        KTFFICodegenHelper.omniSegment,
-//                        baseType.kotlinTypeName
-//                    )
-//                    .build()
-//            )
-//            builder.addFunction(
-//                FunSpec.builder("set")
-//                    .receiver(pointerCnameP)
-//                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-//                    .addParameter("index", LONG)
-//                    .addParameter("value", thisCname)
-//                    .addStatement(
-//                        "%T.arrayVarHandle.set(%M, _address, index, %T.toNative(value))",
-//                        baseType.nativeTypeName,
-//                        KTFFICodegenHelper.omniSegment,
-//                        thisCname
-//                    )
-//                    .build()
-//            )
-//        }
+    context(ctx: KTFFICodegenContext)
+    open fun memoryLayout(): CodeBlock {
+        return memoryLayoutDeep()
     }
 
-    class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
-//        context(ctx: KTFFICodegenContext)
-//        override fun typeObject(builder: TypeSpec.Builder) {
-//            super.typeObject(builder)
-//            builder.superclass(ClassName(KTFFICodegenHelper.packageName, "NativeTypeImpl"))
-//        }
+    sealed class ValueType(val baseType: CBasicType<*>) : CType(baseType.name)
 
+    class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return baseType.nativeTypeName
@@ -238,8 +143,11 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
-            return CodeBlock.of("%M", baseType.valueLayoutMember)
+        override fun memoryLayoutDeep(): CodeBlock {
+            if (baseType === CBasicType.void) {
+                return CodeBlock.of("%M", baseType.valueLayoutMember)
+            }
+            return CodeBlock.of("%T.layout", ClassName(KTFFICodegenHelper.packageName, baseType.name))
         }
 
         override fun compareTo(other: CElement): Int {
@@ -268,7 +176,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
+        override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of("%M", CBasicType.uint64_t.valueLayoutMember)
         }
 
@@ -289,8 +197,8 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
-            TODO("Not yet implemented")
+        override fun memoryLayoutDeep(): CodeBlock {
+            return dstType.memoryLayout()
         }
 
         override fun toString(): String {
@@ -327,15 +235,9 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
-            return CodeBlock.of("%T.layout", entryType.className())
+        override fun memoryLayoutDeep(): CodeBlock {
+            return entryType.memoryLayout()
         }
-
-//        context(ctx: KTFFICodegenContext)
-//        override fun typeObject(builder: TypeSpec.Builder) {
-//            super.typeObject(builder)
-//            builder.addSuperinterface(KTFFICodegenHelper.typeCname, CodeBlock.of("%T", entryType.className()))
-//        }
 
         override fun toString(): String {
             return buildString {
@@ -396,14 +298,9 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
+        override fun memoryLayoutDeep(): CodeBlock {
             throw UnsupportedOperationException()
         }
-
-//        context(ctx: KTFFICodegenContext)
-//        override fun generateImpl(builder: FileSpec.Builder) {
-//            TODO("Not yet implemented")
-//        }
 
         override fun toString(): String {
             return buildString {
@@ -441,11 +338,11 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
+        override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of(
-                "%M(%T.layout)",
-                KTFFICodegenHelper.sequenceLayout,
-                elementType.className()
+                "%M(%L)",
+                KTFFICodegenHelper.addressLayoutMember,
+                elementType.memoryLayout()
             )
         }
 
@@ -460,6 +357,16 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         class Sized(elementType: CType, val length: CExpression<*>) : Array(elementType) {
             override fun compositeName(parentStr: String): String {
                 return elementType.compositeName("$parentStr[$length]")
+            }
+
+            context(ctx: KTFFICodegenContext)
+            override fun memoryLayoutDeep(): CodeBlock {
+                return CodeBlock.of(
+                    "%M(%L.toLong(), %L)",
+                    KTFFICodegenHelper.sequenceLayout,
+                    length.codeBlock(),
+                    elementType.memoryLayout()
+                )
             }
         }
     }
@@ -479,7 +386,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
+        override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of(
                 "%M(%L)",
                 KTFFICodegenHelper.pointerLayoutMember,
@@ -498,7 +405,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
     class FunctionPointer(override val elementType: Function) : Pointer({ elementType }) {
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
+        override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of("%M", KTFFICodegenHelper.pointerLayoutMember)
         }
     }
@@ -515,12 +422,17 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
+        override fun memoryLayoutDeep(): CodeBlock {
             val builder = CodeBlock.builder()
             members.forEach {
-                builder.addStatement("%T.layout.withName(%S),", it.type.className(), it.name)
+                builder.addStatement("%L.withName(%S),", it.type.memoryLayout(), it.name)
             }
             return builder.build()
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun memoryLayout(): CodeBlock {
+            return CodeBlock.of("%T.layout", className())
         }
 
         override fun toString(): String {
@@ -544,25 +456,6 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     }
 
     class Struct(name: String, members: List<Member>) : Group(name, members) {
-        context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
-            return CodeBlock.builder()
-                .add("\n")
-                .indent()
-                .addStatement("%M(", KTFFICodegenHelper.structLayout)
-                .indent()
-                .add(super.memoryLayout())
-                .unindent()
-                .add(").withName(%S)", name)
-                .unindent()
-                .build()
-        }
-
-//        context(ctx: KTFFICodegenContext)
-//        override fun generateImpl(builder: FileSpec.Builder) {
-//            TODO("Not yet implemented")
-//        }
-
         override fun toString(): String {
             return "struct ${super.toString()}"
         }
@@ -573,25 +466,6 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     }
 
     class Union(name: String, members: List<Member>) : Group(name, members) {
-        context(ctx: KTFFICodegenContext)
-        override fun memoryLayout(): CodeBlock {
-            return CodeBlock.builder()
-                .add("\n")
-                .indent()
-                .addStatement("%M(", KTFFICodegenHelper.unionLayout)
-                .indent()
-                .add(super.memoryLayout())
-                .unindent()
-                .add(").withName(%S)", name)
-                .unindent()
-                .build()
-        }
-
-//        context(ctx: KTFFICodegenContext)
-//        override fun generateImpl(builder: FileSpec.Builder) {
-//            TODO("Not yet implemented")
-//        }
-
         override fun toString(): String {
             return "union ${super.toString()}"
         }

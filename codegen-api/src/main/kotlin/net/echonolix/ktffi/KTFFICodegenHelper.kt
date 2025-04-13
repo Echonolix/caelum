@@ -7,8 +7,6 @@ import com.squareup.kotlinpoet.asClassName
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandles
-import kotlin.reflect.KFunction
-import kotlin.reflect.jvm.javaMethod
 
 object KTFFICodegenHelper {
     const val packageName = "net.echonolix.ktffi"
@@ -31,8 +29,8 @@ object KTFFICodegenHelper {
     val findSymbol = helper.member("findSymbol")
 
     val memoryLayoutCname = MemoryLayout::class.asClassName()
-    val structLayout = memoryLayoutCname.member("structLayout")
-    val unionLayout = memoryLayoutCname.member("unionLayout")
+    val structLayoutMember = memoryLayoutCname.member("structLayout")
+    val unionLayoutMember = memoryLayoutCname.member("unionLayout")
     val sequenceLayout = memoryLayoutCname.member("sequenceLayout")
     val paddingLayout = memoryLayoutCname.member("paddingLayout")
 
