@@ -11,6 +11,7 @@ class FilteredRegistry(registry: Registry) {
         .toList()
     val registryExtensions = registry.extensions.extensions.asSequence()
         .filter { it.platform == null }
+        .filter { it.supported != "disabled" }
         .filter { it.name !in VKFFI.skippedExtension }
         .filter { extension -> VKFFI.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
         .toList()
