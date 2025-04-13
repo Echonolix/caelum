@@ -1,12 +1,12 @@
 package net.echonolix.vulkan.schema
 
 import kotlinx.serialization.Serializable
+import net.echonolix.ktffi.CBasicType
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName
 import nl.adaptivity.xmlutil.serialization.XmlValue
 import nl.adaptivity.xmlutil.util.CompactFragment
-import net.echonolix.ktffi.CBasicType
 
 @JvmInline
 @Serializable
@@ -22,6 +22,27 @@ value class XMLComment(val value: String)
 @Serializable
 @XmlSerialName("type")
 value class XMLType(val value: String)
+
+@Serializable
+@XmlSerialName("member")
+data class XMLMember(
+    @XmlElement val name: String,
+    val optional: Boolean = false,
+    val noautovalidity: Boolean = false,
+    val limittype: String? = null,
+    val len: String? = null,
+    val values: String? = null,
+    val deprecated: String? = null,
+    val altlen: String? = null,
+    val api: String? = null,
+    val objecttype: String? = null,
+    val featurelink: String? = null,
+    val selector: String? = null,
+    val selection: String? = null,
+    val externsync: Boolean = false,
+    @XmlElement val comment: String? = null,
+    @XmlValue val inner: List<CompactFragment> = emptyList()
+)
 
 @Serializable
 data class Registry(
