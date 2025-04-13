@@ -3,6 +3,7 @@ package net.echonolix.ktffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import java.lang.foreign.MemoryLayout
+import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandles
 
@@ -37,6 +38,9 @@ public object KTFFICodegenHelper {
 
     public val methodHandlesCname: ClassName = MethodHandles::class.asClassName()
     public val javaMethodMemberName: MemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
+
+    public val memorySegmentCname: ClassName = MemorySegment::class.asClassName()
+    public val copyMember: MemberName = memorySegmentCname.member("copy")
 
     public val starWildcard: WildcardTypeName = WildcardTypeName.producerOf(ANY.copy(nullable = true))
 }
