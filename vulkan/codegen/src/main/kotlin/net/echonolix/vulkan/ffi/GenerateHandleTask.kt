@@ -61,7 +61,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                     .addModifiers(KModifier.OVERRIDE)
                                     .getter(
                                         FunSpec.getterBuilder()
-                                            .addStatement("return %M", type.objectTypeEnum.memberName())
+                                            .addStatement("return %T.%N", objTypeCname, type.objectTypeEnum.name)
                                             .build()
                                     )
                                     .build()
