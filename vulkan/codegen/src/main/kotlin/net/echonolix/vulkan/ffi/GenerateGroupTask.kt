@@ -460,6 +460,22 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     )
                     .build()
             )
+            file.addFunction(
+                FunSpec.builder(member.name)
+                    .addModifiers(KModifier.INLINE)
+                    .receiver(valueCnameP)
+                    .addParameter("block", LambdaTypeName.get(receiver = memberPointerCnameP, returnType = UNIT))
+                    .addStatement("%N.block()", member.name)
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder(member.name)
+                    .addModifiers(KModifier.INLINE)
+                    .receiver(pointerCnameP)
+                    .addParameter("block", LambdaTypeName.get(receiver = memberPointerCnameP, returnType = UNIT))
+                    .addStatement("%N.block()", member.name)
+                    .build()
+            )
         }
 
         @Suppress("JoinDeclarationAndAssignment")
