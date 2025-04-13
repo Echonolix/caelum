@@ -144,7 +144,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
-            return baseType.nativeTypeName
+            return baseType.kotlinTypeName
         }
 
         context(ctx: KTFFICodegenContext)
@@ -354,7 +354,12 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
+            val eType = elementType
+            return if (eType is BasicType) {
+                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiNativeTypeName)
+            } else {
+                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.ktApiType())
+            }
         }
 
         context(ctx: KTFFICodegenContext)
@@ -402,7 +407,12 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
+            val eType = elementType
+            return if (eType is BasicType) {
+                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiNativeTypeName)
+            } else {
+                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.ktApiType())
+            }
         }
 
         context(ctx: KTFFICodegenContext)

@@ -152,7 +152,7 @@ sealed class CBasicType<T : Any>(
 
     val kotlinTypeName: TypeName = kotlinType.asTypeName()
     val valueLayoutMember = KTFFICodegenHelper.valueLayoutCname.member(valueLayoutName)
-    val nativeTypeName = if (name == "void") {
+    val ktffiNativeTypeName = if (name == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))
     } else {
         ClassName(KTFFICodegenHelper.packageName, name)

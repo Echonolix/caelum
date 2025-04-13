@@ -69,8 +69,11 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         }
 
         ctx.resolveElement("VK_API_VERSION_1_0")
-        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+        filteredRegistry.registryFeatures.asSequence()
+            .filter { it.name == "VK_VERSION_1_0" }
+            .forEach { processRequire(it.require) }
+//        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
+//        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
         object : RecursiveAction() {
             override fun compute() {
                 val handle = GenerateHandleTask(ctx).fork()

@@ -1,8 +1,10 @@
 package net.echonolix.ktffi
 
+import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.MemberName.Companion.member
+import com.squareup.kotlinpoet.WildcardTypeName
 import com.squareup.kotlinpoet.asClassName
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout
@@ -39,4 +41,6 @@ object KTFFICodegenHelper {
 
     val methodHandlesCname = MethodHandles::class.asClassName()
     val javaMethodMemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
+
+    val starWildcard = WildcardTypeName.producerOf(ANY.copy(nullable = true))
 }

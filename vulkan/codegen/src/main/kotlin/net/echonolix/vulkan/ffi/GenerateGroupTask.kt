@@ -11,12 +11,13 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
+import com.squareup.kotlinpoet.WildcardTypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import net.echonolix.ktffi.CBasicType
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.CTypeName
 import net.echonolix.ktffi.KTFFICodegenHelper
-import java.io.File
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandle
@@ -280,88 +281,291 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             )
         }
 
+        fun basicTypeAccess(member: CType.Group.Member, cBasicType: CBasicType<*>, cTypeName: String) {
+            file.addProperty(
+                PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CTypeName::class)
+                            .addMember("%S", cTypeName)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return (%T.%N.get(_segment, 0L) as %T)${cBasicType.fromBase}",
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                cBasicType.baseType.asTypeName()
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", cBasicType.kotlinTypeName)
+                            .addStatement(
+                                "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            file.addProperty(
+                PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CTypeName::class)
+                            .addMember("%S", cTypeName)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegenHelper.omniSegment,
+                                cBasicType.baseType.asTypeName()
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", cBasicType.kotlinTypeName)
+                            .addStatement(
+                                "%T.%N.set(%M, _address, value${cBasicType.toBase})",
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegenHelper.omniSegment
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+        }
+
+        fun commonAccess(member: CType.Group.Member) {
+            val memberType = member.type
+            val ktApiType = when (memberType) {
+                is CType.Pointer, is CType.Array -> {
+                    KTFFICodegenHelper.pointerCname
+                }
+                else -> {
+                    memberType.ktApiType()
+                }
+            }
+            var returnType = memberType.ktApiType()
+            var fromIntTypeParamBlock = CodeBlock.of("")
+            if (member.name == "pNext") {
+                val vkStructStar = VKFFI.vkStructCname.parameterizedBy(KTFFICodegenHelper.starWildcard)
+                val outVkStruct = WildcardTypeName.producerOf(vkStructStar)
+                returnType = KTFFICodegenHelper.pointerCname.parameterizedBy(outVkStruct)
+            } else if (memberType is CType.Pointer) {
+                val eType = memberType.elementType
+                if (eType is CType.BasicType && eType.baseType == CBasicType.void) {
+                    fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.ktffiNativeTypeName)
+                }
+            }
+
+            val nativeType = when (memberType) {
+                is CType.Array -> {
+                    LONG
+                }
+                else -> {
+                    memberType.nativeType()
+                }
+            }
+            file.addProperty(
+                PropertySpec.builder(member.name, returnType)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CTypeName::class)
+                            .addMember("%S", memberType.name)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T.fromInt%L((%T.%N.get(_segment, 0L) as %T))",
+                                ktApiType,
+                                fromIntTypeParamBlock,
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                nativeType
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", ktApiType)
+                            .addStatement(
+                                "%T.%N.set(_segment, 0L, %T.toInt(value))",
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                ktApiType
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            file.addProperty(
+                PropertySpec.builder(member.name, returnType)
+                    .addAnnotation(
+                        AnnotationSpec.builder(CTypeName::class)
+                            .addMember("%S", memberType.name)
+                            .build()
+                    )
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T.fromInt%L((%T.%N.get(%M, _address) as %T))",
+                                ktApiType,
+                                fromIntTypeParamBlock,
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegenHelper.omniSegment,
+                                nativeType
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", ktApiType)
+                            .addStatement(
+                                "%T.%N.set(%M, _address, %T.toInt(value))",
+                                thisCname,
+                                "${member.name}_valueVarHandle",
+                                KTFFICodegenHelper.omniSegment,
+                                ktApiType
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+        }
+
+        fun groupAccess(member: CType.Group.Member, memberType: CType.Group) {
+            val groupCname = memberType.className()
+            val annotations = listOf(
+                AnnotationSpec.builder(CTypeName::class)
+                    .addMember("%S", memberType.toSimpleString())
+                    .build(),
+            )
+            val memberPointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(groupCname)
+            file.addProperty(
+                PropertySpec.builder(member.name, memberPointerCnameP)
+                    .addAnnotations(annotations)
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(valueCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long)",
+                                KTFFICodegenHelper.pointerCname,
+                                thisCname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", memberPointerCnameP)
+                            .addStatement(
+                                "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_segment.address(), 0L) as Long, %T.%N_byteSize)",
+                                MemorySegment::class.member("copy"),
+                                KTFFICodegenHelper.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
+                                thisCname,
+                                member.name,
+                                thisCname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            file.addProperty(
+                PropertySpec.builder(member.name, memberPointerCnameP)
+                    .addAnnotations(annotations)
+                    .tryAddKdoc(member)
+                    .mutable()
+                    .receiver(pointerCnameP)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addStatement(
+                                "return %T(%T.%N_offsetHandle.invokeExact(_address, 0L) as Long)",
+                                KTFFICodegenHelper.pointerCname,
+                                thisCname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", memberPointerCnameP)
+                            .addStatement(
+                                "%M(%M, value._address, %M, %T.%N_offsetHandle.invokeExact(_address, 0L) as Long, %T.%N_byteSize)",
+                                MemorySegment::class.member("copy"),
+                                KTFFICodegenHelper.omniSegment,
+                                KTFFICodegenHelper.omniSegment,
+                                thisCname,
+                                member.name,
+                                thisCname,
+                                member.name
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+        }
+
         groupType.members.forEach { member ->
             var memberType = member.type
             while (memberType is CType.TypeDef) {
                 memberType = memberType.dstType
             }
+
             when (memberType) {
                 is CType.BasicType -> {
-                    val cBasicType = memberType.baseType
-                    file.addProperty(
-                        PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
-                            .addAnnotation(
-                                AnnotationSpec.builder(CTypeName::class)
-                                    .addMember("%S", memberType)
-                                    .build()
-                            )
-                            .tryAddKdoc(member)
-                            .mutable()
-                            .receiver(valueCnameP)
-                            .getter(
-                                FunSpec.getterBuilder()
-                                    .addModifiers(KModifier.INLINE)
-                                    .addStatement(
-                                        "return (%T.%N.get(_segment, 0L) as %T)${cBasicType.fromBase}",
-                                        thisCname,
-                                        "${member.name}_valueVarHandle",
-                                        cBasicType.baseType.asTypeName()
-                                    )
-                                    .build()
-                            )
-                            .setter(
-                                FunSpec.setterBuilder()
-                                    .addModifiers(KModifier.INLINE)
-                                    .addParameter("value", cBasicType.kotlinTypeName)
-                                    .addStatement(
-                                        "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
-                                        thisCname,
-                                        "${member.name}_valueVarHandle",
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
-                    file.addProperty(
-                        PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
-                            .addAnnotation(
-                                AnnotationSpec.builder(CTypeName::class)
-                                    .addMember("%S", memberType)
-                                    .build()
-                            )
-                            .tryAddKdoc(member)
-                            .mutable()
-                            .receiver(pointerCnameP)
-                            .getter(
-                                FunSpec.getterBuilder()
-                                    .addModifiers(KModifier.INLINE)
-                                    .addStatement(
-                                        "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
-                                        thisCname,
-                                        "${member.name}_valueVarHandle",
-                                        KTFFICodegenHelper.omniSegment,
-                                        cBasicType.baseType.asTypeName()
-                                    )
-                                    .build()
-                            )
-                            .setter(
-                                FunSpec.setterBuilder()
-                                    .addModifiers(KModifier.INLINE)
-                                    .addParameter("value", cBasicType.kotlinTypeName)
-                                    .addStatement(
-                                        "%T.%N.set(%M, _address, value${cBasicType.toBase})",
-                                        thisCname,
-                                        "${member.name}_valueVarHandle",
-                                        KTFFICodegenHelper.omniSegment
-                                    )
-                                    .build()
-                            )
-                            .build()
-                    )
+                    basicTypeAccess(member, memberType.baseType, memberType.baseType.name)
                 }
-                else -> {
-
+                is CType.Handle, is CType.EnumBase -> {
+                    commonAccess(member)
                 }
+                is CType.Pointer -> {
+                    commonAccess(member)
+                }
+                is CType.Group -> {
+                    groupAccess(member, memberType)
+                }
+                is CType.Array -> {
+                    commonAccess(member)
+                }
+                else -> throw IllegalStateException("Unsupported member type: ${memberType.toSimpleString()}")
             }
         }
 
