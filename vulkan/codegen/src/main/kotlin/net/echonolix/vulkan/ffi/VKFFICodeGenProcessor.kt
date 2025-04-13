@@ -1,6 +1,10 @@
 package net.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
+import net.echonolix.ktgen.KtgenProcessor
+import net.echonolix.vulkan.schema.API
+import net.echonolix.vulkan.schema.FilteredRegistry
+import net.echonolix.vulkan.schema.Registry
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -8,10 +12,6 @@ import nl.adaptivity.xmlutil.serialization.InputKind
 import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
-import net.echonolix.ktgen.KtgenProcessor
-import net.echonolix.vulkan.schema.API
-import net.echonolix.vulkan.schema.FilteredRegistry
-import net.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
 import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
@@ -80,10 +80,12 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 val enum = GenerateEnumTask(ctx).fork()
                 val group = GenerateGroupTask(ctx).fork()
                 val typeDef = GenerateTypeDefTask(ctx).fork()
+                val function = GenerateFunctionTask(ctx).fork()
                 handle.join()
                 enum.join()
                 group.join()
                 typeDef.join()
+                function.join()
             }
         }.fork().join()
 

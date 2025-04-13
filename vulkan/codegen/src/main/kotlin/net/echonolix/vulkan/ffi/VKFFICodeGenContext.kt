@@ -7,20 +7,19 @@ import net.echonolix.vulkan.schema.Registry
 import net.echonolix.vulkan.schema.XMLComment
 import net.echonolix.vulkan.schema.XMLMember
 import java.nio.file.Path
-import kotlin.collections.set
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     KTFFICodegenContext(basePkgName, outputDir) {
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
-            is CType.FunctionPointer -> VKFFI.functionPackageName
+            is CType.FunctionPointer, is CType.Function -> VKFFI.functionPackageName
             is CType.Enum -> VKFFI.enumPackageName
             is CType.Bitmask -> VKFFI.flagPackageName
             is CType.Struct -> VKFFI.structPackageName
             is CType.Union -> VKFFI.unionPackageName
             is CType.Handle -> VKFFI.handlePackageName
             is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
-            is CType.TypeDef -> VKFFI.basePkgName
+            is CType.TypeDef -> basePkgName
             is CTopLevelConst -> basePkgName
             else -> throw IllegalArgumentException("Unsupported element: $element")
         }

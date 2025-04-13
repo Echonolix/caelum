@@ -40,12 +40,13 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 type as VkHandle
                 val thisCname = type.className()
                 val thisTypeDescriptor = KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname)
+                val parent = type.parent
                 FileSpec.builder(thisCname)
                     .addType(
                         TypeSpec.interfaceBuilder(thisCname)
                             .addSuperinterface(VKFFI.vkHandleCname)
                             .apply {
-                                type.parent?.className()?.nestedClass("Child")?.let {
+                                parent?.className()?.nestedClass("Child")?.let {
                                     addSuperinterface(it)
                                 }
                             }
@@ -148,7 +149,16 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                             .addModifiers(KModifier.INLINE)
                                             .addParameter("value", CBasicType.int64_t.kotlinTypeName)
                                             .returns(thisCname)
-                                            .addStatement("throw %T()", UnsupportedOperationException::class)
+                                            .apply {
+                                                if (type.parent == null) {
+                                                    addStatement("return Impl(value)")
+                                                } else {
+                                                    addStatement(
+                                                        "throw %T()",
+                                                        UnsupportedOperationException::class
+                                                    )
+                                                }
+                                            }
                                             .build()
                                     )
                                     .addMethodHandleFields()
