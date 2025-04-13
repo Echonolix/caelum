@@ -81,14 +81,24 @@ class FilteredRegistry(registry: Registry) {
             registryExtensions.flatMap { extension ->
                 extension.require.asSequence()
                     .flatMap { it.enums }
-                    .map { it.copy(extnumber = extension.number.toString()) }
+                    .map { it.copy(extnumber = it.extnumber ?: extension.number.toString()) }
             }
         )
         .filter { it.api == null || it.api == API.vulkan }
-        .sortedWith(compareBy<Registry.Enums.Enum> {
+        .sortedWith(compareBy {
             it.alias != null || it.value != null
         })
         .associateBy { it.name }
+
+    val enumValueOrders = (registry.enums.asSequence()
+        .flatMap { it.enums }
+        .map { it.name }
+        + extEnums.values.asSequence()
+        .map { it.name })
+        .withIndex()
+        .associate { (index, name) ->
+            name to index
+        }
 
 //    val externalTypeNames =
 //        registryTypes.values.asSequence().filter { it.requires?.endsWith(".h") == true }.map { it.name!! }.toSet()

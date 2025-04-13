@@ -68,6 +68,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         """(${CSyntax.nameRegex.pattern})_BIT(|_${VKFFI.VENDOR_TAGS.joinToString("|_")})""".toRegex()
     private val flagNameRegex =
         """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
+    private val enumTypeNameRegex =
+        """(${CSyntax.nameRegex.pattern}?)(|${VKFFI.VENDOR_TAGS.joinToString("|")})""".toRegex()
 
     private fun CType.EnumBase.fixEntryName(entryName: String): String {
         return when (this) {
@@ -89,7 +91,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 }
             }
             is CType.Enum -> {
-                val entryPrefix = "${this.name.pascalCaseToAllCaps()}_"
+                val typeNameMatchResult = enumTypeNameRegex.matchEntire(this.name)
+                    ?: throw IllegalStateException("Unexpected enum name: ${this.name}")
+                val entryPrefix = "${typeNameMatchResult.groupValues[1].pascalCaseToAllCaps()}_"
                 entryName.removePrefix(entryPrefix)
             }
             else -> throw IllegalStateException("Entry name fixing is not supported for ${this::class.simpleName}")
@@ -219,6 +223,9 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
         val objectEnum = resolveElement(handle.objtypeenum!!) as? CType.EnumBase.Entry
             ?: throw IllegalStateException("Cannot find object type enum for handle ${handle.name}")
+        val objectType = (resolveElement("VkObjectType") as CType.Enum)
+        check(objectEnum.parent === objectType)
+        check(objectEnum.name in objectType.entries)
         return when (xmlType) {
             "VK_DEFINE_HANDLE" -> VkDispatchableHandle(handle.name, parent, objectEnum)
             "VK_DEFINE_NON_DISPATCHABLE_HANDLE" -> VkHandle(handle.name, parent, objectEnum)
@@ -273,7 +280,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 enumType.addEntry(xmlEnum)
             }
             xmlEnum.alias != null -> {
-                CTopLevelConst(xmlEnum.name, CExpression.Reference(resolveElement(xmlEnum.alias) as CTopLevelConst))
+                CTopLevelConst(xmlEnum.name, resolveExpression(xmlEnum.alias))
             }
             xmlEnum.value != null -> {
                 resolveConst(xmlEnum)
@@ -314,7 +321,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
 
         registry.enumsValueTypeName[cElementStr]?.let { xmlEnumType ->
-            return resolveEnum(xmlEnumType, xmlEnumType.name).entries[cElementStr]!!
+            return (resolveElement(xmlEnumType.name) as CType.EnumBase).entries[cElementStr]!!
         }
 
         registry.structTypes[cElementStr]?.let {

@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 interface Tag
 
@@ -313,7 +314,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     }
 
     abstract class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
-        val entries: MutableMap<String, Entry> = Collections.synchronizedMap(mutableMapOf())
+        val entries: MutableMap<String, Entry> = ConcurrentHashMap()
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {

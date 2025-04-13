@@ -2,7 +2,6 @@ package net.echonolix.ktffi
 
 import com.squareup.kotlinpoet.FileSpec
 import java.nio.file.Path
-import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.Stream
@@ -32,7 +31,7 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
     protected abstract fun resolveElementImpl(cElementStr: String): CElement
 
     fun addToCache(name: String, element: CElement) {
-        allElements0[name] = element
+        allElements0.putIfAbsent(name, element)
     }
 
     fun resolveExpression(expressionStr: String): CExpression<*> {
@@ -52,7 +51,7 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             if (quoteRemoved.length == trimStr.length) {
                 CExpression.Const(CBasicType.int32_t, CBasicType.int32_t.codeBlock(trimStr))
             } else {
-                CExpression.StringLiteral( quoteRemoved)
+                CExpression.StringLiteral(quoteRemoved)
             }
         }
     }
@@ -67,7 +66,10 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             val trimStr = cElementStr
                 .trim()
                 .removeContinuousSpaces()
-            return allElements0[trimStr] ?: run {
+            val cached = allElements0[trimStr]
+            if (cached != null) return cached
+
+            run {
                 CSyntax.pointerOrArrayRegex.find(trimStr)?.let {
                     return when {
                         it.value.endsWith("*") -> {
@@ -95,6 +97,8 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
             }.also {
                 addToCache(trimStr, it)
             }
+
+            return allElements0[trimStr]!!
         } catch (e: RuntimeException) {
             throw IllegalStateException("Error resolving element: $cElementStr", e)
         }

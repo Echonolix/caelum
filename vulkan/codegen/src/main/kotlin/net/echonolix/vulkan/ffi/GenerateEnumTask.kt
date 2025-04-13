@@ -23,7 +23,9 @@ import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
 import net.echonolix.ktffi.className
 import java.lang.invoke.MethodHandle
+import kotlin.collections.contains
 import kotlin.random.Random
+import kotlin.sequences.sortedBy
 
 class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
@@ -295,7 +297,8 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         )
 
         val companion = TypeSpec.companionObjectBuilder()
-        val flagBitEntries = flagType.entries.values
+        val flagBitEntries = flagType.entries.values.sortedBy { ctx.registry.enumValueOrders[it.name] }
+        val internalAliases = mutableListOf<PropertySpec>()
         flagBitEntries.forEach {
             val expression = it.expression
             val code = expression.codeBlock()
@@ -304,6 +307,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     CodeBlock.of("%T(%L)", thisCname, code)
                 }
                 is CExpression.Reference -> {
+                    check(expression.value.name in flagType.entries)
                     CodeBlock.of("%N", expression.value.name)
                 }
                 else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
@@ -315,8 +319,8 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .tryAddKdoc(it)
                     .build()
             )
-            companion.addProperty(
-                PropertySpec.builder(it.name, thisCname)
+            if (it.name != fixedName) {
+                internalAliases += PropertySpec.builder(it.name, thisCname)
                     .addModifiers(KModifier.INTERNAL)
                     .getter(
                         FunSpec.getterBuilder()
@@ -324,8 +328,9 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                             .build()
                     )
                     .build()
-            )
+            }
         }
+        companion.addProperties(internalAliases)
         if (flagBitEntries.none {
                 CSyntax.intLiteralRegex.matchEntire(it.expression.codeBlock().toString())?.groupValues[2] == "0"
             }) {
@@ -373,6 +378,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val companion = TypeSpec.companionObjectBuilder()
         val internalAliases = mutableListOf<PropertySpec>()
         enumType.entries.values.asSequence()
+            .sortedBy { ctx.registry.enumValueOrders[it.name] }
             .forEach { entry ->
                 val expression = entry.expression
                 val fixedName = entry.tags.get<EnumEntryFixedName>()!!.name
@@ -388,6 +394,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         )
                     }
                     is CExpression.Reference -> {
+                        check(expression.value.name in enumType.entries)
                         companion.addProperty(
                             PropertySpec.builder(fixedName, thisCname)
                                 .initializer("%N", expression.value.name)
@@ -397,14 +404,16 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     }
                     else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
                 }
-                internalAliases += PropertySpec.builder(entry.name, thisCname)
-                    .addModifiers(KModifier.INTERNAL)
-                    .getter(
-                        FunSpec.getterBuilder()
-                            .addStatement("return %N", fixedName)
-                            .build()
-                    )
-                    .build()
+                if (entry.name != fixedName) {
+                    internalAliases += PropertySpec.builder(entry.name, thisCname)
+                        .addModifiers(KModifier.INTERNAL)
+                        .getter(
+                            FunSpec.getterBuilder()
+                                .addStatement("return %N", fixedName)
+                                .build()
+                        )
+                        .build()
+                }
             }
         companion.addProperties(internalAliases)
 
@@ -422,6 +431,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         .beginControlFlow("return when (value)")
                         .apply {
                             enumType.entries.values.asSequence()
+                                .sortedBy { ctx.registry.enumValueOrders[it.name] }
                                 .filter { it.expression is CExpression.Const }
                                 .forEach { entry ->
                                     addStatement(
