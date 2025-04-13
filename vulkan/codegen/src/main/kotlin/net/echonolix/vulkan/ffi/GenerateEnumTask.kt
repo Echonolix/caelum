@@ -188,7 +188,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     private fun TypeSpec.Builder.addSuper(enumBase: CType.EnumBase): TypeSpec.Builder {
         val baseType = enumBase.baseType
         val superCname = when (enumBase) {
-            is CType.Enum -> VKFFI.vkEnumBaseCname
+            is CType.Enum -> VKFFI.vkEnumCname
             is CType.Bitmask -> {
                 when (baseType) {
                     CBasicType.int32_t -> VKFFI.vkFlags32CNAME
@@ -290,6 +290,29 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
 
         val companion = TypeSpec.companionObjectBuilder()
+        flagType.entries.values.let { flagBitTypes ->
+            flagBitTypes.forEach {
+                val code = it.expression.codeBlock()
+                companion.addProperty(
+                    PropertySpec.builder(it.name, thisCname)
+                        .initializer(
+                            "%T(%L)",
+                            thisCname,
+                            code
+                        )
+                        .tryAddKdoc(it)
+                        .build()
+                )
+            }
+            if (flagBitTypes.none { it.expression.codeBlock().toString() == "0" }) {
+                companion.addProperty(
+                    PropertySpec.builder("EMPTY", thisCname)
+                        .initializer("%T(0)", thisCname)
+                        .build()
+                )
+            }
+        }
+
         companion.addCompanionSuper(flagType)
         companion.addFunction(
             FunSpec.builder("toInt")
@@ -311,29 +334,6 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         )
         companion.addMethodHandleFields()
 
-
-//        flagBitType?.entries?.values?.let { flagBitTypes ->
-//            flagBitTypes.forEach {
-//                companion.addProperty(
-//                    PropertySpec.builder(it.fixedName, thisCname)
-//                        .initializer(
-//                            "%T(%L)",
-//                            thisCname,
-//                            it.valueCode.toString().replace("U", "")
-//                        )
-//                        .tryAddKdoc(it)
-//                        .build()
-//                )
-//            }
-//            if (flagBitTypes.none { it.valueCode.toString().startsWith("0") }) {
-//                companion.addProperty(
-//                    PropertySpec.builder("EMPTY", thisCname)
-//                        .initializer("%T(0)", thisCname)
-//                        .build()
-//                )
-//            }
-//        }
-
         val file = FileSpec.builder(thisCname)
         file.addNativeAccess(thisCname, flagType.baseType)
         return file.addType(type.addType(companion.build()).build())
@@ -347,6 +347,32 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         type.addSuper(enumType)
 
         val companion = TypeSpec.companionObjectBuilder()
+        enumType.entries.values.asSequence()
+            .forEach { entry ->
+                val expression = entry.expression
+                when (expression) {
+                    is CExpression.Const -> {
+                        type.addEnumConstant(
+                            entry.name,
+                            TypeSpec.anonymousClassBuilder()
+                                .tryAddKdoc(entry)
+                                .superclass(thisCname)
+                                .addSuperclassConstructorParameter(entry.expression.codeBlock())
+                                .build()
+                        )
+                    }
+                    is CExpression.Reference -> {
+                        companion.addProperty(
+                            PropertySpec.builder(entry.name, thisCname)
+                                .initializer("%N", expression.value.name)
+                                .tryAddKdoc(entry)
+                                .build()
+                        )
+                    }
+                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+                }
+            }
+
         companion.addCompanionSuper(enumType)
         companion.addFunction(
             FunSpec.builder("fromInt")
@@ -386,32 +412,6 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
         companion.addMethodHandleFields()
-
-        enumType.entries.values.asSequence()
-            .forEach { entry ->
-                val expression = entry.expression
-                when (expression) {
-                    is CExpression.Const -> {
-                        type.addEnumConstant(
-                            entry.name,
-                            TypeSpec.anonymousClassBuilder()
-                                .tryAddKdoc(entry)
-                                .superclass(thisCname)
-                                .addSuperclassConstructorParameter(entry.expression.codeBlock())
-                                .build()
-                        )
-                    }
-                    is CExpression.Reference -> {
-                        companion.addProperty(
-                            PropertySpec.builder(entry.name, thisCname)
-                                .initializer("%N", expression.value.name)
-                                .tryAddKdoc(entry)
-                                .build()
-                        )
-                    }
-                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
-                }
-            }
 
         val file = FileSpec.builder(thisCname)
         file.addNativeAccess(thisCname, enumType.baseType)
