@@ -11,21 +11,15 @@ import kotlin.collections.set
 
 class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     KTFFICodegenContext(basePkgName, outputDir) {
-    val enumPackageName = "${basePkgName}.enums"
-    val structPackageName = "${basePkgName}.structs"
-    val unionPackageName = "${basePkgName}.unions"
-    val funcPointerPackageName = "${basePkgName}.funcptrs"
-    val handlePackageName = "${basePkgName}.handles"
-
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
-            is CType.Enum -> enumPackageName
-            is CType.Bitmask -> enumPackageName
-            is CType.Struct -> structPackageName
-            is CType.Union -> unionPackageName
-            is CType.Handle -> handlePackageName
+            is CType.Enum -> VKFFI.enumPackageName
+            is CType.Bitmask -> VKFFI.flagPackageName
+            is CType.Struct -> VKFFI.structPackageName
+            is CType.Union -> VKFFI.unionPackageName
+            is CType.Handle -> VKFFI.handlePackageName
             is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
-            is CTopLevelConst -> enumPackageName
+            is CTopLevelConst -> basePkgName
             else -> throw IllegalArgumentException("Unsupported element: $element")
         }
     }
@@ -305,10 +299,10 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             return resolveFuncPointerType(it)
         }
 
-        registry.bitmaskTypes[cElementStr]?.let { bitmaskType ->
+        registry.bitmaskTypes[cElementStr.replace("Bits", "")]?.let { bitmaskType ->
             val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Bitmask(
                 bitmaskType.name!!,
-                CBasicType.uint32_t.cType
+                CBasicType.int32_t.cType
             )
             val bitEnumXml = registry.enums[bitEnumTypeName]
                 ?: throw IllegalStateException("Cannot find bit enum type: $bitEnumTypeName")

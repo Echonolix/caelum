@@ -1,7 +1,6 @@
 package net.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
-import net.echonolix.ktffi.CTopLevelConst
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -16,10 +15,12 @@ import net.echonolix.vulkan.schema.Registry
 import java.nio.file.Path
 import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteRecursively
+import kotlin.io.path.walk
 
 class VKFFICodeGenProcessor : KtgenProcessor {
-    override fun process(inputs: List<Path>, outputDir: Path) {
+    override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val registryText = javaClass.getResource("/vk.xml")!!.readText()
         val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs")
         val xml = XML {
@@ -47,7 +48,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
-        val ctx = VKFFICodeGenContext(VKFFI.packageName, outputDir, filteredRegistry)
+        val ctx = VKFFICodeGenContext(VKFFI.basePkgName, outputDir, filteredRegistry)
 //        with(ctx) {
 //            val a = ctx.resolveElement("VK_MAX_GLOBAL_PRIORITY_SIZE") as CTopLevelConst
 //            println(a.expression.codeBlock())
@@ -55,7 +56,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
 //        return
         object : RecursiveAction() {
             override fun compute() {
-                fun processRequire(requires: List<Registry.Feature.Require>,) {
+                fun processRequire(requires: List<Registry.Feature.Require>) {
                     requires.asSequence()
                         .filter { it.comment !in skipped }
                         .forEach { require ->
@@ -72,6 +73,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                                 }
                         }
                 }
+
                 val core = object : RecursiveAction() {
                     override fun compute() {
                         filteredRegistry.registryFeatures.parallelStream()
@@ -94,17 +96,33 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 enum.join()
             }
         }.fork().join()
+
+        return ctx.outputFiles
     }
+}
+
+tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path>) {
+    if (curr == null) return
+    if (curr == end) return
+    output.add(curr)
+    return addParentUpTo(curr.parent, end, output)
 }
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
 //    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
-//    repeat(20) {
-        val outputDir = Path.of("vulkan/build/generated/ktgen")
-//        outputDir.deleteRecursively()
-        val time = System.nanoTime()
-        VKFFICodeGenProcessor().process(emptyList(), outputDir)
-        println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
-//    }
+    val time = System.nanoTime()
+    val outputDir = Path.of("vulkan/build/generated/ktgen")
+    val updatedFiles = VKFFICodeGenProcessor().process(emptySet(), outputDir).toMutableSet()
+    updatedFiles.toList()
+        .forEach {
+            addParentUpTo(it.parent, outputDir, updatedFiles)
+        }
+    outputDir.walk(PathWalkOption.INCLUDE_DIRECTORIES, PathWalkOption.BREADTH_FIRST, PathWalkOption.FOLLOW_LINKS)
+        .filter { it != outputDir }
+        .filter { it !in updatedFiles }
+        .forEach {
+            it.deleteRecursively()
+        }
+    println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
 }
