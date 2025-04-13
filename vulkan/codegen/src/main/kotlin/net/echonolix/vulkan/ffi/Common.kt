@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeAliasSpec
 import net.echonolix.ktffi.CType
-import net.echonolix.ktffi.className
 import net.echonolix.vulkan.schema.Element
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.RecursiveTask

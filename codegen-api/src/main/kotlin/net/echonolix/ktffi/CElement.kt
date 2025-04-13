@@ -43,7 +43,17 @@ interface CElement : Comparable<CElement> {
         }
     }
 
-    interface TopLevel : CElement
+    interface TopLevel : CElement {
+        context(ctx: KTFFICodegenContext)
+        fun packageName(): String {
+            return ctx.resolvePackageName(this)
+        }
+
+        context(ctx: KTFFICodegenContext)
+        fun className(): ClassName {
+            return ClassName(packageName(), name)
+        }
+    }
 }
 
 sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl(value.toString()) {
@@ -143,6 +153,16 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
 
         context(ctx: KTFFICodegenContext)
+        override fun packageName(): String {
+            return KTFFICodegenHelper.packageName
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun className(): ClassName {
+            return ClassName(packageName(), name)
+        }
+
+        context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             if (baseType === CBasicType.void) {
                 return CodeBlock.of("%M", baseType.valueLayoutMember)
@@ -177,7 +197,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of("%M", CBasicType.uint64_t.valueLayoutMember)
+            return CodeBlock.of("%T.layout", className())
         }
 
         override fun toString(): String {
@@ -188,17 +208,17 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     class TypeDef(name: String, val dstType: CType) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
-            TODO("Not yet implemented")
+            return dstType.nativeType()
         }
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            TODO("Not yet implemented")
+            return className()
         }
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return dstType.memoryLayout()
+            return CodeBlock.of("%T.layout", className())
         }
 
         override fun toString(): String {
@@ -383,6 +403,16 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             return KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun packageName(): String {
+            return KTFFICodegenHelper.packageName
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun className(): ClassName {
+            return ClassName(packageName(), CBasicType.size_t.name)
         }
 
         context(ctx: KTFFICodegenContext)

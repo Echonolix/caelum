@@ -76,9 +76,11 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 val handle = GenerateHandleTask(ctx).fork()
                 val enum = GenerateEnumTask(ctx).fork()
                 val group = GenerateGroupTask(ctx).fork()
+                val typeDef = GenerateTypeDefTask(ctx).fork()
                 handle.join()
                 enum.join()
                 group.join()
+                typeDef.join()
             }
         }.fork().join()
 

@@ -1,18 +1,10 @@
 package net.echonolix.vulkan.ffi
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
-import net.echonolix.ktffi.className
 import net.echonolix.ktffi.decap
 
 class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
@@ -23,14 +15,13 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
-        val vkHandleCname = ClassName(VKFFI.handlePackageName, "VkHandle")
-        val vkTypeDescriptorCname = vkHandleCname.nestedClass("TypeDescriptor")
+        val vkTypeDescriptorCname = VKFFI.vkHandleCname.nestedClass("TypeDescriptor")
 
         val objTypeCname = resolveType("VkObjectType").className()
-        val typeVariable = TypeVariableName("T", vkHandleCname)
-        val vkHandleFile = FileSpec.builder(vkHandleCname)
+        val typeVariable = TypeVariableName("T", VKFFI.vkHandleCname)
+        val vkHandleFile = FileSpec.builder(VKFFI.vkHandleCname)
             .addType(
-                TypeSpec.interfaceBuilder(vkHandleCname)
+                TypeSpec.interfaceBuilder(VKFFI.vkHandleCname)
                     .addSuperinterface(NativeType::class)
                     .addProperty("objectType", objTypeCname)
                     .addType(
@@ -50,7 +41,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             .map { (_, type) ->
                 type as VkHandle
                 val thisCname = type.className()
-                val superType = type.parent?.className()?.nestedClass("Child") ?: vkHandleCname
+                val superType = type.parent?.className()?.nestedClass("Child") ?: VKFFI.vkHandleCname
                 val thisTypeDescriptor = KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname)
                 FileSpec.builder(thisCname)
                     .addType(

@@ -21,7 +21,6 @@ import net.echonolix.ktffi.CTopLevelConst
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
-import net.echonolix.ktffi.className
 import java.lang.invoke.MethodHandle
 import kotlin.collections.contains
 import kotlin.random.Random

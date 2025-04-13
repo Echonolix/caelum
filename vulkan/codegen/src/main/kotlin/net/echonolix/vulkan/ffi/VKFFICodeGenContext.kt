@@ -19,6 +19,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             is CType.Union -> VKFFI.unionPackageName
             is CType.Handle -> VKFFI.handlePackageName
             is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
+            is CType.TypeDef -> VKFFI.basePkgName
+            is CType.FunctionPointer -> VKFFI.functionPackageName
             is CTopLevelConst -> basePkgName
             else -> throw IllegalArgumentException("Unsupported element: $element")
         }

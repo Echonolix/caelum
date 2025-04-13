@@ -1,6 +1,5 @@
 package net.echonolix.vulkan.ffi
 
-import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -8,12 +7,8 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.WildcardTypeName
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
-import net.echonolix.ktffi.className
-import java.lang.foreign.StructLayout
-import java.lang.foreign.UnionLayout
 
 class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {

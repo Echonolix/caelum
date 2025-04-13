@@ -61,9 +61,8 @@ object VKFFI {
     val flagPackageName = "${basePkgName}.flags"
     val structPackageName = "${basePkgName}.structs"
     val unionPackageName = "${basePkgName}.unions"
-    val funcPointerPackageName = "${basePkgName}.funcptrs"
     val handlePackageName = "${basePkgName}.handles"
-
+    val functionPackageName = "${basePkgName}.functions"
 
     val vkEnumBaseCname = ClassName(basePkgName, "VkEnumBase")
     val vkEnumCname = ClassName(enumPackageName, "VkEnum")
@@ -71,6 +70,8 @@ object VKFFI {
     val vkFlags64CNAME = ClassName(flagPackageName, "VkFlags64")
     val vkStructCname = ClassName(structPackageName, "VkStruct")
     val vkUnionCname = ClassName(unionPackageName, "VkUnion")
+    val vkHandleCname = ClassName(handlePackageName, "VkHandle")
+    val vkFunctionCname = ClassName(functionPackageName, "VkFunction")
 
     val methodHandlesCname = MethodHandles::class.asClassName()
     val methodTypeCname = MethodType::class.asClassName()
