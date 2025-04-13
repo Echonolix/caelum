@@ -2,11 +2,12 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.ktffi.KTFFICodegenHelper
+import net.echonolix.ktffi.addMethodHandleFields
 import net.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
 import java.nio.file.Path
-import java.util.Random
+import java.util.*
 import kotlin.reflect.KClass
 
 class KTFFICoreCodeGenProcessor : KtgenProcessor {
@@ -18,16 +19,15 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
             .indent("    ")
             .addAnnotation(
                 AnnotationSpec.builder(Suppress::class)
-                    .addMember("%S", "RemoveRedundantQualifierName")
                     .addMember("%S", "PropertyName")
-                    .addMember("%S", "RedundantVisibilityModifier")
                     .addMember("%S", "unused")
                     .addMember("%S", "NOTHING_TO_INLINE")
+                    .addMember("%S", "ObjectPropertyName")
                     .build()
             )
 
-        CBasicType.entries.forEach {
-            val thisCname = ClassName(KTFFICodegenHelper.packageName, it.name)
+        CBasicType.entries.forEach { basicType ->
+            val thisCname = ClassName(KTFFICodegenHelper.packageName, basicType.name)
             val arrayCNameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
             val valueCNameP = KTFFICodegenHelper.valueCname.parameterizedBy(thisCname)
             val pointerCNameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
@@ -35,7 +35,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
             file.addType(
                 TypeSpec.objectBuilder(thisCname)
                     .superclass(KTFFICodegenHelper.typeImplCname.parameterizedBy(thisCname))
-                    .addSuperclassConstructorParameter("%M", ValueLayout::class.member(it.valueLayoutName))
+                    .addSuperclassConstructorParameter("%M", ValueLayout::class.member(basicType.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
                             .addAnnotation(JvmField::class)
@@ -48,6 +48,25 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                             .initializer("typeDescriptor.layout.arrayElementVarHandle()")
                             .build()
                     )
+                    .addFunction(
+                        FunSpec.builder("toNativeData")
+                            .addAnnotation(JvmStatic::class)
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", basicType.ktApiType)
+                            .returns(basicType.nativeDataType)
+                            .addStatement("return value${basicType.toNativeData}")
+                            .build()
+                    )
+                    .addFunction(
+                        FunSpec.builder("fromNativeData")
+                            .addAnnotation(JvmStatic::class)
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", basicType.nativeDataType)
+                            .returns(basicType.ktApiType)
+                            .addStatement("return value${basicType.fromNativeData}")
+                            .build()
+                    )
+                    .addMethodHandleFields()
                     .build()
             )
 
@@ -63,12 +82,12 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(arrayCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .returns(it.ktApiType.asTypeName())
+                    .returns(basicType.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(_segment, 0L, index) as %T)${it.fromNativeData}",
+                        "return (%T.%N.get(_segment, 0L, index) as %T)${basicType.fromNativeData}",
                         thisCname,
                         "arrayVarHandle",
-                        it.nativeDataType.asTypeName()
+                        basicType.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -78,9 +97,9 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(arrayCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .addParameter("value", it.ktApiType.asTypeName())
+                    .addParameter("value", basicType.ktApiType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(_segment, 0L, index, value${it.toNativeData})",
+                        "%T.%N.set(_segment, 0L, index, value${basicType.toNativeData})",
                         thisCname,
                         "arrayVarHandle"
                     )
@@ -93,12 +112,12 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .returns(it.ktApiType.asTypeName())
+                    .returns(basicType.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(_segment, 0L) as %T)${it.fromNativeData}",
+                        "return (%T.%N.get(_segment, 0L) as %T)${basicType.fromNativeData}",
                         thisCname,
                         "valueVarHandle",
-                        it.nativeDataType.asTypeName()
+                        basicType.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -109,8 +128,12 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .addParameter("value", it.ktApiType.asTypeName())
-                    .addStatement("%T.%N.set(_segment, 0L, value${it.toNativeData})", thisCname, "valueVarHandle")
+                    .addParameter("value", basicType.ktApiType.asTypeName())
+                    .addStatement(
+                        "%T.%N.set(_segment, 0L, value${basicType.toNativeData})",
+                        thisCname,
+                        "valueVarHandle"
+                    )
                     .build()
             )
 
@@ -120,13 +143,13 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(pointerCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .returns(it.ktApiType.asTypeName())
+                    .returns(basicType.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%M, _address, index) as %T)${it.fromNativeData}",
+                        "return (%T.%N.get(%M, _address, index) as %T)${basicType.fromNativeData}",
                         thisCname,
                         "arrayVarHandle",
                         KTFFICodegenHelper.omniSegment,
-                        it.nativeDataType.asTypeName()
+                        basicType.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -136,9 +159,9 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .receiver(pointerCNameP)
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("index", LONG)
-                    .addParameter("value", it.ktApiType.asTypeName())
+                    .addParameter("value", basicType.ktApiType.asTypeName())
                     .addStatement(
-                        "%T.%N.set(%M, _address, index, value${it.toNativeData})",
+                        "%T.%N.set(%M, _address, index, value${basicType.toNativeData})",
                         thisCname,
                         "arrayVarHandle",
                         KTFFICodegenHelper.omniSegment
@@ -152,13 +175,13 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .returns(it.ktApiType.asTypeName())
+                    .returns(basicType.ktApiType.asTypeName())
                     .addStatement(
-                        "return (%T.%N.get(%M, _address) as %T)${it.fromNativeData}",
+                        "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
                         thisCname,
                         "valueVarHandle",
                         KTFFICodegenHelper.omniSegment,
-                        it.nativeDataType.asTypeName()
+                        basicType.nativeDataType.asTypeName()
                     )
                     .build()
             )
@@ -169,7 +192,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .addParameter("value", it.ktApiType.asTypeName())
+                    .addParameter("value", basicType.ktApiType.asTypeName())
                     .addStatement("return %T.%N.set(%M, _address, value)", thisCname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
                     .build()
             )

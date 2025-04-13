@@ -1,24 +1,24 @@
 package net.echonolix.ktffi
 
 @JvmInline
-value class NativePointer<T : NativeType>(
-    val _address: Long,
+public value class NativePointer<T : NativeType>(
+    public val _address: Long,
 ) : NativeType {
     override val typeDescriptor: TypeDescriptor<NativePointer<*>>
         get() = Companion
 
-    inline operator fun invoke(block: NativePointer<T>.() -> Unit): NativePointer<T> {
+    public inline operator fun invoke(block: NativePointer<T>.() -> Unit): NativePointer<T> {
         this.block()
         return this
     }
 
-    companion object : TypeDescriptor.Impl<NativePointer<*>>(APIHelper.pointerLayout) {
+    public companion object : TypeDescriptor.Impl<NativePointer<*>>(APIHelper.pointerLayout) {
         @JvmStatic
-        fun <T : NativeType> fromInt(value: Long) = NativePointer<T>(value)
+        public fun <T : NativeType> fromNativeData(value: Long): NativePointer<T> = NativePointer<T>(value)
 
         @JvmStatic
-        fun <T : NativeType> toInt(value: NativePointer<T>) = value._address
+        public fun <T : NativeType> toNativeData(value: NativePointer<T>): Long = value._address
     }
 }
 
-val nullptr: NativePointer<*> = NativePointer<NativeChar>(0L)
+public val nullptr: NativePointer<*> = NativePointer<NativeChar>(0L)

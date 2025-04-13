@@ -4,24 +4,26 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
 
 @JvmInline
-value class NativeValue<T : NativeType>(
-    val _segment: MemorySegment,
+public value class NativeValue<T : NativeType>(
+    public val _segment: MemorySegment,
 ) {
-    fun ptr(): NativePointer<T> = NativePointer(_segment.address())
+    public fun ptr(): NativePointer<T> = NativePointer(_segment.address())
 
-    inline operator fun invoke(block: NativeValue<T>.() -> Unit): NativeValue<T> {
+    public inline operator fun invoke(block: NativeValue<T>.() -> Unit): NativeValue<T> {
         this.block()
         return this
     }
 }
 
-fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator): NativeValue<T> = NativeValue(allocator.allocate(layout))
+public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator): NativeValue<T> =
+    NativeValue(allocator.allocate(layout))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> TypeDescriptor<T>.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
+public fun <T : NativeType> TypeDescriptor<T>.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
 
-fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator): NativeValue<T> =
+public fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator): NativeValue<T> =
     NativeValue(allocator.allocate(layout).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> TypeDescriptor<T>.calloc(): NativeValue<T> = NativeValue(allocator.allocate(layout).apply { fill(0) })
+public fun <T : NativeType> TypeDescriptor<T>.calloc(): NativeValue<T> =
+    NativeValue(allocator.allocate(layout).apply { fill(0) })

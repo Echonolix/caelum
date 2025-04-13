@@ -9,6 +9,7 @@ dependencies {
 }
 
 kotlin {
+    explicitApi()
     compilerOptions {
         optIn.add("kotlin.contracts.ExperimentalContracts")
         freeCompilerArgs.addAll("-Xbackend-threads=0", "-Xcontext-parameters")

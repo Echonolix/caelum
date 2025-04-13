@@ -15,19 +15,19 @@ import kotlin.reflect.KClass
 @OptIn(ExperimentalStdlibApi::class)
 @Serializable(with = CBasicType.Serializer::class)
 @Suppress("ClassName")
-sealed class CBasicType<T : Any>(
-    val cTypeNameStr: String,
-    val ktffiTypeNameStr: String,
-    val index: Int,
-    val kotlinType: KClass<T>,
-    val literalSuffix: String,
-    val valueLayout: ValueLayout,
-    val valueLayoutName: String,
-    val baseType: KClass<*> = kotlinType,
-    val fromBase: String = "",
-    val toBase: String = "",
+public sealed class CBasicType<T : Any>(
+    public val cTypeNameStr: String,
+    public val ktffiTypeNameStr: String,
+    public val index: Int,
+    public val kotlinType: KClass<T>,
+    public val literalSuffix: String,
+    public val valueLayout: ValueLayout,
+    public val valueLayoutName: String,
+    public val baseType: KClass<*> = kotlinType,
+    public val fromBase: String = "",
+    public val toBase: String = "",
 ) {
-    object void : CBasicType<Unit>(
+    public object void : CBasicType<Unit>(
         "void",
         "NativeVoid",
         0,
@@ -37,7 +37,7 @@ sealed class CBasicType<T : Any>(
         "JAVA_BYTE"
     )
 
-    object char : CBasicType<Char>(
+    public object char : CBasicType<Char>(
         "char",
         "NativeChar",
         1,
@@ -47,7 +47,7 @@ sealed class CBasicType<T : Any>(
         "JAVA_BYTE"
     )
 
-    object int8_t : CBasicType<Byte>(
+    public object int8_t : CBasicType<Byte>(
         "int8_t",
         "NativeInt8",
         2,
@@ -57,7 +57,7 @@ sealed class CBasicType<T : Any>(
         "JAVA_BYTE"
     )
 
-    object uint8_t : CBasicType<UByte>(
+    public object uint8_t : CBasicType<UByte>(
         "uint8_t",
         "NativeUInt8",
         3,
@@ -70,7 +70,7 @@ sealed class CBasicType<T : Any>(
         ".toByte()"
     )
 
-    object int16_t : CBasicType<Short>(
+    public object int16_t : CBasicType<Short>(
         "int16_t",
         "NativeInt16",
         4,
@@ -80,7 +80,7 @@ sealed class CBasicType<T : Any>(
         "JAVA_SHORT"
     )
 
-    object uint16_t : CBasicType<UShort>(
+    public object uint16_t : CBasicType<UShort>(
         "uint16_t",
         "NativeUInt16",
         5,
@@ -93,7 +93,7 @@ sealed class CBasicType<T : Any>(
         ".toShort()"
     )
 
-    object int32_t : CBasicType<Int>(
+    public object int32_t : CBasicType<Int>(
         "int32_t",
         "NativeInt32",
         6,
@@ -116,7 +116,7 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object uint32_t : CBasicType<UInt>(
+    public object uint32_t : CBasicType<UInt>(
         "uint32_t",
         "NativeUInt32",
         7,
@@ -142,7 +142,7 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object int : CBasicType<Int>(
+    public object int : CBasicType<Int>(
         "int",
         "NativeInt",
         8,
@@ -156,7 +156,7 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object int64_t :
+    public object int64_t :
         CBasicType<Long>(
             "int64_t",
             "NativeInt64",
@@ -181,7 +181,7 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object uint64_t : CBasicType<ULong>(
+    public object uint64_t : CBasicType<ULong>(
         "uint64_t",
         "NativeUInt64",
         10,
@@ -208,7 +208,7 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object size_t : CBasicType<Long>(
+    public object size_t : CBasicType<Long>(
         "size_t",
         "NativeSize",
         11,
@@ -218,7 +218,7 @@ sealed class CBasicType<T : Any>(
         "JAVA_LONG"
     )
 
-    object float : CBasicType<Float>(
+    public object float : CBasicType<Float>(
         "float",
         "NativeFloat",
         12,
@@ -232,7 +232,7 @@ sealed class CBasicType<T : Any>(
         }
     }
 
-    object double : CBasicType<Double>(
+    public object double : CBasicType<Double>(
         "double",
         "NativeDouble",
         12,
@@ -242,24 +242,24 @@ sealed class CBasicType<T : Any>(
         "JAVA_DOUBLE"
     )
 
-    val kotlinTypeName: TypeName = kotlinType.asTypeName()
-    val valueLayoutMember = KTFFICodegenHelper.valueLayoutCname.member(valueLayoutName)
-    val ktffiTypeTName = if (cTypeNameStr == "void") {
+    public val kotlinTypeName: TypeName = kotlinType.asTypeName()
+    public val valueLayoutMember: MemberName = KTFFICodegenHelper.valueLayoutCname.member(valueLayoutName)
+    public val ktffiTypeTName: TypeName = if (cTypeNameStr == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))
     } else {
         ClassName(KTFFICodegenHelper.packageName, ktffiTypeNameStr)
     }
 
-    open fun codeBlock(valueStr: String): CodeBlock {
+    public open fun codeBlock(valueStr: String): CodeBlock {
         throw UnsupportedOperationException("Not implemented for $cTypeNameStr")
     }
 
-    val cType by lazy { CType.BasicType(this) }
+    public val cType: CType.BasicType by lazy { CType.BasicType(this) }
 
-    companion object {
+    public companion object {
         private val invIntLiteralRegex = """~${CSyntax.intLiteralRegex}""".toRegex()
 
-        val ENTRIES by lazy {
+        public val ENTRIES: List<CBasicType<*>> by lazy {
             listOf(
                 void,
                 char,
@@ -278,11 +278,11 @@ sealed class CBasicType<T : Any>(
             )
         }
 
-        val CTYPES by lazy {
+        public val CTYPES: Map<CBasicType<*>, CType.BasicType> by lazy {
             ENTRIES.associateWith { it.cType }
         }
 
-        fun fromStringOrNull(type: String): CBasicType<*>? {
+        public fun fromStringOrNull(type: String): CBasicType<*>? {
             return when (type) {
                 "void" -> void
                 "char" -> char
@@ -302,12 +302,12 @@ sealed class CBasicType<T : Any>(
             }
         }
 
-        fun fromString(type: String): CBasicType<*> {
+        public fun fromString(type: String): CBasicType<*> {
             return fromStringOrNull(type) ?: throw IllegalArgumentException("Unknown CBasicType: $type")
         }
     }
 
-    object Serializer : KSerializer<CBasicType<*>> {
+    public object Serializer : KSerializer<CBasicType<*>> {
         override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("type", PrimitiveKind.STRING)
 
         override fun serialize(

@@ -5,32 +5,30 @@ package net.echonolix.ktffi
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 
-fun FileSpec.Builder.addSuppress() = apply {
+public fun FileSpec.Builder.addSuppress() = apply {
     addAnnotation(
         AnnotationSpec.builder(Suppress::class)
-            .addMember("%S", "RemoveRedundantQualifierName")
             .addMember("%S", "PropertyName")
-            .addMember("%S", "RedundantVisibilityModifier")
             .addMember("%S", "unused")
             .addMember("%S", "NOTHING_TO_INLINE")
-            .addMember("%S", "RemoveExplicitTypeArguments")
+            .addMember("%S", "ObjectPropertyName")
             .build()
     )
 }
 
-fun String.decOrHexToInt(): Int = if (startsWith("0x")) {
+public fun String.decOrHexToInt(): Int = if (startsWith("0x")) {
     substring(2).toInt(16)
 } else {
     toInt(10)
 }
 
-fun String.decOrHexToULong(): ULong = if (startsWith("0x")) {
+public fun String.decOrHexToULong(): ULong = if (startsWith("0x")) {
     substring(2).toULong(16)
 } else {
     toULong(10)
 }
 
-fun String.decOrHexToUInt(): UInt = if (startsWith("0x")) {
+public fun String.decOrHexToUInt(): UInt = if (startsWith("0x")) {
     substring(2).toUInt(16)
 } else {
     toUInt(10)
@@ -38,15 +36,15 @@ fun String.decOrHexToUInt(): UInt = if (startsWith("0x")) {
 
 private val xmlTagRegex = Regex("<[^>]+>")
 
-fun String.toXMLTagFreeString(): String {
+public fun String.toXMLTagFreeString(): String {
     return replace(xmlTagRegex, "")
 }
 
-fun String.removeContinuousSpaces(): String {
+public fun String.removeContinuousSpaces(): String {
     return replace(""" +""".toRegex(), " ")
 }
 
-fun String.pascalCaseToAllCaps() = buildString {
+public fun String.pascalCaseToAllCaps() = buildString {
     append(this@pascalCaseToAllCaps[0])
     for (i in 1..<this@pascalCaseToAllCaps.length) {
         val last = this@pascalCaseToAllCaps[i - 1]
@@ -58,7 +56,7 @@ fun String.pascalCaseToAllCaps() = buildString {
     }
 }
 
-fun String.decap(): String {
+public fun String.decap(): String {
     return replaceFirstChar { it.lowercase() }
 }
 
@@ -67,7 +65,7 @@ private val hexFormat = HexFormat {
     number.prefix = "0x"
 }
 
-fun Int.toLiteralHexString() = toHexString(hexFormat)
-fun UInt.toLiteralHexString() = toHexString(hexFormat)
-fun ULong.toLiteralHexString() = toHexString(hexFormat)
-fun Long.toLiteralHexString() = toHexString(hexFormat)
+public fun Int.toLiteralHexString() = toHexString(hexFormat)
+public fun UInt.toLiteralHexString() = toHexString(hexFormat)
+public fun ULong.toLiteralHexString() = toHexString(hexFormat)
+public fun Long.toLiteralHexString() = toHexString(hexFormat)

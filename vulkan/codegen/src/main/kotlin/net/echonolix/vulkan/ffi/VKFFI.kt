@@ -1,9 +1,6 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.asClassName
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 
 object VKFFI {
     const val VK_EXT_ENUM_BASE = 1000000000
@@ -72,9 +69,6 @@ object VKFFI {
     val vkUnionCname = ClassName(unionPackageName, "VkUnion")
     val vkHandleCname = ClassName(handlePackageName, "VkHandle")
     val vkFunctionCname = ClassName(functionPackageName, "VkFunction")
-
-    val methodHandlesCname = MethodHandles::class.asClassName()
-    val methodTypeCname = MethodType::class.asClassName()
 
     val typedefBlackList = setOf(
         "ANativeWindow",

@@ -2,11 +2,7 @@ package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.ktffi.CBasicType
-import net.echonolix.ktffi.CType
-import net.echonolix.ktffi.KTFFICodegenHelper
-import net.echonolix.ktffi.NativeType
-import net.echonolix.ktffi.decap
+import net.echonolix.ktffi.*
 
 class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     fun CType.Handle.variableName(): String {
@@ -138,7 +134,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                 TypeSpec.companionObjectBuilder()
                                     .superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
                                     .addFunction(
-                                        FunSpec.builder("toInt")
+                                        FunSpec.builder("toNativeData")
                                             .addAnnotation(JvmStatic::class)
                                             .addModifiers(KModifier.INLINE)
                                             .addParameter("value", thisCname)
@@ -147,7 +143,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                             .build()
                                     )
                                     .addFunction(
-                                        FunSpec.builder("fromInt")
+                                        FunSpec.builder("fromNativeData")
                                             .addAnnotation(JvmStatic::class)
                                             .addModifiers(KModifier.INLINE)
                                             .addParameter("value", CBasicType.int64_t.kotlinTypeName)

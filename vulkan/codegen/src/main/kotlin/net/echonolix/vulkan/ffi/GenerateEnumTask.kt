@@ -1,29 +1,9 @@
 package net.echonolix.vulkan.ffi
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.STRING
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
-import net.echonolix.ktffi.CBasicType
-import net.echonolix.ktffi.CExpression
-import net.echonolix.ktffi.CSyntax
-import net.echonolix.ktffi.CTopLevelConst
-import net.echonolix.ktffi.CType
-import net.echonolix.ktffi.KTFFICodegenHelper
-import net.echonolix.ktffi.NativeType
-import kotlin.collections.contains
+import net.echonolix.ktffi.*
 import kotlin.random.Random
-import kotlin.sequences.sortedBy
 
 class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
@@ -309,7 +289,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         companion.addCompanionSuper(flagType)
         companion.addFunction(
-            FunSpec.builder("toInt")
+            FunSpec.builder("toNativeData")
                 .addAnnotation(JvmStatic::class)
                 .addModifiers(KModifier.INLINE)
                 .addParameter("value", thisCname)
@@ -318,7 +298,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
         companion.addFunction(
-            FunSpec.builder("fromInt")
+            FunSpec.builder("fromNativeData")
                 .addAnnotation(JvmStatic::class)
                 .addModifiers(KModifier.INLINE)
                 .addParameter("value", flagType.baseType.kotlinTypeName)
@@ -385,7 +365,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         companion.addCompanionSuper(enumType)
         companion.addFunction(
-            FunSpec.builder("fromInt")
+            FunSpec.builder("fromNativeData")
                 .addAnnotation(JvmStatic::class)
                 .addParameter(
                     "value",
@@ -415,7 +395,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
         companion.addFunction(
-            FunSpec.builder("toInt")
+            FunSpec.builder("toNativeData")
                 .addAnnotation(JvmStatic::class)
                 .addParameter("value", thisCname)
                 .returns(enumType.baseType.kotlinTypeName)
@@ -473,7 +453,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("index", LONG)
                 .returns(thisCname)
                 .addStatement(
-                    "return %T.fromInt(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
+                    "return %T.fromNativeData(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
                     thisCname,
                     baseType.ktffiTypeTName,
                     baseType.kotlinTypeName
@@ -487,7 +467,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("index", LONG)
                 .addParameter("value", thisCname)
                 .addStatement(
-                    "%T.arrayVarHandle.set(_segment, 0L, index, %T.toInt(value))",
+                    "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNativeData(value))",
                     baseType.ktffiTypeTName,
                     thisCname,
                 )
@@ -500,7 +480,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("index", LONG)
                 .returns(thisCname)
                 .addStatement(
-                    "return %T.fromInt(%T.arrayVarHandle.get(%M, _address, index) as %T)",
+                    "return %T.fromNativeData(%T.arrayVarHandle.get(%M, _address, index) as %T)",
                     thisCname,
                     baseType.ktffiTypeTName,
                     KTFFICodegenHelper.omniSegment,
@@ -515,7 +495,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("index", LONG)
                 .addParameter("value", thisCname)
                 .addStatement(
-                    "%T.arrayVarHandle.set(%M, _address, index, %T.toInt(value))",
+                    "%T.arrayVarHandle.set(%M, _address, index, %T.toNativeData(value))",
                     baseType.ktffiTypeTName,
                     KTFFICodegenHelper.omniSegment,
                     thisCname
@@ -531,7 +511,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("property", nullableAny)
                 .returns(thisCname)
                 .addStatement(
-                    "return %T.fromInt(%T.valueVarHandle.get(%M, _address) as %T)",
+                    "return %T.fromNativeData(%T.valueVarHandle.get(%M, _address) as %T)",
                     thisCname,
                     baseType.ktffiTypeTName,
                     KTFFICodegenHelper.omniSegment,
@@ -548,7 +528,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("property", nullableAny)
                 .addParameter("value", thisCname)
                 .addStatement(
-                    "%T.valueVarHandle.set(%M, _address, %T.toInt(value))",
+                    "%T.valueVarHandle.set(%M, _address, %T.toNativeData(value))",
                     baseType.ktffiTypeTName,
                     KTFFICodegenHelper.omniSegment,
                     thisCname
@@ -564,7 +544,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("property", nullableAny)
                 .returns(thisCname)
                 .addStatement(
-                    "return %T.fromInt(%T.valueVarHandle.get(_segment, 0L) as %T)",
+                    "return %T.fromNativeData(%T.valueVarHandle.get(_segment, 0L) as %T)",
                     thisCname,
                     baseType.ktffiTypeTName,
                     baseType.kotlinTypeName
@@ -580,7 +560,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addParameter("property", nullableAny)
                 .addParameter("value", thisCname)
                 .addStatement(
-                    "%T.valueVarHandle.set(_segment, 0L, %T.toInt(value))",
+                    "%T.valueVarHandle.set(_segment, 0L, %T.toNativeData(value))",
                     baseType.ktffiTypeTName,
                     thisCname
                 )

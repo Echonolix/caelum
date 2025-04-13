@@ -5,61 +5,63 @@ import java.lang.foreign.SegmentAllocator
 import java.lang.foreign.ValueLayout
 
 @JvmInline
-value class NativeArray<T : NativeType>(
-    val _segment: MemorySegment,
+public value class NativeArray<T : NativeType>(
+    public val _segment: MemorySegment,
 ) {
-    fun ptr(): NativePointer<T> = NativePointer(_segment.address())
+    public fun ptr(): NativePointer<T> = NativePointer(_segment.address())
 }
 
 
-fun mallocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
+public fun mallocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
     NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
 
 context(allocator: SegmentAllocator)
-fun mallocArr(byteSize: Long): NativeArray<*> = NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
+public fun mallocArr(byteSize: Long): NativeArray<*> =
+    NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize))
 
-fun callocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
+public fun callocArr(byteSize: Long, allocator: SegmentAllocator): NativeArray<*> =
     NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun callocArr(byteSize: Long): NativeArray<*> =
+public fun callocArr(byteSize: Long): NativeArray<*> =
     NativeArray<NativeChar>(allocator.allocate(ValueLayout.JAVA_BYTE, byteSize).apply { fill(0) })
 
 
-fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count))
 
-fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long): NativeArray<T> = NativeArray(allocator.allocate(layout, count))
+public fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count))
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
-fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count).apply { fill(0) })
 
-fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int, allocator: SegmentAllocator): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-var NativeArray<NativeChar>.string: String
+public var NativeArray<NativeChar>.string: String
     get() = _segment.getString(0L)
     set(value) {
         _segment.setString(0L, value)
     }
 
-var NativePointer<NativeChar>.string: String
+public var NativePointer<NativeChar>.string: String
     get() = APIHelper.`_$OMNI_SEGMENT$_`.getString(_address)
     set(value) {
         APIHelper.`_$OMNI_SEGMENT$_`.setString(_address, value)

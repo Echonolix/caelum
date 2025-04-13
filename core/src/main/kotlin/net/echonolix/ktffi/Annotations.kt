@@ -1,12 +1,12 @@
 package net.echonolix.ktffi
 
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
-annotation class CTypeName(val name: String)
+public annotation class CTypeName(val name: String)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
-annotation class CHandleType
+public annotation class CHandleType
 @Target(AnnotationTarget.PROPERTY)
-annotation class CArrayType(val length: UInt)
+public annotation class CArrayType(val length: UInt)
 @Target(AnnotationTarget.FUNCTION)
-annotation class CFunctionPointer
+public annotation class CFunctionPointer
 @Target(AnnotationTarget.PROPERTY)
-annotation class CPointerType(val lengthVariable: String = "")
+public annotation class CPointerType(val lengthVariable: String = "")

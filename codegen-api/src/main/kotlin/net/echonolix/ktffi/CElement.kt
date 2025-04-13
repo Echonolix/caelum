@@ -5,37 +5,37 @@ import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.util.concurrent.ConcurrentHashMap
 
-interface Tag
+public interface Tag
 
-class TagStorage {
+public class TagStorage {
     private val backingMap = mutableMapOf<Class<out Tag>, Tag>()
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Tag> get(clazz: Class<T>): T? {
+    public fun <T : Tag> get(clazz: Class<T>): T? {
         return backingMap[clazz] as? T
     }
 
-    fun <T : Tag> set(clazz: Class<T>, value: T) {
+    public fun <T : Tag> set(clazz: Class<T>, value: T) {
         backingMap[clazz] = value
     }
 
-    inline fun <reified T : Tag> get() = get(T::class.java)
-    inline fun <reified T : Tag> set(value: T) = set(T::class.java, value)
+    public inline fun <reified T : Tag> get(): T? = get(T::class.java)
+    public inline fun <reified T : Tag> set(value: T): Unit = set(T::class.java, value)
 }
 
-interface CElement : Comparable<CElement> {
-    val name: String
-    val tags: TagStorage
+public interface CElement : Comparable<CElement> {
+    public val name: String
+    public val tags: TagStorage
 
-    fun toSimpleString(): String {
+    public fun toSimpleString(): String {
         return toString()
     }
 
-    fun compositeName(parentStr: String): String {
+    public fun compositeName(parentStr: String): String {
         return "$name$parentStr"
     }
 
-    sealed class Impl(override val name: String) : CElement {
+    public sealed class Impl(override val name: String) : CElement {
         override val tags: TagStorage = TagStorage()
 
         override fun compareTo(other: CElement): Int {
@@ -43,24 +43,25 @@ interface CElement : Comparable<CElement> {
         }
     }
 
-    interface TopLevel : CElement {
+    public interface TopLevel : CElement {
         context(ctx: KTFFICodegenContext)
-        fun packageName(): String {
+        public fun packageName(): String {
             return ctx.resolvePackageName(this)
         }
 
         context(ctx: KTFFICodegenContext)
-        fun className(): ClassName {
+        public fun className(): ClassName {
             return ClassName(packageName(), name)
         }
     }
 }
 
-sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl(value.toString()) {
+public sealed class CExpression<T : Any>(public val type: CType, public val value: T) :
+    CElement.Impl(value.toString()) {
     context(ctx: KTFFICodegenContext)
-    abstract fun codeBlock(): CodeBlock
+    public abstract fun codeBlock(): CodeBlock
 
-    class Const(type: CBasicType<*>, value: CodeBlock) : CExpression<CodeBlock>(type.cType, value) {
+    public class Const(type: CBasicType<*>, value: CodeBlock) : CExpression<CodeBlock>(type.cType, value) {
         context(ctx: KTFFICodegenContext)
         override fun codeBlock(): CodeBlock {
             return value
@@ -71,7 +72,7 @@ sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl
         }
     }
 
-    class StringLiteral(value: String) : CExpression<String>(CType.Pointer(CBasicType.char::cType), value) {
+    public class StringLiteral(value: String) : CExpression<String>(CType.Pointer(CBasicType.char::cType), value) {
         context(ctx: KTFFICodegenContext)
         override fun codeBlock(): CodeBlock {
             return CodeBlock.of("%S", value)
@@ -82,7 +83,7 @@ sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl
         }
     }
 
-    class Reference(const: CTopLevelConst) : CExpression<CTopLevelConst>(const.type, const) {
+    public class Reference(const: CTopLevelConst) : CExpression<CTopLevelConst>(const.type, const) {
         context(ctx: KTFFICodegenContext)
         override fun codeBlock(): CodeBlock {
             return CodeBlock.of("%M", value.memberName())
@@ -94,54 +95,56 @@ sealed class CExpression<T : Any>(val type: CType, val value: T) : CElement.Impl
     }
 }
 
-class CConstExpression(val valueInitializer: CodeBlock) : CElement.Impl(valueInitializer.toString())
+public class CConstExpression(valueInitializer: CodeBlock) : CElement.Impl(valueInitializer.toString())
 
-interface CDeclaration : CElement {
-    val type: CType
+public interface CDeclaration : CElement {
+    public val type: CType
 
-    open class Impl(name: String, override val type: CType) : CElement.Impl(name), CDeclaration {
+    public open class Impl(name: String, override val type: CType) : CElement.Impl(name), CDeclaration {
         override fun toString(): String {
             return "${type.toSimpleString()} $name"
         }
     }
 
-    interface TopLevel : CDeclaration, CElement.TopLevel {
+    public interface TopLevel : CDeclaration, CElement.TopLevel {
         context(ctx: KTFFICodegenContext)
-        fun memberName(): MemberName
+        public fun memberName(): MemberName
     }
 }
 
-open class CConst(name: String, val expression: CExpression<*>) : CDeclaration.Impl(name, expression.type) {
+public open class CConst(name: String, public val expression: CExpression<*>) :
+    CDeclaration.Impl(name, expression.type) {
     override fun toString(): String {
         return "${type.toSimpleString()} $name = $expression;"
     }
 }
 
-open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression), CDeclaration.TopLevel {
+public open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression),
+    CDeclaration.TopLevel {
     context(ctx: KTFFICodegenContext)
     override fun memberName(): MemberName {
         return MemberName(packageName(), name)
     }
 }
 
-sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
+public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
     context(ctx: KTFFICodegenContext)
-    abstract fun nativeType(): TypeName
+    public abstract fun nativeType(): TypeName
 
     context(ctx: KTFFICodegenContext)
-    abstract fun ktApiType(): TypeName
+    public abstract fun ktApiType(): TypeName
 
     context(ctx: KTFFICodegenContext)
-    abstract fun memoryLayoutDeep(): CodeBlock
+    public abstract fun memoryLayoutDeep(): CodeBlock
 
     context(ctx: KTFFICodegenContext)
-    open fun memoryLayout(): CodeBlock {
+    public open fun memoryLayout(): CodeBlock {
         return memoryLayoutDeep()
     }
 
-    sealed class ValueType(val baseType: CBasicType<*>) : CType(baseType.cTypeNameStr)
+    public sealed class ValueType(public val baseType: CBasicType<*>) : CType(baseType.cTypeNameStr)
 
-    class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
+    public class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return baseType.kotlinTypeName
@@ -159,7 +162,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
 
         context(ctx: KTFFICodegenContext)
         override fun className(): ClassName {
-            return ClassName(packageName(), name)
+            return baseType.ktffiTypeTName as ClassName
         }
 
         context(ctx: KTFFICodegenContext)
@@ -182,9 +185,9 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    sealed class CompositeType(name: String) : CType(name)
+    public sealed class CompositeType(name: String) : CType(name)
 
-    abstract class Handle(name: String) : CompositeType(name) {
+    public abstract class Handle(name: String) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return LONG
@@ -205,7 +208,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    class TypeDef(name: String, val dstType: CType) : CompositeType(name) {
+    public class TypeDef(name: String, public val dstType: CType) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return dstType.nativeType()
@@ -241,8 +244,9 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    abstract class EnumBase(override val name: String, val entryType: BasicType) : ValueType(entryType.baseType) {
-        val entries: MutableMap<String, Entry> = ConcurrentHashMap()
+    public abstract class EnumBase(override val name: String, public val entryType: BasicType) :
+        ValueType(entryType.baseType) {
+        public val entries: MutableMap<String, Entry> = ConcurrentHashMap()
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
@@ -276,8 +280,8 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
             return name
         }
 
-        inner class Entry(name: String, expression: CExpression<*>) : CTopLevelConst(name, expression) {
-            val parent get() = this@EnumBase
+        public inner class Entry(name: String, expression: CExpression<*>) : CTopLevelConst(name, expression) {
+            public val parent: EnumBase get() = this@EnumBase
 
             context(ctx: KTFFICodegenContext)
             override fun memberName(): MemberName {
@@ -286,7 +290,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType) {
+    public class Enum(name: String, entryType: BasicType) : EnumBase(name, entryType) {
         override fun toString(): String {
             return "enum ${super.toString()}"
         }
@@ -296,7 +300,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType) {
+    public class Bitmask(name: String, entryType: BasicType) : EnumBase(name, entryType) {
         override fun toString(): String {
             return "bitmask ${super.toString()}"
         }
@@ -306,7 +310,8 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    class Function(name: String, val returnType: CType, val parameters: List<Parameter>) : CompositeType(name) {
+    public class Function(name: String, public val returnType: CType, public val parameters: List<Parameter>) :
+        CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -341,10 +346,10 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
             return name
         }
 
-        class Parameter(name: String, type: CType) : CDeclaration.Impl(name, type)
+        public class Parameter(name: String, type: CType) : CDeclaration.Impl(name, type)
     }
 
-    open class Array(open val elementType: CType) : CompositeType("") {
+    public open class Array(public open val elementType: CType) : CompositeType("") {
         override val name: String by lazy { compositeName("") }
 
         context(ctx: KTFFICodegenContext)
@@ -379,7 +384,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
             return elementType.compositeName("$parentStr[]")
         }
 
-        class Sized(elementType: CType, val length: CExpression<*>) : Array(elementType) {
+        public class Sized(elementType: CType, public val length: CExpression<*>) : Array(elementType) {
             override fun compositeName(parentStr: String): String {
                 return elementType.compositeName("$parentStr[$length]")
             }
@@ -396,8 +401,8 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    open class Pointer(elementTypeProvider: () -> CType) : CompositeType("") {
-        open val elementType: CType by lazy { elementTypeProvider() }
+    public open class Pointer(elementTypeProvider: () -> CType) : CompositeType("") {
+        public open val elementType: CType by lazy { elementTypeProvider() }
         override val name: String by lazy { compositeName("") }
 
         context(ctx: KTFFICodegenContext)
@@ -443,7 +448,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    class FunctionPointer(override val elementType: Function) : Pointer({ elementType }) {
+    public class FunctionPointer(override val elementType: Function) : Pointer({ elementType }) {
         context(ctx: KTFFICodegenContext)
         override fun packageName(): String {
             return ctx.resolvePackageName(this)
@@ -460,7 +465,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    sealed class Group(name: String, val members: List<Member>) : CompositeType(name) {
+    public sealed class Group(name: String, public val members: List<Member>) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         final override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
@@ -502,10 +507,10 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
             return name
         }
 
-        class Member(name: String, type: CType) : CDeclaration.Impl(name, type)
+        public class Member(name: String, type: CType) : CDeclaration.Impl(name, type)
     }
 
-    class Struct(name: String, members: List<Member>) : Group(name, members) {
+    public class Struct(name: String, members: List<Member>) : Group(name, members) {
         override fun toString(): String {
             return "struct ${super.toString()}"
         }
@@ -515,7 +520,7 @@ sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
         }
     }
 
-    class Union(name: String, members: List<Member>) : Group(name, members) {
+    public class Union(name: String, members: List<Member>) : Group(name, members) {
         override fun toString(): String {
             return "union ${super.toString()}"
         }

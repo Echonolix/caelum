@@ -1,16 +1,10 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeAliasSpec
-import com.squareup.kotlinpoet.TypeSpec
 import net.echonolix.ktffi.CType
-import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.vulkan.schema.Element
-import java.lang.invoke.MethodHandle
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.RecursiveTask
 
@@ -25,38 +19,6 @@ abstract class VKFFITask<R>(protected val ctx: VKFFICodeGenContext) : RecursiveT
             file.addTypeAlias(it)
         }
         ctx.writeOutput(file)
-    }
-
-    protected fun TypeSpec.Builder.addMethodHandleFields(): TypeSpec.Builder {
-        addProperty(
-            PropertySpec.builder("\$fromIntMH", MethodHandle::class)
-                .addModifiers(KModifier.PRIVATE)
-                .initializer(
-                    CodeBlock.builder()
-                        .add(
-                            "%T.lookup().unreflect(::fromInt.%M)",
-                            VKFFI.methodHandlesCname,
-                            KTFFICodegenHelper.javaMethodMemberName
-                        )
-                        .build()
-                )
-                .build()
-        )
-        addProperty(
-            PropertySpec.builder("\$toIntMH", MethodHandle::class)
-                .addModifiers(KModifier.PRIVATE)
-                .initializer(
-                    CodeBlock.builder()
-                        .add(
-                            "%T.lookup().unreflect(::toInt.%M)",
-                            VKFFI.methodHandlesCname,
-                            KTFFICodegenHelper.javaMethodMemberName
-                        )
-                        .build()
-                )
-                .build()
-        )
-        return this
     }
 
     protected abstract fun VKFFICodeGenContext.compute(): R

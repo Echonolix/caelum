@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.ktffi.*
-import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.vulkan.schema.Element
 import net.echonolix.vulkan.schema.PatchedRegistry
 import java.lang.foreign.MemoryLayout
@@ -14,7 +13,6 @@ import java.lang.foreign.UnionLayout
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 import java.util.concurrent.RecursiveAction
-import kotlin.collections.get
 
 class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry: PatchedRegistry) : RecursiveAction() {
     override fun compute() {
@@ -725,7 +723,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
-                                "return %T.fromInt((%T.%N.get(_segment, 0L) as %T))",
+                                "return %T.fromNativeData((%T.%N.get(_segment, 0L) as %T))",
                                 typeCname,
                                 groupInfo.thisCname,
                                 "${member.name}_valueVarHandle",
@@ -738,7 +736,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addModifiers(KModifier.INLINE)
                             .addParameter("value", cBasicType.kotlinTypeName)
                             .addStatement(
-                                "%T.%N.set(_segment, 0L, %T.toInt(value))",
+                                "%T.%N.set(_segment, 0L, %T.toNativeData(value))",
                                 groupInfo.thisCname,
                                 "${member.name}_valueVarHandle",
                                 typeCname
@@ -761,7 +759,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
-                                "return %T.fromInt((%T.%N.get(%M, _address) as %T))",
+                                "return %T.fromNativeData((%T.%N.get(%M, _address) as %T))",
                                 typeCname,
                                 groupInfo.thisCname,
                                 "${member.name}_valueVarHandle",
@@ -775,7 +773,7 @@ class GenerateCGroupTask(private val genCtx: FFIGenContext, private val registry
                             .addModifiers(KModifier.INLINE)
                             .addParameter("value", cBasicType.kotlinTypeName)
                             .addStatement(
-                                "%T.%N.set(%M, _address, %T.toInt(value))",
+                                "%T.%N.set(%M, _address, %T.toNativeData(value))",
                                 groupInfo.thisCname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegenHelper.omniSegment,

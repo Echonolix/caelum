@@ -1,26 +1,23 @@
 package net.echonolix.ktffi
 
 import java.lang.foreign.*
-import java.lang.foreign.StructLayout
-import java.lang.foreign.UnionLayout
-import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandle
 
-interface TypeDescriptor<T : NativeType> {
-    val layout: MemoryLayout
-    val arrayByteOffsetHandle: MethodHandle
+public interface TypeDescriptor<T : NativeType> {
+    public val layout: MemoryLayout
+    public val arrayByteOffsetHandle: MethodHandle
 
-    abstract class Impl<T : NativeType>(override val layout: MemoryLayout) : TypeDescriptor<T> {
+    public abstract class Impl<T : NativeType>(override val layout: MemoryLayout) : TypeDescriptor<T> {
         final override val arrayByteOffsetHandle: MethodHandle by lazy {
             layout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
         }
     }
 }
 
-interface NativeType {
-    val typeDescriptor: TypeDescriptor<*>
+public interface NativeType {
+    public val typeDescriptor: TypeDescriptor<*>
 
-    abstract class Impl<T : NativeType>(layout: MemoryLayout) : TypeDescriptor.Impl<T>(layout), NativeType {
+    public abstract class Impl<T : NativeType>(layout: MemoryLayout) : TypeDescriptor.Impl<T>(layout), NativeType {
         override val typeDescriptor: TypeDescriptor<T> = this
     }
 }
@@ -44,26 +41,31 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
 }
 
-abstract class NativeStruct<T : NativeType> private constructor(override val layout: StructLayout) :
+public abstract class NativeStruct<T : NativeType> private constructor(override val layout: StructLayout) :
     NativeType.Impl<T>(layout), TypeDescriptor<T> {
-    constructor(vararg members: MemoryLayout) : this(
+    public constructor(vararg members: MemoryLayout) : this(
         paddedStructLayout(*members)
     )
 }
 
-abstract class NativeUnion<T : NativeType> private constructor(override val layout: UnionLayout) :
+public abstract class NativeUnion<T : NativeType> private constructor(override val layout: UnionLayout) :
     NativeType.Impl<T>(layout), TypeDescriptor<T> {
-    constructor(vararg members: MemoryLayout) : this(
+    public constructor(vararg members: MemoryLayout) : this(
         MemoryLayout.unionLayout(*members)
     )
 }
 
-interface NativeFunction : NativeType {
+public interface NativeFunction : NativeType {
 
-    abstract class TypeDescriptorImpl<T : NativeFunction>(val returnType: NativeType?, vararg parameters: NativeType) :
+    public abstract class TypeDescriptorImpl<T : NativeFunction>(
+        @Suppress("CanBeParameter")
+        public val returnType: NativeType?,
+        vararg parameters: NativeType
+    ) :
         NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
+        public val parameters: List<NativeType> = parameters.toList()
 
-        val functionDescriptor = if (returnType == null) {
+        public val functionDescriptor: FunctionDescriptor? = if (returnType == null) {
             FunctionDescriptor.ofVoid(
                 *parameters.map { it.typeDescriptor.layout }.toTypedArray()
             )
@@ -74,7 +76,7 @@ interface NativeFunction : NativeType {
             )
         }
 
-        fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
+        public fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
             return Linker.nativeLinker().downcallHandle(
                 functionAddress,
                 functionDescriptor

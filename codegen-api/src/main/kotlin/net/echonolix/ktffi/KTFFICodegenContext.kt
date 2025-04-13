@@ -6,35 +6,35 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.Stream
 
-abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path) {
+public abstract class KTFFICodegenContext(public val basePkgName: String, public val outputDir: Path) {
     private val allElements0 = ConcurrentHashMap<String, CElement>()
-    val allElements: Map<String, CElement>
+    public val allElements: Map<String, CElement>
         get() = allElements0
 
     private val outputFiles0 = ConcurrentLinkedQueue<Path>()
-    val outputFiles: Set<Path>
+    public val outputFiles: Set<Path>
         get() = outputFiles0.toSet()
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T> filterTypeStream(): Stream<Pair<String, T>> {
+    public inline fun <reified T> filterTypeStream(): Stream<Pair<String, T>> {
         return allElements.entries.parallelStream()
             .filter { it.value is T }
             .map { it.key to (it.value as T) }
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T> filterType(): List<Pair<String, T>> {
+    public inline fun <reified T> filterType(): List<Pair<String, T>> {
         return filterTypeStream<T>().toList()
     }
 
-    abstract fun resolvePackageName(element: CElement): String
+    public abstract fun resolvePackageName(element: CElement): String
     protected abstract fun resolveElementImpl(cElementStr: String): CElement
 
-    fun addToCache(name: String, element: CElement) {
+    public fun addToCache(name: String, element: CElement) {
         allElements0.putIfAbsent(name, element)
     }
 
-    fun resolveExpression(expressionStr: String): CExpression<*> {
+    public fun resolveExpression(expressionStr: String): CExpression<*> {
         val trimStr = expressionStr.trim().removeContinuousSpaces()
         return runCatching {
             resolveElement(trimStr)
@@ -56,12 +56,12 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
         }
     }
 
-    fun resolveType(cElementStr: String): CType {
+    public fun resolveType(cElementStr: String): CType {
         return resolveElement(cElementStr) as? CType
             ?: throw IllegalArgumentException("Not a type: $cElementStr")
     }
 
-    fun resolveElement(cElementStr: String): CElement {
+    public fun resolveElement(cElementStr: String): CElement {
         try {
             val trimStr = cElementStr
                 .trim()
@@ -104,7 +104,7 @@ abstract class KTFFICodegenContext(val basePkgName: String, val outputDir: Path)
         }
     }
 
-    fun writeOutput(fileSpec: FileSpec.Builder) {
+    public fun writeOutput(fileSpec: FileSpec.Builder) {
         fileSpec.addSuppress()
         fileSpec.indent("    ")
         outputFiles0.add(fileSpec.build().writeTo(outputDir))

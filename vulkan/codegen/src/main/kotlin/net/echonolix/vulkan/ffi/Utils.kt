@@ -19,8 +19,6 @@ inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
     }.getOrNull()
 }
 
-private val xmlTagRegex = Regex("<[^>]+>")
-
 fun List<CompactFragment>.toXmlTagFreeString() =
     joinToString(" ") { it.contentString.toXMLTagFreeString() }.removeContinuousSpaces()
 

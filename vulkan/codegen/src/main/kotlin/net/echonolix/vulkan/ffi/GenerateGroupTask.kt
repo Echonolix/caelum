@@ -1,19 +1,8 @@
 package net.echonolix.vulkan.ffi
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.WildcardTypeName
-import com.squareup.kotlinpoet.asClassName
-import com.squareup.kotlinpoet.asTypeName
 import net.echonolix.ktffi.CBasicType
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.CTypeName
@@ -399,7 +388,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
-                                "return %T.fromInt%L((%T.%N.get(_segment, 0L) as %T))",
+                                "return %T.fromNativeData%L((%T.%N.get(_segment, 0L) as %T))",
                                 ktApiType,
                                 fromIntTypeParamBlock,
                                 thisCname,
@@ -413,7 +402,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                             .addModifiers(KModifier.INLINE)
                             .addParameter("value", ktApiType)
                             .addStatement(
-                                "%T.%N.set(_segment, 0L, %T.toInt(value))",
+                                "%T.%N.set(_segment, 0L, %T.toNativeData(value))",
                                 thisCname,
                                 "${member.name}_valueVarHandle",
                                 ktApiType
@@ -436,7 +425,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         FunSpec.getterBuilder()
                             .addModifiers(KModifier.INLINE)
                             .addStatement(
-                                "return %T.fromInt%L((%T.%N.get(%M, _address) as %T))",
+                                "return %T.fromNativeData%L((%T.%N.get(%M, _address) as %T))",
                                 ktApiType,
                                 fromIntTypeParamBlock,
                                 thisCname,
@@ -451,7 +440,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                             .addModifiers(KModifier.INLINE)
                             .addParameter("value", ktApiType)
                             .addStatement(
-                                "%T.%N.set(%M, _address, %T.toInt(value))",
+                                "%T.%N.set(%M, _address, %T.toNativeData(value))",
                                 thisCname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegenHelper.omniSegment,

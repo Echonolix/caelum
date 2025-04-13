@@ -1,46 +1,42 @@
 package net.echonolix.ktffi
 
-import com.squareup.kotlinpoet.ANY
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
-import com.squareup.kotlinpoet.WildcardTypeName
-import com.squareup.kotlinpoet.asClassName
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandles
 
-object KTFFICodegenHelper {
-    const val packageName = "net.echonolix.ktffi"
-    val typeCname = ClassName(packageName, "NativeType")
-    val typeImplCname = typeCname.nestedClass("Impl")
-    val typeDescriptorCname = ClassName(packageName, "TypeDescriptor")
-    val typeDescriptorImplCname = typeDescriptorCname.nestedClass("Impl")
-    val structCname = ClassName(packageName, "NativeStruct")
-    val unionCname = ClassName(packageName, "NativeUnion")
-    val arrayCname = ClassName(packageName, "NativeArray")
-    val valueCname = ClassName(packageName, "NativeValue")
-    val pointerCname = ClassName(packageName, "NativePointer")
+public object KTFFICodegenHelper {
+    public const val packageName: String = "net.echonolix.ktffi"
+    public val typeCname: ClassName = ClassName(packageName, "NativeType")
+    public val typeImplCname: ClassName = typeCname.nestedClass("Impl")
+    public val typeDescriptorCname: ClassName = ClassName(packageName, "TypeDescriptor")
+    public val typeDescriptorImplCname: ClassName = typeDescriptorCname.nestedClass("Impl")
+    public val structCname: ClassName = ClassName(packageName, "NativeStruct")
+    public val unionCname: ClassName = ClassName(packageName, "NativeUnion")
+    public val arrayCname: ClassName = ClassName(packageName, "NativeArray")
+    public val valueCname: ClassName = ClassName(packageName, "NativeValue")
+    public val pointerCname: ClassName = ClassName(packageName, "NativePointer")
 
-    val helper = ClassName(packageName, "APIHelper")
-    val omniSegment = helper.member("_\$OMNI_SEGMENT\$_")
-    val linker = helper.member("linker")
-    val loaderLookup = helper.member("loaderLookup")
-    val pointerLayoutMember = helper.member("pointerLayout")
-    val symbolLookup = helper.member("symbolLookup")
-    val findSymbol = helper.member("findSymbol")
+    public val helper: ClassName = ClassName(packageName, "APIHelper")
+    public val omniSegment: MemberName = helper.member("_\$OMNI_SEGMENT\$_")
+    public val linker: MemberName = helper.member("linker")
+    public val loaderLookup: MemberName = helper.member("loaderLookup")
+    public val pointerLayoutMember: MemberName = helper.member("pointerLayout")
+    public val symbolLookup: MemberName = helper.member("symbolLookup")
+    public val findSymbol: MemberName = helper.member("findSymbol")
 
-    val memoryLayoutCname = MemoryLayout::class.asClassName()
-    val structLayoutMember = memoryLayoutCname.member("structLayout")
-    val unionLayoutMember = memoryLayoutCname.member("unionLayout")
-    val sequenceLayout = memoryLayoutCname.member("sequenceLayout")
-    val paddingLayout = memoryLayoutCname.member("paddingLayout")
+    public val memoryLayoutCname: ClassName = MemoryLayout::class.asClassName()
+    public val structLayoutMember: MemberName = memoryLayoutCname.member("structLayout")
+    public val unionLayoutMember: MemberName = memoryLayoutCname.member("unionLayout")
+    public val sequenceLayout: MemberName = memoryLayoutCname.member("sequenceLayout")
+    public val paddingLayout: MemberName = memoryLayoutCname.member("paddingLayout")
 
-    val valueLayoutCname = ValueLayout::class.asClassName()
-    val addressLayoutMember = valueLayoutCname.member("ADDRESS")
+    public val valueLayoutCname: ClassName = ValueLayout::class.asClassName()
+    public val addressLayoutMember: MemberName = valueLayoutCname.member("ADDRESS")
 
-    val methodHandlesCname = MethodHandles::class.asClassName()
-    val javaMethodMemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
+    public val methodHandlesCname: ClassName = MethodHandles::class.asClassName()
+    public val javaMethodMemberName: MemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
 
-    val starWildcard = WildcardTypeName.producerOf(ANY.copy(nullable = true))
+    public val starWildcard: WildcardTypeName = WildcardTypeName.producerOf(ANY.copy(nullable = true))
 }

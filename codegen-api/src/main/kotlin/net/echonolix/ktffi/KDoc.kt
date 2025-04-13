@@ -1,8 +1,8 @@
 package net.echonolix.ktffi
 
-class KDoc {
-    val lines = mutableListOf<String>()
-    var since: String? = null
+public class KDoc {
+    public val lines: MutableList<String> = mutableListOf()
+    public var since: String? = null
 
     override fun toString(): String {
         return buildString {
