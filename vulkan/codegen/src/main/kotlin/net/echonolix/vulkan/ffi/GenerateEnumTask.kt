@@ -282,6 +282,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         )
         type.addFunction(
             FunSpec.builder("contains")
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("other", thisCname)
                 .returns(Boolean::class)
                 .addStatement("return (value and other.value == other.value)")
