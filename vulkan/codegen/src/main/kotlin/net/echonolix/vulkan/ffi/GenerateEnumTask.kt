@@ -298,7 +298,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         CodeBlock.of("%T(%L)", thisCname, code)
                     }
                     is CExpression.Reference -> {
-                        code
+                        CodeBlock.of("%N", expression.value.name)
                     }
                     else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
                 }
