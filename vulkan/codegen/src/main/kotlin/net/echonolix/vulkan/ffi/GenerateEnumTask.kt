@@ -288,18 +288,23 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
 
-
         val companion = TypeSpec.companionObjectBuilder()
         flagType.entries.values.let { flagBitTypes ->
             flagBitTypes.forEach {
-                val code = it.expression.codeBlock()
+                val expression = it.expression
+                val code = expression.codeBlock()
+                val initilizer = when (expression) {
+                    is CExpression.Const -> {
+                        CodeBlock.of("%T(%L)", thisCname, code)
+                    }
+                    is CExpression.Reference -> {
+                        code
+                    }
+                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+                }
                 companion.addProperty(
                     PropertySpec.builder(it.name, thisCname)
-                        .initializer(
-                            "%T(%L)",
-                            thisCname,
-                            code
-                        )
+                        .initializer(initilizer)
                         .tryAddKdoc(it)
                         .build()
                 )
