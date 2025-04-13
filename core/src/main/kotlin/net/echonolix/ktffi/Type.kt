@@ -16,9 +16,9 @@ interface TypeDescriptor<T : NativeType> {
 }
 
 interface NativeType {
-    val descriptor: TypeDescriptor<*>
+    val typeDescriptor: TypeDescriptor<*>
     abstract class Impl<T : NativeType>(layout: MemoryLayout) : NativeType {
-        override val descriptor: TypeDescriptor<T> = object : TypeDescriptor.Impl<T>(layout) {}
+        override val typeDescriptor: TypeDescriptor<T> = object : TypeDescriptor.Impl<T>(layout) {}
     }
 }
 
@@ -29,12 +29,12 @@ abstract class NativeFunction<T : NativeType>(val returnType: NativeType?, varar
 
     val functionDescriptor = if (returnType == null) {
         FunctionDescriptor.ofVoid(
-            *parameters.map { it.descriptor.layout }.toTypedArray()
+            *parameters.map { it.typeDescriptor.layout }.toTypedArray()
         )
     } else {
         FunctionDescriptor.of(
-            returnType.descriptor.layout,
-            *parameters.map { it.descriptor.layout }.toTypedArray()
+            returnType.typeDescriptor.layout,
+            *parameters.map { it.typeDescriptor.layout }.toTypedArray()
         )
     }
 

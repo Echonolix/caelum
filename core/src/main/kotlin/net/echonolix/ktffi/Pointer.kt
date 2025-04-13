@@ -4,7 +4,7 @@ package net.echonolix.ktffi
 value class NativePointer<T : NativeType>(
     val _address: Long,
 ) : NativeType {
-    override val descriptor: TypeDescriptor<NativePointer<*>>
+    override val typeDescriptor: TypeDescriptor<NativePointer<*>>
         get() = Companion
 
     inline operator fun invoke(block: NativePointer<T>.() -> Unit): NativePointer<T> {

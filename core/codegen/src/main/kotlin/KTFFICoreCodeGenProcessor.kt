@@ -39,13 +39,13 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
                             .addAnnotation(JvmField::class)
-                            .initializer("descriptor.layout.varHandle()")
+                            .initializer("typeDescriptor.layout.varHandle()")
                             .build()
                     )
                     .addProperty(
                         PropertySpec.builder("arrayVarHandle", VarHandle::class)
                             .addAnnotation(JvmField::class)
-                            .initializer("descriptor.layout.arrayElementVarHandle()")
+                            .initializer("typeDescriptor.layout.arrayElementVarHandle()")
                             .build()
                     )
                     .build()

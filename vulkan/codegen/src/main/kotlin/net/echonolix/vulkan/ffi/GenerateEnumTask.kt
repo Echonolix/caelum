@@ -216,10 +216,9 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         )
         addProperty(
             PropertySpec.builder(
-                "descriptor",
+                "typeDescriptor",
                 KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(enumBase.className())
-            )
-                .addModifiers(KModifier.OVERRIDE)
+            ).addModifiers(KModifier.OVERRIDE)
                 .getter(
                     FunSpec.getterBuilder()
                         .addStatement("return Companion")
@@ -262,8 +261,10 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return this
     }
 
-    private val bitSuffixRegex = """(${CSyntax.nameRegex.pattern})_BIT(|_${VKFFI.VENDOR_TAGS.joinToString("|_")})""".toRegex()
-    private val flagNameRegex = """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
+    private val bitSuffixRegex =
+        """(${CSyntax.nameRegex.pattern})_BIT(|_${VKFFI.VENDOR_TAGS.joinToString("|_")})""".toRegex()
+    private val flagNameRegex =
+        """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
 
     private fun VKFFICodeGenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
         val thisCname = flagType.className()
@@ -469,7 +470,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         addSuperinterface(
             KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname),
             CodeBlock.of(
-                "%T.descriptor as %T<%T>",
+                "%T.typeDescriptor as %T<%T>",
                 enumBase.baseType.nativeTypeName,
                 KTFFICodegenHelper.typeDescriptorCname,
                 thisCname
