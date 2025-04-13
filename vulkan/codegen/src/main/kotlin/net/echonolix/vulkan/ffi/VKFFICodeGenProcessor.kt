@@ -25,6 +25,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs")
         val xml = XML {
             indentString = "    "
+            defaultToGenericParser = true
             defaultPolicy {
                 autoPolymorphic = true
                 typeDiscriminatorName = QName("category")
@@ -111,6 +112,7 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 @OptIn(ExperimentalPathApi::class)
 fun main() {
 //    System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1")
+//    repeat(50) {
     val time = System.nanoTime()
     val outputDir = Path.of("vulkan/build/generated/ktgen")
     val updatedFiles = VKFFICodeGenProcessor().process(emptySet(), outputDir).toMutableSet()
@@ -125,4 +127,5 @@ fun main() {
             it.deleteRecursively()
         }
     println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
+//    }
 }

@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.Documentable
+import kotlinx.serialization.decodeFromString
 import net.echonolix.ktffi.CElement
 import net.echonolix.ktffi.removeContinuousSpaces
 import net.echonolix.ktffi.toXMLTagFreeString
@@ -8,9 +9,13 @@ import net.echonolix.vulkan.schema.Element
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
 
+val __xml = XML {
+    defaultToGenericParser = true
+}
+
 inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
     return runCatching {
-        XML.decodeFromString<T>(this.contentString)
+        __xml.decodeFromString<T>(this.contentString)
     }.getOrNull()
 }
 
