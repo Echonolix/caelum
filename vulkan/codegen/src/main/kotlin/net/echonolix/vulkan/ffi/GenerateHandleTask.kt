@@ -106,12 +106,19 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                                 )
                                             }
                                         } else {
-                                            superclass(KTFFICodegenHelper.typeImplCname.parameterizedBy(thisCname))
                                             addSuperclassConstructorParameter(
-                                                CodeBlock.of(
-                                                    "%M",
-                                                    KTFFICodegenHelper.addressLayoutMember
-                                                )
+                                                CodeBlock.of("%M", CBasicType.int64_t.valueLayoutMember)
+                                            )
+                                            addProperty(
+                                                PropertySpec.builder("handle", CBasicType.int64_t.kotlinTypeName)
+                                                    .addModifiers(KModifier.OVERRIDE)
+                                                    .initializer(CodeBlock.of("handle"))
+                                                    .build()
+                                            )
+                                            primaryConstructor(
+                                                FunSpec.constructorBuilder()
+                                                    .addParameter("handle", CBasicType.int64_t.kotlinTypeName)
+                                                    .build()
                                             )
                                         }
                                     }
