@@ -7,9 +7,7 @@ import net.echonolix.ktffi.CType
 class GenerateTypeDefTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val typeDefFile = FileSpec.builder(VKFFI.basePkgName, "TypeDefs")
-        ctx.filterTypeStream<CType.TypeDef>()
-            .filter { (_, typeDefType) -> typeDefType.dstType !is CType.FunctionPointer }
-            .forEach { (_, typeDefType) ->
+        ctx.filterTypeStream<CType.TypeDef>().forEach { (_, typeDefType) ->
             typeDefFile.addTypeAlias(
                 TypeAliasSpec.builder(typeDefType.name, typeDefType.dstType.className())
                     .build()
