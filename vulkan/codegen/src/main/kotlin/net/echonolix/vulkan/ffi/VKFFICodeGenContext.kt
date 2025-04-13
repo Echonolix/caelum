@@ -64,11 +64,46 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return CType.TypeDef(xmlTypeDefType.name, funcPointer)
     }
 
+    private val bitSuffixRegex =
+        """(${CSyntax.nameRegex.pattern})_BIT(|_${VKFFI.VENDOR_TAGS.joinToString("|_")})""".toRegex()
+    private val flagNameRegex =
+        """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
+
+    private fun CType.EnumBase.fixEntryName(entryName: String): String {
+        return when (this) {
+            is CType.Bitmask -> {
+                val typeNameMatchResult = flagNameRegex.matchEntire(this.name)
+                    ?: throw IllegalStateException("Unexpected flag name: ${this.name}")
+                val (typeName, num, _) = typeNameMatchResult.destructured
+                val entryPrefix = buildString {
+                    append("VK_")
+                    append(typeName.pascalCaseToAllCaps())
+                    if (num.isNotEmpty()) {
+                        append('_')
+                        append(num)
+                    }
+                    append('_')
+                }
+                entryName.removePrefix(entryPrefix).replace(bitSuffixRegex) {
+                    "${it.groupValues[1]}${it.groupValues[2]}"
+                }
+            }
+            is CType.Enum -> {
+                val entryPrefix = "${this.name.pascalCaseToAllCaps()}_"
+                entryName.removePrefix(entryPrefix)
+            }
+            else -> throw IllegalStateException("Entry name fixing is not supported for ${this::class.simpleName}")
+        }
+    }
+
     private fun CType.EnumBase.addEntry(xmlEnum: Registry.Enums.Enum): CType.EnumBase.Entry {
         val type = entryType.baseType
-        val expression = if (xmlEnum.alias != null) {
+        val entry = if (xmlEnum.alias != null) {
             val dstEntry = entries[xmlEnum.alias] ?: resolveElement(xmlEnum.alias) as CType.EnumBase.Entry
-            CExpression.Reference(dstEntry)
+            val expression = CExpression.Reference(dstEntry)
+            val entry = this.Entry(xmlEnum.name, expression)
+            entry.tags.set<AliasedTag>(AliasedTag(dstEntry))
+            entry
         } else {
             val literalSuffix = type.literalSuffix
             val valueCode: CodeBlock
@@ -93,54 +128,17 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                     )
                 }
             }
-            CExpression.Const(type, valueCode)
+            val expression = CExpression.Const(type, valueCode)
+            val entry = this.Entry(xmlEnum.name, expression)
+            entry
         }
-//        fun String.removeVendorTag(): String {
-//            VKFFI.VENDOR_TAGS.forEach {
-//                val suffix = "_$it"
-//                if (endsWith(suffix)) {
-//                    return removeSuffix(suffix)
-//                }
-//            }
-//            return this
-//        }
 
-//        val allCaps = name.pascalCaseToAllCaps()
-//        val split = allCaps.split("_FLAG_BITS".toRegex())
-//        val suffix = if (split.size == 2) "_BIT" else ""
-
-//        val prefix = if (split.size == 2) {
-//            var temp = split[0] + "_"
-//            if (name.contains("FlagBits2")) {
-//                temp += "2_"
-//            }
-//            temp
-//        } else {
-////            allCaps.removeVendorTag() + "_"
-//            ""
-//        }
-
-        var fixedEnumName = xmlEnum.name
-//        if (this.name != "VkVendorId") {
-//            fixedEnumName = fixedEnumName.removeVendorTag()
-//        }
-//        if (this.name !in enumTypeWhitelist && !fixedEnumName.contains("RESERVED")) {
-//            check(fixedEnumName.startsWith(prefix)) {
-//                "Expected $fixedEnumName to start with $prefix"
-//            }
-//        }
-//        if (xmlEnum.name !in enumWhitelist) {
-//            check(fixedEnumName.endsWith(suffix)) {
-//                "Expected $fixedEnumName to end with $suffix"
-//            }
-//        }
-//        fixedEnumName = fixedEnumName.removePrefix(prefix)/*.removeSuffix(suffix)*/
-        val entry = this.Entry(fixedEnumName, expression)
-        addToCache(fixedEnumName, entry)
+        entry.tags.set(EnumEntryFixedName(fixEntryName(xmlEnum.name)))
+        addToCache(xmlEnum.name, entry)
         xmlEnum.comment?.let {
             entry.tags.set(ElementCommentTag(it))
         }
-        entries[fixedEnumName] = entry
+        entries[xmlEnum.name] = entry
         return entry
     }
 
@@ -155,9 +153,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
         xmlEnums.enums.asSequence()
             .filter { it.deprecated.isNullOrBlank() }
-            .forEach {
-            enumBase.addEntry(it)
-        }
+            .forEach { enumBase.addEntry(it) }
         return enumBase
     }
 

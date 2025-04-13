@@ -22,7 +22,6 @@ import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.KTFFICodegenHelper
 import net.echonolix.ktffi.NativeType
 import net.echonolix.ktffi.className
-import net.echonolix.ktffi.pascalCaseToAllCaps
 import java.lang.invoke.MethodHandle
 import kotlin.random.Random
 
@@ -261,25 +260,8 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return this
     }
 
-    private val bitSuffixRegex =
-        """(${CSyntax.nameRegex.pattern})_BIT(|_${VKFFI.VENDOR_TAGS.joinToString("|_")})""".toRegex()
-    private val flagNameRegex =
-        """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
-
     private fun VKFFICodeGenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
         val thisCname = flagType.className()
-        val typeNameMatchResult = flagNameRegex.matchEntire(flagType.name)
-            ?: throw IllegalStateException("Unexpected flag name: ${flagType.name}")
-        val (typeName, num, vendor) = typeNameMatchResult.destructured
-        val entryPrefix = buildString {
-            append("VK_")
-            append(typeName.pascalCaseToAllCaps())
-            if (num.isNotEmpty()) {
-                append('_')
-                append(num)
-            }
-            append('_')
-        }
 
         val type = TypeSpec.classBuilder(thisCname)
         type.tryAddKdoc(flagType)
@@ -312,13 +294,6 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
 
-        fun fixEntryName(name: String): String {
-            return name.removePrefix(entryPrefix)
-                .replace(bitSuffixRegex) {
-                    "${it.groupValues[1]}${it.groupValues[2]}"
-                }
-        }
-
         val companion = TypeSpec.companionObjectBuilder()
         val flagBitEntries = flagType.entries.values
         flagBitEntries.forEach {
@@ -329,14 +304,25 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     CodeBlock.of("%T(%L)", thisCname, code)
                 }
                 is CExpression.Reference -> {
-                    CodeBlock.of("%N", fixEntryName(expression.value.name))
+                    CodeBlock.of("%N", expression.value.name)
                 }
                 else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
             }
+            val fixedName = it.tags.get<EnumEntryFixedName>()!!.name
             companion.addProperty(
-                PropertySpec.builder(fixEntryName(it.name), thisCname)
+                PropertySpec.builder(fixedName, thisCname)
                     .initializer(initilizer)
                     .tryAddKdoc(it)
+                    .build()
+            )
+            companion.addProperty(
+                PropertySpec.builder(it.name, thisCname)
+                    .addModifiers(KModifier.INTERNAL)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addStatement("return %N", fixedName)
+                            .build()
+                    )
                     .build()
             )
         }
@@ -385,13 +371,15 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         type.addSuper(enumType)
 
         val companion = TypeSpec.companionObjectBuilder()
+        val internalAliases = mutableListOf<PropertySpec>()
         enumType.entries.values.asSequence()
             .forEach { entry ->
                 val expression = entry.expression
+                val fixedName = entry.tags.get<EnumEntryFixedName>()!!.name
                 when (expression) {
                     is CExpression.Const -> {
                         type.addEnumConstant(
-                            entry.name,
+                            fixedName,
                             TypeSpec.anonymousClassBuilder()
                                 .tryAddKdoc(entry)
                                 .superclass(thisCname)
@@ -401,7 +389,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     }
                     is CExpression.Reference -> {
                         companion.addProperty(
-                            PropertySpec.builder(entry.name, thisCname)
+                            PropertySpec.builder(fixedName, thisCname)
                                 .initializer("%N", expression.value.name)
                                 .tryAddKdoc(entry)
                                 .build()
@@ -409,7 +397,16 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     }
                     else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
                 }
+                internalAliases += PropertySpec.builder(entry.name, thisCname)
+                    .addModifiers(KModifier.INTERNAL)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addStatement("return %N", fixedName)
+                            .build()
+                    )
+                    .build()
             }
+        companion.addProperties(internalAliases)
 
         companion.addCompanionSuper(enumType)
         companion.addFunction(

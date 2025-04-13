@@ -43,16 +43,20 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: Element) = apply {
     addKdoc(sb.toString())
 }
 
+context(ctx: VKFFICodeGenContext)
 fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     val docs = element.tags.get<ElementCommentTag>()?.comment
     val since = element.tags.get<RequiredByTag>()?.requiredBy
-    if (docs == null && since == null) {
+    val aliasDst = element.tags.get<AliasedTag>()?.dst
+    if (docs == null && since == null && aliasDst == null) {
         return@apply
     }
     val sb = StringBuilder()
     if (docs != null) {
-        sb.append(docs.removePrefix("//").trim())
-        sb.append("\n\n")
+        sb.appendLine(docs.removePrefix("//").trim())
+    }
+    if (aliasDst != null) {
+        sb.appendLine("Alias for [${aliasDst.memberName()}]")
     }
     if (since != null) {
         sb.append("@since: ")
