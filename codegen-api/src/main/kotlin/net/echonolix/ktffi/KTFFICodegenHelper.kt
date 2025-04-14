@@ -5,19 +5,27 @@ import com.squareup.kotlinpoet.MemberName.Companion.member
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
+import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 
 public object KTFFICodegenHelper {
     public const val packageName: String = "net.echonolix.ktffi"
+
     public val typeCname: ClassName = ClassName(packageName, "NativeType")
     public val typeImplCname: ClassName = typeCname.nestedClass("Impl")
+
     public val typeDescriptorCname: ClassName = ClassName(packageName, "TypeDescriptor")
     public val typeDescriptorImplCname: ClassName = typeDescriptorCname.nestedClass("Impl")
+
     public val structCname: ClassName = ClassName(packageName, "NativeStruct")
     public val unionCname: ClassName = ClassName(packageName, "NativeUnion")
     public val arrayCname: ClassName = ClassName(packageName, "NativeArray")
     public val valueCname: ClassName = ClassName(packageName, "NativeValue")
     public val pointerCname: ClassName = ClassName(packageName, "NativePointer")
+
+    public val functionCname: ClassName = ClassName(packageName, "NativeFunction")
+    public val functionImplCname: ClassName = functionCname.nestedClass("Impl")
+    public val functionTypeDescriptorImplCname: ClassName = functionCname.nestedClass("TypeDescriptorImpl")
 
     public val helper: ClassName = ClassName(packageName, "APIHelper")
     public val omniSegment: MemberName = helper.member("_\$OMNI_SEGMENT\$_")
@@ -36,7 +44,9 @@ public object KTFFICodegenHelper {
     public val valueLayoutCname: ClassName = ValueLayout::class.asClassName()
     public val addressLayoutMember: MemberName = valueLayoutCname.member("ADDRESS")
 
+    public val methodHandleCname: ClassName = MethodHandle::class.asClassName()
     public val methodHandlesCname: ClassName = MethodHandles::class.asClassName()
+    public val handleLookUpMember: MemberName = methodHandlesCname.member("lookup")
     public val javaMethodMemberName: MemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
 
     public val memorySegmentCname: ClassName = MemorySegment::class.asClassName()

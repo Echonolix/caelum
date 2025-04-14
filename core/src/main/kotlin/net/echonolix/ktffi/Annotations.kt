@@ -1,6 +1,6 @@
 package net.echonolix.ktffi
 
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 public annotation class CTypeName(val name: String)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
 public annotation class CHandleType

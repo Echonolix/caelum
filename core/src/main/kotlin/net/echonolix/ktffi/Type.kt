@@ -2,10 +2,15 @@ package net.echonolix.ktffi
 
 import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import kotlin.reflect.jvm.javaMethod
 
 public interface TypeDescriptor<T : NativeType> {
     public val layout: MemoryLayout
     public val arrayByteOffsetHandle: MethodHandle
+
+    public val fromNativeDataMH: MethodHandle
+    public val toNativeDataMH: MethodHandle
 
     public abstract class Impl<T : NativeType>(override val layout: MemoryLayout) : TypeDescriptor<T> {
         final override val arrayByteOffsetHandle: MethodHandle by lazy {
@@ -46,6 +51,12 @@ public abstract class NativeStruct<T : NativeType> private constructor(override 
     public constructor(vararg members: MemoryLayout) : this(
         paddedStructLayout(*members)
     )
+
+    override val fromNativeDataMH: MethodHandle
+        get() = throw UnsupportedOperationException()
+
+    override val toNativeDataMH: MethodHandle
+        get() = throw UnsupportedOperationException()
 }
 
 public abstract class NativeUnion<T : NativeType> private constructor(override val layout: UnionLayout) :
@@ -53,39 +64,80 @@ public abstract class NativeUnion<T : NativeType> private constructor(override v
     public constructor(vararg members: MemoryLayout) : this(
         MemoryLayout.unionLayout(*members)
     )
+
+    override val fromNativeDataMH: MethodHandle
+        get() = throw UnsupportedOperationException()
+
+    override val toNativeDataMH: MethodHandle
+        get() = throw UnsupportedOperationException()
 }
 
 public interface NativeFunction : NativeType {
+    override val typeDescriptor: TypeDescriptorImpl<*>
+    public val funcHandle: MethodHandle get() = typeDescriptor.filteredUpcallHandle.bindTo(this)
+
+    public abstract class Impl(
+        final override val funcHandle: MethodHandle
+    ) : NativeFunction
 
     public abstract class TypeDescriptorImpl<T : NativeFunction>(
-        public val funcHandle: MethodHandle,
-        public val returnType: NativeType?,
-        vararg parameters: NativeType
-    ) :
-        NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
-        public val parameters: List<NativeType> = parameters.toList()
+        public val baseUpcallHandle: MethodHandle,
+        public val returnType: TypeDescriptor<*>?,
+        vararg parameters: TypeDescriptor<*>
+    ) : NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
+        public val parameters: List<TypeDescriptor<*>> = parameters.toList()
 
-        public val functionDescriptor: FunctionDescriptor? = if (returnType == null) {
+        public val functionDescriptor: FunctionDescriptor = if (returnType == null) {
             FunctionDescriptor.ofVoid(
-                *parameters.map { it.typeDescriptor.layout }.toTypedArray()
+                *parameters.map { it.layout }.toTypedArray()
             )
         } else {
             FunctionDescriptor.of(
-                returnType.typeDescriptor.layout,
-                *parameters.map { it.typeDescriptor.layout }.toTypedArray()
+                returnType.layout,
+                *parameters.map { it.layout }.toTypedArray()
             )
         }
 
+        public val downcallArgumentFilters: Array<MethodHandle> = parameters.map {
+            it.fromNativeDataMH
+        }.toTypedArray()
+
+        public val upcallArgumentFilters: Array<MethodHandle> = parameters.map {
+            it.toNativeDataMH
+        }.toTypedArray()
+
+        public val filteredUpcallHandle: MethodHandle = MethodHandles.filterArguments(
+            baseUpcallHandle,
+            1,
+            *upcallArgumentFilters
+        )
+
+        override val toNativeDataMH: MethodHandle =
+            MethodHandles.lookup().unreflect(::toNativeData.javaMethod).bindTo(this)
+        override val fromNativeDataMH: MethodHandle =
+            MethodHandles.lookup().unreflect(::fromNativeData.javaMethod).bindTo(this)
+
+        public fun toNativeData(value: T): NativePointer<T> {
+            return NativePointer(upcallStub(value).address())
+        }
+
+        public abstract fun fromNativeData(value: NativePointer<T>): T
+
+        public fun downcallHandle(functionAddress: Long): MethodHandle {
+            return downcallHandle(MemorySegment.ofAddress(functionAddress))
+        }
+
         public fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
-            return Linker.nativeLinker().downcallHandle(
-                functionAddress,
-                functionDescriptor
+            return MethodHandles.filterArguments(
+                Linker.nativeLinker().downcallHandle(functionAddress, functionDescriptor),
+                0,
+                *downcallArgumentFilters
             )
         }
 
         public fun upcallStub(function: T): MemorySegment {
             return Linker.nativeLinker().upcallStub(
-                funcHandle.bindTo(function),
+                function.funcHandle,
                 functionDescriptor,
                 Arena.ofAuto()
             )

@@ -1,13 +1,14 @@
 package net.echonolix.ktffi
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import java.lang.invoke.MethodHandle
 
 public fun TypeSpec.Builder.addMethodHandleFields(): TypeSpec.Builder {
     addProperty(
-        PropertySpec.builder("\$fromNativeDataMH", MethodHandle::class)
+        PropertySpec.builder("fromNativeDataMH", KTFFICodegenHelper.methodHandleCname)
+            .addModifiers(KModifier.OVERRIDE)
             .initializer(
                 CodeBlock.builder()
                     .add(
@@ -20,7 +21,8 @@ public fun TypeSpec.Builder.addMethodHandleFields(): TypeSpec.Builder {
             .build()
     )
     addProperty(
-        PropertySpec.builder("\$toNativeDataMH", MethodHandle::class)
+        PropertySpec.builder("toNativeDataMH", KTFFICodegenHelper.methodHandleCname)
+            .addModifiers(KModifier.OVERRIDE)
             .initializer(
                 CodeBlock.builder()
                     .add(
