@@ -121,16 +121,16 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         )
                         .build()
                 )
-                typeObject.addProperty(
-                    PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
-                        .addAnnotation(JvmField::class)
-                        .initializer(
-                            "layout.arrayElementVarHandle(%M(%S))",
-                            MemoryLayout.PathElement::class.member("groupElement"),
-                            member.name
-                        )
-                        .build()
-                )
+//                typeObject.addProperty(
+//                    PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
+//                        .addAnnotation(JvmField::class)
+//                        .initializer(
+//                            "layout.arrayElementVarHandle(%M(%S))",
+//                            MemoryLayout.PathElement::class.member("groupElement"),
+//                            member.name
+//                        )
+//                        .build()
+//                )
             }
             typeObject.addProperty(
                 PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
