@@ -42,6 +42,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             "VkBaseInStructure",
             "VkBaseOutStructure"
         )
+
         override fun VKFFICodeGenContext.compute() {
             val structTypes = ctx.filterTypeStream<CType.Struct>()
                 .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
@@ -482,7 +483,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
 
         @Suppress("JoinDeclarationAndAssignment")
-        fun commonAccess(member: CType.Group.Member) {
+        fun commonAccess(member: CType.Group.Member, mutable: Boolean = true) {
             val memberType = member.type
             val descType = memberType.typeDescriptorTypeName()!!
             val ktApiType = when (memberType) {
@@ -561,26 +562,27 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 )
                 .build()
 
-            file.addProperty(
-                PropertySpec.builder(member.name, returnType)
-                    .addAnnotation(cTypeNameAnnotation)
-                    .tryAddKdoc(member)
-                    .mutable()
-                    .receiver(valueCnameP)
-                    .getter(valueGetter)
-                    .setter(valueSetter)
-                    .build()
-            )
-            file.addProperty(
-                PropertySpec.builder(member.name, returnType)
-                    .addAnnotation(cTypeNameAnnotation)
-                    .tryAddKdoc(member)
-                    .mutable()
-                    .receiver(pointerCnameP)
-                    .getter(pointerGetter)
-                    .setter(pointerSetter)
-                    .build()
-            )
+            val valueProperty = PropertySpec.builder(member.name, returnType)
+            valueProperty.addAnnotation(cTypeNameAnnotation)
+            valueProperty.tryAddKdoc(member)
+            valueProperty.receiver(valueCnameP)
+            valueProperty.getter(valueGetter)
+            if (mutable) {
+                valueProperty.mutable()
+                valueProperty.setter(valueSetter)
+            }
+
+            val pointerProperty = PropertySpec.builder(member.name, returnType)
+            pointerProperty.addAnnotation(cTypeNameAnnotation)
+            pointerProperty.tryAddKdoc(member)
+            pointerProperty.receiver(pointerCnameP)
+            pointerProperty.getter(pointerGetter)
+            if (mutable) {
+                pointerProperty.mutable()
+                pointerProperty.setter(pointerSetter)
+            }
+            file.addProperty(valueProperty.build())
+            file.addProperty(pointerProperty.build())
         }
 
         fun groupAccess(member: CType.Group.Member, memberType: CType.Group) {
@@ -648,7 +650,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             }
         }
 
-        groupType.members.forEach { member ->
+        groupType.members.asSequence().forEach { member ->
             var memberType = member.type
             while (memberType is CType.TypeDef) {
                 memberType = memberType.dstType
@@ -658,8 +660,11 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 is CType.BasicType -> {
                     basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr)
                 }
-                is CType.Handle, is CType.EnumBase, is CType.Pointer -> {
+                is CType.Handle, is CType.Pointer -> {
                     commonAccess(member)
+                }
+                is CType.EnumBase -> {
+                    commonAccess(member, member.name != "sType")
                 }
                 is CType.Group -> {
                     groupAccess(member, memberType)
