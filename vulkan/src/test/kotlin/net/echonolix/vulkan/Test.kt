@@ -9,6 +9,7 @@ import net.echonolix.vulkan.handles.VkInstance
 import net.echonolix.vulkan.structs.*
 
 private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebugUtilsMessengerCreateInfoEXT>) {
+    println(debugCreateInfo.sType)
     debugCreateInfo.sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT
     debugCreateInfo.messageSeverity = VkDebugUtilsMessageSeverityFlagsEXT.VERBOSE_EXT +
         VkDebugUtilsMessageSeverityFlagsEXT.WARNING_EXT +
@@ -29,20 +30,22 @@ fun main() {
     MemoryStack {
         val VALIDATION_LAYERS = setOf("VK_LAYER_KHRONOS_validation")
 
-        val appInfo = VkApplicationInfo.calloc()
-        appInfo.sType = VkStructureType.APPLICATION_INFO
+        val appInfo = VkApplicationInfo.allocate()
+        println(appInfo.sType)
+//        appInfo.sType = VkStructureType.APPLICATION_INFO
         appInfo.pApplicationName = "Hello Vulkan".c_str()
         appInfo.applicationVersion = VkApiVersion(0u, 1u, 0u, 0u).value
         appInfo.pEngineName = "Echonolix".c_str()
         appInfo.engineVersion = VkApiVersion(0u, 1u, 0u, 0u).value
         appInfo.apiVersion = VK_API_VERSION_1_0.value
 
-        val createInfo = VkInstanceCreateInfo.calloc()
-        createInfo.sType = VkStructureType.INSTANCE_CREATE_INFO
+        val createInfo = VkInstanceCreateInfo.allocate()
+        println(createInfo.sType)
+//        createInfo.sType = VkStructureType.INSTANCE_CREATE_INFO
         createInfo.pApplicationInfo = appInfo.ptr()
 
         createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.c_strs()
-        val debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc()
+        val debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.allocate()
         populateDebugMessengerCreateInfo(debugCreateInfo)
         createInfo.pNext = debugCreateInfo.ptr()
 

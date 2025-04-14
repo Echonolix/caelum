@@ -33,30 +33,19 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             )
         ctx.writeOutput(vkUnionFile)
 
-        val structTypeVar = TypeVariableName("T", VKFFI.vkStructCname.parameterizedBy(TypeVariableName("T")))
-        val vkStructFile = FileSpec.builder(VKFFI.vkStructCname)
-            .addType(
-                TypeSpec.classBuilder(VKFFI.vkStructCname)
-                    .addTypeVariable(structTypeVar)
-                    .addModifiers(KModifier.SEALED)
-                    .superclass(KTFFICodegenHelper.structCname.parameterizedBy(structTypeVar))
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter("members", KTFFICodegenHelper.memoryLayoutCname, KModifier.VARARG)
-                            .build()
-                    )
-                    .addSuperclassConstructorParameter("*members")
-                    .build()
-            )
-        ctx.writeOutput(vkStructFile)
-
         struct.join()
         union.join()
     }
 
     private inner class StructTask : VKFFITask<Unit>(ctx) {
+        private val skippedStructs = setOf(
+            "VkBaseInStructure",
+            "VkBaseOutStructure"
+        )
         override fun VKFFICodeGenContext.compute() {
-            val structTypes = ctx.filterType<CType.Struct>()
+            val structTypes = ctx.filterTypeStream<CType.Struct>()
+                .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
+                .toList()
             val typeAlias = GenTypeAliasTask(this, structTypes).fork()
 
             structTypes.parallelStream()
@@ -102,6 +91,22 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .unindent()
                 .build()
         )
+        if (groupType is CType.Struct) {
+            val vkStructureType = ctx.resolveElement("VkStructureType") as CType.Enum
+            val vkStructureTypeCname = vkStructureType.className()
+            groupType.members.firstNotNullOfOrNull { it.tags.get<StructTypeTag>() }?.let {
+                typeObject.addProperty(
+                    PropertySpec.builder("structType", vkStructureType.typeName())
+                        .addModifiers(KModifier.OVERRIDE)
+                        .getter(
+                            FunSpec.getterBuilder()
+                                .addStatement("return %T.%N", vkStructureTypeCname, it.structType.name)
+                                .build()
+                        )
+                        .build()
+                )
+            }
+        }
 
         groupType.members.forEach { member ->
             if (member.type !is CType.Array) {

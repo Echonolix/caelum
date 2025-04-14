@@ -9,7 +9,8 @@ public interface TypeDescriptor<T : NativeType> {
 
     public abstract class Impl<T : NativeType>(override val layout: MemoryLayout) : TypeDescriptor<T> {
         final override val arrayByteOffsetHandle: MethodHandle by lazy {
-            layout.byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
+            MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.byteSize(), layout)
+                .byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
         }
     }
 }

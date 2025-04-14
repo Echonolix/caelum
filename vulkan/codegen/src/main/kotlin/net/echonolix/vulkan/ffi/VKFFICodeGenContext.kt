@@ -175,6 +175,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             val xmlMember = xmlMember.tryParseXML<XMLMember>()!!
             if (xmlMember.api != null && !xmlMember.api.split(",").contains("vulkan")) return@forEach
+
             var bits = -1
             var typeStr = xmlMember.inner.toXmlTagFreeString()
             intBitRegex.find(typeStr)?.let {
@@ -198,6 +199,10 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             lineComment?.let {
                 member.tags.set(LineCommentTag(it))
+            }
+            if (xmlMember.name == "sType" && xmlMember.values != null) {
+                val structType = resolveElement(xmlMember.values) as CType.EnumBase.Entry
+                member.tags.set(StructTypeTag(structType))
             }
             lineComment = null
             members.add(member)
