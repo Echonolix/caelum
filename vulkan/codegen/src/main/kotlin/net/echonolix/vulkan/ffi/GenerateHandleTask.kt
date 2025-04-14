@@ -9,7 +9,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return name.removePrefix("Vk").decap()
     }
 
-    private val objTypeCname = with(ctx) { resolveType("VkObjectType").className() }
+    private val objTypeCname = with(ctx) { resolveType("VkObjectType").typeName() }
     private val typeVariable = TypeVariableName("T", VKFFI.vkHandleCname)
     val vkTypeDescriptorCname = VKFFI.vkHandleCname.nestedClass("TypeDescriptor")
 
@@ -82,7 +82,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         implType.addSuperinterface(thisCname)
         if (handleType.parent != null) {
             val parentVariableName = handleType.parent.variableName()
-            val parentCname = handleType.parent.className()
+            val parentCname = handleType.parent.typeName()
             implType.addProperty(
                 PropertySpec.builder(parentVariableName, parentCname)
                     .addModifiers(KModifier.OVERRIDE)
@@ -97,7 +97,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             )
             implType.primaryConstructor(
                 FunSpec.constructorBuilder()
-                    .addParameter(parentVariableName, handleType.parent.className())
+                    .addParameter(parentVariableName, handleType.parent.typeName())
                     .addParameter("handle", CBasicType.int64_t.kotlinTypeName)
                     .build()
             )

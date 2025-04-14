@@ -196,7 +196,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         addProperty(
             PropertySpec.builder(
                 "typeDescriptor",
-                KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(enumBase.className())
+                KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(enumBase.typeName())
             ).addModifiers(KModifier.OVERRIDE)
                 .getter(
                     FunSpec.getterBuilder()

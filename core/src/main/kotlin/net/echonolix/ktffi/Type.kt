@@ -58,7 +58,7 @@ public abstract class NativeUnion<T : NativeType> private constructor(override v
 public interface NativeFunction : NativeType {
 
     public abstract class TypeDescriptorImpl<T : NativeFunction>(
-        @Suppress("CanBeParameter")
+        public val funcHandle: MethodHandle,
         public val returnType: NativeType?,
         vararg parameters: NativeType
     ) :
@@ -83,11 +83,12 @@ public interface NativeFunction : NativeType {
             )
         }
 
-//        fun upcallStub(function: T): MemorySegment {
-//            return Linker.nativeLinker().upcallStub(
-//                function,
-//                functionDescriptor
-//            )
-//        }
+        public fun upcallStub(function: T): MemorySegment {
+            return Linker.nativeLinker().upcallStub(
+                funcHandle.bindTo(function),
+                functionDescriptor,
+                Arena.ofAuto()
+            )
+        }
     }
 }

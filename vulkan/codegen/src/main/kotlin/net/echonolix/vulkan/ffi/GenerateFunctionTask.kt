@@ -13,6 +13,9 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     private fun VKFFICodeGenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
         val thisCname = funcType.className()
         val returnType = funcType.returnType
+
+        val funInterfaceType = TypeSpec.funInterfaceBuilder(thisCname)
+
         val invokeFunc = FunSpec.builder("invoke")
             .addModifiers(KModifier.OPERATOR, KModifier.ABSTRACT)
             .returns(returnType.ktApiType())
@@ -20,9 +23,12 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 ParameterSpec.builder(it.name, it.type.ktApiType())
                     .build()
             })
+        funInterfaceType.addFunction(invokeFunc.build())
 
-        val funInterfaceType = TypeSpec.funInterfaceBuilder(thisCname)
-            .addFunction(invokeFunc.build())
+        TypeSpec.companionObjectBuilder()
+            .build()
+
+        funInterfaceType.build()
 
 
         val file = FileSpec.builder(thisCname)

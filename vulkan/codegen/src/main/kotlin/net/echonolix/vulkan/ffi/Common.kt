@@ -28,7 +28,7 @@ class GenTypeAliasTask(ctx: VKFFICodeGenContext, private val inputs: List<Pair<S
         return inputs.parallelStream()
             .filter { (name, dstType) -> name != dstType.name }
             .map { (name, dstType) ->
-                TypeAliasSpec.builder(name, dstType.className())
+                TypeAliasSpec.builder(name, dstType.typeName())
                     .build()
             }
             .toList()

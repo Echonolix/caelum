@@ -576,7 +576,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
 
         fun groupAccess(member: CType.Group.Member, memberType: CType.Group) {
-            val groupCname = memberType.className()
+            val groupCname = memberType.typeName()
             val memberPointerCnameP = KTFFICodegenHelper.pointerCname.parameterizedBy(groupCname)
             val cTypeNameAnnotation = AnnotationSpec.builder(CTypeName::class)
                 .addMember("%S", memberType.toSimpleString())

@@ -50,8 +50,14 @@ public interface CElement : Comparable<CElement> {
         }
 
         context(ctx: KTFFICodegenContext)
-        public fun className(): ClassName {
+        public fun typeName(): TypeName {
             return ClassName(packageName(), name)
+        }
+
+        context(ctx: KTFFICodegenContext)
+        public fun className(): ClassName {
+            return typeName() as? ClassName
+                ?: throw UnsupportedOperationException("${javaClass.simpleName} doesn't have a class name")
         }
     }
 }
@@ -161,7 +167,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun className(): ClassName {
+        override fun typeName(): ClassName {
             return baseType.ktffiTypeTName as ClassName
         }
 
@@ -195,12 +201,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return this.className()
+            return this.typeName()
         }
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of("%T.layout", className())
+            return CodeBlock.of("%T.layout", typeName())
         }
 
         override fun toString(): String {
@@ -216,12 +222,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return className()
+            return typeName()
         }
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of("%T.layout", className())
+            return CodeBlock.of("%T.layout", typeName())
         }
 
         override fun toString(): String {
@@ -255,7 +261,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return className()
+            return typeName()
+        }
+
+        context(ctx: KTFFICodegenContext)
+        override fun typeName(): TypeName {
+            return ClassName(packageName(), name)
         }
 
         context(ctx: KTFFICodegenContext)
@@ -319,7 +330,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return className()
+            return typeName()
         }
 
         context(ctx: KTFFICodegenContext)
@@ -373,7 +384,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun className(): ClassName {
+        override fun typeName(): TypeName {
             throw UnsupportedOperationException("Array isn't a top level type")
         }
 
@@ -436,8 +447,8 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun className(): ClassName {
-            return CBasicType.size_t.ktffiTypeTName as ClassName
+        override fun typeName(): TypeName {
+            return CBasicType.size_t.ktffiTypeTName
         }
 
         context(ctx: KTFFICodegenContext)
@@ -465,8 +476,8 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: KTFFICodegenContext)
-        override fun className(): ClassName {
-            return ClassName(packageName(), name.removeSuffix("*"))
+        override fun typeName(): TypeName {
+            return KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.typeName())
         }
 
         context(ctx: KTFFICodegenContext)
@@ -483,7 +494,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         final override fun ktApiType(): TypeName {
-            return className()
+            return typeName()
         }
 
         context(ctx: KTFFICodegenContext)
@@ -497,7 +508,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayout(): CodeBlock {
-            return CodeBlock.of("%T.layout", className())
+            return CodeBlock.of("%T.layout", typeName())
         }
 
         override fun toString(): String {

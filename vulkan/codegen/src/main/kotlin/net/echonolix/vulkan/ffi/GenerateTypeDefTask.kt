@@ -9,7 +9,7 @@ class GenerateTypeDefTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val typeDefFile = FileSpec.builder(VKFFI.basePkgName, "TypeDefs")
         ctx.filterTypeStream<CType.TypeDef>().forEach { (_, typeDefType) ->
             typeDefFile.addTypeAlias(
-                TypeAliasSpec.builder(typeDefType.name, typeDefType.dstType.className())
+                TypeAliasSpec.builder(typeDefType.name, typeDefType.dstType.typeName())
                     .build()
             )
         }
