@@ -242,7 +242,6 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return const
     }
 
-    private val vkVersionConstRegex = """VK_API_VERSION_(\d+)_(\d+)""".toRegex()
     private fun makeApiVersion(variant: UInt, major: UInt, minor: UInt, patch: UInt): UInt {
         return (variant shl 29) or (major shl 22) or (minor shl 12) or patch
     }
@@ -352,7 +351,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         }
 
         @OptIn(ExperimentalStdlibApi::class)
-        vkVersionConstRegex.matchEntire(cElementStr)?.let {
+        VKFFI.vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
             val expression =

@@ -139,7 +139,8 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             val constantsFile = FileSpec.builder(VKFFI.basePkgName, "Constants")
             constantsFile.addProperties(
-                ctx.filterType<CTopLevelConst>().parallelStream()
+                ctx.filterTypeStream<CTopLevelConst>()
+                    .filter { !VKFFI.vkVersionConstRegex.matches(it.first) }
                     .sorted(
                         compareBy<Pair<String, CTopLevelConst>> { (_, const) ->
                             const.expression is CExpression.StringLiteral

@@ -72,20 +72,20 @@ object VKFFI {
 
     val typedefBlackList = setOf(
         "ANativeWindow",
-            "AHardwareBuffer",
-            "CAMetalLayer",
-            "MTLDevice_id",
-            "MTLCommandQueue_id",
-            "MTLBuffer_id",
-            "MTLTexture_id",
-            "MTLSharedEvent_id",
-            "IOSurfaceRef"
+        "AHardwareBuffer",
+        "CAMetalLayer",
+        "MTLDevice_id",
+        "MTLCommandQueue_id",
+        "MTLBuffer_id",
+        "MTLTexture_id",
+        "MTLSharedEvent_id",
+        "IOSurfaceRef"
     )
 
     val skippedExtensionPrefix = setOf(
         "VK_KHR_video_"
     )
-    val skippedExtension = setOf(
-        ""
-    )
+
+
+    val vkVersionConstRegex = """VK_API_VERSION_(\d+)_(\d+)""".toRegex()
 }

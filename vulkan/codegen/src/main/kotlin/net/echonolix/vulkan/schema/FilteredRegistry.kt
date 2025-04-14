@@ -2,7 +2,6 @@ package net.echonolix.vulkan.schema
 
 import net.echonolix.vulkan.ffi.VKFFI
 import net.echonolix.vulkan.ffi.tryParseXML
-import kotlin.sequences.filter
 
 class FilteredRegistry(registry: Registry) {
     val raw = registry
@@ -12,7 +11,6 @@ class FilteredRegistry(registry: Registry) {
     val registryExtensions = registry.extensions.extensions.asSequence()
         .filter { it.platform == null }
         .filter { it.supported != "disabled" }
-        .filter { it.name !in VKFFI.skippedExtension }
         .filter { extension -> VKFFI.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
         .toList()
     val registryTypes = registry.types.types.associate { type ->
