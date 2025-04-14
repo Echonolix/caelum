@@ -115,13 +115,21 @@ public interface NativeFunction : NativeType {
         override val toNativeDataMH: MethodHandle =
             MethodHandles.lookup().unreflect(::toNativeData.javaMethod).bindTo(this)
         override val fromNativeDataMH: MethodHandle =
-            MethodHandles.lookup().unreflect(::fromNativeData.javaMethod).bindTo(this)
+            MethodHandles.lookup().unreflect(::fromNativeData0.javaMethod).bindTo(this)
 
         public fun toNativeData(value: T): NativePointer<T> {
             return NativePointer(upcallStub(value).address())
         }
 
-        public abstract fun fromNativeData(value: NativePointer<T>): T
+        public fun fromNativeData0(value: NativePointer<T>): T {
+            return fromNativeData(value)
+        }
+
+        public abstract fun fromNativeData(value: MemorySegment): T
+
+        public fun fromNativeData(value: NativePointer<T>): T {
+            return fromNativeData(MemorySegment.ofAddress(value._address))
+        }
 
         public fun downcallHandle(functionAddress: Long): MethodHandle {
             return downcallHandle(MemorySegment.ofAddress(functionAddress))

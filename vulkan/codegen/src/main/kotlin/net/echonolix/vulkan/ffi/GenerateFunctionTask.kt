@@ -83,10 +83,10 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addModifiers(KModifier.OVERRIDE)
                 .addParameter(
                     "value",
-                    KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
+                    KTFFICodegenHelper.memorySegmentCname
                 )
                 .returns(thisCname)
-                .addStatement("return Impl(downcallHandle(value._address))")
+                .addStatement("return Impl(downcallHandle(value))")
                 .build()
         )
         val implType = TypeSpec.classBuilder("Impl")
@@ -107,6 +107,11 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         implInvokeCode.add(") as %T", returnType.ktApiType())
         implType.addFunction(
             FunSpec.builder("invoke")
+                .addAnnotation(
+                    AnnotationSpec.builder(Suppress::class)
+                        .addMember("%S", "UNCHECKED_CAST")
+                        .build()
+                )
                 .addModifiers(KModifier.OVERRIDE)
                 .addParameters(funcType.parameters.map {
                     ParameterSpec.builder(it.name, it.type.ktApiType()).build()

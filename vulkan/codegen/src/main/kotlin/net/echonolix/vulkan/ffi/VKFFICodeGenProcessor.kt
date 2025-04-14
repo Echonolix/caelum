@@ -69,11 +69,21 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         }
 
         ctx.resolveElement("VK_API_VERSION_1_0")
-        filteredRegistry.registryFeatures.asSequence()
-            .filter { it.name == "VK_VERSION_1_0" }
-            .forEach { processRequire(it.require) }
+//        filteredRegistry.registryFeatures.asSequence()
+//            .filter { it.name == "VK_VERSION_1_0" }
+//            .forEach { processRequire(it.require) }
 //        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
 //        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+
+        val includedVKVersion = setOf("VK_VERSION_1_0", "VK_VERSION_1_1")
+        val includedExtension = setOf("VK_KHR_surface", "VK_KHR_swapchain")
+
+        filteredRegistry.registryFeatures.asSequence()
+            .filter { it.name in includedVKVersion }
+            .forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.asSequence()
+            .filter { it.name in includedExtension }
+            .forEach { processRequire(it.require) }
         object : RecursiveAction() {
             override fun compute() {
                 val handle = GenerateHandleTask(ctx).fork()
@@ -88,7 +98,6 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 function.join()
             }
         }.fork().join()
-//        GenerateFunctionTask(ctx).invoke()
 
         return ctx.outputFiles
     }
