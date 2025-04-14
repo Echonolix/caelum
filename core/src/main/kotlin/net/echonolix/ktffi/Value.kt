@@ -15,14 +15,8 @@ public value class NativeValue<T : NativeType>(
     }
 }
 
-public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator): NativeValue<T> =
-    NativeValue(allocator.allocate(layout))
-
 context(allocator: SegmentAllocator)
 public fun <T : NativeType> TypeDescriptor<T>.malloc(): NativeValue<T> = NativeValue(allocator.allocate(layout))
-
-public fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator): NativeValue<T> =
-    NativeValue(allocator.allocate(layout).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
 public fun <T : NativeType> TypeDescriptor<T>.calloc(): NativeValue<T> =

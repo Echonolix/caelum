@@ -14,8 +14,9 @@ public object APIHelper {
     public val loaderLookup: SymbolLookup = SymbolLookup.loaderLookup()
 
     @JvmField
-    public val pointerLayout: AddressLayout =
-        ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, ValueLayout.JAVA_BYTE))
+    public val pointerLayout: MemoryLayout =
+        ValueLayout.JAVA_LONG
+//        ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Long.MAX_VALUE, ValueLayout.JAVA_BYTE))
 
     @JvmField
     public val symbolLookup: SymbolLookup = SymbolLookup { name ->
@@ -28,13 +29,14 @@ public object APIHelper {
     }
 
     @JvmStatic
-    public fun pointerLayout(elementLayout: MemoryLayout): AddressLayout {
-        return ValueLayout.ADDRESS.withTargetLayout(
-            MemoryLayout.sequenceLayout(
-                Long.MAX_VALUE / elementLayout.byteSize(),
-                elementLayout
-            )
-        )
+    public fun pointerLayout(elementLayout: MemoryLayout): MemoryLayout {
+        return ValueLayout.JAVA_LONG
+//        return ValueLayout.ADDRESS.withTargetLayout(
+//            MemoryLayout.sequenceLayout(
+//                Long.MAX_VALUE / elementLayout.byteSize(),
+//                elementLayout
+//            )
+//        )
     }
 
     @JvmStatic

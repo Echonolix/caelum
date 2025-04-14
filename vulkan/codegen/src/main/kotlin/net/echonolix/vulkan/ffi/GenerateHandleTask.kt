@@ -21,7 +21,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             .addType(
                 TypeSpec.interfaceBuilder(VKFFI.vkHandleCname)
                     .addSuperinterface(NativeType::class)
-                    .addProperty("handle", CBasicType.int64_t.kotlinTypeName)
+                    .addProperty("handle", CBasicType.int64_t.ktApiTypeTypeName)
                     .addProperty("objectType", objTypeCname)
                     .addType(
                         TypeSpec.classBuilder(vkTypeDescriptorCname)
@@ -90,7 +90,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .build()
             )
             implType.addProperty(
-                PropertySpec.builder("handle", CBasicType.int64_t.kotlinTypeName)
+                PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
                     .addModifiers(KModifier.OVERRIDE)
                     .initializer(CodeBlock.of("handle"))
                     .build()
@@ -98,7 +98,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             implType.primaryConstructor(
                 FunSpec.constructorBuilder()
                     .addParameter(parentVariableName, handleType.parent.typeName())
-                    .addParameter("handle", CBasicType.int64_t.kotlinTypeName)
+                    .addParameter("handle", CBasicType.int64_t.ktApiTypeTypeName)
                     .build()
             )
             val grandparent = handleType.parent.parent
@@ -113,14 +113,14 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 CodeBlock.of("%M", CBasicType.int64_t.valueLayoutMember)
             )
             implType.addProperty(
-                PropertySpec.builder("handle", CBasicType.int64_t.kotlinTypeName)
+                PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
                     .addModifiers(KModifier.OVERRIDE)
                     .initializer(CodeBlock.of("handle"))
                     .build()
             )
             implType.primaryConstructor(
                 FunSpec.constructorBuilder()
-                    .addParameter("handle", CBasicType.int64_t.kotlinTypeName)
+                    .addParameter("handle", CBasicType.int64_t.ktApiTypeTypeName)
                     .build()
             )
         }
@@ -138,19 +138,10 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val companion = TypeSpec.companionObjectBuilder()
         companion.superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
         companion.addFunction(
-            FunSpec.builder("toNativeData")
-                .addAnnotation(JvmStatic::class)
-                .addModifiers(KModifier.INLINE)
-                .addParameter("value", thisCname)
-                .returns(CBasicType.int64_t.kotlinTypeName)
-                .addStatement("return value.handle")
-                .build()
-        )
-        companion.addFunction(
             FunSpec.builder("fromNativeData")
                 .addAnnotation(JvmStatic::class)
                 .addModifiers(KModifier.INLINE)
-                .addParameter("value", CBasicType.int64_t.kotlinTypeName)
+                .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
                 .returns(thisCname)
                 .apply {
                     if (handleType.parent == null) {
@@ -164,7 +155,15 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 }
                 .build()
         )
-        companion.addMethodHandleFields()
+        companion.addFunction(
+            FunSpec.builder("toNativeData")
+                .addAnnotation(JvmStatic::class)
+                .addModifiers(KModifier.INLINE)
+                .addParameter("value", thisCname)
+                .returns(CBasicType.int64_t.ktApiTypeTypeName)
+                .addStatement("return value.handle")
+                .build()
+        )
         interfaceType.addType(companion.build())
 
 

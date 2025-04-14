@@ -2,15 +2,10 @@ package net.echonolix.ktffi
 
 import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import kotlin.reflect.jvm.javaMethod
 
 public interface TypeDescriptor<T : NativeType> {
     public val layout: MemoryLayout
     public val arrayByteOffsetHandle: MethodHandle
-
-    public val fromNativeDataMH: MethodHandle
-    public val toNativeDataMH: MethodHandle
 
     public abstract class Impl<T : NativeType>(override val layout: MemoryLayout) : TypeDescriptor<T> {
         final override val arrayByteOffsetHandle: MethodHandle by lazy {
@@ -51,12 +46,6 @@ public abstract class NativeStruct<T : NativeType> private constructor(override 
     public constructor(vararg members: MemoryLayout) : this(
         paddedStructLayout(*members)
     )
-
-    override val fromNativeDataMH: MethodHandle
-        get() = throw UnsupportedOperationException()
-
-    override val toNativeDataMH: MethodHandle
-        get() = throw UnsupportedOperationException()
 }
 
 public abstract class NativeUnion<T : NativeType> private constructor(override val layout: UnionLayout) :
@@ -64,24 +53,18 @@ public abstract class NativeUnion<T : NativeType> private constructor(override v
     public constructor(vararg members: MemoryLayout) : this(
         MemoryLayout.unionLayout(*members)
     )
-
-    override val fromNativeDataMH: MethodHandle
-        get() = throw UnsupportedOperationException()
-
-    override val toNativeDataMH: MethodHandle
-        get() = throw UnsupportedOperationException()
 }
 
 public interface NativeFunction : NativeType {
     override val typeDescriptor: TypeDescriptorImpl<*>
-    public val funcHandle: MethodHandle get() = typeDescriptor.filteredUpcallHandle.bindTo(this)
+    public val funcHandle: MethodHandle get() = typeDescriptor.upcallHandle.bindTo(this)
 
     public abstract class Impl(
         final override val funcHandle: MethodHandle
     ) : NativeFunction
 
     public abstract class TypeDescriptorImpl<T : NativeFunction>(
-        public val baseUpcallHandle: MethodHandle,
+        public val upcallHandle: MethodHandle,
         public val returnType: TypeDescriptor<*>?,
         vararg parameters: TypeDescriptor<*>
     ) : NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
@@ -98,31 +81,8 @@ public interface NativeFunction : NativeType {
             )
         }
 
-        public val downcallArgumentFilters: Array<MethodHandle> = parameters.map {
-            it.fromNativeDataMH
-        }.toTypedArray()
-
-        public val upcallArgumentFilters: Array<MethodHandle> = parameters.map {
-            it.toNativeDataMH
-        }.toTypedArray()
-
-        public val filteredUpcallHandle: MethodHandle = MethodHandles.filterArguments(
-            baseUpcallHandle,
-            1,
-            *upcallArgumentFilters
-        )
-
-        override val toNativeDataMH: MethodHandle =
-            MethodHandles.lookup().unreflect(::toNativeData.javaMethod).bindTo(this)
-        override val fromNativeDataMH: MethodHandle =
-            MethodHandles.lookup().unreflect(::fromNativeData0.javaMethod).bindTo(this)
-
         public fun toNativeData(value: T): NativePointer<T> {
             return NativePointer(upcallStub(value).address())
-        }
-
-        public fun fromNativeData0(value: NativePointer<T>): T {
-            return fromNativeData(value)
         }
 
         public abstract fun fromNativeData(value: MemorySegment): T
@@ -131,16 +91,8 @@ public interface NativeFunction : NativeType {
             return fromNativeData(MemorySegment.ofAddress(value._address))
         }
 
-        public fun downcallHandle(functionAddress: Long): MethodHandle {
-            return downcallHandle(MemorySegment.ofAddress(functionAddress))
-        }
-
         public fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
-            return MethodHandles.filterArguments(
-                Linker.nativeLinker().downcallHandle(functionAddress, functionDescriptor),
-                0,
-                *downcallArgumentFilters
-            )
+            return Linker.nativeLinker().downcallHandle(functionAddress, functionDescriptor)
         }
 
         public fun upcallStub(function: T): MemorySegment {

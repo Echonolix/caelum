@@ -104,26 +104,28 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         )
 
         groupType.members.forEach { member ->
-            typeObject.addProperty(
-                PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
-                    .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.varHandle(%M(%S))",
-                        MemoryLayout.PathElement::class.member("groupElement"),
-                        member.name
-                    )
-                    .build()
-            )
-            typeObject.addProperty(
-                PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
-                    .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.arrayElementVarHandle(%M(%S))",
-                        MemoryLayout.PathElement::class.member("groupElement"),
-                        member.name
-                    )
-                    .build()
-            )
+            if (member.type !is CType.Array) {
+                typeObject.addProperty(
+                    PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
+                        .addAnnotation(JvmField::class)
+                        .initializer(
+                            "layout.varHandle(%M(%S))",
+                            MemoryLayout.PathElement::class.member("groupElement"),
+                            member.name
+                        )
+                        .build()
+                )
+                typeObject.addProperty(
+                    PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
+                        .addAnnotation(JvmField::class)
+                        .initializer(
+                            "layout.arrayElementVarHandle(%M(%S))",
+                            MemoryLayout.PathElement::class.member("groupElement"),
+                            member.name
+                        )
+                        .build()
+                )
+            }
             typeObject.addProperty(
                 PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
                     .addAnnotation(JvmField::class)
@@ -267,7 +269,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         fun basicTypeAccess(member: CType.Group.Member, cBasicType: CBasicType<*>, cTypeName: String) {
             file.addProperty(
-                PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
+                PropertySpec.builder(member.name, cBasicType.ktApiTypeTypeName)
                     .addAnnotation(
                         AnnotationSpec.builder(CTypeName::class)
                             .addMember("%S", cTypeName)
@@ -283,14 +285,14 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                 "return (%T.%N.get(_segment, 0L) as %T)${cBasicType.fromBase}",
                                 thisCname,
                                 "${member.name}_valueVarHandle",
-                                cBasicType.baseType.asTypeName()
+                                cBasicType.nativeDataType.asTypeName()
                             )
                             .build()
                     )
                     .setter(
                         FunSpec.setterBuilder()
                             .addModifiers(KModifier.INLINE)
-                            .addParameter("value", cBasicType.kotlinTypeName)
+                            .addParameter("value", cBasicType.ktApiTypeTypeName)
                             .addStatement(
                                 "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
                                 thisCname,
@@ -301,7 +303,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .build()
             )
             file.addProperty(
-                PropertySpec.builder(member.name, cBasicType.kotlinTypeName)
+                PropertySpec.builder(member.name, cBasicType.ktApiTypeTypeName)
                     .addAnnotation(
                         AnnotationSpec.builder(CTypeName::class)
                             .addMember("%S", cTypeName)
@@ -318,14 +320,14 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                                 thisCname,
                                 "${member.name}_valueVarHandle",
                                 KTFFICodegenHelper.omniSegment,
-                                cBasicType.baseType.asTypeName()
+                                cBasicType.nativeDataType.asTypeName()
                             )
                             .build()
                     )
                     .setter(
                         FunSpec.setterBuilder()
                             .addModifiers(KModifier.INLINE)
-                            .addParameter("value", cBasicType.kotlinTypeName)
+                            .addParameter("value", cBasicType.ktApiTypeTypeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, value${cBasicType.toBase})",
                                 thisCname,
@@ -477,6 +479,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         @Suppress("JoinDeclarationAndAssignment")
         fun commonAccess(member: CType.Group.Member) {
             val memberType = member.type
+            val descType = memberType.typeDescriptorTypeName()!!
             val ktApiType = when (memberType) {
                 is CType.Pointer -> {
                     KTFFICodegenHelper.pointerCname
@@ -494,7 +497,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             } else if (memberType is CType.Pointer) {
                 val eType = memberType.elementType
                 if (eType is CType.BasicType && eType.baseType == CBasicType.void) {
-                    fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.ktffiTypeTName)
+                    fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.ktffiTypeName)
                 }
             }
 
@@ -512,7 +515,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .addModifiers(KModifier.INLINE)
                 .addStatement(
                     "return %T.fromNativeData%L((%T.%N.get(_segment, 0L) as %T))",
-                    ktApiType,
+                    descType,
                     fromIntTypeParamBlock,
                     thisCname,
                     "${member.name}_valueVarHandle",
@@ -526,14 +529,14 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     "%T.%N.set(_segment, 0L, %T.toNativeData(value))",
                     thisCname,
                     "${member.name}_valueVarHandle",
-                    ktApiType
+                    descType
                 )
                 .build()
             pointerGetter = FunSpec.getterBuilder()
                 .addModifiers(KModifier.INLINE)
                 .addStatement(
                     "return %T.fromNativeData%L((%T.%N.get(%M, _address) as %T))",
-                    ktApiType,
+                    descType,
                     fromIntTypeParamBlock,
                     thisCname,
                     "${member.name}_valueVarHandle",
@@ -549,7 +552,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     thisCname,
                     "${member.name}_valueVarHandle",
                     KTFFICodegenHelper.omniSegment,
-                    ktApiType
+                    descType
                 )
                 .build()
 

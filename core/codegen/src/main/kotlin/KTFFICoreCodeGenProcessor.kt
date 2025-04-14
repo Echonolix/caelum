@@ -2,7 +2,6 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.ktffi.KTFFICodegenHelper
-import net.echonolix.ktffi.addMethodHandleFields
 import net.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
@@ -49,15 +48,6 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                             .build()
                     )
                     .addFunction(
-                        FunSpec.builder("toNativeData")
-                            .addAnnotation(JvmStatic::class)
-                            .addModifiers(KModifier.INLINE)
-                            .addParameter("value", basicType.ktApiType)
-                            .returns(basicType.nativeDataType)
-                            .addStatement("return value${basicType.toNativeData}")
-                            .build()
-                    )
-                    .addFunction(
                         FunSpec.builder("fromNativeData")
                             .addAnnotation(JvmStatic::class)
                             .addModifiers(KModifier.INLINE)
@@ -66,7 +56,15 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                             .addStatement("return value${basicType.fromNativeData}")
                             .build()
                     )
-                    .addMethodHandleFields()
+                    .addFunction(
+                        FunSpec.builder("toNativeData")
+                            .addAnnotation(JvmStatic::class)
+                            .addModifiers(KModifier.INLINE)
+                            .addParameter("value", basicType.ktApiType)
+                            .returns(basicType.nativeDataType)
+                            .addStatement("return value${basicType.toNativeData}")
+                            .build()
+                    )
                     .build()
             )
 

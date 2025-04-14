@@ -141,6 +141,11 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     public abstract fun ktApiType(): TypeName
 
     context(ctx: KTFFICodegenContext)
+    public open fun typeDescriptorTypeName(): TypeName? {
+        return typeName()
+    }
+
+    context(ctx: KTFFICodegenContext)
     public abstract fun memoryLayoutDeep(): CodeBlock
 
     context(ctx: KTFFICodegenContext)
@@ -153,12 +158,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     public class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
-            return baseType.kotlinTypeName
+            return baseType.nativeDataTypeName
         }
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            return baseType.kotlinTypeName
+            return baseType.ktApiTypeTypeName
         }
 
         context(ctx: KTFFICodegenContext)
@@ -168,7 +173,13 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun typeName(): ClassName {
-            return baseType.ktffiTypeTName as ClassName
+            return baseType.ktffiTypeName as ClassName
+        }
+
+        context(ctx: KTFFICodegenContext)
+        public override fun typeDescriptorTypeName(): TypeName? {
+            if (baseType === CBasicType.void) return null
+            return typeName()
         }
 
         context(ctx: KTFFICodegenContext)
@@ -176,7 +187,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             if (baseType === CBasicType.void) {
                 return CodeBlock.of("%M", baseType.valueLayoutMember)
             }
-            return CodeBlock.of("%T.layout", baseType.ktffiTypeTName)
+            return CodeBlock.of("%T.layout", baseType.ktffiTypeName)
         }
 
         override fun compareTo(other: CElement): Int {
@@ -222,6 +233,11 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
+            return dstType.ktApiType()
+        }
+
+        context(ctx: KTFFICodegenContext)
+        public override fun typeDescriptorTypeName(): TypeName? {
             return typeName()
         }
 
@@ -365,14 +381,19 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
-            return elementType.nativeType()
+            return LONG
+        }
+
+        context(ctx: KTFFICodegenContext)
+        public override fun typeDescriptorTypeName(): TypeName? {
+            return KTFFICodegenHelper.pointerCname
         }
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             val eType = elementType
             return if (eType is BasicType) {
-                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiTypeTName)
+                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiTypeName)
             } else {
                 KTFFICodegenHelper.pointerCname.parameterizedBy(eType.ktApiType())
             }
@@ -432,12 +453,20 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: KTFFICodegenContext)
+        public override fun typeDescriptorTypeName(): TypeName? {
+            return KTFFICodegenHelper.pointerCname
+        }
+
+        context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            val eType = elementType
-            return if (eType is BasicType) {
-                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiTypeTName)
+            var finalType = elementType
+            while (finalType is TypeDef) {
+                finalType = finalType.dstType
+            }
+            return if (finalType is BasicType) {
+                KTFFICodegenHelper.pointerCname.parameterizedBy(finalType.baseType.ktffiTypeName)
             } else {
-                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.ktApiType())
+                KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
             }
         }
 
@@ -448,7 +477,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun typeName(): TypeName {
-            return CBasicType.size_t.ktffiTypeTName
+            return CBasicType.size_t.ktffiTypeName
         }
 
         context(ctx: KTFFICodegenContext)

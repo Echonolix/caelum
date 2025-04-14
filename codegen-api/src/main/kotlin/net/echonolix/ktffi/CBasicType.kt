@@ -23,7 +23,7 @@ public sealed class CBasicType<T : Any>(
     public val literalSuffix: String,
     public val valueLayout: ValueLayout,
     public val valueLayoutName: String,
-    public val baseType: KClass<*> = kotlinType,
+    public val nativeDataType: KClass<*> = kotlinType,
     public val fromBase: String = "",
     public val toBase: String = "",
 ) {
@@ -242,9 +242,10 @@ public sealed class CBasicType<T : Any>(
         "JAVA_DOUBLE"
     )
 
-    public val kotlinTypeName: TypeName = kotlinType.asTypeName()
+    public val nativeDataTypeName: TypeName = nativeDataType.asTypeName()
+    public val ktApiTypeTypeName: TypeName = kotlinType.asTypeName()
     public val valueLayoutMember: MemberName = KTFFICodegenHelper.valueLayoutCname.member(valueLayoutName)
-    public val ktffiTypeTName: TypeName = if (cTypeNameStr == "void") {
+    public val ktffiTypeName: TypeName = if (cTypeNameStr == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))
     } else {
         ClassName(KTFFICodegenHelper.packageName, ktffiTypeNameStr)

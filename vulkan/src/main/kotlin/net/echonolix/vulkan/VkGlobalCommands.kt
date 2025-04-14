@@ -9,6 +9,10 @@ import net.echonolix.vulkan.handles.VkInstance
 
 @Suppress("UNCHECKED_CAST")
 public object VkGlobalCommands {
+    init {
+        System.loadLibrary("vulkan-1")
+    }
+
     private val nullInstance = VkInstance.Impl(0L)
     public val vkGetInstanceProcAddr: VkCmdGetInstanceProcAddr =
         VkCmdGetInstanceProcAddr.fromNativeData(APIHelper.findSymbol("vkGetInstanceProcAddr"))

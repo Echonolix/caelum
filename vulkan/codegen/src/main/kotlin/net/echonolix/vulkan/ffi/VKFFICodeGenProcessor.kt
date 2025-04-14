@@ -76,7 +76,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
 //        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
 
         val includedVKVersion = setOf("VK_VERSION_1_0", "VK_VERSION_1_1")
-        val includedExtension = setOf("VK_KHR_surface", "VK_KHR_swapchain")
+        val includedExtension = setOf("VK_KHR_surface", "VK_KHR_swapchain", "VK_EXT_debug_utils")
 
         filteredRegistry.registryFeatures.asSequence()
             .filter { it.name in includedVKVersion }

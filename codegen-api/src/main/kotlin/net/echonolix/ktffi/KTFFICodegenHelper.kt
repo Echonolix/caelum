@@ -46,8 +46,9 @@ public object KTFFICodegenHelper {
 
     public val methodHandleCname: ClassName = MethodHandle::class.asClassName()
     public val methodHandlesCname: ClassName = MethodHandles::class.asClassName()
-    public val handleLookUpMember: MemberName = methodHandlesCname.member("lookup")
     public val javaMethodMemberName: MemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
+
+    public val methodTypeCname: ClassName = ClassName("java.lang.invoke", "MethodType")
 
     public val memorySegmentCname: ClassName = MemorySegment::class.asClassName()
     public val copyMember: MemberName = memorySegmentCname.member("copy")
