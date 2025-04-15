@@ -13,19 +13,19 @@ public value class NativeArray<T : NativeType>(
 }
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Long): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.malloc(count: Long): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count))
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> TypeDescriptor<T>.mallocArr(count: Int): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.malloc(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Long): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.calloc(count: Long): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> TypeDescriptor<T>.callocArr(count: Int): NativeArray<T> =
+public fun <T : NativeType> TypeDescriptor<T>.calloc(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
 public var NativeArray<NativeChar>.string: String
