@@ -3,6 +3,7 @@ package net.echonolix.vulkan
 import net.echonolix.ktffi.*
 import net.echonolix.vulkan.flags.VkDebugUtilsMessageSeverityFlagsEXT
 import net.echonolix.vulkan.flags.VkDebugUtilsMessageTypeFlagsEXT
+import net.echonolix.vulkan.functions.VkFuncDestroyInstance
 import net.echonolix.vulkan.functions.VkFuncPtrDebugUtilsMessengerCallbackEXT
 import net.echonolix.vulkan.handles.VkInstance
 import net.echonolix.vulkan.structs.*
@@ -25,7 +26,8 @@ private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebu
 
 fun main() {
     MemoryStack {
-        val VALIDATION_LAYERS = setOf("VK_LAYER_KHRONOS_validation")
+        val layers = setOf("VK_LAYER_KHRONOS_validation")
+        val extensions = setOf("VK_EXT_debug_utils")
 
         val appInfo = VkApplicationInfo.allocate()
         appInfo.pApplicationName = "Hello Vulkan".c_str()
@@ -37,12 +39,27 @@ fun main() {
         val createInfo = VkInstanceCreateInfo.allocate()
         createInfo.pApplicationInfo = appInfo.ptr()
 
-        createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.c_strs()
+        createInfo.enabledExtensionCount = 1u
+        createInfo.ppEnabledExtensionNames = extensions.c_strs()
+        createInfo.enabledLayerCount = 1u
+        createInfo.ppEnabledLayerNames = layers.c_strs()
         val debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.allocate()
         populateDebugMessengerCreateInfo(debugCreateInfo)
         createInfo.pNext = debugCreateInfo.ptr()
 
-        val instancePtr = VkInstance.mallocArr(1)
-        VkGlobalCommands.vkCreateInstance(createInfo.ptr(), nullptr(), instancePtr.ptr())
+        val instancePtr = VkInstance.malloc(1)
+        val result = VkGlobalCommands.vkCreateInstance(createInfo.ptr(), nullptr(), instancePtr.ptr())
+        val instance = VkInstance.fromNativeData((instancePtr.ptr() as NativePointer<NativeInt64>)[0])
+        println(result)
+
+        @Suppress("UNCHECKED_CAST")
+        val vkDestroyInstance = VkFuncDestroyInstance.fromNativeData(
+            VkGlobalCommands.vkGetInstanceProcAddr(
+                instance,
+                "vkDestroyInstance".c_str()
+            ) as NativePointer<VkFuncDestroyInstance>
+        )
+
+        vkDestroyInstance(instance, nullptr())
     }
 }
