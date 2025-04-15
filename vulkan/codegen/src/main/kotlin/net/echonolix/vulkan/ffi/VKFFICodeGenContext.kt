@@ -254,7 +254,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     private fun resolveCommand(xmlCommand: Registry.Commands.Command): CType.Function {
         xmlCommand.proto!!
         val cmdName = xmlCommand.proto.name
-        val funcName = "VkCmd${cmdName.removePrefix("vk")}"
+        val funcName = "VkFunc${cmdName.removePrefix("vk")}"
         val returnTypeStr = xmlCommand.proto.type
         val returnType = resolveType(returnTypeStr)
         val parameters = xmlCommand.params.asSequence()

@@ -14,38 +14,38 @@ public object VkGlobalCommands {
     }
 
     private val nullInstance = VkInstance.Impl(0L)
-    public val vkGetInstanceProcAddr: VkCmdGetInstanceProcAddr =
-        VkCmdGetInstanceProcAddr.fromNativeData(APIHelper.findSymbol("vkGetInstanceProcAddr"))
-    public val vkCreateInstance: VkCmdCreateInstance = MemoryStack {
-        VkCmdCreateInstance.fromNativeData(
+    public val vkGetInstanceProcAddr: VkFuncGetInstanceProcAddr =
+        VkFuncGetInstanceProcAddr.fromNativeData(APIHelper.findSymbol("vkGetInstanceProcAddr"))
+    public val vkCreateInstance: VkFuncCreateInstance = MemoryStack {
+        VkFuncCreateInstance.fromNativeData(
             vkGetInstanceProcAddr(
                 nullInstance,
                 "vkCreateInstance".c_str()
-            ) as NativePointer<VkCmdCreateInstance>
+            ) as NativePointer<VkFuncCreateInstance>
         )
     }
-    public val vkEnumerateInstanceExtensionProperties: VkCmdEnumerateInstanceExtensionProperties = MemoryStack {
-        VkCmdEnumerateInstanceExtensionProperties.fromNativeData(
+    public val vkEnumerateInstanceExtensionProperties: VkFuncEnumerateInstanceExtensionProperties = MemoryStack {
+        VkFuncEnumerateInstanceExtensionProperties.fromNativeData(
             vkGetInstanceProcAddr(
                 nullInstance,
                 "vkEnumerateInstanceExtensionProperties".c_str()
-            ) as NativePointer<VkCmdEnumerateInstanceExtensionProperties>
+            ) as NativePointer<VkFuncEnumerateInstanceExtensionProperties>
         )
     }
-    public val vkEnumerateInstanceLayerProperties: VkCmdEnumerateInstanceLayerProperties = MemoryStack {
-        VkCmdEnumerateInstanceLayerProperties.fromNativeData(
+    public val vkEnumerateInstanceLayerProperties: VkFuncEnumerateInstanceLayerProperties = MemoryStack {
+        VkFuncEnumerateInstanceLayerProperties.fromNativeData(
             vkGetInstanceProcAddr(
                 nullInstance,
                 "vkEnumerateInstanceLayerProperties".c_str()
-            ) as NativePointer<VkCmdEnumerateInstanceLayerProperties>
+            ) as NativePointer<VkFuncEnumerateInstanceLayerProperties>
         )
     }
-    public val vkEnumerateInstanceVersion: VkCmdEnumerateInstanceVersion = MemoryStack {
-        VkCmdEnumerateInstanceVersion.fromNativeData(
+    public val vkEnumerateInstanceVersion: VkFuncEnumerateInstanceVersion = MemoryStack {
+        VkFuncEnumerateInstanceVersion.fromNativeData(
             vkGetInstanceProcAddr(
                 nullInstance,
                 "vkEnumerateInstanceVersion".c_str()
-            ) as NativePointer<VkCmdEnumerateInstanceVersion>
+            ) as NativePointer<VkFuncEnumerateInstanceVersion>
         )
     }
 }
