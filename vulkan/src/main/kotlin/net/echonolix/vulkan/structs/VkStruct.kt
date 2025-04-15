@@ -20,29 +20,76 @@ public sealed class VkStruct<T : VkStruct<T>>(
         ReplaceWith("allocate(count)"),
         DeprecationLevel.ERROR
     )
-    public fun mallocArr(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+    public fun malloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
         "Use allocate() instead",
         ReplaceWith("allocate(count)"),
         DeprecationLevel.ERROR
     )
-    public fun mallocArr(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+    public fun malloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
         "Use allocate() instead",
         ReplaceWith("allocate(count)"),
         DeprecationLevel.ERROR
     )
-    public fun callocArr(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+    public fun calloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
         "Use allocate() instead",
         ReplaceWith("allocate(count)"),
         DeprecationLevel.ERROR
     )
-    public fun callocArr(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+    public fun calloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
 
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator): NativeValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator): NativeValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
         "Use allocate() instead",
@@ -60,7 +107,7 @@ public sealed class VkStruct<T : VkStruct<T>>(
     public fun calloc(): NativeValue<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
-    private fun MemorySegment.init(): MemorySegment {
+    private fun MemorySegment.initValue(): MemorySegment {
         this.fill(0)
         structType?.let {
             this.set(ValueLayout.JAVA_INT, 0L, it.value)
@@ -68,31 +115,34 @@ public sealed class VkStruct<T : VkStruct<T>>(
         return this
     }
 
-    context(allocator: SegmentAllocator)
-    public fun allocate(count: Long): NativeArray<T> = NativeArray(allocator.allocate(layout, count).apply {
-        fill(0)
+    private fun MemorySegment.initArray(count: Long): MemorySegment {
+        this.fill(0)
         structType?.let { structType ->
             for (i in 0..<count) {
                 this.set(ValueLayout.JAVA_INT, i * layout.byteSize(), structType.value)
             }
         }
-    })
+        return this
+    }
+
+    public fun allocate(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+        NativeArray(allocator.allocate(layout, count).initArray(count))
+
+    public fun allocate(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+        NativeArray(allocator.allocate(layout, count.toLong()).initArray(count.toLong()))
 
     context(allocator: SegmentAllocator)
-    public fun allocate(count: Int): NativeArray<T> = NativeArray(allocator.allocate(layout, count.toLong()).apply {
-        fill(0)
-        structType?.let { structType ->
-            for (i in 0..<count) {
-                this.set(ValueLayout.JAVA_INT, i * layout.byteSize(), structType.value)
-            }
-        }
-    })
+    public fun allocate(count: Long): NativeArray<T> =
+        NativeArray(allocator.allocate(layout, count).initArray(count))
 
     context(allocator: SegmentAllocator)
-    public fun allocate(): NativeValue<T> = NativeValue(allocator.allocate(layout).apply {
-        fill(0)
-        structType?.let {
-            this.set(ValueLayout.JAVA_INT, 0L, it.value)
-        }
-    })
+    public fun allocate(count: Int): NativeArray<T> =
+        NativeArray(allocator.allocate(layout, count.toLong()).initArray(count.toLong()))
+
+    public fun allocate(allocator: SegmentAllocator): NativeValue<T> =
+        NativeValue(allocator.allocate(layout).initValue())
+
+    context(allocator: SegmentAllocator)
+    public fun allocate(): NativeValue<T> =
+        NativeValue(allocator.allocate(layout).initValue())
 }
