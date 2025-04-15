@@ -134,12 +134,12 @@ public sealed class VkStruct<T : VkStruct<T>>(
         NativeArray(allocator.allocate(layout, count.toLong()).initArray(count.toLong()))
 
     context(allocator: SegmentAllocator)
-    @JvmName("allocate-191")
+    @JvmName("allocate-114")
     public fun allocate(count: Long): NativeArray<T> =
         NativeArray(allocator.allocate(layout, count).initArray(count))
 
     context(allocator: SegmentAllocator)
-    @JvmName("allocate-981")
+    @JvmName("allocate-514")
     public fun allocate(count: Int): NativeArray<T> =
         NativeArray(allocator.allocate(layout, count.toLong()).initArray(count.toLong()))
 
