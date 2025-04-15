@@ -103,6 +103,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
 
         val superParameters = mutableListOf(
+            CodeBlock.of("%S", funcType.name),
             CodeBlock.of(
                 "%T.lookup().unreflect(%T::invokeNative.%M)",
                 KTFFICodegenHelper.methodHandlesCname,

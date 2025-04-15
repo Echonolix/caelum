@@ -8,10 +8,11 @@ public sealed interface VkFunction : NativeFunction {
     override val typeDescriptor: TypeDescriptorImpl<*>
 
     public abstract class TypeDescriptorImpl<T : VkFunction>(
+        name: String,
         upcallHandle: MethodHandle,
         returnType: TypeDescriptor<*>?,
         vararg parameters: TypeDescriptor<*>
-    ) : NativeFunction.TypeDescriptorImpl<T>(upcallHandle, returnType, *parameters) {
+    ) : NativeFunction.TypeDescriptorImpl<T>(name, upcallHandle, returnType, *parameters) {
         final override val manager: NativeFunction.Manager
             get() = Companion
     }

@@ -70,6 +70,7 @@ public interface NativeFunction : NativeType {
     ) : NativeFunction
 
     public abstract class TypeDescriptorImpl<T : NativeFunction>(
+        public val name: String,
         public val upcallHandle: MethodHandle,
         public val returnType: TypeDescriptor<*>?,
         vararg parameters: TypeDescriptor<*>

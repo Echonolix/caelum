@@ -14,38 +14,28 @@ public object VkGlobalCommands {
     }
 
     private val nullInstance = VkInstance.Impl(0L)
+
     public val vkGetInstanceProcAddr: VkFuncGetInstanceProcAddr =
         VkFuncGetInstanceProcAddr.fromNativeData(APIHelper.findSymbol("vkGetInstanceProcAddr"))
-    public val vkCreateInstance: VkFuncCreateInstance = MemoryStack {
-        VkFuncCreateInstance.fromNativeData(
-            vkGetInstanceProcAddr(
-                nullInstance,
-                "vkCreateInstance".c_str()
-            ) as NativePointer<VkFuncCreateInstance>
-        )
-    }
-    public val vkEnumerateInstanceExtensionProperties: VkFuncEnumerateInstanceExtensionProperties = MemoryStack {
-        VkFuncEnumerateInstanceExtensionProperties.fromNativeData(
-            vkGetInstanceProcAddr(
-                nullInstance,
-                "vkEnumerateInstanceExtensionProperties".c_str()
-            ) as NativePointer<VkFuncEnumerateInstanceExtensionProperties>
-        )
-    }
-    public val vkEnumerateInstanceLayerProperties: VkFuncEnumerateInstanceLayerProperties = MemoryStack {
-        VkFuncEnumerateInstanceLayerProperties.fromNativeData(
-            vkGetInstanceProcAddr(
-                nullInstance,
-                "vkEnumerateInstanceLayerProperties".c_str()
-            ) as NativePointer<VkFuncEnumerateInstanceLayerProperties>
-        )
-    }
-    public val vkEnumerateInstanceVersion: VkFuncEnumerateInstanceVersion = MemoryStack {
-        VkFuncEnumerateInstanceVersion.fromNativeData(
-            vkGetInstanceProcAddr(
-                nullInstance,
-                "vkEnumerateInstanceVersion".c_str()
-            ) as NativePointer<VkFuncEnumerateInstanceVersion>
+
+    public val vkCreateInstance: VkFuncCreateInstance =
+        vkGetInstanceFunc(nullInstance, VkFuncCreateInstance)
+    public val vkEnumerateInstanceExtensionProperties: VkFuncEnumerateInstanceExtensionProperties =
+        vkGetInstanceFunc(nullInstance, VkFuncEnumerateInstanceExtensionProperties)
+    public val vkEnumerateInstanceLayerProperties: VkFuncEnumerateInstanceLayerProperties =
+        vkGetInstanceFunc(nullInstance, VkFuncEnumerateInstanceLayerProperties)
+    public val vkEnumerateInstanceVersion: VkFuncEnumerateInstanceVersion =
+        vkGetInstanceFunc(nullInstance, VkFuncEnumerateInstanceVersion)
+}
+
+public fun <T : VkFunction> vkGetInstanceFunc(
+    instance: VkInstance,
+    funcDescriptor: VkFunction.TypeDescriptorImpl<T>
+): T {
+    return MemoryStack {
+        @Suppress("UNCHECKED_CAST")
+        funcDescriptor.fromNativeData(
+            VkGlobalCommands.vkGetInstanceProcAddr(instance, funcDescriptor.name.c_str()) as NativePointer<T>
         )
     }
 }
