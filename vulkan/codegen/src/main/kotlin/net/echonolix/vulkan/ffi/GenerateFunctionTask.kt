@@ -16,11 +16,11 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val thisCname = funcType.className()
         val returnType = funcType.returnType
         val funInterfaceType = TypeSpec.funInterfaceBuilder(thisCname)
-        funInterfaceType.addSuperinterface(KTFFICodegenHelper.functionCname)
+        funInterfaceType.addSuperinterface(VKFFI.vkFunctionCname)
         funInterfaceType.addProperty(
             PropertySpec.builder(
                 "typeDescriptor",
-                KTFFICodegenHelper.functionTypeDescriptorImplCname.parameterizedBy(thisCname)
+                VKFFI.vkFunctionTypeDescriptorImplCname.parameterizedBy(thisCname)
             )
                 .addModifiers(KModifier.OVERRIDE)
                 .getter(
@@ -94,7 +94,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         funInterfaceType.addFunction(invokeNativeFunc.build())
 
         val companion = TypeSpec.companionObjectBuilder("TypeDescriptor")
-        companion.superclass(KTFFICodegenHelper.functionTypeDescriptorImplCname.parameterizedBy(thisCname))
+        companion.superclass(VKFFI.vkFunctionTypeDescriptorImplCname.parameterizedBy(thisCname))
         val nullCodeBlock = CodeBlock.of("null")
         fun typeDescriptorCodeBlock(type: CType): CodeBlock {
             return type.typeDescriptorTypeName()?.let {

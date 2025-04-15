@@ -69,6 +69,7 @@ object VKFFI {
     val vkUnionCname = ClassName(unionPackageName, "VkUnion")
     val vkHandleCname = ClassName(handlePackageName, "VkHandle")
     val vkFunctionCname = ClassName(functionPackageName, "VkFunction")
+    val vkFunctionTypeDescriptorImplCname = vkFunctionCname.nestedClass("TypeDescriptorImpl")
 
     val typedefBlackList = setOf(
         "ANativeWindow",

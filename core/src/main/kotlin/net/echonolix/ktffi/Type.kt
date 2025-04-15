@@ -87,11 +87,13 @@ public interface NativeFunction : NativeType {
             )
         }
 
+        protected abstract val manager: Manager
+
+        public abstract fun fromNativeData(value: MemorySegment): T
+
         public fun toNativeData(value: T): NativePointer<T> {
             return NativePointer(upcallStub(value).address())
         }
-
-        public abstract fun fromNativeData(value: MemorySegment): T
 
         public fun fromNativeData(value: NativePointer<T>): T {
             return fromNativeData(MemorySegment.ofAddress(value._address))
@@ -105,8 +107,17 @@ public interface NativeFunction : NativeType {
             return Linker.nativeLinker().upcallStub(
                 function.funcHandle,
                 functionDescriptor,
-                Arena.ofAuto()
+                manager.stubAllocator
             )
+        }
+    }
+
+    public abstract class Manager {
+        internal var stubAllocator: Arena = Arena.ofShared(); private set
+
+        public fun freeFunctionStubs() {
+            stubAllocator.close()
+            stubAllocator = Arena.ofShared()
         }
     }
 }
