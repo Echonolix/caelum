@@ -2,7 +2,10 @@ package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.ktffi.*
+import net.echonolix.ktffi.CBasicType
+import net.echonolix.ktffi.CType
+import net.echonolix.ktffi.KTFFICodegenHelper
+import net.echonolix.ktffi.decap
 
 class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     private fun CType.Handle.variableName(): String {
@@ -16,25 +19,6 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
-
-        val vkHandleFile = FileSpec.builder(VKFFI.vkHandleCname)
-            .addType(
-                TypeSpec.interfaceBuilder(VKFFI.vkHandleCname)
-                    .addSuperinterface(NativeType::class)
-                    .addProperty("handle", CBasicType.int64_t.ktApiTypeTypeName)
-                    .addProperty("objectType", objTypeCname)
-                    .addType(
-                        TypeSpec.classBuilder(vkTypeDescriptorCname)
-                            .addModifiers(KModifier.ABSTRACT)
-                            .addTypeVariable(typeVariable)
-                            .superclass(KTFFICodegenHelper.typeDescriptorImplCname.parameterizedBy(typeVariable))
-                            .addSuperclassConstructorParameter("%M", CBasicType.int64_t.valueLayoutMember)
-                            .build()
-                    )
-                    .build()
-            )
-
-        ctx.writeOutput(vkHandleFile)
 
         handles.parallelStream()
             .filter { (name, dstType) -> name == dstType.name }

@@ -6,6 +6,7 @@ import net.echonolix.vulkan.flags.VkDebugUtilsMessageTypeFlagsEXT
 import net.echonolix.vulkan.functions.VkFuncDestroyInstance
 import net.echonolix.vulkan.functions.VkFuncPtrDebugUtilsMessengerCallbackEXT
 import net.echonolix.vulkan.handles.VkInstance
+import net.echonolix.vulkan.handles.value
 import net.echonolix.vulkan.structs.*
 
 private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebugUtilsMessengerCreateInfoEXT>) {
@@ -47,9 +48,9 @@ fun main() {
         populateDebugMessengerCreateInfo(debugCreateInfo)
         createInfo.pNext = debugCreateInfo.ptr()
 
-        val instancePtr = VkInstance.malloc(1)
-        val result = VkGlobalCommands.vkCreateInstance(createInfo.ptr(), nullptr(), instancePtr.ptr())
-        val instance = VkInstance.fromNativeData((instancePtr.ptr() as NativePointer<NativeInt64>)[0])
+        val instanceV = VkInstance.malloc()
+        val result = VkGlobalCommands.vkCreateInstance(createInfo.ptr(), nullptr(), instanceV.ptr())
+        val instance = VkInstance.fromNativeData(instanceV.value)
         println(result)
 
         @Suppress("UNCHECKED_CAST")
