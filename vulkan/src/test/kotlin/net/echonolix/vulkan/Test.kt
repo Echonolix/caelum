@@ -4,7 +4,6 @@ import net.echonolix.ktffi.*
 import net.echonolix.vulkan.flags.VkDebugUtilsMessageSeverityFlagsEXT
 import net.echonolix.vulkan.flags.VkDebugUtilsMessageTypeFlagsEXT
 import net.echonolix.vulkan.functions.VkFuncDestroyInstance
-import net.echonolix.vulkan.functions.VkFuncPtrDebugUtilsMessengerCallbackEXT
 import net.echonolix.vulkan.handles.VkInstance
 import net.echonolix.vulkan.handles.value
 import net.echonolix.vulkan.structs.*
@@ -18,11 +17,10 @@ private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebu
         VkDebugUtilsMessageTypeFlagsEXT.VALIDATION_EXT +
         VkDebugUtilsMessageTypeFlagsEXT.PERFORMANCE_EXT
 
-    debugCreateInfo.pfnUserCallback =
-        VkFuncPtrDebugUtilsMessengerCallbackEXT.toNativeData { messageSeverity, messageType, pCallbackData, pUserData ->
-            System.err.println("Validation layer: " + pCallbackData.pMessage.string)
-            VK_FALSE
-        }
+    debugCreateInfo.pfnUserCallback { messageSeverity, messageType, pCallbackData, pUserData ->
+        System.err.println("Validation layer: " + pCallbackData.pMessage.string)
+        VK_FALSE
+    }
 }
 
 fun main() {

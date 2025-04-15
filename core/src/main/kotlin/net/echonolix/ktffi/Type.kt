@@ -113,7 +113,7 @@ public interface NativeFunction : NativeType {
     }
 
     public abstract class Manager {
-        internal var stubAllocator: Arena = Arena.ofShared(); private set
+        public var stubAllocator: Arena = Arena.ofShared(); private set
 
         public fun freeFunctionStubs() {
             stubAllocator.close()

@@ -650,6 +650,24 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             }
         }
 
+        fun funcPointerOverload(member: CType.Group.Member, functionPtrType: CType.FunctionPointer) {
+            val funcPtrCname = functionPtrType.elementType.className()
+            file.addFunction(
+                FunSpec.builder(member.name)
+                    .receiver(valueCnameP)
+                    .addParameter("func", funcPtrCname)
+                    .addStatement("this.%N = %T.toNativeData(func)", member.name, funcPtrCname)
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder(member.name)
+                    .receiver(pointerCnameP)
+                    .addParameter("func", funcPtrCname)
+                    .addStatement("this.%N = %T.toNativeData(func)", member.name, funcPtrCname)
+                    .build()
+            )
+        }
+
         groupType.members.asSequence().forEach { member ->
             var memberType = member.type
             while (memberType is CType.TypeDef) {
@@ -660,8 +678,14 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 is CType.BasicType -> {
                     basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr)
                 }
-                is CType.Handle, is CType.Pointer -> {
+                is CType.Handle -> {
                     commonAccess(member)
+                }
+                is CType.Pointer -> {
+                    commonAccess(member)
+                    if (memberType is CType.FunctionPointer) {
+                        funcPointerOverload(member, memberType)
+                    }
                 }
                 is CType.EnumBase -> {
                     commonAccess(member, member.name != "sType")
