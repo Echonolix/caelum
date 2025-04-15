@@ -39,6 +39,11 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
         currSize += memberSize
         newMembers.add(member)
     }
+    val mod = currSize % maxMemberSize
+    if (mod != 0L) {
+        val padding = maxMemberSize - mod
+        newMembers.add(MemoryLayout.paddingLayout(padding))
+    }
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
 }
 
