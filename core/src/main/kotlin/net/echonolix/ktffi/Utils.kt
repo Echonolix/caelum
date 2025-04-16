@@ -9,17 +9,22 @@ public typealias NativeChar = NativeInt8
 public typealias NativeSize = NativeInt64
 public typealias NativeInt = NativeInt32
 
-context(allocator: SegmentAllocator)
-public fun String.c_str(): NativePointer<NativeChar> = NativeArray<NativeChar>(allocator.allocateFrom(this)).ptr()
+public fun String.c_str(allocator: SegmentAllocator): NativePointer<NativeChar> =
+    NativeArray<NativeChar>(allocator.allocateFrom(this)).ptr()
 
 context(allocator: SegmentAllocator)
-public fun Collection<String>.c_strs(): NativePointer<NativePointer<NativeChar>> {
-    val arr = NativePointer.mallocArr<NativeChar>(this.size)
+public fun String.c_str(): NativePointer<NativeChar> = c_str(allocator)
+
+public fun Collection<String>.c_strs(allocator: SegmentAllocator): NativePointer<NativePointer<NativeChar>> {
+    val arr = NativePointer.malloc<NativeChar>(allocator, this.size)
     this.forEachIndexed { index, str ->
-        arr[index] = str.c_str()
+        arr[index] = str.c_str(allocator)
     }
     return arr.ptr()
 }
+
+context(allocator: SegmentAllocator)
+public fun Collection<String>.c_strs(): NativePointer<NativePointer<NativeChar>> = c_strs(allocator)
 
 public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
     contract {
