@@ -47,6 +47,8 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
             val origName = funcType.tags.get<OriginalFunctionNameTag>()?.name
                 ?: error("$funcType is missing original function name tag")
 
+            val dispatcher = if (isDeviceBase(handleType)) "device" else "instance"
+
             val firstParam = funcType.parameters.first()
             val firstDropped = funcType.parameters.drop(1)
             check(firstParam.type is CType.Handle)
@@ -65,6 +67,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 check(resultCodeTag.successCodes.isNotEmpty())
                 check(resultCodeTag.errorCodes.isNotEmpty())
                 returnType1 = lastParamType.elementType.ktApiType()
+                val returnHandleType = lastParamType.elementType as CType.Handle
                 params1 = firstDropped.dropLast(1)
 
                 func1.returns(resultCname.parameterizedBy(returnType1))
@@ -76,9 +79,9 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                     returnType1,
                     KTFFICodegenHelper.mallocMember
                 )
-                funcCode.add("when (val result69420 = $origName(")
-                val funcThis = CodeBlock.of("this@%N", funcName)
-                val callParams = mutableListOf(funcThis)
+                funcCode.add("when (val result69420 = $dispatcher.$origName(")
+                val thisAtFunc = CodeBlock.of("this@%N", funcName)
+                val callParams = mutableListOf(thisAtFunc)
                 params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
                 callParams.add(CodeBlock.of("handle114514.ptr()"))
                 funcCode.add(callParams.joinToCode())
@@ -91,7 +94,18 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                     )
                 })
                 funcCode.add(" -> %T.success(%T.fromNativeData(", resultCname, returnType1)
-                funcCode.add(funcThis)
+
+                val returnHandleParentType = returnHandleType.tags.get<VkHandleTag>()!!.parent
+                if (returnHandleParentType != handleType) {
+                    val secondParam = params1.first()
+                    val secondParamType = secondParam.type
+                    check(secondParamType is CType.Handle)
+                    check(secondParamType == returnHandleParentType)
+                    funcCode.add(secondParam.name)
+                } else {
+                    funcCode.add(thisAtFunc)
+                }
+
                 funcCode.addStatement(", handle114514.%M))", VKFFI.handleValueMember)
                 funcCode.add(resultCodeTag.errorCodes.joinToCode(",\n") {
                     CodeBlock.of(
@@ -112,7 +126,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 func1.returns(returnType1)
                 func1.addParameters(params1.toKtParamSpecs(true))
                 val funcCode = CodeBlock.builder()
-                funcCode.add("return when (val result69420 = $origName(")
+                funcCode.add("return when (val result69420 = $dispatcher.$origName(")
                 val callParams = mutableListOf(CodeBlock.of("this"))
                 params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
                 funcCode.add(callParams.joinToCode())
@@ -143,11 +157,11 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 params1 = firstDropped
 
                 func1.returns(returnType1)
-                func1.addParameters(firstDropped.toKtParamSpecs(true))
+                func1.addParameters(params1.toKtParamSpecs(true))
                 val funcCode = CodeBlock.builder()
-                funcCode.add("return $origName(")
+                funcCode.add("return $dispatcher.$origName(")
                 val callParams = mutableListOf(CodeBlock.of("this"))
-                firstDropped.mapTo(callParams) { CodeBlock.of("%N", it.name) }
+                params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
                 funcCode.add(callParams.joinToCode())
                 funcCode.add(")")
                 func1.addCode(funcCode.build())

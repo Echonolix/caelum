@@ -60,7 +60,13 @@ fun VKFFICodeGenContext.filterVkFunction(): List<CType.Function> =
 
 context(ctx: VKFFICodeGenContext)
 fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
-    toParamSpecs(annotations) { it.type.ktApiType() }
+    toParamSpecs(annotations) {
+        var pType = it.type.ktApiType()
+        if (it.type is CType.Pointer && it.optional) {
+            pType = pType.copy(nullable = true)
+        }
+        pType
+    }
 
 context(ctx: VKFFICodeGenContext)
 fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) =
@@ -71,19 +77,19 @@ inline fun List<CType.Function.Parameter>.toParamSpecs(
     annotations: Boolean,
     typeMapper: (CType.Function.Parameter) -> TypeName
 ) = map {
-    var pType = typeMapper(it)
-    if (it.type is CType.Pointer && it.optional) {
-        pType = pType.copy(nullable = true)
+    val builder = ParameterSpec.builder(it.name, typeMapper(it))
+    if (annotations) {
+        builder.addAnnotation(
+            AnnotationSpec.builder(CTypeName::class)
+                .addMember("%S", it.type.name)
+                .build()
+        )
     }
-    ParameterSpec.builder(it.name, pType)
-        .apply {
-            if (annotations) {
-                addAnnotation(
-                    AnnotationSpec.builder(CTypeName::class)
-                        .addMember("%S", it.type.name)
-                        .build()
-                )
-            }
-        }
-        .build()
+    builder.build()
+}
+
+tailrec fun isDeviceBase(type: CType.Handle): Boolean {
+    if (type.name == "VkDevice") return true
+    val parent = type.tags.get<VkHandleTag>()?.parent ?: return false
+    return isDeviceBase(parent)
 }

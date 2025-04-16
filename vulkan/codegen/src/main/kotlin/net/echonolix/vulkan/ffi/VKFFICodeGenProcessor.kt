@@ -15,6 +15,9 @@ import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import java.nio.file.Path
 import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.PathWalkOption
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.walk
 
 class VKFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
@@ -94,8 +97,6 @@ class VKFFICodeGenProcessor : KtgenProcessor {
             }
         }.fork().join()
 
-//        GenerateFunctionOverloadTask(ctx).compute()
-
         return ctx.outputFiles
     }
 }
@@ -116,11 +117,11 @@ fun main() {
         .forEach {
             addParentUpTo(it.parent, outputDir, updatedFiles)
         }
-//    outputDir.walk(PathWalkOption.INCLUDE_DIRECTORIES, PathWalkOption.BREADTH_FIRST, PathWalkOption.FOLLOW_LINKS)
-//        .filter { it != outputDir }
-//        .filter { it !in updatedFiles }
-//        .forEach {
-//            it.deleteRecursively()
-//        }
+    outputDir.walk(PathWalkOption.INCLUDE_DIRECTORIES, PathWalkOption.BREADTH_FIRST, PathWalkOption.FOLLOW_LINKS)
+        .filter { it != outputDir }
+        .filter { it !in updatedFiles }
+        .forEach {
+            it.deleteRecursively()
+        }
     println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
 }

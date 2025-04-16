@@ -46,12 +46,6 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         abstract fun filterFunc(funcType: CType.Function): Boolean
 
-        private tailrec fun isDeviceBase(type: CType.Handle): Boolean {
-            if (type.name == "VkDevice") return true
-            val parent = type.tags.get<VkHandleTag>()?.parent ?: return false
-            return isDeviceBase(parent)
-        }
-
         protected fun isDeviceFunc(funcType: CType.Function): Boolean {
             return isDeviceBase(funcType.parameters.first().type as CType.Handle)
         }

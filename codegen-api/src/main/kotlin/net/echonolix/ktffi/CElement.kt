@@ -391,7 +391,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            val eType = elementType
+            val eType = elementType.deepResolve()
             return if (eType is BasicType) {
                 KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiTypeName)
             } else {
@@ -459,12 +459,9 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
-            var finalType = elementType
-            while (finalType is TypeDef) {
-                finalType = finalType.dstType
-            }
-            return if (finalType is BasicType) {
-                KTFFICodegenHelper.pointerCname.parameterizedBy(finalType.baseType.ktffiTypeName)
+            val eType = elementType.deepResolve()
+            return if (eType is BasicType) {
+                KTFFICodegenHelper.pointerCname.parameterizedBy(eType.baseType.ktffiTypeName)
             } else {
                 KTFFICodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
             }
@@ -579,4 +576,9 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             return "union ${super.toSimpleString()}"
         }
     }
+}
+
+private tailrec fun CType.deepResolve(): CType {
+    if (this !is CType.TypeDef) return this
+    return this.dstType.deepResolve()
 }
