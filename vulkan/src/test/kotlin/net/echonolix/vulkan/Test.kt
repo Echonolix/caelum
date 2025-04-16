@@ -49,5 +49,7 @@ fun main() {
 
         val instance = Vk.createInstance(createInfo.ptr(), null).getOrThrow()
         instance.vkDestroyInstance(instance, null)
+
+        instance.create()
     }
 }

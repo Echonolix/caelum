@@ -1,11 +1,11 @@
-package net.echonolix.vulkan.functions
+package net.echonolix.vulkan
 
 import net.echonolix.ktffi.MemoryStack
 import net.echonolix.ktffi.NativePointer
 import net.echonolix.ktffi.c_str
+import net.echonolix.vulkan.functions.VkFunction
 import net.echonolix.vulkan.handles.VkDevice
 import net.echonolix.vulkan.handles.VkInstance
-import net.echonolix.vulkan.toAddressHexString
 
 public fun <T : VkFunction> VkInstance.getInstanceFunc(
     funcDescriptor: VkFunction.TypeDescriptorImpl<T>

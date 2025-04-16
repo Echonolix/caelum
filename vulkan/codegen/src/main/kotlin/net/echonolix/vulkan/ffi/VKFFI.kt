@@ -91,7 +91,9 @@ object VKFFI {
 
 
     val vkVersionConstRegex = """VK_API_VERSION_(\d+)_(\d+)""".toRegex()
+    val vkExceptionCname = ClassName(basePkgName, "VkException")
 
-    val getInstanceFuncMember = MemberName(functionPackageName, "getInstanceFunc")
-    val getDeviceFuncMember = MemberName(functionPackageName, "getDeviceFunc")
+    val getInstanceFuncMember = MemberName(basePkgName, "getInstanceFunc")
+    val getDeviceFuncMember = MemberName(basePkgName, "getDeviceFunc")
+    val handleValueMember = MemberName(handlePackageName, "value")
 }

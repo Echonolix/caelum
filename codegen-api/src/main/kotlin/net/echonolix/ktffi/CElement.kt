@@ -517,12 +517,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
     public sealed class Group(name: String, public val members: List<Member>) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
-        final override fun nativeType(): TypeName {
+        override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
         }
 
         context(ctx: KTFFICodegenContext)
-        final override fun ktApiType(): TypeName {
+        override fun ktApiType(): TypeName {
             return typeName()
         }
 
@@ -560,7 +560,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         public class Member(name: String, type: CType) : CDeclaration.Impl(name, type)
     }
 
-    public class Struct(name: String, members: List<Member>) : Group(name, members) {
+    public open class Struct(name: String, members: List<Member>) : Group(name, members) {
         override fun toString(): String {
             return "struct ${super.toString()}"
         }
@@ -570,7 +570,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
     }
 
-    public class Union(name: String, members: List<Member>) : Group(name, members) {
+    public open class Union(name: String, members: List<Member>) : Group(name, members) {
         override fun toString(): String {
             return "union ${super.toString()}"
         }

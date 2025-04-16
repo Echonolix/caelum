@@ -7,7 +7,7 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.RecursiveTask
 
 abstract class VKFFITask<R>(protected val ctx: VKFFICodeGenContext) : RecursiveTask<R>() {
-    final override fun compute(): R {
+    public final override fun compute(): R {
         return ctx.compute()
     }
 

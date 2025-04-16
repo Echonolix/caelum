@@ -70,6 +70,7 @@ class FilteredRegistry(registry: Registry) {
 
     val commands = registry.commands.asSequence()
         .flatMap { it.commands }
+        .filter { it.api == null || it.api == API.vulkan }
         .associateBy { it.proto?.name ?: it.name }
 
     val extEnums = (

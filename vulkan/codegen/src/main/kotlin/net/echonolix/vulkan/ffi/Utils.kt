@@ -1,10 +1,10 @@
 package net.echonolix.vulkan.ffi
 
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.Documentable
+import com.squareup.kotlinpoet.ParameterSpec
 import kotlinx.serialization.decodeFromString
-import net.echonolix.ktffi.CElement
-import net.echonolix.ktffi.removeContinuousSpaces
-import net.echonolix.ktffi.toXMLTagFreeString
+import net.echonolix.ktffi.*
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
 
@@ -44,3 +44,49 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     addKdoc(sb.toString())
 }
 
+fun VKFFICodeGenContext.filterVkFunction(): List<CType.Function> =
+    filterTypeStream<CType.Function>()
+        .filter { it.first == it.second.tags.get<OriginalFunctionNameTag>()!!.name }
+        .map { it.second }
+        .filter { !it.name.startsWith("VkFuncPtr") }
+        .filter { it.parameters.isNotEmpty() }
+        .filter { it.parameters.first().type is CType.Handle }
+        .sorted(
+            compareBy<CType.Function> { !it.name.endsWith("ProcAddr") }
+                .thenBy { it.name }
+        )
+        .toList()
+
+context(ctx: VKFFICodeGenContext)
+fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) = map {
+    var pType = it.type.ktApiType()
+    if (it.type is CType.Pointer && it.optional) {
+        pType = pType.copy(nullable = true)
+    }
+    ParameterSpec.builder(it.name, pType)
+        .apply {
+            if (annotations) {
+                addAnnotation(
+                    AnnotationSpec.builder(CTypeName::class)
+                        .addMember("%S", it.type.name)
+                        .build()
+                )
+            }
+        }
+        .build()
+}
+
+context(ctx: VKFFICodeGenContext)
+fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) = map {
+    ParameterSpec.builder(it.name, it.type.nativeType())
+        .apply {
+            if (annotations) {
+                addAnnotation(
+                    AnnotationSpec.builder(CTypeName::class)
+                        .addMember("%S", it.type.name)
+                        .build()
+                )
+            }
+        }
+        .build()
+}

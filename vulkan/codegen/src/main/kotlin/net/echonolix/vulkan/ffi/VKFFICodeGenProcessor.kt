@@ -15,9 +15,6 @@ import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import java.nio.file.Path
 import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.PathWalkOption
-import kotlin.io.path.deleteRecursively
-import kotlin.io.path.walk
 
 class VKFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
@@ -68,17 +65,17 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 }
         }
 
-//        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-//        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
 
-        val includedVKVersion = setOf("VK_VERSION_1_0", "VK_VERSION_1_1")
-        val includedExtension = setOf("VK_KHR_surface", "VK_KHR_swapchain", "VK_EXT_debug_utils")
-        filteredRegistry.registryFeatures.asSequence()
-            .filter { it.name in includedVKVersion }
-            .forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.asSequence()
-            .filter { it.name in includedExtension }
-            .forEach { processRequire(it.require) }
+//        val includedVKVersion = setOf("VK_VERSION_1_0", "VK_VERSION_1_1")
+//        val includedExtension = setOf("VK_KHR_surface", "VK_KHR_swapchain", "VK_EXT_debug_utils")
+//        filteredRegistry.registryFeatures.asSequence()
+//            .filter { it.name in includedVKVersion }
+//            .forEach { processRequire(it.require) }
+//        filteredRegistry.registryExtensions.asSequence()
+//            .filter { it.name in includedExtension }
+//            .forEach { processRequire(it.require) }
 
         object : RecursiveAction() {
             override fun compute() {
@@ -87,13 +84,17 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 val group = GenerateGroupTask(ctx).fork()
                 val typeDef = GenerateTypeDefTask(ctx).fork()
                 val function = GenerateFunctionTask(ctx).fork()
+                val overload = GenerateFunctionOverloadTask(ctx).fork()
                 handle.join()
                 enum.join()
                 group.join()
                 typeDef.join()
                 function.join()
+                overload.join()
             }
         }.fork().join()
+
+//        GenerateFunctionOverloadTask(ctx).compute()
 
         return ctx.outputFiles
     }
@@ -115,11 +116,11 @@ fun main() {
         .forEach {
             addParentUpTo(it.parent, outputDir, updatedFiles)
         }
-    outputDir.walk(PathWalkOption.INCLUDE_DIRECTORIES, PathWalkOption.BREADTH_FIRST, PathWalkOption.FOLLOW_LINKS)
-        .filter { it != outputDir }
-        .filter { it !in updatedFiles }
-        .forEach {
-            it.deleteRecursively()
-        }
+//    outputDir.walk(PathWalkOption.INCLUDE_DIRECTORIES, PathWalkOption.BREADTH_FIRST, PathWalkOption.FOLLOW_LINKS)
+//        .filter { it != outputDir }
+//        .filter { it !in updatedFiles }
+//        .forEach {
+//            it.deleteRecursively()
+//        }
     println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
 }

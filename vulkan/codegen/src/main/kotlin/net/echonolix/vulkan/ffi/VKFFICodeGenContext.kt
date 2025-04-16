@@ -1,6 +1,9 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.WildcardTypeName
 import net.echonolix.ktffi.*
 import net.echonolix.vulkan.schema.*
 import java.nio.file.Path
@@ -58,6 +61,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 CType.Function.Parameter(it[2], resolveType(it[1]), false)
             }.toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
+        func.tags.set(OriginalFunctionNameTag(xmlTypeDefType.name))
         addToCache(func.name, func)
         val funcPointer = CType.FunctionPointer(func)
         addToCache(funcPointer.name, func)
@@ -211,7 +215,17 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
     }
 
     private fun resolveStruct(xmlStructType: Registry.Types.Type): CType.Struct {
-        val struct = CType.Struct(xmlStructType.name!!, resolveGroupMembers(xmlStructType))
+        val members = resolveGroupMembers(xmlStructType)
+        val struct = if (xmlStructType.name == "VkBaseOutStructure") {
+            object : CType.Struct(xmlStructType.name, members) {
+                context(ctx: KTFFICodegenContext)
+                override fun ktApiType(): TypeName {
+                    return WildcardTypeName.producerOf(VKFFI.vkStructCname.parameterizedBy(KTFFICodegenHelper.starWildcard))
+                }
+            }
+        } else {
+            CType.Struct(xmlStructType.name!!, members)
+        }
         return struct
     }
 
@@ -274,9 +288,19 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             .toList()
         val function = CType.Function(funcName, returnType, parameters)
+        function.tags.set(OriginalFunctionNameTag(cmdName))
         xmlCommand.comment?.let {
             function.tags.set(ElementCommentTag(it))
         }
+        fun parseResultCodes(str: String?): List<CType.EnumBase.Entry> {
+            if (str == null) return emptyList()
+            return str.split(",")
+                .mapNotNull { runCatching { resolveElement(it) as CType.EnumBase.Entry }.getOrNull() }
+        }
+
+        val successCodes = parseResultCodes(xmlCommand.successcodes)
+        val errorCodes = parseResultCodes(xmlCommand.errorcodes)
+        function.tags.set(ResultCodeTag(successCodes, errorCodes))
         return function
     }
 

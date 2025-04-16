@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.ktffi.CBasicType
 import net.echonolix.ktffi.CType
-import net.echonolix.ktffi.CTypeName
 import net.echonolix.ktffi.KTFFICodegenHelper
 
 class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
@@ -13,7 +12,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     }
 
     private fun VKFFICodeGenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
-        val rawName = "vk${funcType.name.removePrefix("VkFunc")}"
+        val rawName = funcType.tags.get<OriginalFunctionNameTag>()!!.name
         val thisCname = funcType.className()
         val returnType = funcType.returnType
         val funInterfaceType = TypeSpec.funInterfaceBuilder(thisCname)
@@ -32,36 +31,13 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
 
-        val ktParameters = funcType.parameters.map {
-            var pType = it.type.ktApiType()
-            if (it.type is CType.Pointer && it.optional) {
-                pType = pType.copy(nullable = true)
-            }
-            ParameterSpec.builder(it.name, pType)
-                .addAnnotation(
-                    AnnotationSpec.builder(CTypeName::class)
-                        .addMember("%S", it.type.name)
-                        .build()
-                )
-                .build()
-        }
-        val nativeParameters = funcType.parameters.map {
-            ParameterSpec.builder(it.name, it.type.nativeType())
-                .addAnnotation(
-                    AnnotationSpec.builder(CTypeName::class)
-                        .addMember("%S", it.type.name)
-                        .build()
-                )
-                .build()
-        }
-
         fun ParameterSpec.clearAnnotations() =
             this.toBuilder().apply { annotations.clear() }.build()
 
         val invokeFunc = FunSpec.builder("invoke")
         invokeFunc.addModifiers(KModifier.OPERATOR, KModifier.ABSTRACT)
         invokeFunc.returns(returnType.ktApiType())
-        invokeFunc.addParameters(ktParameters)
+        invokeFunc.addParameters(funcType.parameters.toKtParamSpecs(true))
         funInterfaceType.addFunction(invokeFunc.build())
 
         fun fromNativeDataCodeBlock(type: CType): CodeBlock {
@@ -78,7 +54,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         val invokeNativeFunc = FunSpec.builder("invokeNative")
         invokeNativeFunc.returns(returnType.nativeType())
-        invokeNativeFunc.addParameters(nativeParameters)
+        invokeNativeFunc.addParameters(funcType.parameters.toNativeParamSpecs(false))
         val invokeNativeCode = CodeBlock.builder()
         val rTypeDesc = returnType.typeDescriptorTypeName()
         invokeNativeCode.add("return ")
@@ -159,7 +135,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val implInvokeFunc = FunSpec.builder("invoke")
         implInvokeFunc.addModifiers(KModifier.OVERRIDE)
         implInvokeFunc.returns(returnType.ktApiType())
-        implInvokeFunc.addParameters(ktParameters.map { it.clearAnnotations() })
+        implInvokeFunc.addParameters(funcType.parameters.toKtParamSpecs(false))
         val implInvokeCode = CodeBlock.builder()
         implInvokeCode.add("return ")
         if (rTypeDesc != null) {
@@ -185,7 +161,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val implInvokeNativeFunc = FunSpec.builder("invokeNative")
         implInvokeNativeFunc.addModifiers(KModifier.OVERRIDE)
         implInvokeNativeFunc.returns(returnType.nativeType())
-        implInvokeNativeFunc.addParameters(nativeParameters.map { it.clearAnnotations() })
+        implInvokeNativeFunc.addParameters(funcType.parameters.toNativeParamSpecs(false))
         val implInvokeNativeCode = CodeBlock.builder()
         implInvokeNativeCode.add("return funcHandle.invokeExact(\n")
         implInvokeNativeCode.indent()

@@ -19,16 +19,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
 
-        val functions = ctx.filterTypeStream<CType.Function>()
-            .map { it.second }
-            .filter { !it.name.startsWith("VkFuncPtr") }
-            .filter { it.parameters.isNotEmpty() }
-            .filter { it.parameters.first().type is CType.Handle }
-            .sorted(
-                compareBy<CType.Function> { !it.name.endsWith("ProcAddr") }
-                    .thenBy { it.name }
-            )
-            .toList()
+        val functions = ctx.filterVkFunction()
         handles.parallelStream()
             .filter { (name, dstType) -> name == dstType.name }
             .map { (_, handleType) -> genHandle(functions, handleType) }
@@ -165,7 +156,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             )
         }
         ContainerType[handleType.name]?.let { containerType ->
-            fun CType.Function.funcName() = "vk${name.removePrefix("VkFunc")}"
+            fun CType.Function.funcName() = tags.get<OriginalFunctionNameTag>()!!.name
 
             val filteredFunctions = functions.parallelStream()
                 .filter(containerType::filterFunc)
