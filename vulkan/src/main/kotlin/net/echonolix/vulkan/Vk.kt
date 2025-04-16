@@ -64,20 +64,36 @@ public object Vk {
         @CTypeName("char*") pLayerName: NativePointer<NativeChar>?,
         @CTypeName("uint32_t*") pPropertyCount: NativePointer<NativeUInt32>,
         @CTypeName("VkExtensionProperties*") pProperties: NativePointer<VkExtensionProperties>?,
-    ): VkResult {
-        return vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties)
+    ): Result<Unit> {
+        return when (val result = vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties)) {
+            VkResult.VK_SUCCESS,
+            VkResult.VK_INCOMPLETE -> Result.success(Unit)
+            VkResult.VK_ERROR_OUT_OF_HOST_MEMORY,
+            VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY,
+            VkResult.VK_ERROR_LAYER_NOT_PRESENT -> Result.failure(VkException(result))
+            else -> error("Unexpected result from vkEnumerateInstanceExtensionProperties: $result")
+        }
     }
-
     public fun enumerateInstanceLayerProperties(
         @CTypeName("uint32_t*") pPropertyCount: NativePointer<NativeUInt32>,
         @CTypeName("VkLayerProperties*") pProperties: NativePointer<VkLayerProperties>?
-    ): VkResult {
-        return vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties)
+    ): Result<Unit> {
+        return when (val result = vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties)) {
+            VkResult.VK_SUCCESS,
+            VkResult.VK_INCOMPLETE -> Result.success(Unit)
+            VkResult.VK_ERROR_OUT_OF_HOST_MEMORY,
+            VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY -> Result.failure(VkException(result))
+            else -> error("Unexpected result from vkEnumerateInstanceLayerProperties: $result")
+        }
     }
 
     public fun enumerateInstanceVersion(
         @CTypeName("uint32_t*") pApiVersion: NativePointer<NativeUInt32>
-    ): VkResult {
-        return vkEnumerateInstanceVersion(pApiVersion)
+    ): Result<VkResult> {
+        return when (val result = vkEnumerateInstanceVersion(pApiVersion)) {
+            VkResult.VK_SUCCESS -> Result.success(result)
+            VkResult.VK_ERROR_OUT_OF_HOST_MEMORY -> Result.failure(VkException(result))
+            else -> error("Unexpected result from vkEnumerateInstanceVersion: $result")
+        }
     }
 }
