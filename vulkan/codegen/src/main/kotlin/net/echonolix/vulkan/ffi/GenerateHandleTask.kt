@@ -18,18 +18,71 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
+
+        val functions = ctx.filterTypeStream<CType.Function>()
+            .map { it.second }
+            .filter { !it.name.startsWith("VkFuncPtr") }
+            .filter { it.parameters.isNotEmpty() }
+            .filter { it.parameters.first().type is CType.Handle }
+            .sorted(
+                compareBy<CType.Function> { !it.name.endsWith("ProcAddr") }
+                    .thenBy { it.name }
+            )
+            .toList()
         handles.parallelStream()
             .filter { (name, dstType) -> name == dstType.name }
-            .map { (_, handleType) -> genHandle(handleType) }
+            .map { (_, handleType) -> genHandle(functions, handleType) }
             .forEach(ctx::writeOutput)
 
         typeAlias.joinAndWriteOutput(VKFFI.handlePackageName)
     }
 
-    private fun VKFFICodeGenContext.genHandle(handleType: CType.Handle): FileSpec.Builder {
-        val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
+    private enum class ContainerType(val getFuncMemberName: MemberName) {
+        Instance(VKFFI.getInstanceFuncMember) {
+            override fun filterFunc(funcType: CType.Function): Boolean {
+                return !isDeviceFunc(funcType)
+            }
+        },
+        Device(VKFFI.getDeviceFuncMember) {
+            override fun filterFunc(funcType: CType.Function): Boolean {
+                return isDeviceFunc(funcType)
+            }
+        };
+
+        val handleName = "Vk$name"
+        val className = ClassName(VKFFI.basePkgName, "${handleName}FuncContainer")
+        val implClassName = className.nestedClass("Impl")
+
+        abstract fun filterFunc(funcType: CType.Function): Boolean
+
+        private tailrec fun isDeviceBase(type: CType.Handle): Boolean {
+            if (type.name == "VkDevice") return true
+            val parent = type.tags.get<VkHandleTag>()?.parent ?: return false
+            return isDeviceBase(parent)
+        }
+
+        protected fun isDeviceFunc(funcType: CType.Function): Boolean {
+            return isDeviceBase(funcType.parameters.first().type as CType.Handle)
+        }
+
+        companion object {
+            operator fun get(name: String): ContainerType? {
+                return when (name) {
+                    "VkInstance" -> Instance
+                    "VkDevice" -> Device
+                    else -> null
+                }
+            }
+        }
+    }
+
+    private fun VKFFICodeGenContext.genHandle(
+        functions: List<CType.Function>,
+        handleType: CType.Handle
+    ): FileSpec.Builder {
         val thisCname = handleType.className()
         val thisTypeDescriptor = KTFFICodegenHelper.typeDescriptorCname.parameterizedBy(thisCname)
+        val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
         val parent = vkHandleTag.parent
 
         val baseCname = ClassName(VKFFI.handlePackageName, "${handleType.name}Base")
@@ -110,6 +163,32 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .build()
             )
         }
+        ContainerType[handleType.name]?.let { containerType ->
+            fun CType.Function.funcName() = "vk${name.removePrefix("VkFunc")}"
+
+            val filteredFunctions = functions.parallelStream()
+                .filter(containerType::filterFunc)
+                .toList()
+
+            interfaceType.addProperties(filteredFunctions.parallelStream().map {
+                PropertySpec.builder(it.funcName(), it.className())
+                    .build()
+            }.toList())
+
+            implType.addProperties(filteredFunctions.parallelStream().map {
+                val funcName = it.funcName()
+                val property = PropertySpec.builder(funcName, it.className())
+                property.addModifiers(KModifier.OVERRIDE)
+                if (funcName == "vkGetInstanceProcAddr") {
+                    property.initializer("%T.$funcName", VKFFI.vkCname)
+                } else {
+                    property.initializer("this.%M(%T)", containerType.getFuncMemberName, it.className())
+                }
+
+                property.build()
+            }.toList())
+        }
+
         interfaceType.addType(implType.build())
 
 

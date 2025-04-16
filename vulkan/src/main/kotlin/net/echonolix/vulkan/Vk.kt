@@ -15,39 +15,29 @@ public object Vk {
         System.loadLibrary("vulkan-1")
     }
 
-    private val nullInstance = VkInstance.Impl(0L)
-
-    private val vkGetInstanceProcAddr: VkFuncGetInstanceProcAddr =
+    public val vkGetInstanceProcAddr: VkFuncGetInstanceProcAddr =
         VkFuncGetInstanceProcAddr.fromNativeData(APIHelper.findSymbol("vkGetInstanceProcAddr"))
 
-    private val vkCreateInstance: VkFuncCreateInstance =
-        getInstanceFunc(nullInstance, VkFuncCreateInstance)
-    private val vkEnumerateInstanceExtensionProperties: VkFuncEnumerateInstanceExtensionProperties =
-        getInstanceFunc(nullInstance, VkFuncEnumerateInstanceExtensionProperties)
-    private val vkEnumerateInstanceLayerProperties: VkFuncEnumerateInstanceLayerProperties =
-        getInstanceFunc(nullInstance, VkFuncEnumerateInstanceLayerProperties)
-    private val vkEnumerateInstanceVersion: VkFuncEnumerateInstanceVersion =
-        getInstanceFunc(nullInstance, VkFuncEnumerateInstanceVersion)
+    public val vkCreateInstance: VkFuncCreateInstance =
+        getGlobalFunc(VkFuncCreateInstance)
+    public val vkEnumerateInstanceExtensionProperties: VkFuncEnumerateInstanceExtensionProperties =
+        getGlobalFunc(VkFuncEnumerateInstanceExtensionProperties)
+    public val vkEnumerateInstanceLayerProperties: VkFuncEnumerateInstanceLayerProperties =
+        getGlobalFunc(VkFuncEnumerateInstanceLayerProperties)
+    public val vkEnumerateInstanceVersion: VkFuncEnumerateInstanceVersion =
+        getGlobalFunc(VkFuncEnumerateInstanceVersion)
 
-    public fun <T : VkFunction> getInstanceFunc(
-        instance: VkInstance,
+    private fun <T : VkFunction> getGlobalFunc(
         funcDescriptor: VkFunction.TypeDescriptorImpl<T>
-    ): T = getInstanceFunc(instance.handle, funcDescriptor)
-
-    internal fun <T : VkFunction> getInstanceFunc(
-        instance: Long,
-        funcDescriptor: VkFunction.TypeDescriptorImpl<T>
-    ): T {
-        return MemoryStack {
-            funcDescriptor.fromNativeData(
-                NativePointer(
-                    vkGetInstanceProcAddr.invokeNative(
-                        instance,
-                        funcDescriptor.name.c_str()._address
-                    )
+    ): T = MemoryStack {
+        funcDescriptor.fromNativeData(
+            NativePointer(
+                vkGetInstanceProcAddr.invokeNative(
+                    0L,
+                    funcDescriptor.name.c_str()._address
                 )
             )
-        }
+        )
     }
 
     public fun createInstance(

@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.MemberName
 
 object VKFFI {
     const val VK_EXT_ENUM_BASE = 1000000000
@@ -90,4 +91,7 @@ object VKFFI {
 
 
     val vkVersionConstRegex = """VK_API_VERSION_(\d+)_(\d+)""".toRegex()
+
+    val getInstanceFuncMember = MemberName(functionPackageName, "getInstanceFunc")
+    val getDeviceFuncMember = MemberName(functionPackageName, "getDeviceFunc")
 }

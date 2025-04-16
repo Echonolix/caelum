@@ -3,7 +3,6 @@ package net.echonolix.vulkan
 import net.echonolix.ktffi.*
 import net.echonolix.vulkan.flags.VkDebugUtilsMessageSeverityFlagsEXT
 import net.echonolix.vulkan.flags.VkDebugUtilsMessageTypeFlagsEXT
-import net.echonolix.vulkan.functions.VkFuncDestroyInstance
 import net.echonolix.vulkan.structs.*
 
 private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebugUtilsMessengerCreateInfoEXT>) {
@@ -16,7 +15,11 @@ private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebu
         VkDebugUtilsMessageTypeFlagsEXT.PERFORMANCE_EXT
 
     debugCreateInfo.pfnUserCallback { messageSeverity, messageType, pCallbackData, pUserData ->
-        System.err.println("Validation layer: " + pCallbackData.pMessage.string)
+        if (VkDebugUtilsMessageSeverityFlagsEXT.ERROR_EXT in messageSeverity) {
+            System.err.println("Validation layer: " + pCallbackData.pMessage.string)
+        } else {
+            println("Validation layer: " + pCallbackData.pMessage.string)
+        }
         VK_FALSE
     }
 }
@@ -24,7 +27,7 @@ private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebu
 fun main() {
     MemoryStack {
         val layers = setOf("VK_LAYER_KHRONOS_validation")
-        val extensions = setOf("VK_EXT_debug_utils")
+        val extensions = setOf("VK_EXT_debug_utils", "VK_KHR_surface")
 
         val appInfo = VkApplicationInfo.allocate()
         appInfo.pApplicationName = "Hello Vulkan".c_str()
@@ -36,7 +39,7 @@ fun main() {
         val createInfo = VkInstanceCreateInfo.allocate()
         createInfo.pApplicationInfo = appInfo.ptr()
 
-        createInfo.enabledExtensionCount = 1u
+        createInfo.enabledExtensionCount = extensions.size.toUInt()
         createInfo.ppEnabledExtensionNames = extensions.c_strs()
         createInfo.enabledLayerCount = 1u
         createInfo.ppEnabledLayerNames = layers.c_strs()
@@ -45,9 +48,6 @@ fun main() {
         createInfo.pNext = debugCreateInfo.ptr()
 
         val instance = Vk.createInstance(createInfo.ptr(), null).getOrThrow()
-
-        @Suppress("UNCHECKED_CAST")
-        val vkDestroyInstance = Vk.getInstanceFunc(instance, VkFuncDestroyInstance)
-        vkDestroyInstance(instance, null)
+        instance.vkDestroyInstance(instance, null)
     }
 }
