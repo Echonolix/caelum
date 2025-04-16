@@ -20,7 +20,7 @@ public value class NativePointer<T : NativeType>(
         public inline fun <T : NativeType> fromNativeData(value: Long): NativePointer<T> = NativePointer(value)
 
         @JvmStatic
-        public inline fun <T : NativeType> toNativeData(value: NativePointer<T>): Long = value._address
+        public inline fun <T : NativeType> toNativeData(value: NativePointer<T>?): Long = value?._address ?: 0L
 
         context(allocator: SegmentAllocator)
         public inline fun <T : NativeType> malloc(): NativeValue<NativePointer<T>> =

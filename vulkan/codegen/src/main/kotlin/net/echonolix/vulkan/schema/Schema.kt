@@ -216,7 +216,7 @@ data class Registry(
             data class Param(
                 @XmlElement(false) val api: API? = null,
                 @XmlElement val name: String?,
-                val optional: Boolean = false,
+                val optional: String? = null,
                 val externsync: Boolean = false,
                 val len: String? = null,
                 val noautovalidity: Boolean = false,

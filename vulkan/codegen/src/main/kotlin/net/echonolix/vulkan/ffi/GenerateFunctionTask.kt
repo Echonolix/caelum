@@ -13,6 +13,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     }
 
     private fun VKFFICodeGenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
+        val rawName = "vk${funcType.name.removePrefix("VkFunc")}"
         val thisCname = funcType.className()
         val returnType = funcType.returnType
         val funInterfaceType = TypeSpec.funInterfaceBuilder(thisCname)
@@ -31,18 +32,36 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
 
-        val invokeFunc = FunSpec.builder("invoke")
-        invokeFunc.addModifiers(KModifier.OPERATOR, KModifier.ABSTRACT)
-        invokeFunc.returns(returnType.ktApiType())
-        invokeFunc.addParameters(funcType.parameters.map {
-            ParameterSpec.builder(it.name, it.type.ktApiType())
+        val ktParameters = funcType.parameters.map {
+            var pType = it.type.ktApiType()
+            if (it.type is CType.Pointer && it.optional) {
+                pType = pType.copy(nullable = true)
+            }
+            ParameterSpec.builder(it.name, pType)
                 .addAnnotation(
                     AnnotationSpec.builder(CTypeName::class)
                         .addMember("%S", it.type.name)
                         .build()
                 )
                 .build()
-        })
+        }
+        val nativeParameters = funcType.parameters.map {
+            ParameterSpec.builder(it.name, it.type.nativeType())
+                .addAnnotation(
+                    AnnotationSpec.builder(CTypeName::class)
+                        .addMember("%S", it.type.name)
+                        .build()
+                )
+                .build()
+        }
+
+        fun ParameterSpec.clearAnnotations() =
+            this.toBuilder().apply { annotations.clear() }.build()
+
+        val invokeFunc = FunSpec.builder("invoke")
+        invokeFunc.addModifiers(KModifier.OPERATOR, KModifier.ABSTRACT)
+        invokeFunc.returns(returnType.ktApiType())
+        invokeFunc.addParameters(ktParameters)
         funInterfaceType.addFunction(invokeFunc.build())
 
         fun fromNativeDataCodeBlock(type: CType): CodeBlock {
@@ -59,18 +78,9 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         val invokeNativeFunc = FunSpec.builder("invokeNative")
         invokeNativeFunc.returns(returnType.nativeType())
-        invokeNativeFunc.addParameters(funcType.parameters.map {
-            ParameterSpec.builder(it.name, it.type.nativeType())
-                .addAnnotation(
-                    AnnotationSpec.builder(CTypeName::class)
-                        .addMember("%S", it.type.name)
-                        .build()
-                )
-                .build()
-        })
+        invokeNativeFunc.addParameters(nativeParameters)
         val invokeNativeCode = CodeBlock.builder()
         val rTypeDesc = returnType.typeDescriptorTypeName()
-        invokeNativeCode.addStatement("")
         invokeNativeCode.add("return ")
         if (rTypeDesc != null) {
             invokeNativeCode.add("%T.toNativeData(\n", rTypeDesc)
@@ -103,7 +113,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
 
         val superParameters = mutableListOf(
-            CodeBlock.of("%S", funcType.name),
+            CodeBlock.of("%S", rawName),
             CodeBlock.of(
                 "%T.lookup().unreflect(%T::invokeNative.%M)",
                 KTFFICodegenHelper.methodHandlesCname,
@@ -149,11 +159,8 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val implInvokeFunc = FunSpec.builder("invoke")
         implInvokeFunc.addModifiers(KModifier.OVERRIDE)
         implInvokeFunc.returns(returnType.ktApiType())
-        implInvokeFunc.addParameters(funcType.parameters.map {
-            ParameterSpec.builder(it.name, it.type.ktApiType()).build()
-        })
+        implInvokeFunc.addParameters(ktParameters.map { it.clearAnnotations() })
         val implInvokeCode = CodeBlock.builder()
-        implInvokeCode.addStatement("")
         implInvokeCode.add("return ")
         if (rTypeDesc != null) {
             implInvokeCode.add(fromNativeDataCodeBlock(returnType))
@@ -178,11 +185,8 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val implInvokeNativeFunc = FunSpec.builder("invokeNative")
         implInvokeNativeFunc.addModifiers(KModifier.OVERRIDE)
         implInvokeNativeFunc.returns(returnType.nativeType())
-        implInvokeNativeFunc.addParameters(funcType.parameters.map {
-            ParameterSpec.builder(it.name, it.type.nativeType()).build()
-        })
+        implInvokeNativeFunc.addParameters(nativeParameters.map { it.clearAnnotations() })
         val implInvokeNativeCode = CodeBlock.builder()
-        implInvokeNativeCode.addStatement("")
         implInvokeNativeCode.add("return funcHandle.invokeExact(\n")
         implInvokeNativeCode.indent()
         implInvokeNativeCode.add(funcType.parameters.map {

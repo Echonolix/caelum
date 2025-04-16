@@ -373,7 +373,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             return name
         }
 
-        public class Parameter(name: String, type: CType) : CDeclaration.Impl(name, type)
+        public class Parameter(name: String, type: CType, public val optional: Boolean) : CDeclaration.Impl(name, type)
     }
 
     public open class Array(public open val elementType: CType) : CompositeType("") {
