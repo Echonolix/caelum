@@ -32,11 +32,20 @@ public object Vk {
     public fun <T : VkFunction> getInstanceFunc(
         instance: VkInstance,
         funcDescriptor: VkFunction.TypeDescriptorImpl<T>
+    ): T = getInstanceFunc(instance.handle, funcDescriptor)
+
+    internal fun <T : VkFunction> getInstanceFunc(
+        instance: Long,
+        funcDescriptor: VkFunction.TypeDescriptorImpl<T>
     ): T {
         return MemoryStack {
-            @Suppress("UNCHECKED_CAST")
             funcDescriptor.fromNativeData(
-                vkGetInstanceProcAddr(instance, funcDescriptor.name.c_str()) as NativePointer<T>
+                NativePointer(
+                    vkGetInstanceProcAddr.invokeNative(
+                        instance,
+                        funcDescriptor.name.c_str()._address
+                    )
+                )
             )
         }
     }
@@ -74,6 +83,7 @@ public object Vk {
             else -> error("Unexpected result from vkEnumerateInstanceExtensionProperties: $result")
         }
     }
+
     public fun enumerateInstanceLayerProperties(
         @CTypeName("uint32_t*") pPropertyCount: NativePointer<NativeUInt32>,
         @CTypeName("VkLayerProperties*") pProperties: NativePointer<VkLayerProperties>?

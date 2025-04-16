@@ -21,3 +21,5 @@ class EnumEntryFixedName(val name: String) : Tag
 class AliasedTag(val dst: CDeclaration.TopLevel) : Tag
 
 class StructTypeTag(val structType: CType.EnumBase.Entry) : Tag
+
+class VkHandleTag(val parent: CType.Handle?, val objectTypeEnum: CType.EnumBase.Entry, val dispatchable: Boolean) : Tag

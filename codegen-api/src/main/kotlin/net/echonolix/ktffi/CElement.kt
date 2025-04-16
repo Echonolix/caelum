@@ -204,7 +204,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
     public sealed class CompositeType(name: String) : CType(name)
 
-    public abstract class Handle(name: String) : CompositeType(name) {
+    public class Handle(name: String) : CompositeType(name) {
         context(ctx: KTFFICodegenContext)
         override fun nativeType(): TypeName {
             return LONG

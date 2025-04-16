@@ -53,5 +53,7 @@ public object KTFFICodegenHelper {
     public val memorySegmentCname: ClassName = MemorySegment::class.asClassName()
     public val copyMember: MemberName = memorySegmentCname.member("copy")
 
+    public val cstrMember: MemberName = MemberName("net.echonolix.ktffi", "c_str")
+
     public val starWildcard: WildcardTypeName = WildcardTypeName.producerOf(ANY.copy(nullable = true))
 }

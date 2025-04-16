@@ -220,22 +220,26 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         return union
     }
 
-    private fun resolveHandle(handle: Registry.Types.Type): VkHandle {
-        handle.name ?: throw IllegalStateException("Handle name is null")
+    private fun resolveHandle(handle: Registry.Types.Type): CType.Handle {
+        handle.name ?: error("Handle name is null")
         val xmlType = handle.inner[0].contentString.toXMLTagFreeString()
         val parent = handle.parent?.let {
-            resolveElement(it) as? VkHandle ?: throw IllegalStateException("Parent $it is not a handle")
+            resolveElement(it) as? CType.Handle ?: error("Parent $it is not a handle")
         }
         val objectEnum = resolveElement(handle.objtypeenum!!) as? CType.EnumBase.Entry
-            ?: throw IllegalStateException("Cannot find object type enum for handle ${handle.name}")
+            ?: error("Cannot find object type enum for handle ${handle.name}")
         val objectType = (resolveElement("VkObjectType") as CType.Enum)
         check(objectEnum.parent === objectType)
         check(objectEnum.name in objectType.entries)
-        return when (xmlType) {
-            "VK_DEFINE_HANDLE" -> VkDispatchableHandle(handle.name, parent, objectEnum)
-            "VK_DEFINE_NON_DISPATCHABLE_HANDLE" -> VkHandle(handle.name, parent, objectEnum)
-            else -> throw IllegalStateException("Unexpected handle type $xmlType for ${handle.name}")
+        val dispatchable = when (xmlType) {
+            "VK_DEFINE_HANDLE" -> true
+            "VK_DEFINE_NON_DISPATCHABLE_HANDLE" -> false
+            else -> error("Unexpected handle type $xmlType for ${handle.name}")
         }
+
+        val handleType = CType.Handle(handle.name)
+        handleType.tags.set(VkHandleTag(parent, objectEnum, dispatchable))
+        return handleType
     }
 
     private fun resolveConst(constType: Registry.Enums.Enum): CTopLevelConst {

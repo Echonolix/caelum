@@ -1,6 +1,7 @@
 package net.echonolix.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
+import net.echonolix.ktffi.CType
 import net.echonolix.ktgen.KtgenProcessor
 import net.echonolix.vulkan.schema.API
 import net.echonolix.vulkan.schema.FilteredRegistry
@@ -18,6 +19,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.walk
+import kotlin.streams.asSequence
 
 class VKFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
@@ -94,6 +96,34 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 function.join()
             }
         }.fork().join()
+
+        fun isDeviceFunc(funcType: CType.Function): Boolean {
+            fun CType.Handle.parent(): CType.Handle? {
+                return tags.get<VkHandleTag>()!!.parent
+            }
+
+            var handleType = funcType.parameters.first().type as? CType.Handle
+            while (handleType != null) {
+                if (handleType.name == "VkDevice") {
+                    return true
+                }
+                handleType = handleType.parent()
+            }
+            return false
+        }
+
+        ctx.filterTypeStream<CType.Function>()
+            .map { it.second }
+            .filter { !it.name.startsWith("VkFuncPtr") }
+            .filter { it.parameters.isNotEmpty() }
+            .filter { it.parameters.first().type is CType.Handle }
+            .sequential()
+            .asSequence()
+            .groupBy { it.parameters.first().type }
+            .forEach {
+                println(it.key)
+            }
+
 
         return ctx.outputFiles
     }

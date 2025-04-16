@@ -61,6 +61,7 @@ object VKFFI {
     val handlePackageName = "${basePkgName}.handles"
     val functionPackageName = "${basePkgName}.functions"
 
+    val vkCname = ClassName(basePkgName, "Vk")
     val vkEnumBaseCname = ClassName(basePkgName, "VkEnumBase")
     val vkEnumCname = ClassName(enumPackageName, "VkEnum")
     val vkFlags32CNAME = ClassName(flagPackageName, "VkFlags32")

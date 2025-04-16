@@ -12,10 +12,24 @@ public value class NativeArray<T : NativeType>(
     public fun ptr(): NativePointer<T> = NativePointer(_segment.address())
 }
 
+public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()))
+
+public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()))
+
 public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count))
 
 public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()))
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> TypeDescriptor<T>.malloc(count: ULong): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()))
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> TypeDescriptor<T>.malloc(count: UInt): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
 context(allocator: SegmentAllocator)
@@ -26,10 +40,24 @@ context(allocator: SegmentAllocator)
 public fun <T : NativeType> TypeDescriptor<T>.malloc(count: Int): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()))
 
+public fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
+
+public fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
+
 public fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count).apply { fill(0) })
 
 public fun <T : NativeType> TypeDescriptor<T>.calloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> TypeDescriptor<T>.calloc(count: ULong): NativeArray<T> =
+    NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> TypeDescriptor<T>.calloc(count: UInt): NativeArray<T> =
     NativeArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
 context(allocator: SegmentAllocator)
