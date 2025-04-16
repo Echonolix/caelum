@@ -129,6 +129,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
 
         val implType = TypeSpec.classBuilder("Impl")
+        implType.addModifiers(KModifier.PRIVATE)
         implType.addSuperinterface(thisCname)
         if (parent != null) {
             implType.addProperty(
@@ -182,7 +183,13 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 if (funcName == "vkGetInstanceProcAddr") {
                     property.initializer("%T.$funcName", VKFFI.vkCname)
                 } else {
-                    property.initializer("this.%M(%T)", containerType.getFuncMemberName, it.className())
+                    property.delegate(
+                        CodeBlock.builder()
+                            .beginControlFlow("lazy")
+                            .addStatement("this.%M(%T)", containerType.getFuncMemberName, it.className())
+                            .endControlFlow()
+                            .build()
+                    )
                 }
 
                 property.build()
@@ -197,7 +204,6 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         companion.addFunction(
             FunSpec.builder("fromNativeData")
                 .addAnnotation(JvmStatic::class)
-                .addModifiers(KModifier.INLINE)
                 .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
                 .returns(thisCname)
                 .apply {
@@ -212,10 +218,20 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 }
                 .build()
         )
+        if (parent != null) {
+            companion.addFunction(
+                FunSpec.builder("fromNativeData")
+                    .addAnnotation(JvmStatic::class)
+                    .addParameter("parent", parent.typeName())
+                    .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
+                    .returns(thisCname)
+                    .addStatement("return Impl(parent, value)")
+                    .build()
+            )
+        }
         companion.addFunction(
             FunSpec.builder("toNativeData")
                 .addAnnotation(JvmStatic::class)
-                .addModifiers(KModifier.INLINE)
                 .addParameter("value", thisCname)
                 .returns(CBasicType.int64_t.ktApiTypeTypeName)
                 .addStatement("return value.handle")

@@ -100,11 +100,11 @@ public interface NativeFunction : NativeType {
             return fromNativeData(MemorySegment.ofAddress(value._address))
         }
 
-        public fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
+        protected fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
             return Linker.nativeLinker().downcallHandle(functionAddress, functionDescriptor)
         }
 
-        public fun upcallStub(function: T): MemorySegment {
+        protected fun upcallStub(function: T): MemorySegment {
             return Linker.nativeLinker().upcallStub(
                 function.funcHandle,
                 functionDescriptor,
