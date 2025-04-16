@@ -41,6 +41,9 @@ public object KTFFICodegenHelper {
     public val sequenceLayout: MemberName = memoryLayoutCname.member("sequenceLayout")
     public val paddingLayout: MemberName = memoryLayoutCname.member("paddingLayout")
 
+    public val pathElementCname: ClassName = memoryLayoutCname.nestedClass("PathElement")
+    public val groupElementMember: MemberName = pathElementCname.member("groupElement")
+
     public val valueLayoutCname: ClassName = ValueLayout::class.asClassName()
     public val addressLayoutMember: MemberName = valueLayoutCname.member("ADDRESS")
 
@@ -60,5 +63,4 @@ public object KTFFICodegenHelper {
     public val memoryStackMember: MemberName = MemberName("net.echonolix.ktffi", "MemoryStack")
 
     public val mallocMember: MemberName = MemberName("net.echonolix.ktffi", "malloc")
-
 }

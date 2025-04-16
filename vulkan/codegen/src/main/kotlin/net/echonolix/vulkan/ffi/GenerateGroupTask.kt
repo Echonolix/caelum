@@ -1,13 +1,11 @@
 package net.echonolix.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.ktffi.CBasicType
 import net.echonolix.ktffi.CType
 import net.echonolix.ktffi.CTypeName
 import net.echonolix.ktffi.KTFFICodegenHelper
-import java.lang.foreign.MemoryLayout
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 
@@ -113,12 +111,9 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             if (member.type !is CType.Array) {
                 typeObject.addProperty(
                     PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
+                        .addModifiers(KModifier.INTERNAL)
                         .addAnnotation(JvmField::class)
-                        .initializer(
-                            "layout.varHandle(%M(%S))",
-                            MemoryLayout.PathElement::class.member("groupElement"),
-                            member.name
-                        )
+                        .initializer("layout.varHandle(%M(%S))", KTFFICodegenHelper.groupElementMember, member.name)
                         .build()
                 )
 //                typeObject.addProperty(
@@ -126,7 +121,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 //                        .addAnnotation(JvmField::class)
 //                        .initializer(
 //                            "layout.arrayElementVarHandle(%M(%S))",
-//                            MemoryLayout.PathElement::class.member("groupElement"),
+//                            KTFFICodegenHelper.groupElementMember
 //                            member.name
 //                        )
 //                        .build()
@@ -134,28 +129,15 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             }
             typeObject.addProperty(
                 PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
+                    .addModifiers(KModifier.INTERNAL)
                     .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.byteOffsetHandle(%M(%S))",
-                        MemoryLayout.PathElement::class.member("groupElement"),
-                        member.name
-                    )
-                    .build()
-            )
-            typeObject.addProperty(
-                PropertySpec.builder("${member.name}_layout", MemoryLayout::class)
-                    .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.select(%M(%S))",
-                        MemoryLayout.PathElement::class.member("groupElement"),
-                        member.name
-                    )
+                    .initializer("layout.byteOffsetHandle(%M(%S))", KTFFICodegenHelper.groupElementMember, member.name)
                     .build()
             )
             typeObject.addProperty(
                 PropertySpec.builder("${member.name}_byteSize", Long::class)
                     .addAnnotation(JvmField::class)
-                    .initializer("%N.byteSize()", "${member.name}_layout")
+                    .initializer("layout.select(%M(%S)).byteSize()", KTFFICodegenHelper.groupElementMember, member.name)
                     .build()
             )
         }
@@ -170,7 +152,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             file.addFunction(
                 FunSpec.builder("elementAddress")
                     .receiver(arrayCnameP)
-                    .addModifiers(KModifier.INLINE)
                     .addParameter("index", LONG)
                     .returns(LONG)
                     .addStatement(
@@ -182,7 +163,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             file.addFunction(
                 FunSpec.builder("get")
                     .receiver(arrayCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
                     .returns(pointerCnameP)
                     .addStatement(
@@ -194,20 +175,16 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             file.addFunction(
                 FunSpec.builder("set")
                     .receiver(arrayCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
                     .addParameter("value", valueCnameP)
-                    .addStatement(
-                        "%M(value._segment, 0L, _segment, elementAddress(index), %T.layout.byteSize())",
-                        KTFFICodegenHelper.copyMember,
-                        thisCname
-                    )
+                    .addStatement("set(index, value.ptr())")
                     .build()
             )
             file.addFunction(
                 FunSpec.builder("set")
                     .receiver(arrayCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
                     .addParameter("value", pointerCnameP)
                     .addStatement(
@@ -221,7 +198,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             file.addFunction(
                 FunSpec.builder("elementAddress")
                     .receiver(pointerCnameP)
-                    .addModifiers(KModifier.INLINE)
                     .addParameter("index", LONG)
                     .returns(LONG)
                     .addStatement(
@@ -233,7 +209,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             file.addFunction(
                 FunSpec.builder("get")
                     .receiver(pointerCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
                     .returns(pointerCnameP)
                     .addStatement(
@@ -245,21 +221,16 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             file.addFunction(
                 FunSpec.builder("set")
                     .receiver(pointerCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
                     .addParameter("value", valueCnameP)
-                    .addStatement(
-                        "%M(value._segment, 0L, %M, elementAddress(index), %T.layout.byteSize())",
-                        KTFFICodegenHelper.copyMember,
-                        KTFFICodegenHelper.omniSegment,
-                        thisCname
-                    )
+                    .addStatement("set(index, value.ptr())")
                     .build()
             )
             file.addFunction(
                 FunSpec.builder("set")
                     .receiver(pointerCnameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
                     .addParameter("value", pointerCnameP)
                     .addStatement(
@@ -286,24 +257,13 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .receiver(valueCnameP)
                     .getter(
                         FunSpec.getterBuilder()
-                            .addModifiers(KModifier.INLINE)
-                            .addStatement(
-                                "return (%T.%N.get(_segment, 0L) as %T)${cBasicType.fromBase}",
-                                thisCname,
-                                "${member.name}_valueVarHandle",
-                                cBasicType.nativeDataType.asTypeName()
-                            )
+                            .addStatement("return ptr().${member.name}")
                             .build()
                     )
                     .setter(
                         FunSpec.setterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addParameter("value", cBasicType.ktApiTypeTypeName)
-                            .addStatement(
-                                "%T.%N.set(_segment, 0L, value${cBasicType.toBase})",
-                                thisCname,
-                                "${member.name}_valueVarHandle",
-                            )
+                            .addStatement("ptr().${member.name} = value")
                             .build()
                     )
                     .build()
@@ -320,7 +280,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .receiver(pointerCnameP)
                     .getter(
                         FunSpec.getterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addStatement(
                                 "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
                                 thisCname,
@@ -332,7 +291,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     )
                     .setter(
                         FunSpec.setterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addParameter("value", cBasicType.ktApiTypeTypeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, value${cBasicType.toBase})",
@@ -382,13 +340,9 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .receiver(valueCnameP)
                     .getter(
                         FunSpec.getterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addCode(
                                 CodeBlock.builder()
-                                    .add(
-                                        "return %T(",
-                                        KTFFICodegenHelper.pointerCname,
-                                    )
+                                    .add("return %T(", KTFFICodegenHelper.pointerCname)
                                     .add(valueMemberOffset)
                                     .add(")")
                                     .build()
@@ -397,7 +351,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     )
                     .setter(
                         FunSpec.setterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addParameter("value", memberPointerCnameP)
                             .addCode(
                                 CodeBlock.builder()
@@ -427,7 +380,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .receiver(pointerCnameP)
                     .getter(
                         FunSpec.getterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addCode(
                                 CodeBlock.builder()
                                     .add(
@@ -442,7 +394,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     )
                     .setter(
                         FunSpec.setterBuilder()
-                            .addModifiers(KModifier.INLINE)
                             .addParameter("value", memberPointerCnameP)
                             .addCode(
                                 CodeBlock.builder()
@@ -518,28 +469,13 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             val pointerSetter: FunSpec
 
             valueGetter = FunSpec.getterBuilder()
-                .addModifiers(KModifier.INLINE)
-                .addStatement(
-                    "return %T.fromNativeData%L((%T.%N.get(_segment, 0L) as %T))",
-                    descType,
-                    fromIntTypeParamBlock,
-                    thisCname,
-                    "${member.name}_valueVarHandle",
-                    nativeType
-                )
+                .addStatement("return ptr().${member.name}")
                 .build()
             valueSetter = FunSpec.setterBuilder()
-                .addModifiers(KModifier.INLINE)
                 .addParameter("value", ktApiType)
-                .addStatement(
-                    "%T.%N.set(_segment, 0L, %T.toNativeData(value))",
-                    thisCname,
-                    "${member.name}_valueVarHandle",
-                    descType
-                )
+                .addStatement("ptr().${member.name} = value")
                 .build()
             pointerGetter = FunSpec.getterBuilder()
-                .addModifiers(KModifier.INLINE)
                 .addStatement(
                     "return %T.fromNativeData%L((%T.%N.get(%M, _address) as %T))",
                     descType,
@@ -551,7 +487,6 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 )
                 .build()
             pointerSetter = FunSpec.setterBuilder()
-                .addModifiers(KModifier.INLINE)
                 .addParameter("value", ktApiType)
                 .addStatement(
                     "%T.%N.set(%M, _address, %T.toNativeData(value))",
@@ -615,33 +550,22 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         }
                     }
                     .build()
-                val valueMemberOffset = member.valueMemberOffset()
-                val pointerMemberOffset = member.pointerMemberOffset()
                 file.addFunction(
                     FunSpec.builder(member.name)
-                        .addModifiers(KModifier.INLINE)
                         .receiver(valueCnameP)
                         .addParameter("value", STRING)
-                        .addCode(
-                            CodeBlock.builder()
-                                .add(checkCodeBlock)
-                                .add("_segment.setString(")
-                                .add(valueMemberOffset)
-                                .add(", value)")
-                                .build()
-                        )
+                        .addCode("ptr().${member.name}(value)")
                         .build()
                 )
                 file.addFunction(
                     FunSpec.builder(member.name)
-                        .addModifiers(KModifier.INLINE)
                         .receiver(pointerCnameP)
                         .addParameter("value", STRING)
                         .addCode(
                             CodeBlock.builder()
                                 .add(checkCodeBlock)
                                 .add("%M.setString(", KTFFICodegenHelper.omniSegment)
-                                .add(pointerMemberOffset)
+                                .add(member.pointerMemberOffset())
                                 .add(", value)")
                                 .build()
                         )
@@ -656,14 +580,14 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 FunSpec.builder(member.name)
                     .receiver(valueCnameP)
                     .addParameter("func", funcPtrCname)
-                    .addStatement("this.%N = %T.toNativeData(func)", member.name, funcPtrCname)
+                    .addStatement("ptr().${member.name}(func)")
                     .build()
             )
             file.addFunction(
                 FunSpec.builder(member.name)
                     .receiver(pointerCnameP)
                     .addParameter("func", funcPtrCname)
-                    .addStatement("this.%N = %T.toNativeData(func)", member.name, funcPtrCname)
+                    .addStatement("%N = %T.toNativeData(func)", member.name, funcPtrCname)
                     .build()
             )
         }
