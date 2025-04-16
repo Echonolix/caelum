@@ -47,70 +47,74 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
             val origName = funcType.tags.get<OriginalFunctionNameTag>()?.name
                 ?: error("$funcType is missing original function name tag")
 
-            val func = FunSpec.builder(funcName)
-            func.receiver(handleType.typeName())
             val firstParam = funcType.parameters.first()
             val firstDropped = funcType.parameters.drop(1)
             check(firstParam.type is CType.Handle)
 
-            if (prefixRemoved.startsWith("Create")) {
+            val func1 = FunSpec.builder(funcName)
+            func1.receiver(handleType.typeName())
+
+            val lastParam = funcType.parameters.last()
+            val lastParamType = lastParam.type
+
+            val returnType1: TypeName
+            val params1: List<CType.Function.Parameter>
+
+            if (prefixRemoved.startsWith("Create") && (lastParamType as CType.Pointer).elementType is CType.Handle) {
                 check(funcType.returnType.name == "VkResult")
                 check(resultCodeTag.successCodes.isNotEmpty())
                 check(resultCodeTag.errorCodes.isNotEmpty())
-                val lastParam = funcType.parameters.last()
-                val lastParamType = lastParam.type
-                check(lastParamType is CType.Pointer)
-                if (lastParamType.elementType is CType.Handle) {
-                    val returnValueCname = lastParamType.elementType.ktApiType()
-                    func.returns(resultCname.parameterizedBy(returnValueCname))
-                    val firstAndLastDropped = firstDropped.dropLast(1)
-                    func.addParameters(firstAndLastDropped.toKtParamSpecs(true))
-                    val funcCode = CodeBlock.builder()
-                    funcCode.beginControlFlow("return %M", KTFFICodegenHelper.memoryStackMember)
-                    funcCode.addStatement(
-                        "val handle114514 = %T.%M()",
-                        returnValueCname,
-                        KTFFICodegenHelper.mallocMember
-                    )
-                    funcCode.add("when (val result69420 = $origName(")
-                    val funcThis = CodeBlock.of("this@%N", funcName)
-                    val callParams = mutableListOf(funcThis)
-                    firstAndLastDropped.mapTo(callParams) { CodeBlock.of("%N", it.name) }
-                    callParams.add(CodeBlock.of("handle114514.ptr()"))
-                    funcCode.add(callParams.joinToCode())
-                    funcCode.beginControlFlow("))")
-                    funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
-                        CodeBlock.of(
-                            "%T.%N",
-                            vkResultCname,
-                            it.name
-                        )
-                    })
-                    funcCode.add(" -> %T.success(%T.fromNativeData(", resultCname, returnValueCname)
-                    funcCode.add(funcThis)
-                    funcCode.addStatement(", handle114514.%M))", VKFFI.handleValueMember)
-                    funcCode.add(resultCodeTag.errorCodes.joinToCode(",\n") {
-                        CodeBlock.of(
-                            "%T.%N",
-                            vkResultCname,
-                            it.name
-                        )
-                    })
-                    funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, VKFFI.vkExceptionCname)
-                    funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
-                    funcCode.endControlFlow()
-                    funcCode.endControlFlow()
-                    func.addCode(funcCode.build())
-                    return func.build()
-                }
-            } else if (funcType.returnType.name == "VkResult") {
-                func.returns(resultCname.parameterizedBy(UNIT))
-                func.addParameters(firstDropped.toKtParamSpecs(true))
+                returnType1 = lastParamType.elementType.ktApiType()
+                params1 = firstDropped.dropLast(1)
+
+                func1.returns(resultCname.parameterizedBy(returnType1))
+                func1.addParameters(params1.toKtParamSpecs(true))
                 val funcCode = CodeBlock.builder()
-                funcCode.add("return when (val result69420 = $origName(")
+                funcCode.beginControlFlow("return %M", KTFFICodegenHelper.memoryStackMember)
+                funcCode.addStatement(
+                    "val handle114514 = %T.%M()",
+                    returnType1,
+                    KTFFICodegenHelper.mallocMember
+                )
+                funcCode.add("when (val result69420 = $origName(")
                 val funcThis = CodeBlock.of("this@%N", funcName)
                 val callParams = mutableListOf(funcThis)
-                firstDropped.mapTo(callParams) { CodeBlock.of("%N", it.name) }
+                params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
+                callParams.add(CodeBlock.of("handle114514.ptr()"))
+                funcCode.add(callParams.joinToCode())
+                funcCode.beginControlFlow("))")
+                funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
+                    CodeBlock.of(
+                        "%T.%N",
+                        vkResultCname,
+                        it.name
+                    )
+                })
+                funcCode.add(" -> %T.success(%T.fromNativeData(", resultCname, returnType1)
+                funcCode.add(funcThis)
+                funcCode.addStatement(", handle114514.%M))", VKFFI.handleValueMember)
+                funcCode.add(resultCodeTag.errorCodes.joinToCode(",\n") {
+                    CodeBlock.of(
+                        "%T.%N",
+                        vkResultCname,
+                        it.name
+                    )
+                })
+                funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, VKFFI.vkExceptionCname)
+                funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
+                funcCode.endControlFlow()
+                funcCode.endControlFlow()
+                func1.addCode(funcCode.build())
+            } else if (funcType.returnType.name == "VkResult") {
+                returnType1 = resultCname.parameterizedBy(UNIT)
+                params1 = firstDropped
+
+                func1.returns(returnType1)
+                func1.addParameters(params1.toKtParamSpecs(true))
+                val funcCode = CodeBlock.builder()
+                funcCode.add("return when (val result69420 = $origName(")
+                val callParams = mutableListOf(CodeBlock.of("this"))
+                params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
                 funcCode.add(callParams.joinToCode())
                 funcCode.beginControlFlow("))")
                 funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
@@ -133,11 +137,63 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 }
                 funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
                 funcCode.endControlFlow()
-                func.addCode(funcCode.build())
-                return func.build()
+                func1.addCode(funcCode.build())
+            } else {
+                returnType1 = funcType.returnType.ktApiType()
+                params1 = firstDropped
+
+                func1.returns(returnType1)
+                func1.addParameters(firstDropped.toKtParamSpecs(true))
+                val funcCode = CodeBlock.builder()
+                funcCode.add("return $origName(")
+                val callParams = mutableListOf(CodeBlock.of("this"))
+                firstDropped.mapTo(callParams) { CodeBlock.of("%N", it.name) }
+                funcCode.add(callParams.joinToCode())
+                funcCode.add(")")
+                func1.addCode(funcCode.build())
             }
 
-            return func.build()
+            return func1.build()
+//            val results = mutableListOf(func1.build())
+//
+//            if (params1.any { it.type is CType.Pointer }) {
+//                val funcBase = FunSpec.builder(funcName)
+//                funcBase.returns(returnType1)
+//                val funcCode = CodeBlock.builder()
+//                funcCode.add("return $funcName(")
+//                funcCode.add(firstDropped.joinToCode {
+//                    if (it.type is CType.Pointer) {
+//                        CodeBlock.of("%N.ptr()", it.name)
+//                    } else {
+//                        CodeBlock.of("%N", it.name)
+//                    }
+//                })
+//                funcCode.add(")")
+//                funcBase.addCode(funcCode.build())
+//
+//                funcBase.addParameters(firstDropped.toParamSpecs(true) {
+//                    var pType = it.type.ktApiType()
+//                    if (it.type is CType.Pointer) {
+//                        val typeArguments = (pType as ParameterizedTypeName).typeArguments
+//                        pType = KTFFICodegenHelper.valueCname.parameterizedBy(typeArguments)
+//                    }
+//                    pType
+//                })
+//                results.add(funcBase.build())
+//                funcBase.parameters.clear()
+//
+//                funcBase.addParameters(firstDropped.toParamSpecs(true) {
+//                    var pType = it.type.ktApiType()
+//                    if (it.type is CType.Pointer) {
+//                        val typeArguments = (pType as ParameterizedTypeName).typeArguments
+//                        pType = KTFFICodegenHelper.arrayCname.parameterizedBy(typeArguments)
+//                    }
+//                    pType
+//                })
+//                results.add(funcBase.build())
+//            }
+//
+//            return results
         }
     }
 }

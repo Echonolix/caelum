@@ -3,6 +3,7 @@ package net.echonolix.vulkan.ffi
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.Documentable
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.TypeName
 import kotlinx.serialization.decodeFromString
 import net.echonolix.ktffi.*
 import nl.adaptivity.xmlutil.serialization.XML
@@ -58,27 +59,23 @@ fun VKFFICodeGenContext.filterVkFunction(): List<CType.Function> =
         .toList()
 
 context(ctx: VKFFICodeGenContext)
-fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) = map {
-    var pType = it.type.ktApiType()
+fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
+    toParamSpecs(annotations) { it.type.ktApiType() }
+
+context(ctx: VKFFICodeGenContext)
+fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) =
+    toParamSpecs(annotations) { it.type.nativeType() }
+
+context(ctx: VKFFICodeGenContext)
+inline fun List<CType.Function.Parameter>.toParamSpecs(
+    annotations: Boolean,
+    typeMapper: (CType.Function.Parameter) -> TypeName
+) = map {
+    var pType = typeMapper(it)
     if (it.type is CType.Pointer && it.optional) {
         pType = pType.copy(nullable = true)
     }
     ParameterSpec.builder(it.name, pType)
-        .apply {
-            if (annotations) {
-                addAnnotation(
-                    AnnotationSpec.builder(CTypeName::class)
-                        .addMember("%S", it.type.name)
-                        .build()
-                )
-            }
-        }
-        .build()
-}
-
-context(ctx: VKFFICodeGenContext)
-fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) = map {
-    ParameterSpec.builder(it.name, it.type.nativeType())
         .apply {
             if (annotations) {
                 addAnnotation(
