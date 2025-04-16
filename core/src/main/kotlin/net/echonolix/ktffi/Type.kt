@@ -122,3 +122,191 @@ public interface NativeFunction : NativeType {
         }
     }
 }
+
+public interface AllocateOverLoad<T : NativeType> {
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: ULong): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: UInt): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: ULong): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: UInt): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator): NativeValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator): NativeValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(): NativeValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(): NativeValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    public fun allocate(allocator: SegmentAllocator, count: Long): NativeArray<T>
+
+    public fun allocate(allocator: SegmentAllocator): NativeValue<T>
+}
+
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+    allocate(allocator, count.toLong())
+
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+    allocate(allocator, count.toLong())
+
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+    allocate(allocator, count.toLong())
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: Long): NativeArray<T> =
+    allocate(allocator, count)
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: ULong): NativeArray<T> =
+    allocate(allocator, count.toLong())
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: UInt): NativeArray<T> =
+    allocate(allocator, count.toLong())
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: Int): NativeArray<T> =
+    allocate(allocator, count.toLong())
+
+context(allocator: SegmentAllocator)
+public fun <T : NativeType> AllocateOverLoad<T>.allocate(): NativeValue<T> =
+    allocate(allocator)

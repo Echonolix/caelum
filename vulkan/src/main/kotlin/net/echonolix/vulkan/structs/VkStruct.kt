@@ -1,5 +1,6 @@
 package net.echonolix.vulkan.structs
 
+import net.echonolix.ktffi.AllocateOverLoad
 import net.echonolix.ktffi.NativeArray
 import net.echonolix.ktffi.NativeStruct
 import net.echonolix.ktffi.NativeValue
@@ -11,101 +12,9 @@ import java.lang.foreign.ValueLayout
 
 public sealed class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
-) : NativeStruct<T>(*members) {
+) : NativeStruct<T>(*members), AllocateOverLoad<T> {
     public open val structType: VkStructureType?
         get() = null
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(allocator: SegmentAllocator): NativeValue<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(allocator: SegmentAllocator): NativeValue<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(): NativeValue<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(): NativeValue<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
 
     private fun MemorySegment.initValue(): MemorySegment {
         this.fill(0)
@@ -125,30 +34,9 @@ public sealed class VkStruct<T : VkStruct<T>>(
         return this
     }
 
-    @JvmName("allocate")
-    public fun allocate(allocator: SegmentAllocator, count: Long): NativeArray<T> =
-        NativeArray(allocator.allocate(layout, count).initArray(count))
-
-    @JvmName("allocate")
-    public fun allocate(allocator: SegmentAllocator, count: Int): NativeArray<T> =
-        NativeArray(allocator.allocate(layout, count.toLong()).initArray(count.toLong()))
-
-    context(allocator: SegmentAllocator)
-    @JvmName("allocate-114")
-    public fun allocate(count: Long): NativeArray<T> =
-        NativeArray(allocator.allocate(layout, count).initArray(count))
-
-    context(allocator: SegmentAllocator)
-    @JvmName("allocate-514")
-    public fun allocate(count: Int): NativeArray<T> =
-        NativeArray(allocator.allocate(layout, count.toLong()).initArray(count.toLong()))
-
-    @JvmName("allocate")
-    public fun allocate(allocator: SegmentAllocator): NativeValue<T> =
+    override fun allocate(allocator: SegmentAllocator): NativeValue<T> =
         NativeValue(allocator.allocate(layout).initValue())
 
-    context(allocator: SegmentAllocator)
-    @JvmName("allocate-420")
-    public fun allocate(): NativeValue<T> =
-        NativeValue(allocator.allocate(layout).initValue())
+    override fun allocate(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+        NativeArray(allocator.allocate(layout, count).initArray(count))
 }
