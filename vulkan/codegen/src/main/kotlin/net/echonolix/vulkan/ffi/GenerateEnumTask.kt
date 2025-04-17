@@ -292,7 +292,6 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         companion.addFunction(
             FunSpec.builder("fromNativeData")
                 .addAnnotation(JvmStatic::class)
-                .addModifiers(KModifier.INLINE)
                 .addParameter("value", flagType.baseType.ktApiTypeTypeName)
                 .returns(thisCname)
                 .addStatement("return %T(value)", thisCname)
@@ -301,7 +300,6 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         companion.addFunction(
             FunSpec.builder("toNativeData")
                 .addAnnotation(JvmStatic::class)
-                .addModifiers(KModifier.INLINE)
                 .addParameter("value", thisCname)
                 .returns(flagType.baseType.ktApiTypeTypeName)
                 .addStatement("return value.value")
@@ -448,7 +446,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         addFunction(
             FunSpec.builder("get")
                 .receiver(arrayCnameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("index", LONG)
                 .returns(thisCname)
                 .addStatement(
@@ -462,7 +460,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         addFunction(
             FunSpec.builder("set")
                 .receiver(arrayCnameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("index", LONG)
                 .addParameter("value", thisCname)
                 .addStatement(
@@ -475,7 +473,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         addFunction(
             FunSpec.builder("get")
                 .receiver(pointerCnameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("index", LONG)
                 .returns(thisCname)
                 .addStatement(
@@ -490,7 +488,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         addFunction(
             FunSpec.builder("set")
                 .receiver(pointerCnameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("index", LONG)
                 .addParameter("value", thisCname)
                 .addStatement(
@@ -505,7 +503,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             FunSpec.builder("getValue")
                 .addAnnotation(randomName("getValue"))
                 .receiver(pointerCnameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("thisRef", nullableAny)
                 .addParameter("property", nullableAny)
                 .returns(thisCname)
@@ -522,7 +520,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             FunSpec.builder("setValue")
                 .addAnnotation(randomName("setValue"))
                 .receiver(pointerCnameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("thisRef", nullableAny)
                 .addParameter("property", nullableAny)
                 .addParameter("value", thisCname)
@@ -538,7 +536,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             FunSpec.builder("getValue")
                 .addAnnotation(randomName("getValue"))
                 .receiver(valueCNameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("thisRef", nullableAny)
                 .addParameter("property", nullableAny)
                 .returns(thisCname)
@@ -554,7 +552,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             FunSpec.builder("setValue")
                 .addAnnotation(randomName("setValue"))
                 .receiver(valueCNameP)
-                .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                .addModifiers(KModifier.OPERATOR)
                 .addParameter("thisRef", nullableAny)
                 .addParameter("property", nullableAny)
                 .addParameter("value", thisCname)
