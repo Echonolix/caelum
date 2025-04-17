@@ -87,8 +87,8 @@ fun main() {
             val physicalDevices = VkPhysicalDevice.malloc(physicalDeviceCount.value)
             instance.enumeratePhysicalDevices(physicalDeviceCount.ptr(), physicalDevices.ptr())
             repeat(physicalDeviceCount.value.toInt()) {
-                val property = VkPhysicalDeviceProperties.allocate()
                 val device = VkPhysicalDevice.fromNativeData(instance, physicalDevices[it])
+                val property = VkPhysicalDeviceProperties.allocate()
                 device.getPhysicalDeviceProperties(property.ptr())
                 if (property.deviceType == VkPhysicalDeviceType.DISCRETE_GPU) physicalDeviceHandle = device.handle
             }
@@ -125,7 +125,6 @@ fun main() {
             queueCount = 1u
             pQueuePriorities = graphicsQueuePriority.ptr()
         }
-
         val deviceCreateInfo = VkDeviceCreateInfo.allocate().apply {
             pQueueCreateInfos = graphicsQueueCreateInfo.ptr()
             queueCreateInfoCount = 1u
@@ -136,8 +135,8 @@ fun main() {
             enabledLayerCount = layers.size.toUInt()
             ppEnabledLayerNames = layers.c_strs()
         }
-
         val device = physicalDevice.createDevice(deviceCreateInfo.ptr(), null).getOrThrow()
+//        val queue = physicalDevice.
 
         device.destroyDevice(null)
         instance.destroyDebugUtilsMessengerEXT(debugUtilsMessenger, null)
