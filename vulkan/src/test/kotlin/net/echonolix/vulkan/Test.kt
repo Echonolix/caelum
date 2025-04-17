@@ -2,30 +2,17 @@ package net.echonolix.vulkan
 
 import net.echonolix.ktffi.*
 import net.echonolix.vulkan.Vk.vkCreateInstance
-import net.echonolix.vulkan.enums.VkColorSpaceKHR
-import net.echonolix.vulkan.enums.VkFormat
-import net.echonolix.vulkan.enums.VkPhysicalDeviceType
-import net.echonolix.vulkan.enums.VkPresentModeKHR
-import net.echonolix.vulkan.enums.VkResult
-import net.echonolix.vulkan.enums.VkSharingMode
-import net.echonolix.vulkan.enums.get
-import net.echonolix.vulkan.flags.VkCompositeAlphaFlagsKHR
-import net.echonolix.vulkan.flags.VkDebugUtilsMessageSeverityFlagsEXT
-import net.echonolix.vulkan.flags.VkDebugUtilsMessageTypeFlagsEXT
-import net.echonolix.vulkan.flags.VkImageUsageFlags
-import net.echonolix.vulkan.flags.VkQueueFlags
-import net.echonolix.vulkan.handles.VkInstance
-import net.echonolix.vulkan.handles.VkPhysicalDevice
-import net.echonolix.vulkan.handles.VkQueue
-import net.echonolix.vulkan.handles.VkSurfaceKHR
-import net.echonolix.vulkan.handles.get
-import net.echonolix.vulkan.handles.value
+import net.echonolix.vulkan.enums.*
+import net.echonolix.vulkan.flags.*
+import net.echonolix.vulkan.handles.*
 import net.echonolix.vulkan.structs.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions
 import org.lwjgl.glfw.GLFWVulkan.nglfwCreateWindowSurface
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.util.shaderc.Shaderc
 
+@OptIn(UnsafeAPI::class)
 fun main() {
     MemoryStack {
         // region Init GLFW
@@ -235,16 +222,14 @@ fun main() {
         val swapchainSupport = physicalDevice.querySwapchainSupport()
         val surfaceFormat = chooseSwapchainFormat(swapchainSupport.formats)!!
         val presentMode = choosePresentMode(swapchainSupport.presentModes)
-        val extent = chooseSwapchainExtent(swapchainSupport.capabilities)
-
-        val imageCount = swapchainSupport.capabilities.minImageCount
+        val swapchainExtent = chooseSwapchainExtent(swapchainSupport.capabilities)
 
         val swapchainCreateInfo = VkSwapchainCreateInfoKHR.allocate().apply {
             this.surface = surface
-            minImageCount = imageCount
+            minImageCount = swapchainSupport.capabilities.minImageCount
             imageFormat = surfaceFormat.format
             imageColorSpace = surfaceFormat.colorSpace
-            imageExtent = extent
+            imageExtent = swapchainExtent
             imageArrayLayers = 1u
             imageUsage = VkImageUsageFlags.COLOR_ATTACHMENT
 
@@ -266,7 +251,308 @@ fun main() {
         }
         val swapchain = device.createSwapchainKHR(swapchainCreateInfo.ptr(), null).getOrThrow()
 
+        val swapchainImageCount = NativeUInt32.malloc()
+        device.getSwapchainImagesKHR(swapchain, swapchainImageCount.ptr(), null)
+        println("Swapchain image count: ${swapchainImageCount.value}")
+        val swapchainImages = buildList {
+            val buffer = VkImage.malloc(swapchainImageCount.value)
+            device.getSwapchainImagesKHR(swapchain, swapchainImageCount.ptr(), buffer.ptr())
+            repeat(swapchainImageCount.value.toInt()) {
+                add(VkImage.fromNativeData(device, buffer[it]))
+            }
+        }
+        val swapchainImageFormat = surfaceFormat.format
 
+        val swapchainImageViews = buildList {
+            repeat(swapchainImageCount.value.toInt()) {
+                val createInfo = VkImageViewCreateInfo.allocate().apply {
+                    image = swapchainImages[it]
+                    viewType = VkImageViewType.`2D`
+                    format = swapchainImageFormat
+                    components.r = VkComponentSwizzle.IDENTITY
+                    components.g = VkComponentSwizzle.IDENTITY
+                    components.b = VkComponentSwizzle.IDENTITY
+                    components.a = VkComponentSwizzle.IDENTITY
+                    subresourceRange.aspectMask = VkImageAspectFlags.COLOR
+                    subresourceRange.baseMipLevel = 0u
+                    subresourceRange.levelCount = 1u
+                    subresourceRange.baseArrayLayer = 0u
+                    subresourceRange.layerCount = 1u
+                }
+                add(device.createImageView(createInfo.ptr(), null).getOrThrow())
+            }
+        }
+
+        val vertexShaderSourceCode = """
+            #version 450
+
+            layout(location = 0) out vec3 fragColor;
+
+            vec2 positions[3] = vec2[](
+                vec2(0.0, -0.5),
+                vec2(0.5, 0.5),
+                vec2(-0.5, 0.5)
+            );
+
+            vec3 colors[3] = vec3[](
+                vec3(1.0, 0.0, 0.0),
+                vec3(0.0, 1.0, 0.0),
+                vec3(0.0, 0.0, 1.0)
+            );
+
+            void main() {
+                gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+                fragColor = colors[gl_VertexIndex];
+            }
+        """.trimIndent()
+        val fragmentShaderSourceCode = """
+            #version 450
+
+            layout(location = 0) in vec3 fragColor;
+
+            layout(location = 0) out vec4 outColor;
+
+            void main() {
+                outColor = vec4(fragColor, 1.0);
+            }
+        """.trimIndent()
+
+        class ShaderCompiler {
+            var available = true; private set
+            private val compiler = Shaderc.shaderc_compiler_initialize()
+
+            fun compileGlslToSpv(
+                source: String,
+                kind: Int,
+                fileName: String,
+                entryPoint: String = "main",
+                options: CompilerOptions? = null
+            ): CompilationResult {
+                checkAvailability()
+                org.lwjgl.system.MemoryStack.stackPush().use { stack ->
+                    val sourceBuffer = stack.ASCII(source, false) // fuck you
+                    val fileNameBuffer = stack.ASCII(fileName)
+                    val entryPointBuffer = stack.ASCII(entryPoint)
+                    val result = Shaderc.shaderc_compile_into_spv(
+                        compiler, sourceBuffer, kind, fileNameBuffer,
+                        entryPointBuffer, options?.options ?: 0)
+                    return CompilationResult(result)
+                }
+            }
+
+            private fun checkAvailability() { require(available) }
+
+            fun destroy() {
+                Shaderc.shaderc_compiler_release(compiler)
+                available = false
+            }
+
+            inner class CompilationResult(val handle: Long) {
+                val errorMessage = Shaderc.shaderc_result_get_error_message(handle)
+                val compilationStatus = Shaderc.shaderc_result_get_compilation_status(handle)
+                val numWarnings = Shaderc.shaderc_result_get_num_warnings(handle)
+                val numErrors = Shaderc.shaderc_result_get_num_errors(handle)
+                val binaryLength = Shaderc.shaderc_result_get_length(handle)
+                val binary by lazy { Shaderc.shaderc_result_get_bytes(handle) }
+            }
+            inner class CompilerOptions {
+                var available = true; private set
+                val options = Shaderc.shaderc_compile_options_initialize()
+                    get() {
+                        checkAvailability()
+                        return field
+                    }
+
+                private fun checkAvailability() { require(available) }
+
+                fun destroy() {
+                    Shaderc.shaderc_compile_options_release(options)
+                    available = false
+                }
+            }
+        }
+
+        val shaderCompiler = ShaderCompiler()
+
+        val vshCompilationResult = shaderCompiler.compileGlslToSpv(vertexShaderSourceCode, Shaderc.shaderc_vertex_shader, "vert.glsl")
+        vshCompilationResult.errorMessage?.let { println(it) }
+        val fshCompilationResult = shaderCompiler.compileGlslToSpv(fragmentShaderSourceCode, Shaderc.shaderc_fragment_shader, "frag.glsl")
+        fshCompilationResult.errorMessage?.let { println(it) }
+        val vshSpv = ByteArray(vshCompilationResult.binary!!.remaining())
+            .also { vshCompilationResult.binary!!.get(it) }
+        val fshSpv = ByteArray(fshCompilationResult.binary!!.remaining())
+            .also { fshCompilationResult.binary!!.get(it) }
+
+        fun VkDevice.createShaderModule(code: ByteArray): VkShaderModule {
+            val codeBuffer = NativeInt8.malloc(code.size)
+            for (i in code.indices) codeBuffer[i] = code[i]
+            val createInfo = VkShaderModuleCreateInfo.allocate().apply {
+                codeSize = code.size.toLong()
+                pCode = reinterpretCast(codeBuffer.ptr())
+            }
+            return createShaderModule(createInfo.ptr(), null).getOrThrow()
+        }
+
+        val vshModule = device.createShaderModule(vshSpv)
+        val fshModule = device.createShaderModule(fshSpv)
+
+        shaderCompiler.destroy()
+
+        val shaderStages = VkPipelineShaderStageCreateInfo.allocate(2)
+        val vertShaderStageCreateInfo = shaderStages[0].apply {
+            stage = VkShaderStageFlags.VERTEX
+            module = vshModule
+            pName = "main".c_str()
+        }
+        val fragShaderStageCreateInfo = shaderStages[1].apply {
+            stage = VkShaderStageFlags.FRAGMENT
+            module = fshModule
+            pName = "main".c_str()
+        }
+
+
+        val vertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.allocate().apply {
+            vertexBindingDescriptionCount = 0u
+            pVertexBindingDescriptions = nullptr()
+            vertexAttributeDescriptionCount = 0u
+            pVertexAttributeDescriptions = nullptr()
+        }
+
+        val inputAssemblyStateCreateInfo = VkPipelineInputAssemblyStateCreateInfo.allocate().apply {
+            topology = VkPrimitiveTopology.TRIANGLE_LIST
+            primitiveRestartEnable = 0u
+        }
+
+        val viewport = VkViewport.allocate()
+        viewport.x = 0.0f
+        viewport.y = 0.0f
+        viewport.width = swapchainExtent.width.toFloat()
+        viewport.height = swapchainExtent.height.toFloat()
+        viewport.minDepth = 0.0f
+        viewport.maxDepth = 1.0f
+
+        val scissor = VkRect2D.allocate()
+        scissor.offset.x = 0
+        scissor.offset.y = 0
+        scissor.extent = swapchainExtent
+
+        val viewportStateCreateInfo = VkPipelineViewportStateCreateInfo.allocate().apply {
+            viewportCount = 1u
+            pViewports = viewport.ptr()
+            scissorCount = 1u
+            pScissors = scissor.ptr()
+        }
+
+        val rasterizationStateCreateInfo = VkPipelineRasterizationStateCreateInfo.allocate().apply {
+            depthClampEnable = VK_FALSE
+            rasterizerDiscardEnable = VK_FALSE
+            polygonMode = VkPolygonMode.FILL
+            lineWidth = 1f
+            cullMode = VkCullModeFlags.NONE
+            frontFace = VkFrontFace.CLOCKWISE
+            depthBiasEnable = VK_FALSE
+            depthBiasConstantFactor = 0.0f // Optional
+            depthBiasClamp = 0.0f // Optional
+            depthBiasSlopeFactor = 0.0f // Optional
+        }
+
+        val multisampleStateCreateInfo = VkPipelineMultisampleStateCreateInfo.allocate().apply {
+            sampleShadingEnable = VK_FALSE
+            rasterizationSamples = VkSampleCountFlags.`1_BIT`
+            minSampleShading = 1.0f // Optional
+            pSampleMask = nullptr() // Optional
+            alphaToCoverageEnable = VK_FALSE // Optional
+            alphaToOneEnable = VK_FALSE // Optional
+        }
+
+        val colorBlendAttachmentState = VkPipelineColorBlendAttachmentState.allocate().apply {
+            colorWriteMask = VkColorComponentFlags.R + VkColorComponentFlags.G + VkColorComponentFlags.B + VkColorComponentFlags.A
+            blendEnable = VK_FALSE
+            srcColorBlendFactor = VkBlendFactor.ONE // Optional
+            dstColorBlendFactor = VkBlendFactor.ZERO // Optional
+            colorBlendOp = VkBlendOp.ADD // Optional
+            srcAlphaBlendFactor = VkBlendFactor.ONE // Optional
+            dstAlphaBlendFactor = VkBlendFactor.ZERO // Optional
+            alphaBlendOp = VkBlendOp.ADD // Optional
+        }
+
+        val colorBlendState = VkPipelineColorBlendStateCreateInfo.allocate().apply {
+            logicOpEnable = VK_FALSE
+            logicOp = VkLogicOp.COPY // Optional
+            attachmentCount = 1u
+            pAttachments = colorBlendAttachmentState.ptr()
+            blendConstants[0] = 0.0f // Optional
+            blendConstants[1] = 0.0f // Optional
+            blendConstants[2] = 0.0f // Optional
+            blendConstants[3] = 0.0f // Optional
+        }
+
+        val pipelineLayoutCreateInfo = VkPipelineLayoutCreateInfo.allocate().apply {
+            setLayoutCount = 0u // Optional
+            pSetLayouts = nullptr() // Optional
+            pushConstantRangeCount = 0u // Optional
+            pPushConstantRanges = nullptr() // Optional
+        }
+
+        val pipelineLayout = device.createPipelineLayout(pipelineLayoutCreateInfo.ptr(), null).getOrThrow()
+
+        val colorAttachment = VkAttachmentDescription.allocate().apply {
+            format = swapchainImageFormat
+            samples = VkSampleCountFlags.`1_BIT`
+            loadOp = VkAttachmentLoadOp.CLEAR
+            storeOp = VkAttachmentStoreOp.STORE
+            stencilLoadOp = VkAttachmentLoadOp.DONT_CARE
+            stencilStoreOp = VkAttachmentStoreOp.DONT_CARE
+            initialLayout = VkImageLayout.UNDEFINED
+            finalLayout = VkImageLayout.PRESENT_SRC_KHR
+        }
+
+        val colorAttachmentRef = VkAttachmentReference.allocate().apply {
+            attachment = 0u
+            layout = VkImageLayout.COLOR_ATTACHMENT_OPTIMAL
+        }
+
+        val subpass = VkSubpassDescription.allocate().apply {
+            pipelineBindPoint = VkPipelineBindPoint.GRAPHICS
+            colorAttachmentCount = 1u
+            pColorAttachments = colorAttachmentRef.ptr()
+        }
+
+        val renderPassCreateInfo = VkRenderPassCreateInfo.allocate().apply {
+            attachmentCount = 1u
+            pAttachments = colorAttachment.ptr()
+            subpassCount = 1u
+            pSubpasses = subpass.ptr()
+        }
+
+        val renderPass = device.createRenderPass(renderPassCreateInfo.ptr(), null).getOrThrow()
+
+        val pipelineCreateInfo = VkGraphicsPipelineCreateInfo.allocate().apply {
+            stageCount = 2u
+            pStages = shaderStages.ptr()
+            pVertexInputState = vertexInputStateCreateInfo.ptr()
+            pInputAssemblyState = inputAssemblyStateCreateInfo.ptr()
+            pViewportState = viewportStateCreateInfo.ptr()
+            pRasterizationState = rasterizationStateCreateInfo.ptr()
+            pMultisampleState = multisampleStateCreateInfo.ptr()
+            pDepthStencilState = nullptr()
+            pColorBlendState = colorBlendState.ptr()
+            pDynamicState = nullptr()
+            layout = pipelineLayout
+            this.renderPass = renderPass
+            this.subpass = 0u
+        }
+
+        val pipeline = device.createGraphicsPipelines(VkPipelineCache.fromNativeData(device, 0L), 1u, pipelineCreateInfo.ptr(), null).getOrThrow()
+
+        device.destroyPipeline(pipeline, null)
+        device.destroyPipelineLayout(pipelineLayout, null)
+        device.destroyRenderPass(renderPass, null)
+        device.destroyShaderModule(vshModule, null)
+        device.destroyShaderModule(fshModule, null)
+        for (imageView in swapchainImageViews) {
+            device.destroyImageView(imageView, null)
+        }
         device.destroySwapchainKHR(swapchain, null)
         device.destroyDevice(null)
         instance.destroySurfaceKHR(surface, null)

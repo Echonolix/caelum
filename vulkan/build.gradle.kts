@@ -13,8 +13,10 @@ dependencies {
     testImplementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     testImplementation("org.lwjgl", "lwjgl", lwjglVersion)
     testImplementation("org.lwjgl", "lwjgl-glfw", lwjglVersion)
+    testImplementation("org.lwjgl", "lwjgl-shaderc", lwjglVersion)
     testRuntimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
     testRuntimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
+    testRuntimeOnly("org.lwjgl", "lwjgl-shaderc", classifier = lwjglNatives)
 }
 
 kotlin {
