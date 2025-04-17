@@ -108,14 +108,18 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
 
         groupType.members.forEach { member ->
-            if (member.type !is CType.Array) {
-                typeObject.addProperty(
-                    PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
-                        .addModifiers(KModifier.INTERNAL)
-                        .addAnnotation(JvmField::class)
-                        .initializer("layout.varHandle(%M(%S))", KTFFICodegenHelper.groupElementMember, member.name)
-                        .build()
-                )
+            when (member.type) {
+                is CType.Array, is CType.Group -> {
+                    // do nothing
+                }
+                else -> {
+                    typeObject.addProperty(
+                        PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
+                            .addModifiers(KModifier.INTERNAL)
+                            .addAnnotation(JvmField::class)
+                            .initializer("layout.varHandle(%M(%S))", KTFFICodegenHelper.groupElementMember, member.name)
+                            .build()
+                    )
 //                typeObject.addProperty(
 //                    PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
 //                        .addAnnotation(JvmField::class)
@@ -126,6 +130,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 //                        )
 //                        .build()
 //                )
+                }
             }
             typeObject.addProperty(
                 PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
