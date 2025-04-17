@@ -134,10 +134,10 @@ fun main() {
             enabledLayerCount = layers.size.toUInt()
             ppEnabledLayerNames = layers.c_strs()
         }
-        physicalDevice.createDevice(deviceCreateInfo.ptr(), null).getOrThrow()
+        val device = physicalDevice.createDevice(deviceCreateInfo.ptr(), null).getOrThrow()
 //        val queue = physicalDevice.
 
-//        device.destroyDevice(null)
+        device.destroyDevice(null)
         instance.destroyDebugUtilsMessengerEXT(debugUtilsMessenger, null)
         instance.destroyInstance(null)
 
