@@ -311,22 +311,13 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         fun CType.Group.Member.valueMemberOffset(): CodeBlock {
             return CodeBlock.builder()
-                .addStatement(
-                    "%T.%N.invokeExact(_segment.address()) as Long",
-                    thisCname,
-                    "${this.name}_offsetHandle"
-                )
+                .addStatement("%T.${this.name}_offsetHandle.invokeExact(_segment.address()) as Long", thisCname)
                 .build()
         }
 
         fun CType.Group.Member.pointerMemberOffset(): CodeBlock {
             return CodeBlock.builder()
-                .addStatement(
-                    "%T.%N.invokeExact(_address) as Long",
-                    thisCname,
-                    "${this.name}_offsetHandle",
-//                    KTFFICodegenHelper.omniSegment
-                )
+                .addStatement("%T.${this.name}_offsetHandle.invokeExact(_address) as Long", thisCname)
                 .build()
         }
 
