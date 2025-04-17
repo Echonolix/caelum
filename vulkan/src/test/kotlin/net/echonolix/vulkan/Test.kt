@@ -11,14 +11,7 @@ import net.echonolix.vulkan.handles.VkPhysicalDevice
 import net.echonolix.vulkan.handles.get
 import net.echonolix.vulkan.handles.value
 import net.echonolix.vulkan.structs.*
-import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
-import org.lwjgl.glfw.GLFW.GLFW_FALSE
-import org.lwjgl.glfw.GLFW.GLFW_NO_API
-import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
-import org.lwjgl.glfw.GLFW.glfwCreateWindow
-import org.lwjgl.glfw.GLFW.glfwInit
-import org.lwjgl.glfw.GLFW.glfwTerminate
-import org.lwjgl.glfw.GLFW.glfwWindowHint
+import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions
 import org.lwjgl.system.MemoryUtil
 
