@@ -60,15 +60,17 @@ fun main() {
             apiVersion = VK_API_VERSION_1_0.value
         }
 
+        val debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.allocate()
+        populateDebugMessengerCreateInfo(debugCreateInfo)
+
         val createInfo = VkInstanceCreateInfo.allocate().apply {
             pApplicationInfo = appInfo.ptr()
             ppEnabledExtensionNames = extensions.c_strs()
             enabledExtensionCount = extensions.size.toUInt()
             ppEnabledLayerNames = layers.c_strs()
             enabledLayerCount = layers.size.toUInt()
+            pNext = debugCreateInfo.ptr()
         }
-        val debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.allocate()
-        populateDebugMessengerCreateInfo(debugCreateInfo)
 
         val instancePtr = VkInstance.malloc()
         val result = vkCreateInstance(createInfo.ptr(), nullptr(), instancePtr.ptr())
@@ -132,10 +134,10 @@ fun main() {
             enabledLayerCount = layers.size.toUInt()
             ppEnabledLayerNames = layers.c_strs()
         }
-        val device = physicalDevice.createDevice(deviceCreateInfo.ptr(), null).getOrThrow()
+        physicalDevice.createDevice(deviceCreateInfo.ptr(), null).getOrThrow()
 //        val queue = physicalDevice.
 
-        device.destroyDevice(null)
+//        device.destroyDevice(null)
         instance.destroyDebugUtilsMessengerEXT(debugUtilsMessenger, null)
         instance.destroyInstance(null)
 
