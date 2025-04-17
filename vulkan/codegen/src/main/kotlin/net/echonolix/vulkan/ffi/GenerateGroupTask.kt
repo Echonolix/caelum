@@ -312,7 +312,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         fun CType.Group.Member.valueMemberOffset(): CodeBlock {
             return CodeBlock.builder()
                 .addStatement(
-                    "%T.%N.invokeExact(_segment.address(), 0L) as Long",
+                    "%T.%N.invokeExact(_segment.address()) as Long",
                     thisCname,
                     "${this.name}_offsetHandle"
                 )
@@ -322,7 +322,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         fun CType.Group.Member.pointerMemberOffset(): CodeBlock {
             return CodeBlock.builder()
                 .addStatement(
-                    "%T.%N.invokeExact(%M, _address) as Long",
+                    "%T.%N.invokeExact(%M) as Long",
                     thisCname,
                     "${this.name}_offsetHandle",
                     KTFFICodegenHelper.omniSegment
