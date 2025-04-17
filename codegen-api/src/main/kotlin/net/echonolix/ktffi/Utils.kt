@@ -10,8 +10,8 @@ public fun FileSpec.Builder.addSuppress() = apply {
         AnnotationSpec.builder(Suppress::class)
             .addMember("%S", "PropertyName")
             .addMember("%S", "unused")
-            .addMember("%S", "NOTHING_TO_INLINE")
             .addMember("%S", "ObjectPropertyName")
+            .addMember("%S", "ReplaceGetOrSet")
             .build()
     )
 }

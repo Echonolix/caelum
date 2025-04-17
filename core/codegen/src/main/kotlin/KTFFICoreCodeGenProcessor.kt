@@ -2,6 +2,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.ktffi.KTFFICodegenHelper
+import net.echonolix.ktffi.addSuppress
 import net.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
@@ -16,14 +17,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
 
         val file = FileSpec.builder(KTFFICodegenHelper.packageName, "CoreGenerated")
             .indent("    ")
-            .addAnnotation(
-                AnnotationSpec.builder(Suppress::class)
-                    .addMember("%S", "PropertyName")
-                    .addMember("%S", "unused")
-                    .addMember("%S", "NOTHING_TO_INLINE")
-                    .addMember("%S", "ObjectPropertyName")
-                    .build()
-            )
+            .addSuppress()
 
         CBasicType.entries.forEach { basicType ->
             val thisCname = ClassName(KTFFICodegenHelper.packageName, basicType.name)
@@ -50,7 +44,6 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addFunction(
                         FunSpec.builder("fromNativeData")
                             .addAnnotation(JvmStatic::class)
-                            .addModifiers(KModifier.INLINE)
                             .addParameter("value", basicType.nativeDataType)
                             .returns(basicType.ktApiType)
                             .addStatement("return value${basicType.fromNativeData}")
@@ -59,7 +52,6 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .addFunction(
                         FunSpec.builder("toNativeData")
                             .addAnnotation(JvmStatic::class)
-                            .addModifiers(KModifier.INLINE)
                             .addParameter("value", basicType.ktApiType)
                             .returns(basicType.nativeDataType)
                             .addStatement("return value${basicType.toNativeData}")
@@ -69,81 +61,58 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
             )
 
             fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
-                .addMember("%S",
-                    "${thisCname.simpleName}_${base}_${(0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")}"
+                .addMember(
+                    "%S",
+                    "${thisCname.simpleName}_${base}_${
+                        (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
+                    }"
                 )
                 .build()
 
-            file.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", LONG)
-                    .returns(basicType.ktApiType.asTypeName())
-                    .addStatement(
-                        "return (%T.%N.get(_segment, 0L, index) as %T)${basicType.fromNativeData}",
-                        thisCname,
-                        "arrayVarHandle",
-                        basicType.nativeDataType.asTypeName()
+            val overloadTypes = listOf(INT, UInt::class.asTypeName(), ULong::class.asTypeName())
+            val returnTypeName = basicType.ktApiType.asTypeName()
+
+            fun addGetOverloads(receiver: TypeName) {
+                for (pType in overloadTypes) {
+                    file.addFunction(
+                        FunSpec.builder("get")
+                            .addAnnotation(randomName("get"))
+                            .receiver(receiver)
+                            .addModifiers(KModifier.OPERATOR)
+                            .addParameter("index", pType)
+                            .returns(returnTypeName)
+                            .addStatement("return get(index.toLong())")
+                            .build()
                     )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .returns(basicType.ktApiType.asTypeName())
-                    .addStatement(
-                        "return (%T.%N.get(_segment, 0L, index.toLong()) as %T)${basicType.fromNativeData}",
-                        thisCname,
-                        "arrayVarHandle",
-                        basicType.nativeDataType.asTypeName()
+                }
+            }
+
+            fun addSetOverloads(receiver: TypeName) {
+                for (pType in overloadTypes) {
+                    file.addFunction(
+                        FunSpec.builder("set")
+                            .addAnnotation(randomName("set"))
+                            .receiver(receiver)
+                            .addModifiers(KModifier.OPERATOR)
+                            .addParameter("index", pType)
+                            .addParameter("value", returnTypeName)
+                            .addStatement("set(index.toLong(), value)")
+                            .build()
                     )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", LONG)
-                    .addParameter("value", basicType.ktApiType.asTypeName())
-                    .addStatement(
-                        "%T.%N.set(_segment, 0L, index, value${basicType.toNativeData})",
-                        thisCname,
-                        "arrayVarHandle"
-                    )
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .addParameter("value", basicType.ktApiType.asTypeName())
-                    .addStatement(
-                        "%T.%N.set(_segment, 0L, index.toLong(), value${basicType.toNativeData})",
-                        thisCname,
-                        "arrayVarHandle"
-                    )
-                    .build()
-            )
+                }
+            }
             file.addProperty(
-                PropertySpec.builder("value", basicType.ktApiType)
-                    .receiver(valueCNameP)
+                PropertySpec.builder("value", returnTypeName)
+                    .receiver(pointerCNameP)
                     .mutable(true)
                     .getter(
                         FunSpec.getterBuilder()
                             .addAnnotation(randomName("getValue"))
-                            .addModifiers(KModifier.INLINE)
                             .addStatement(
-                                "return (%T.%N.get(_segment, 0L) as %T)${basicType.fromNativeData}",
+                                "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
                                 thisCname,
                                 "valueVarHandle",
+                                KTFFICodegenHelper.omniSegment,
                                 basicType.nativeDataType.asTypeName()
                             )
                             .build()
@@ -151,47 +120,24 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     .setter(
                         FunSpec.setterBuilder()
                             .addAnnotation(randomName("setValue"))
-                            .addModifiers(KModifier.INLINE)
-                            .addParameter("value", basicType.ktApiType.asTypeName())
+                            .addParameter("value", returnTypeName)
                             .addStatement(
-                                "%T.%N.set(_segment, 0L, value${basicType.toNativeData})",
+                                "%T.%N.set(%M, _address, value${basicType.toNativeData})",
                                 thisCname,
-                                "valueVarHandle"
+                                "valueVarHandle",
+                                KTFFICodegenHelper.omniSegment,
                             )
                             .build()
                     )
                     .build()
             )
             file.addFunction(
-                FunSpec.builder("getValue")
-                    .addAnnotation(randomName("getValue"))
-                    .receiver(valueCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("thisRef", nullableAny)
-                    .addParameter("property", nullableAny)
-                    .returns(basicType.ktApiType.asTypeName())
-                    .addStatement("return this.value")
-                    .build()
-            )
-            file.addFunction(
-                FunSpec.builder("setValue")
-                    .addAnnotation(randomName("setValue"))
-                    .receiver(valueCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("thisRef", nullableAny)
-                    .addParameter("property", nullableAny)
-                    .addParameter("value", basicType.ktApiType.asTypeName())
-                    .addStatement("this.value = value")
-                    .build()
-            )
-
-            file.addFunction(
                 FunSpec.builder("get")
                     .addAnnotation(randomName("get"))
                     .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
-                    .returns(basicType.ktApiType.asTypeName())
+                    .returns(returnTypeName)
                     .addStatement(
                         "return (%T.%N.get(%M, _address, index) as %T)${basicType.fromNativeData}",
                         thisCname,
@@ -201,29 +147,15 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     )
                     .build()
             )
-            file.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .returns(basicType.ktApiType.asTypeName())
-                    .addStatement(
-                        "return (%T.%N.get(%M, _address, index.toLong()) as %T)${basicType.fromNativeData}",
-                        thisCname,
-                        "arrayVarHandle",
-                        KTFFICodegenHelper.omniSegment,
-                        basicType.nativeDataType.asTypeName()
-                    )
-                    .build()
-            )
+            addGetOverloads(pointerCNameP)
+
             file.addFunction(
                 FunSpec.builder("set")
                     .addAnnotation(randomName("set"))
                     .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("index", LONG)
-                    .addParameter("value", basicType.ktApiType.asTypeName())
+                    .addParameter("value", returnTypeName)
                     .addStatement(
                         "%T.%N.set(%M, _address, index, value${basicType.toNativeData})",
                         thisCname,
@@ -232,29 +164,16 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                     )
                     .build()
             )
-            file.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
-                    .addParameter("index", INT)
-                    .addParameter("value", basicType.ktApiType.asTypeName())
-                    .addStatement(
-                        "%T.%N.set(%M, _address, index.toLong(), value${basicType.toNativeData})",
-                        thisCname,
-                        "arrayVarHandle",
-                        KTFFICodegenHelper.omniSegment
-                    )
-                    .build()
-            )
+            addSetOverloads(pointerCNameP)
+
             file.addFunction(
                 FunSpec.builder("getValue")
                     .addAnnotation(randomName("getValue"))
                     .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .returns(basicType.ktApiType.asTypeName())
+                    .returns(returnTypeName)
                     .addStatement(
                         "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
                         thisCname,
@@ -268,13 +187,84 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                 FunSpec.builder("setValue")
                     .addAnnotation(randomName("setValue"))
                     .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR, KModifier.INLINE)
+                    .addModifiers(KModifier.OPERATOR)
                     .addParameter("thisRef", nullableAny)
                     .addParameter("property", nullableAny)
-                    .addParameter("value", basicType.ktApiType.asTypeName())
-                    .addStatement("return %T.%N.set(%M, _address, value)", thisCname, "valueVarHandle", KTFFICodegenHelper.omniSegment)
+                    .addParameter("value", returnTypeName)
+                    .addStatement(
+                        "return %T.%N.set(%M, _address, value)",
+                        thisCname,
+                        "valueVarHandle",
+                        KTFFICodegenHelper.omniSegment
+                    )
                     .build()
             )
+
+
+            file.addProperty(
+                PropertySpec.builder("value", basicType.ktApiType)
+                    .receiver(valueCNameP)
+                    .mutable(true)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addAnnotation(randomName("getValue"))
+                            .addStatement("return ptr().value")
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addAnnotation(randomName("setValue"))
+                            .addParameter("value", returnTypeName)
+                            .addStatement("ptr().value = value")
+                            .build()
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("getValue")
+                    .addAnnotation(randomName("getValue"))
+                    .receiver(valueCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("thisRef", nullableAny)
+                    .addParameter("property", nullableAny)
+                    .returns(returnTypeName)
+                    .addStatement("return this.value")
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("setValue")
+                    .addAnnotation(randomName("setValue"))
+                    .receiver(valueCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("thisRef", nullableAny)
+                    .addParameter("property", nullableAny)
+                    .addParameter("value", returnTypeName)
+                    .addStatement("this.value = value")
+                    .build()
+            )
+
+            file.addFunction(
+                FunSpec.builder("get")
+                    .addAnnotation(randomName("get"))
+                    .receiver(arrayCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("index", LONG)
+                    .returns(returnTypeName)
+                    .addStatement("return ptr().get(index)")
+                    .build()
+            )
+            addGetOverloads(arrayCNameP)
+            file.addFunction(
+                FunSpec.builder("set")
+                    .addAnnotation(randomName("set"))
+                    .receiver(arrayCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("index", LONG)
+                    .addParameter("value", returnTypeName)
+                    .addStatement("ptr().set(index, value)")
+                    .build()
+            )
+            addSetOverloads(arrayCNameP)
         }
         return setOf(file.build().writeTo(outputDir))
     }

@@ -1,4 +1,4 @@
-@file:Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+@file:Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE", "ReplaceGetOrSet")
 
 package net.echonolix.vulkan.handles
 
@@ -23,21 +23,21 @@ public operator fun NativePointer<out VkHandle>.get(index: Long): Long =
 public operator fun NativePointer<out VkHandle>.get(index: Int): Long =
     get(index.toLong())
 
+public operator fun NativePointer<out VkHandle>.get(index: ULong): Long =
+    get(index.toLong())
+
+public operator fun NativePointer<out VkHandle>.get(index: UInt): Long =
+    get(index.toLong())
+
+public operator fun NativeArray<out VkHandle>.get(index: Long): Long =
+    ptr().get(index)
+
+public operator fun NativeArray<out VkHandle>.get(index: Int): Long =
+    get(index.toLong())
+
 public operator fun NativeArray<out VkHandle>.get(index: ULong): Long =
     get(index.toLong())
 
 public operator fun NativeArray<out VkHandle>.get(index: UInt): Long =
     get(index.toLong())
-
-public operator fun NativeArray<out VkHandle>.get(index: Long): Long =
-    (this as NativeArray<NativeInt64>)[index]
-
-public operator fun NativeArray<out VkHandle>.get(index: Int): Long =
-    get(index.toLong())
-
-public operator fun NativeArray<out VkHandle>.set(index: ULong, value: Long): Long =
-    set(index.toLong(), value)
-
-public operator fun NativeArray<out VkHandle>.set(index: UInt, value: Long): Long =
-    set(index.toLong(), value)
 
