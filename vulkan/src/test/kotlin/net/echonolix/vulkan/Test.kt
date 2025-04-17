@@ -6,6 +6,10 @@ import net.echonolix.vulkan.enums.*
 import net.echonolix.vulkan.flags.*
 import net.echonolix.vulkan.handles.*
 import net.echonolix.vulkan.structs.*
+import net.echonolix.vulkan.unions.VkClearColorValue
+import net.echonolix.vulkan.unions.VkClearValue
+import net.echonolix.vulkan.unions.color
+import net.echonolix.vulkan.unions.int32
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions
 import org.lwjgl.glfw.GLFWVulkan.nglfwCreateWindowSurface
@@ -80,7 +84,7 @@ fun main() {
         run {
             val physicalDeviceCount = NativeUInt32.calloc()
             instance.enumeratePhysicalDevices(physicalDeviceCount.ptr(), null)
-            require(physicalDeviceCount.value != 0u) { "No physical device found." }
+            check(physicalDeviceCount.value != 0u) { "No physical device found." }
             val physicalDevices = VkPhysicalDevice.malloc(physicalDeviceCount.value)
             instance.enumeratePhysicalDevices(physicalDeviceCount.ptr(), physicalDevices.ptr())
             repeat(physicalDeviceCount.value.toInt()) {
@@ -100,7 +104,7 @@ fun main() {
         println("Using physical device ${physicalDeviceProperties.deviceName.string}")
 
         val surfaceHandle = NativeInt64.malloc()
-        require(nglfwCreateWindowSurface(instance.handle, window, 0L, surfaceHandle.ptr()._address) == VkResult.VK_SUCCESS.value)
+        check(nglfwCreateWindowSurface(instance.handle, window, 0L, surfaceHandle.ptr()._address) == VkResult.VK_SUCCESS.value)
         val surface = VkSurfaceKHR.fromNativeData(instance, surfaceHandle.value)
 
         var graphicsQueueFamilyIndex = -1
@@ -545,6 +549,76 @@ fun main() {
 
         val pipeline = device.createGraphicsPipelines(VkPipelineCache.fromNativeData(device, 0L), 1u, pipelineCreateInfo.ptr(), null).getOrThrow()
 
+        val swapchainFramebuffers = buildList {
+            repeat(swapchainImageViews.size) {
+                val attachments = NativeInt64.malloc()
+                attachments.value = swapchainImageViews[it].handle
+                val framebufferCreateInfo = VkFramebufferCreateInfo.allocate().apply {
+                    this.renderPass = renderPass
+                    attachmentCount = 1u
+                    pAttachments = reinterpretCast(attachments.ptr())
+                    this.width = swapchainExtent.width
+                    this.height = swapchainExtent.height
+                    this.layers = 1u
+                }
+                add(device.createFramebuffer(framebufferCreateInfo.ptr(), null).getOrThrow())
+            }
+        }
+
+        val commandPoolCreateInfo = VkCommandPoolCreateInfo.allocate().apply {
+            flags = VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER
+            queueFamilyIndex = graphicsQueueFamilyIndex.toUInt()
+        }
+
+        val commandPool = device.createCommandPool(commandPoolCreateInfo.ptr(), null).getOrThrow()
+
+        val commandBufferAllocateInfo = VkCommandBufferAllocateInfo.allocate().apply {
+            this.commandPool = commandPool
+            level = VkCommandBufferLevel.PRIMARY
+            commandBufferCount = 1u
+        }
+        val pCommandBuffer = VkCommandBuffer.malloc()
+        device.allocateCommandBuffers(commandBufferAllocateInfo.ptr(), pCommandBuffer.ptr())
+        val commandBuffer = VkCommandBuffer.fromNativeData(commandPool, pCommandBuffer.value)
+
+        val clearColor = VkClearValue.malloc().apply {
+            color.int32.value = 0xff
+        }
+
+        fun recordCommandBuffer(buffer: VkCommandBuffer, imageIndex: Int) {
+            val beginInfo = VkCommandBufferBeginInfo.allocate().apply {}
+            buffer.beginCommandBuffer(beginInfo.ptr())
+            val renderPassInfo = VkRenderPassBeginInfo.allocate().apply {
+                this.renderPass = renderPass
+                this.framebuffer = swapchainFramebuffers[imageIndex]
+                renderArea.offset.apply {
+                    x = 0
+                    y = 0
+                }
+                renderArea.extent = swapchainExtent
+                clearValueCount = 1u
+                pClearValues = clearColor.ptr()
+            }
+
+            buffer.cmdBeginRenderPass(renderPassInfo.ptr(), VkSubpassContents.INLINE)
+
+            buffer.cmdBindPipeline(VkPipelineBindPoint.GRAPHICS, pipeline)
+            buffer.cmdDraw(3u, 1u, 0u, 0u)
+
+            buffer.cmdEndRenderPass()
+
+            buffer.endCommandBuffer()
+        }
+
+        while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents()
+
+        }
+
+        device.destroyCommandPool(commandPool, null)
+        for (framebuffer in swapchainFramebuffers) {
+            device.destroyFramebuffer(framebuffer, null)
+        }
         device.destroyPipeline(pipeline, null)
         device.destroyPipelineLayout(pipelineLayout, null)
         device.destroyRenderPass(renderPass, null)
