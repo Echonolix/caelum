@@ -11,18 +11,25 @@ import net.echonolix.vulkan.handles.VkPhysicalDevice
 import net.echonolix.vulkan.handles.get
 import net.echonolix.vulkan.handles.value
 import net.echonolix.vulkan.structs.*
-import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
+import org.lwjgl.glfw.GLFW.GLFW_FALSE
+import org.lwjgl.glfw.GLFW.GLFW_NO_API
+import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
+import org.lwjgl.glfw.GLFW.glfwCreateWindow
+import org.lwjgl.glfw.GLFW.glfwInit
+import org.lwjgl.glfw.GLFW.glfwTerminate
+import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions
 import org.lwjgl.system.MemoryUtil
 
 private fun populateDebugMessengerCreateInfo(debugCreateInfo: NativeValue<VkDebugUtilsMessengerCreateInfoEXT>) {
     debugCreateInfo.messageSeverity = VkDebugUtilsMessageSeverityFlagsEXT.VERBOSE_EXT +
-        VkDebugUtilsMessageSeverityFlagsEXT.WARNING_EXT +
-        VkDebugUtilsMessageSeverityFlagsEXT.ERROR_EXT
+            VkDebugUtilsMessageSeverityFlagsEXT.WARNING_EXT +
+            VkDebugUtilsMessageSeverityFlagsEXT.ERROR_EXT
 
     debugCreateInfo.messageType = VkDebugUtilsMessageTypeFlagsEXT.GENERAL_EXT +
-        VkDebugUtilsMessageTypeFlagsEXT.VALIDATION_EXT +
-        VkDebugUtilsMessageTypeFlagsEXT.PERFORMANCE_EXT
+            VkDebugUtilsMessageTypeFlagsEXT.VALIDATION_EXT +
+            VkDebugUtilsMessageTypeFlagsEXT.PERFORMANCE_EXT
 
     debugCreateInfo.pfnUserCallback { messageSeverity, messageType, pCallbackData, pUserData ->
         System.err.println("Validation layer: " + pCallbackData.pMessage.string)
@@ -38,7 +45,7 @@ fun main() {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE)
         val width = 800
         val height = 600
-        glfwCreateWindow(width, height, "Vulkan", 0, 0)
+        val window = glfwCreateWindow(width, height, "Vulkan", 0, 0)
         // endregion
 
         val layers = setOf("VK_LAYER_KHRONOS_validation")
