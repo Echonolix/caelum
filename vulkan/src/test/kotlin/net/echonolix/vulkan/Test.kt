@@ -81,7 +81,7 @@ fun main() {
             instance.enumeratePhysicalDevices(physicalDeviceCount.ptr(), physicalDevices.ptr())
             repeat(physicalDeviceCount.value.toInt()) {
                 val property = VkPhysicalDeviceProperties.allocate()
-                val device = VkPhysicalDevice.fromNativeData(physicalDevices[it])
+                val device = VkPhysicalDevice.fromNativeData(instance, physicalDevices[it])
                 device.getPhysicalDeviceProperties(property.ptr())
                 if (property.deviceType == VkPhysicalDeviceType.DISCRETE_GPU) physicalDeviceHandle = device.handle
             }
@@ -89,7 +89,7 @@ fun main() {
         check(physicalDeviceHandle != -1L) { "No suitable physical device found." }
         val physicalDeviceProperties = VkPhysicalDeviceProperties.allocate()
         val physicalDeviceFeatures = VkPhysicalDeviceFeatures.allocate()
-        val physicalDevice = VkPhysicalDevice.fromNativeData(physicalDeviceHandle)
+        val physicalDevice = VkPhysicalDevice.fromNativeData(instance, physicalDeviceHandle)
         physicalDevice.getPhysicalDeviceProperties(physicalDeviceProperties.ptr())
         physicalDevice.getPhysicalDeviceFeatures(physicalDeviceFeatures.ptr())
 

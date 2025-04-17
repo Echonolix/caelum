@@ -40,10 +40,6 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             }
         };
 
-        val handleName = "Vk$name"
-        val className = ClassName(VKFFI.basePkgName, "${handleName}FuncContainer")
-        val implClassName = className.nestedClass("Impl")
-
         abstract fun filterFunc(funcType: CType.Function): Boolean
 
         protected fun isDeviceFunc(funcType: CType.Function): Boolean {
@@ -165,16 +161,26 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 val funcName = it.funcName()
                 val property = PropertySpec.builder(funcName, it.className())
                 property.addModifiers(KModifier.OVERRIDE)
-                if (funcName == "vkGetInstanceProcAddr") {
-                    property.initializer("%T.$funcName", VKFFI.vkCname)
-                } else {
-                    property.delegate(
-                        CodeBlock.builder()
-                            .beginControlFlow("lazy")
-                            .addStatement("this.%M(%T)", containerType.getFuncMemberName, it.className())
-                            .endControlFlow()
-                            .build()
-                    )
+                when (funcName) {
+                    "vkGetInstanceProcAddr" -> {
+                        property.initializer("%T.$funcName", VKFFI.vkCname)
+                    }
+                    "vkGetDeviceProcAddr" -> {
+                        property.initializer(
+                            "instance.%M(%T)",
+                            ContainerType.Instance.getFuncMemberName,
+                            it.className()
+                        )
+                    }
+                    else -> {
+                        property.delegate(
+                            CodeBlock.builder()
+                                .beginControlFlow("lazy")
+                                .addStatement("this.%M(%T)", containerType.getFuncMemberName, it.className())
+                                .endControlFlow()
+                                .build()
+                        )
+                    }
                 }
 
                 property.build()
@@ -188,13 +194,14 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         companion.superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
         companion.addFunction(
             FunSpec.builder("fromNativeData")
-                .addAnnotation(JvmStatic::class)
                 .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
                 .returns(thisCname)
                 .apply {
                     if (parent == null) {
+                        addAnnotation(JvmStatic::class)
                         addStatement("return Impl(value)")
                     } else {
+                        addModifiers(KModifier.INTERNAL)
                         addStatement(
                             "throw %T()",
                             UnsupportedOperationException::class
