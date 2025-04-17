@@ -10,3 +10,8 @@ public annotation class CArrayType(val length: UInt)
 public annotation class CFunctionPointer
 @Target(AnnotationTarget.PROPERTY)
 public annotation class CPointerType(val lengthVariable: String = "")
+
+@RequiresOptIn(level = RequiresOptIn.Level.WARNING)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+public annotation class UnsafeAPI

@@ -3,6 +3,7 @@
 package net.echonolix.ktffi
 
 import java.lang.foreign.SegmentAllocator
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 public typealias NativeChar = NativeInt8
@@ -28,7 +29,7 @@ public fun Collection<String>.c_strs(): NativePointer<NativePointer<NativeChar>>
 
 public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
     contract {
-        callsInPlace(block, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
     return MemoryStack.stackPush().use {
         it.block()
@@ -37,9 +38,24 @@ public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
 
 public inline fun <R> MemoryStack.Frame.MemoryStack(block: MemoryStack.Frame.() -> R): R {
     contract {
-        callsInPlace(block, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
     return this.push().use {
         it.block()
     }
 }
+
+@Suppress("UNCHECKED_CAST")
+@UnsafeAPI
+public fun <T : NativeType> reinterpret_cast(pointer: NativePointer<*>): NativePointer<T> =
+    pointer as NativePointer<T>
+
+@Suppress("UNCHECKED_CAST")
+@UnsafeAPI
+public fun <T : NativeType> reinterpret_cast(array: NativeArray<*>): NativeArray<T> =
+    array as NativeArray<T>
+
+@Suppress("UNCHECKED_CAST")
+@UnsafeAPI
+public fun <T : NativeType> reinterpret_cast(value: NativeValue<*>): NativeValue<T> =
+    value as NativeValue<T>

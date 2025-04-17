@@ -1,14 +1,38 @@
 package net.echonolix.ktffi
 
-import java.lang.foreign.MemoryLayout
-import java.lang.foreign.ValueLayout
-
+@OptIn(UnsafeAPI::class, ExperimentalStdlibApi::class)
 fun main() {
-    val a = MemoryLayout.structLayout(
-        ValueLayout.JAVA_BYTE,
-        MemoryLayout.paddingLayout(3),
-        ValueLayout.JAVA_INT,
-        ValueLayout.JAVA_BYTE
-    )
-    println(a.byteSize())
+    MemoryStack {
+        val hexFormat = HexFormat {
+            upperCase = true
+            number {
+                prefix = "0x"
+            }
+        }
+
+        val a = NativeUInt32.malloc().ptr()
+        val b = reinterpret_cast<NativeFloat>(a)
+        val c = reinterpret_cast<NativeUInt16>(b)
+
+        a[0] = 0x43d25852u
+        println(a[0].toHexString(hexFormat))
+        println(b[0])
+        println(c[0].toHexString(hexFormat))
+        println(c[1].toHexString(hexFormat))
+        println()
+
+        b[0] = 0.5f
+        println(a[0].toHexString(hexFormat))
+        println(b[0])
+        println(c[0].toHexString(hexFormat))
+        println(c[1].toHexString(hexFormat))
+        println()
+
+        a[0] = 0x42e5072bu
+        println(a[0].toHexString(hexFormat))
+        println(b[0])
+        println(c[0].toHexString(hexFormat))
+        println(c[1].toHexString(hexFormat))
+        println()
+    }
 }
