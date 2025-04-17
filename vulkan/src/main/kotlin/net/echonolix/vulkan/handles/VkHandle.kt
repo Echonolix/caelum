@@ -14,18 +14,30 @@ public interface VkHandle : NativeType {
     public abstract class TypeDescriptor<T : VkHandle> : net.echonolix.ktffi.TypeDescriptor.Impl<T>(JAVA_LONG)
 }
 
-public inline val NativeValue<out VkHandle>.value: Long
+public val NativeValue<out VkHandle>.value: Long
     get() = (this as NativeValue<NativeInt64>).value
 
-public inline fun NativePointer<out VkHandle>.get(index: Long): Long =
+public operator fun NativePointer<out VkHandle>.get(index: Long): Long =
     (this as NativePointer<NativeInt64>)[index]
 
-public inline fun NativePointer<out VkHandle>.get(index: Int): Long =
-    (this as NativePointer<NativeInt64>)[index]
+public operator fun NativePointer<out VkHandle>.get(index: Int): Long =
+    get(index.toLong())
 
-public inline fun NativeArray<out VkHandle>.get(index: Long): Long =
+public operator fun NativeArray<out VkHandle>.get(index: ULong): Long =
+    get(index.toLong())
+
+public operator fun NativeArray<out VkHandle>.get(index: UInt): Long =
+    get(index.toLong())
+
+public operator fun NativeArray<out VkHandle>.get(index: Long): Long =
     (this as NativeArray<NativeInt64>)[index]
 
-public inline fun NativeArray<out VkHandle>.get(index: Int): Long =
-    (this as NativeArray<NativeInt64>)[index]
+public operator fun NativeArray<out VkHandle>.get(index: Int): Long =
+    get(index.toLong())
+
+public operator fun NativeArray<out VkHandle>.set(index: ULong, value: Long): Long =
+    set(index.toLong(), value)
+
+public operator fun NativeArray<out VkHandle>.set(index: UInt, value: Long): Long =
+    set(index.toLong(), value)
 

@@ -11,8 +11,8 @@ fun main() {
         }
 
         val a = NativeUInt32.malloc().ptr()
-        val b = reinterpret_cast<NativeFloat>(a)
-        val c = reinterpret_cast<NativeUInt16>(b)
+        val b = reinterpretCast<NativeFloat>(a)
+        val c = reinterpretCast<NativeUInt16>(b)
 
         a[0] = 0x43d25852u
         println(a[0].toHexString(hexFormat))

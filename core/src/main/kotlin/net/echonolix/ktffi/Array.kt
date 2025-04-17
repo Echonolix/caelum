@@ -80,20 +80,20 @@ public var NativePointer<NativeChar>.string: String
         APIHelper.`_$OMNI_SEGMENT$_`.setString(_address, value)
     }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.get(index: Long): T {
+public operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.get(index: Long): T {
     @Suppress("UNCHECKED_CAST")
     return NativePointer<E>(NativePointer.arrayVarHandle.get(_segment, 0L, index) as Long) as T
 }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.set(index: Long, value: T) {
+public operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.set(index: Long, value: T) {
     NativePointer.arrayVarHandle.set(_segment, 0L, index, value._address)
 }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.get(index: Int): T {
+public operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.get(index: Int): T {
     @Suppress("UNCHECKED_CAST")
     return NativePointer<E>(NativePointer.arrayVarHandle.get(_segment, 0L, index.toLong()) as Long) as T
 }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.set(index: Int, value: T) {
+public operator fun <E : NativeType, T : NativePointer<E>> NativeArray<T>.set(index: Int, value: T) {
     NativePointer.arrayVarHandle.set(_segment, 0L, index.toLong(), value._address)
 }

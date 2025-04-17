@@ -115,9 +115,9 @@ public value class NativePointer<T : NativeType>(
     }
 }
 
-public inline fun <T : NativeType> nullptr(): NativePointer<T> = NativePointer(0L)
+public fun <T : NativeType> nullptr(): NativePointer<T> = NativePointer(0L)
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.get(index: Long): T {
+public operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.get(index: Long): T {
     @Suppress("UNCHECKED_CAST")
     return NativePointer<E>(
         NativePointer.arrayVarHandle.get(
@@ -128,11 +128,11 @@ public inline operator fun <E : NativeType, T : NativePointer<E>> NativePointer<
     ) as T
 }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.set(index: Long, value: T) {
+public operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.set(index: Long, value: T) {
     NativePointer.arrayVarHandle.set(APIHelper.`_$OMNI_SEGMENT$_`, _address, index, value._address)
 }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.get(index: Int): T {
+public operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.get(index: Int): T {
     @Suppress("UNCHECKED_CAST")
     return NativePointer<E>(
         NativePointer.arrayVarHandle.get(
@@ -143,6 +143,6 @@ public inline operator fun <E : NativeType, T : NativePointer<E>> NativePointer<
     ) as T
 }
 
-public inline operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.set(index: Int, value: T) {
+public operator fun <E : NativeType, T : NativePointer<E>> NativePointer<T>.set(index: Int, value: T) {
     NativePointer.arrayVarHandle.set(APIHelper.`_$OMNI_SEGMENT$_`, _address, index.toLong(), value._address)
 }

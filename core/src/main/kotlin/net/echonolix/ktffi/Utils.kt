@@ -47,15 +47,15 @@ public inline fun <R> MemoryStack.Frame.MemoryStack(block: MemoryStack.Frame.() 
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NativeType> reinterpret_cast(pointer: NativePointer<*>): NativePointer<T> =
+public fun <T : NativeType> reinterpretCast(pointer: NativePointer<*>): NativePointer<T> =
     pointer as NativePointer<T>
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NativeType> reinterpret_cast(array: NativeArray<*>): NativeArray<T> =
+public fun <T : NativeType> reinterpretCast(array: NativeArray<*>): NativeArray<T> =
     array as NativeArray<T>
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NativeType> reinterpret_cast(value: NativeValue<*>): NativeValue<T> =
+public fun <T : NativeType> reinterpretCast(value: NativeValue<*>): NativeValue<T> =
     value as NativeValue<T>

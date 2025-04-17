@@ -8,11 +8,6 @@ public value class NativeValue<T : NativeType>(
     public val _segment: MemorySegment,
 ) {
     public fun ptr(): NativePointer<T> = NativePointer(_segment.address())
-
-    public inline operator fun invoke(block: NativeValue<T>.() -> Unit): NativeValue<T> {
-        this.block()
-        return this
-    }
 }
 
 public fun <T : NativeType> TypeDescriptor<T>.malloc(allocator: SegmentAllocator): NativeValue<T> =
