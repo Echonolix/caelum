@@ -36,14 +36,14 @@ public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
     }
 }
 
-//public inline fun <R> MemoryStack.Frame.MemoryStack(block: (@MemoryStackMarker MemoryStack.Frame).() -> R): R {
-//    contract {
-//        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
-//    }
-//    return this.push().use {
-//        it.block()
-//    }
-//}
+public inline fun <R> MemoryStack.Frame.MemoryStack(block: (MemoryStack.Frame).() -> R): R {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return this.push().use {
+        it.block()
+    }
+}
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI

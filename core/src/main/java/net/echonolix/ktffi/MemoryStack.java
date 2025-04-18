@@ -14,32 +14,26 @@ public final class MemoryStack {
     }
 
     public static Frame stackPush() {
-        return INSTANCES.get().push();
+        return getInstance().pushFrame();
     }
 
-    public void checkEmpty() {
-        if (frames.size() != 1) {
+    public static void checkEmpty() {
+        if (getInstance().frames.size() != 1) {
             throw new IllegalStateException("Frame leak");
         }
     }
 
+    private static MemoryStack getInstance() {
+        return INSTANCES.get();
+    }
+
     @SuppressWarnings("resource")
-    public Frame push() {
+    private Frame pushFrame() {
         Frame lastFrame = frames.peek();
         if (lastFrame == null) {
             throw new IllegalStateException("No frame");
         }
-        Frame newFrame = lastFrame.push();
-        frames.push(newFrame);
-        return newFrame;
-    }
-
-    @SuppressWarnings("resource")
-    private void pop(Frame frame) {
-        if (frames.peek() != frame) {
-            throw new IllegalStateException("Frame mismatch");
-        }
-        frames.pop();
+        return lastFrame.push();
     }
 
     public final class Frame implements SegmentAllocator, AutoCloseable {
@@ -59,17 +53,31 @@ public final class MemoryStack {
             return result;
         }
 
+        public long getAllocated() {
+            return allocated;
+        }
+
         public Frame push() {
             MemorySegment remaining = baseSegment.asSlice(allocated);
             if (remaining.byteSize() == 0) {
                 throw new IllegalStateException("No space");
             }
-            return new Frame(remaining);
+            Frame newFrame = new Frame(remaining);
+            frames.push(newFrame);
+            return newFrame;
+        }
+
+        @SuppressWarnings("resource")
+        public void pop() {
+            if (frames.peek() != this) {
+                throw new IllegalStateException("Frame mismatch");
+            }
+            frames.pop();
         }
 
         @Override
         public void close() {
-            pop(this);
+            pop();
         }
     }
 }
