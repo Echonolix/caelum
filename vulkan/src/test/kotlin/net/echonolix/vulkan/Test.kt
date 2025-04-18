@@ -6,10 +6,9 @@ import net.echonolix.vulkan.enums.*
 import net.echonolix.vulkan.flags.*
 import net.echonolix.vulkan.handles.*
 import net.echonolix.vulkan.structs.*
-import net.echonolix.vulkan.unions.VkClearColorValue
 import net.echonolix.vulkan.unions.VkClearValue
 import net.echonolix.vulkan.unions.color
-import net.echonolix.vulkan.unions.int32
+import net.echonolix.vulkan.unions.float32
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions
 import org.lwjgl.glfw.GLFWVulkan.nglfwCreateWindowSurface
@@ -81,7 +80,7 @@ fun main() {
         val debugUtilsMessenger = instance.createDebugUtilsMessengerEXT(debugCreateInfo.ptr(), null).getOrThrow()
 
         var physicalDeviceHandle = -1L
-        run {
+        MemoryStack {
             val physicalDeviceCount = NativeUInt32.calloc()
             instance.enumeratePhysicalDevices(physicalDeviceCount.ptr(), null)
             check(physicalDeviceCount.value != 0u) { "No physical device found." }
@@ -109,7 +108,7 @@ fun main() {
 
         var graphicsQueueFamilyIndex = -1
         var presentQueueFamilyIndex = -1
-        run {
+        MemoryStack {
             val queueFamilyPropertyCount = NativeUInt32.calloc()
             physicalDevice.getPhysicalDeviceQueueFamilyProperties(queueFamilyPropertyCount.ptr(), null)
             val queueFamilyProperties = VkQueueFamilyProperties.allocate(queueFamilyPropertyCount.value)
@@ -344,7 +343,7 @@ fun main() {
                 }
             }
 
-            private fun checkAvailability() { require(available) }
+            private fun checkAvailability() { check(available) }
 
             fun destroy() {
                 Shaderc.shaderc_compiler_release(compiler)
@@ -367,7 +366,7 @@ fun main() {
                         return field
                     }
 
-                private fun checkAvailability() { require(available) }
+                private fun checkAvailability() { check(available) }
 
                 fun destroy() {
                     Shaderc.shaderc_compile_options_release(options)
@@ -403,17 +402,16 @@ fun main() {
         shaderCompiler.destroy()
 
         val shaderStages = VkPipelineShaderStageCreateInfo.allocate(2)
-        val vertShaderStageCreateInfo = shaderStages[0].apply {
+        shaderStages[0].apply {
             stage = VkShaderStageFlags.VERTEX
             module = vshModule
             pName = "main".c_str()
         }
-        val fragShaderStageCreateInfo = shaderStages[1].apply {
+        shaderStages[1].apply {
             stage = VkShaderStageFlags.FRAGMENT
             module = fshModule
             pName = "main".c_str()
         }
-
 
         val vertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.allocate().apply {
             vertexBindingDescriptionCount = 0u
@@ -470,7 +468,8 @@ fun main() {
         }
 
         val colorBlendAttachmentState = VkPipelineColorBlendAttachmentState.allocate().apply {
-            colorWriteMask = VkColorComponentFlags.R + VkColorComponentFlags.G + VkColorComponentFlags.B + VkColorComponentFlags.A
+            colorWriteMask =
+                VkColorComponentFlags.R + VkColorComponentFlags.G + VkColorComponentFlags.B + VkColorComponentFlags.A
             blendEnable = VK_FALSE
             srcColorBlendFactor = VkBlendFactor.ONE // Optional
             dstColorBlendFactor = VkBlendFactor.ZERO // Optional
@@ -522,11 +521,22 @@ fun main() {
             pColorAttachments = colorAttachmentRef.ptr()
         }
 
+        val subpassDependency = VkSubpassDependency.allocate().apply {
+            srcSubpass = VK_SUBPASS_EXTERNAL
+            dstSubpass = 0u
+            srcStageMask = VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT
+            srcAccessMask = VkAccessFlags.NONE
+            dstStageMask = VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT
+            dstAccessMask = VkAccessFlags.COLOR_ATTACHMENT_WRITE
+        }
+
         val renderPassCreateInfo = VkRenderPassCreateInfo.allocate().apply {
             attachmentCount = 1u
             pAttachments = colorAttachment.ptr()
             subpassCount = 1u
             pSubpasses = subpass.ptr()
+            dependencyCount = 1u
+            pDependencies = subpassDependency.ptr()
         }
 
         val renderPass = device.createRenderPass(renderPassCreateInfo.ptr(), null).getOrThrow()
@@ -547,7 +557,8 @@ fun main() {
             this.subpass = 0u
         }
 
-        val pipeline = device.createGraphicsPipelines(VkPipelineCache.fromNativeData(device, 0L), 1u, pipelineCreateInfo.ptr(), null).getOrThrow()
+        val pipeline = device.createGraphicsPipelines(
+            VkPipelineCache.fromNativeData(device, 0L), 1u, pipelineCreateInfo.ptr(), null).getOrThrow()
 
         val swapchainFramebuffers = buildList {
             repeat(swapchainImageViews.size) {
@@ -577,44 +588,120 @@ fun main() {
             level = VkCommandBufferLevel.PRIMARY
             commandBufferCount = 1u
         }
+
         val pCommandBuffer = VkCommandBuffer.malloc()
         device.allocateCommandBuffers(commandBufferAllocateInfo.ptr(), pCommandBuffer.ptr())
         val commandBuffer = VkCommandBuffer.fromNativeData(commandPool, pCommandBuffer.value)
 
-        val clearColor = VkClearValue.malloc().apply {
-            color.int32.value = 0xff
+        val semaphoreCreateInfo = VkSemaphoreCreateInfo.allocate().apply {}
+        val fenceCreateInfo = VkFenceCreateInfo.allocate().apply {
+            flags = VkFenceCreateFlags.SIGNALED
         }
 
-        fun recordCommandBuffer(buffer: VkCommandBuffer, imageIndex: Int) {
-            val beginInfo = VkCommandBufferBeginInfo.allocate().apply {}
-            buffer.beginCommandBuffer(beginInfo.ptr())
-            val renderPassInfo = VkRenderPassBeginInfo.allocate().apply {
-                this.renderPass = renderPass
-                this.framebuffer = swapchainFramebuffers[imageIndex]
-                renderArea.offset.apply {
-                    x = 0
-                    y = 0
-                }
-                renderArea.extent = swapchainExtent
-                clearValueCount = 1u
-                pClearValues = clearColor.ptr()
-            }
+        val imageAvailableSemaphore = device.createSemaphore(semaphoreCreateInfo.ptr(), null).getOrThrow()
+        val renderFinishedSemaphore = device.createSemaphore(semaphoreCreateInfo.ptr(), null).getOrThrow()
+        val inFlightFence = device.createFence(fenceCreateInfo.ptr(), null).getOrThrow()
+        val fences = reinterpretCast<VkFence>(NativeInt64.malloc().apply {
+            value = inFlightFence.handle
+        })
 
-            buffer.cmdBeginRenderPass(renderPassInfo.ptr(), VkSubpassContents.INLINE)
-
-            buffer.cmdBindPipeline(VkPipelineBindPoint.GRAPHICS, pipeline)
-            buffer.cmdDraw(3u, 1u, 0u, 0u)
-
-            buffer.cmdEndRenderPass()
-
-            buffer.endCommandBuffer()
+        val clearColor = VkClearValue.malloc().apply {
+            color.float32[0] = 0f
+            color.float32[1] = 0f
+            color.float32[2] = 0f
+            color.float32[3] = 1f
         }
 
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents()
+            MemoryStack {
+                device.waitForFences(1u, fences.ptr(), VK_TRUE, ULong.MAX_VALUE)
+                device.resetFences(1u, fences.ptr())
 
+                val pImageIndex = NativeUInt32.malloc()
+                device.acquireNextImageKHR(
+                    swapchain,
+                    ULong.MAX_VALUE,
+                    imageAvailableSemaphore,
+                    VkFence.fromNativeData(device, 0L),
+                    pImageIndex.ptr()
+                )
+
+                commandBuffer.resetCommandBuffer(VkCommandBufferResetFlags.NONE)
+
+                val imageIndex = pImageIndex.value.toInt()
+                val beginInfo = VkCommandBufferBeginInfo.allocate().apply {}
+                commandBuffer.beginCommandBuffer(beginInfo.ptr())
+
+                val renderPassInfo = VkRenderPassBeginInfo.allocate().apply {
+                    this.renderPass = renderPass
+                    this.framebuffer = swapchainFramebuffers[imageIndex]
+                    renderArea.offset.apply {
+                        x = 0
+                        y = 0
+                    }
+                    renderArea.extent = swapchainExtent
+                    clearValueCount = 1u
+                    pClearValues = clearColor.ptr()
+                }
+
+                commandBuffer.cmdBeginRenderPass(renderPassInfo.ptr(), VkSubpassContents.INLINE)
+
+                commandBuffer.cmdBindPipeline(VkPipelineBindPoint.GRAPHICS, pipeline)
+                commandBuffer.cmdDraw(3u, 1u, 0u, 0u)
+
+                commandBuffer.cmdEndRenderPass()
+
+                commandBuffer.endCommandBuffer()
+
+                val waitStages = VkPipelineStageFlags.malloc(1).apply {
+                    this[0] = VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT
+                }
+                val waitSemaphores = reinterpretCast<VkSemaphore>(NativeInt64.malloc().apply {
+                    value = imageAvailableSemaphore.handle
+                })
+                val signalSemaphores = reinterpretCast<VkSemaphore>(NativeInt64.malloc().apply {
+                    value = renderFinishedSemaphore.handle
+                })
+                val submitInfo = VkSubmitInfo.allocate().apply {
+                    waitSemaphoreCount = 1u
+                    pWaitSemaphores = waitSemaphores.ptr()
+
+                    pWaitDstStageMask = waitStages.ptr()
+
+                    commandBufferCount = 1u
+                    pCommandBuffers = pCommandBuffer.ptr()
+
+                    signalSemaphoreCount = 1u
+                    pSignalSemaphores = signalSemaphores.ptr()
+                }
+                device.vkQueueSubmit(
+                    VkQueue.fromNativeData(device, graphicsQueue.value),
+                    1u,
+                    submitInfo.ptr(),
+                    inFlightFence
+                )
+
+                val swapchains = reinterpretCast<VkSwapchainKHR>(NativeInt64.malloc().apply {
+                    value = swapchain.handle
+                })
+                val presentInfo = VkPresentInfoKHR.allocate().apply {
+                    waitSemaphoreCount = 1u
+                    pWaitSemaphores = signalSemaphores.ptr()
+
+                    swapchainCount = 1u
+                    pSwapchains = swapchains.ptr()
+
+                    pImageIndices = pImageIndex.ptr()
+                }
+                device.vkQueuePresentKHR(VkQueue.fromNativeData(device, presentQueue.value), presentInfo.ptr())
+            }
         }
+        device.deviceWaitIdle()
 
+        device.destroySemaphore(imageAvailableSemaphore, null)
+        device.destroySemaphore(renderFinishedSemaphore, null)
+        device.destroyFence(inFlightFence, null)
         device.destroyCommandPool(commandPool, null)
         for (framebuffer in swapchainFramebuffers) {
             device.destroyFramebuffer(framebuffer, null)
