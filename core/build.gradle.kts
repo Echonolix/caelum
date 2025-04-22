@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    ktgen(project(":ktffi-core.codegen"))
+    ktgen(project(":caelum-core-codegen"))
     implementation(kotlin("reflect"))
 }
 

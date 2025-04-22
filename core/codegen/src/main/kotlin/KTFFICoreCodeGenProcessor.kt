@@ -1,8 +1,8 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.ktffi.KTFFICodegenHelper
-import net.echonolix.ktffi.addSuppress
+import net.echonolix.caelum.CaelumCodegenHelper
+import net.echonolix.caelum.addSuppress
 import net.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
@@ -15,19 +15,19 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
         val validChars = ('a'..'z').toList()
         val random = Random(0)
 
-        val file = FileSpec.builder(KTFFICodegenHelper.packageName, "CoreGenerated")
+        val file = FileSpec.builder(CaelumCodegenHelper.basePkgName, "CoreGenerated")
             .indent("    ")
             .addSuppress()
 
         CBasicType.entries.forEach { basicType ->
-            val thisCname = ClassName(KTFFICodegenHelper.packageName, basicType.name)
-            val arrayCNameP = KTFFICodegenHelper.arrayCname.parameterizedBy(thisCname)
-            val valueCNameP = KTFFICodegenHelper.valueCname.parameterizedBy(thisCname)
-            val pointerCNameP = KTFFICodegenHelper.pointerCname.parameterizedBy(thisCname)
+            val thisCname = ClassName(CaelumCodegenHelper.basePkgName, basicType.name)
+            val arrayCNameP = CaelumCodegenHelper.arrayCname.parameterizedBy(thisCname)
+            val valueCNameP = CaelumCodegenHelper.valueCname.parameterizedBy(thisCname)
+            val pointerCNameP = CaelumCodegenHelper.pointerCname.parameterizedBy(thisCname)
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
                 TypeSpec.objectBuilder(thisCname)
-                    .superclass(KTFFICodegenHelper.typeImplCname.parameterizedBy(thisCname))
+                    .superclass(CaelumCodegenHelper.typeImplCname.parameterizedBy(thisCname))
                     .addSuperclassConstructorParameter("%M", ValueLayout::class.member(basicType.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
@@ -112,7 +112,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                                 "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
                                 thisCname,
                                 "valueVarHandle",
-                                KTFFICodegenHelper.omniSegment,
+                                CaelumCodegenHelper.omniSegment,
                                 basicType.nativeDataType.asTypeName()
                             )
                             .build()
@@ -125,7 +125,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                                 "%T.%N.set(%M, _address, value${basicType.toNativeData})",
                                 thisCname,
                                 "valueVarHandle",
-                                KTFFICodegenHelper.omniSegment,
+                                CaelumCodegenHelper.omniSegment,
                             )
                             .build()
                     )
@@ -142,7 +142,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                         "return (%T.%N.get(%M, _address, index) as %T)${basicType.fromNativeData}",
                         thisCname,
                         "arrayVarHandle",
-                        KTFFICodegenHelper.omniSegment,
+                        CaelumCodegenHelper.omniSegment,
                         basicType.nativeDataType.asTypeName()
                     )
                     .build()
@@ -160,7 +160,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                         "%T.%N.set(%M, _address, index, value${basicType.toNativeData})",
                         thisCname,
                         "arrayVarHandle",
-                        KTFFICodegenHelper.omniSegment
+                        CaelumCodegenHelper.omniSegment
                     )
                     .build()
             )
@@ -178,7 +178,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                         "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
                         thisCname,
                         "valueVarHandle",
-                        KTFFICodegenHelper.omniSegment,
+                        CaelumCodegenHelper.omniSegment,
                         basicType.nativeDataType.asTypeName()
                     )
                     .build()
@@ -195,7 +195,7 @@ class KTFFICoreCodeGenProcessor : KtgenProcessor {
                         "return %T.%N.set(%M, _address, value)",
                         thisCname,
                         "valueVarHandle",
-                        KTFFICodegenHelper.omniSegment
+                        CaelumCodegenHelper.omniSegment
                     )
                     .build()
             )

@@ -1,3 +1,3 @@
 dependencies {
-    implementation(project(":ktffi-codegen-api"))
+    implementation(project(":caelum-codegen-api"))
 }

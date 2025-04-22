@@ -13,16 +13,13 @@ pluginManagement {
     }
 }
 
-rootProject.name = "ktffi"
+rootProject.name = "caelum-core"
 
 listOf(
-    "ktffi-core" to file("core"),
-    "ktffi-core.codegen" to file("core/codegen"),
-    "ktffi-codegen-api" to file("codegen-api"),
+    "caelum-core" to file("core"),
+    "caelum-core-codegen" to file("core/codegen"),
+    "caelum-codegen-api" to file("codegen-api"),
 ).forEach { (name, dir) ->
     includeFlat(name)
     project(":$name").projectDir = dir
 }
-
-
-include(":vulkan", ":vulkan:codegen")
