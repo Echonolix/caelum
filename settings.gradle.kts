@@ -14,7 +14,7 @@ includeBuild("../ktgen") {
 }
 
 (listOf(
-    "caelum-codegen-api" to file("codegen-api")
+    "codegen-api" to file("codegen-api")
 ) + listOf(
     "core",
     "vulkan",
