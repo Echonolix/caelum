@@ -1,10 +1,3 @@
-includeBuild("../ktgen") {
-    dependencySubstitution {
-        substitute(module("net.echonolix:ktgen-api")).using(project(":api"))
-        substitute(module("net.echonolix:ktgen-runtime")).using(project(":runtime"))
-    }
-}
-
 pluginManagement {
     includeBuild("../ktgen")
 
@@ -13,13 +6,30 @@ pluginManagement {
     }
 }
 
-rootProject.name = "caelum-core"
+includeBuild("../ktgen") {
+    dependencySubstitution {
+        substitute(module("net.echonolix:ktgen-api")).using(project(":api"))
+        substitute(module("net.echonolix:ktgen-runtime")).using(project(":runtime"))
+    }
+}
 
-listOf(
-    "caelum-core" to file("core"),
-    "caelum-core-codegen" to file("core/codegen"),
-    "caelum-codegen-api" to file("codegen-api"),
-).forEach { (name, dir) ->
-    includeFlat(name)
+(listOf(
+    "caelum-codegen-api" to file("codegen-api")
+) + listOf(
+    "core",
+    "vulkan",
+    "glfw",
+    "vma",
+    "jemalloc",
+    "assimp"
+).flatMap {
+    sequenceOf(
+        "caelum-$it" to file(it),
+        "caelum-$it:codegen" to file("$it/codegen")
+    )
+}).forEach { (name, dir) ->
+    include(name)
     project(":$name").projectDir = dir
 }
+
+rootProject.name = "caelum"
