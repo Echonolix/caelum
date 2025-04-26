@@ -27,6 +27,10 @@ public fun Collection<String>.c_strs(allocator: SegmentAllocator): NativePointer
 context(allocator: SegmentAllocator)
 public fun Collection<String>.c_strs(): NativePointer<NativePointer<NativeChar>> = c_strs(allocator)
 
+/**
+ * Creates a new [MemoryStack] and pushes it onto the stack, executing the
+ * given block of code within the [MemoryStack.Frame] context.
+ */
 public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -36,6 +40,13 @@ public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
     }
 }
 
+public inline fun <R> memStack(block: MemoryStack.Frame.() -> R): R =
+    MemoryStack(block)
+
+/**
+ * Creates a new [MemoryStack] and pushes it onto the stack, executing
+ * the given block of code within the [MemoryStack.Frame] context.
+ */
 public inline fun <R> MemoryStack.Frame.MemoryStack(block: (MemoryStack.Frame).() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -44,6 +55,9 @@ public inline fun <R> MemoryStack.Frame.MemoryStack(block: (MemoryStack.Frame).(
         it.block()
     }
 }
+
+public inline fun <R> MemoryStack.Frame.memStack(block: (MemoryStack.Frame).() -> R): R =
+    MemoryStack(block)
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI

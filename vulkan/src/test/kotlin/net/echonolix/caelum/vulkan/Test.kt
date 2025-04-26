@@ -12,6 +12,7 @@ import net.echonolix.caelum.vulkan.unions.float32
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions
 import org.lwjgl.glfw.GLFWVulkan.nglfwCreateWindowSurface
+import org.lwjgl.system.MemoryStack as LwjglMemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.util.shaderc.Shaderc
 
@@ -332,7 +333,7 @@ fun main() {
                 options: CompilerOptions? = null
             ): CompilationResult {
                 checkAvailability()
-                org.lwjgl.system.MemoryStack.stackPush().use { stack ->
+                LwjglMemoryStack.stackPush().use { stack ->
                     val sourceBuffer = stack.ASCII(source, false) // fuck you
                     val fileNameBuffer = stack.ASCII(fileName)
                     val entryPointBuffer = stack.ASCII(entryPoint)
