@@ -1,10 +1,10 @@
 package net.echonolix.caelum.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
-import net.echonolix.ktgen.KtgenProcessor
 import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.schema.Registry
+import net.echonolix.ktgen.KtgenProcessor
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
 import nl.adaptivity.xmlutil.XmlReader
@@ -71,8 +71,18 @@ class VKFFICodeGenProcessor : KtgenProcessor {
 //        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
 //        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
 
-        val includedVKVersion = setOf("VK_VERSION_1_0", "VK_VERSION_1_1", "VK_VERSION_1_2", "VK_VERSION_1_3")
-        val includedExtension = setOf("VK_KHR_surface", "VK_KHR_swapchain", "VK_EXT_debug_utils")
+        val includedVKVersion = setOf(
+            "VK_VERSION_1_0",
+            "VK_VERSION_1_1",
+            "VK_VERSION_1_2",
+            "VK_VERSION_1_3"
+        )
+        val includedExtension = setOf(
+            "VK_KHR_surface",
+            "VK_KHR_swapchain",
+            "VK_EXT_debug_utils",
+            "VK_EXT_present_mode_fifo_latest_ready"
+        )
         filteredRegistry.registryFeatures.asSequence()
             .filter { it.name in includedVKVersion }
             .forEach { processRequire(it.require) }
