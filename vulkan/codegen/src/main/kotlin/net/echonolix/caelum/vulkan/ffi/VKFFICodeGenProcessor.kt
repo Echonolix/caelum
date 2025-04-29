@@ -131,13 +131,13 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 val group = GenerateGroupTask(ctx).fork()
                 val typeDef = GenerateTypeDefTask(ctx).fork()
                 val function = GenerateFunctionTask(ctx).fork()
-//                val overload = GenerateFunctionOverloadTask(ctx).fork()
+                val overload = GenerateFunctionOverloadTask(ctx).fork()
                 handle.join()
                 enum.join()
                 group.join()
                 typeDef.join()
                 function.join()
-//                overload.join()
+                overload.join()
             }
         }.fork().join()
 

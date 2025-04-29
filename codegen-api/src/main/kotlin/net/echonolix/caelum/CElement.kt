@@ -480,10 +480,16 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         context(ctx: KTFFICodegenContext)
         override fun ktApiType(): TypeName {
             val eType = elementType.deepResolve()
-            return if (eType is BasicType) {
-                CaelumCodegenHelper.pointerCname.parameterizedBy(eType.baseType.caelumCoreTypeName)
-            } else {
-                CaelumCodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
+            return when (eType) {
+                is BasicType -> {
+                    CaelumCodegenHelper.pointerCname.parameterizedBy(eType.baseType.caelumCoreTypeName)
+                }
+                is Handle -> {
+                    CaelumCodegenHelper.pointerCname.parameterizedBy(WildcardTypeName.producerOf(elementType.ktApiType()))
+                }
+                else -> {
+                    CaelumCodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
+                }
             }
         }
 

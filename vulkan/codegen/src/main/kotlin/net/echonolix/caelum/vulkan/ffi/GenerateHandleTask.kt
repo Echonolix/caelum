@@ -136,11 +136,6 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         ctx.writeOutput(Path("objectHandles"), file)
     }
 
-    context(_: VKFFICodeGenContext)
-    private fun CType.Handle.objectBaseCName(): ClassName {
-        return ClassName(packageName(), "${this.name}Object")
-    }
-
     private fun VKFFICodeGenContext.genObjectBase(
         functions: List<CType.Function>,
         handleType: CType.Handle

@@ -8,7 +8,7 @@ import kotlin.io.path.Path
 class GenerateTypeDefTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
         val typeDefFileBase = FileSpec.builder(VKFFI.basePkgName, "TypeDefs")
-        val typeDefFileFuncPtr = FileSpec.builder(VKFFI.basePkgName, "TypeDefs")
+        val typeDefFileFuncPtr = FileSpec.builder(VKFFI.basePkgName, "FuncPtrTypeDefs")
         ctx.filterTypeStream<CType.TypeDef>().forEach { (_, typeDefType) ->
             val dstFile = if (typeDefType.dstType is CType.FunctionPointer) {
                 typeDefFileFuncPtr

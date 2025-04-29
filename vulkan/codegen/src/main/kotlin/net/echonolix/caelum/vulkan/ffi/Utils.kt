@@ -1,6 +1,7 @@
 package net.echonolix.caelum.vulkan.ffi
 
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.Documentable
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
@@ -59,6 +60,20 @@ fun VKFFICodeGenContext.filterVkFunction(): List<CType.Function> =
         .toList()
 
 context(ctx: VKFFICodeGenContext)
+fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) =
+    toParamSpecs(annotations) {
+        val paramType = it.type
+        var pType = paramType.ktApiType()
+        if (paramType is CType.Pointer && it.optional) {
+            pType = pType.copy(nullable = true)
+        }
+        if (paramType is CType.Handle) {
+            pType = paramType.objectBaseCName()
+        }
+        pType
+    }
+
+context(ctx: VKFFICodeGenContext)
 fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
     toParamSpecs(annotations) {
         var pType = it.type.ktApiType()
@@ -92,4 +107,9 @@ tailrec fun isDeviceBase(type: CType.Handle): Boolean {
     if (type.name == "VkDevice") return true
     val parent = type.tags.get<VkHandleTag>()?.parent ?: return false
     return isDeviceBase(parent)
+}
+
+context(_: VKFFICodeGenContext)
+fun CType.Handle.objectBaseCName(): ClassName {
+    return ClassName(packageName(), this.name)
 }

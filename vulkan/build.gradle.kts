@@ -4,9 +4,6 @@ plugins {
     id("net.echonolix.ktgen")
 }
 
-val lwjglVersion = "3.3.6"
-val lwjglNatives = "natives-windows"
-
 ktgen {
     defaultCompile.set(false)
 }
@@ -18,12 +15,12 @@ val baseSrc by sourceSets.creating {
 fun SourceSet.setup(parents: List<SourceSet>) {
     kotlin.srcDir(ktgen.outputDir.file(this.name))
     parents.forEach {
-        configurations.named(this.implementationConfigurationName)
-            .extendsFrom(configurations.named(it.implementationConfigurationName))
+        configurations.named(this.apiConfigurationName)
+            .extendsFrom(configurations.named(it.apiConfigurationName))
     }
     dependencies {
         parents.forEach {
-            implementationConfigurationName(it.output)
+            apiConfigurationName(it.output)
         }
     }
 }
@@ -70,32 +67,31 @@ val objectBase by sourceSets.creating {
     setup(functions)
 }
 
-dependencies {
-    ktgen(project("codegen"))
+val allGenSourceSets = listOf(baseSrc) + enumsBase + enums +
+    groupsBase + groups + functionsBase + functions + objectHandles +
+    objectBase
 
-    baseSrc.implementationConfigurationName(kotlin("reflect"))
-    baseSrc.implementationConfigurationName(project(":caelum-core"))
-
-    testImplementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
-    testImplementation("org.lwjgl", "lwjgl", lwjglVersion)
-    testImplementation("org.lwjgl", "lwjgl-glfw", lwjglVersion)
-    testImplementation("org.lwjgl", "lwjgl-shaderc", lwjglVersion)
-    testRuntimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
-    testRuntimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
-    testRuntimeOnly("org.lwjgl", "lwjgl-shaderc", classifier = lwjglNatives)
-}
-
-afterEvaluate {
-    tasks.named(baseSrc.getCompileTaskName("kotlin")).configure {
+allGenSourceSets.forEach {
+    tasks.named(it.getCompileTaskName("kotlin")) {
         dependsOn(tasks.ktgen)
     }
 }
 
-val myTask by tasks.registering {
-    group = "build"
-    dependsOn(objectBase.output)
+sourceSets.main.configure {
+    setup(objectBase)
 }
 
-kotlin {
-    explicitApi()
+dependencies {
+    ktgen(project("codegen"))
+
+    baseSrc.apiConfigurationName(kotlin("reflect"))
+    baseSrc.apiConfigurationName(project(":caelum-core"))
+}
+
+tasks.jar {
+    from(allGenSourceSets.map { it.output })
+}
+
+tasks.named<Jar>("sourcesJar") {
+    from(allGenSourceSets.map { it.allSource })
 }

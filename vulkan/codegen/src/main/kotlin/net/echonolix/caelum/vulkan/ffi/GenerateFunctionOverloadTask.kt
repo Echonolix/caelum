@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.CType
 import net.echonolix.caelum.CaelumCodegenHelper
 import net.echonolix.caelum.decap
+import kotlin.io.path.Path
 
 class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
@@ -37,7 +38,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                     .map { vkFuncOverload(it) }
                     .toList()
             )
-            ctx.writeOutput(file)
+            ctx.writeOutput(Path("main"), file)
         }
 
         private fun VKFFICodeGenContext.vkFuncOverload(funcType: CType.Function): FunSpec {
@@ -54,7 +55,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
             check(firstParam.type is CType.Handle)
 
             val func1 = FunSpec.builder(funcName)
-            func1.receiver(handleType.typeName())
+            func1.receiver(handleType.objectBaseCName())
 
             val lastParam = funcType.parameters.last()
             val lastParamType = lastParam.type
@@ -66,17 +67,18 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 check(funcType.returnType.name == "VkResult")
                 check(resultCodeTag.successCodes.isNotEmpty())
                 check(resultCodeTag.errorCodes.isNotEmpty())
-                returnType1 = lastParamType.elementType.ktApiType()
-                val returnHandleType = lastParamType.elementType as CType.Handle
+                val lastParamElementType = lastParamType.elementType as CType.Handle
+                returnType1 = lastParamElementType.objectBaseCName()
+                val returnHandleType = lastParamElementType
                 params1 = firstDropped.dropLast(1)
 
                 func1.returns(resultCname.parameterizedBy(returnType1))
-                func1.addParameters(params1.toKtParamSpecs(true))
+                func1.addParameters(params1.toKtParamOverloadSpecs(true))
                 val funcCode = CodeBlock.builder()
                 funcCode.beginControlFlow("return %M", CaelumCodegenHelper.memoryStackMember)
                 funcCode.addStatement(
                     "val handle114514 = %T.%M()",
-                    returnType1,
+                    lastParamElementType.typeName(),
                     CaelumCodegenHelper.mallocMember
                 )
                 funcCode.add("when (val result69420 = $dispatcher.$origName(")
@@ -124,7 +126,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 params1 = firstDropped
 
                 func1.returns(returnType1)
-                func1.addParameters(params1.toKtParamSpecs(true))
+                func1.addParameters(params1.toKtParamOverloadSpecs(true))
                 val funcCode = CodeBlock.builder()
                 funcCode.add("return when (val result69420 = $dispatcher.$origName(")
                 val callParams = mutableListOf(CodeBlock.of("this"))
@@ -157,7 +159,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
                 params1 = firstDropped
 
                 func1.returns(returnType1)
-                func1.addParameters(params1.toKtParamSpecs(true))
+                func1.addParameters(params1.toKtParamOverloadSpecs(true))
                 val funcCode = CodeBlock.builder()
                 funcCode.add("return $dispatcher.$origName(")
                 val callParams = mutableListOf(CodeBlock.of("this"))

@@ -18,6 +18,9 @@ subprojects {
     apply {
         plugin("kotlin")
     }
+    configure<JavaPluginExtension> {
+        withSourcesJar()
+    }
 
     configure<KotlinJvmProjectExtension> {
         compilerOptions {
