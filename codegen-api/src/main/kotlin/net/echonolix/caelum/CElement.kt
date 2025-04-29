@@ -43,6 +43,19 @@ public interface CElement : Comparable<CElement> {
         override fun compareTo(other: CElement): Int {
             return this.javaClass.simpleName.compareTo(other.javaClass.simpleName)
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Impl
+
+            return name == other.name
+        }
+
+        override fun hashCode(): Int {
+            return name.hashCode()
+        }
     }
 
     public interface TopLevel : CElement {

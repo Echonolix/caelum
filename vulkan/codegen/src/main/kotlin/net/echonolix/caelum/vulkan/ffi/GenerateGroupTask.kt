@@ -5,72 +5,107 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
+import java.util.stream.Collectors
 import kotlin.io.path.Path
 
 class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
-    private val groupsPath = Path("groups")
+    private val skippedStructs = setOf(
+        "VkBaseInStructure",
+        "VkBaseOutStructure"
+    )
 
     override fun VKFFICodeGenContext.compute() {
-        val struct = StructTask().fork()
-        val union = UnionTask().fork()
-        struct.join()
-        union.join()
-    }
+        val groupTypes = ctx.filterTypeStream<CType.Group>()
+            .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
+            .toList()
 
-    private fun CType.Group.isParallelizable(): Boolean {
-        return members.none {
-            val memberType = it.type.deepReferenceResolve()
-            memberType is CType.Function || memberType is CType.Group
+        val typeAlias = GenTypeAliasTask(this, groupTypes).fork()
+
+        val groupTypesNoAliases = groupTypes.parallelStream()
+            .filter { (name, type) -> name == type.name }
+            .map { (_, type) -> type }
+            .toList()
+
+        val hasFunctionPointer: MutableSet<CType.Group> = groupTypesNoAliases.parallelStream()
+            .filter { type -> type.members.any { it.type.deepReferenceResolve() is CType.Function } }
+            .collect(Collectors.toCollection(::mutableSetOf))
+
+        val typeMemberAdjLists: Map<CType.Group, Set<CType.Group>> = groupTypesNoAliases.parallelStream()
+            .collect(Collectors.toMap(Function.identity()) { type ->
+                type.members.asSequence()
+                    .map { it.type.deepReferenceResolve() }
+                    .filterIsInstance<CType.Group>()
+                    .filter { it != type }
+                    .toSet()
+            })
+
+        val twoWayAdjLists: Map<CType.Group, Set<CType.Group>> = typeMemberAdjLists.entries.parallelStream()
+            .flatMap { (type, neighbors) -> neighbors.stream().map { type to it } }
+            .collect(
+                Collectors.groupingByConcurrent(
+                    Pair<CType.Group, CType.Group>::second,
+                    {
+                        ConcurrentHashMap(typeMemberAdjLists).apply {
+                            replaceAll { _, neighbors -> neighbors.toMutableSet() }
+                        }
+                    },
+                    Collectors.mapping(Pair<CType.Group, CType.Group>::first, Collectors.toSet())
+                )
+            )
+
+        val clusters = mutableSetOf<MutableSet<CType.Group>>()
+        val visitedType = mutableMapOf<CType.Group, MutableSet<CType.Group>>()
+
+        val comparator = compareBy<CType> { it.name }
+
+        fun dfs(type: CType.Group, cluster: MutableSet<CType.Group>) {
+            if (type in visitedType) return
+            visitedType[type] = cluster
+            cluster.add(type)
+            twoWayAdjLists[type]?.sortedWith(comparator)?.forEach { dfs(it, cluster) }
         }
-    }
 
-    private inner class StructTask : VKFFITask<Unit>(ctx) {
-        private val skippedStructs = setOf(
-            "VkBaseInStructure",
-            "VkBaseOutStructure"
-        )
-
-        override fun VKFFICodeGenContext.compute() {
-            val structTypes = ctx.filterTypeStream<CType.Struct>()
-                .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
-                .toList()
-            val typeAlias = GenTypeAliasTask(this, structTypes).fork()
-
-            structTypes.parallelStream()
-                .filter { (name, type) -> name == type.name }
-                .filter { (_, type) -> type.isParallelizable() }
-                .map { (_, type) -> genGroupType(type) }
-                .partitionWrite("groups")
-
-            structTypes.parallelStream()
-                .filter { (name, type) -> name == type.name }
-                .filter { (_, type) -> !type.isParallelizable() }
-                .map { (_, type) -> genGroupType(type) }
-                .forEach { ctx.writeOutput(groupsPath, it) }
-
-            typeAlias.joinAndWriteOutput(groupsPath, VKFFI.structPackageName)
+        groupTypesNoAliases.sortedWith(comparator).forEach { type ->
+            if (type in visitedType) return@forEach
+            val cluster = mutableSetOf<CType.Group>()
+            dfs(type, cluster)
+            if (cluster.any { it in hasFunctionPointer }) {
+                hasFunctionPointer.addAll(cluster)
+            } else {
+                clusters.add(cluster)
+            }
         }
-    }
 
-    private inner class UnionTask : VKFFITask<Unit>(ctx) {
-        override fun VKFFICodeGenContext.compute() {
-            val unionTypes = ctx.filterType<CType.Union>()
-            val typeAlias = GenTypeAliasTask(this, unionTypes).fork()
+        val targetClusterSize = (groupTypesNoAliases.size + 7) / 8
+        val mergedClusters = mutableListOf<MutableSet<CType.Group>>()
 
-            unionTypes.parallelStream()
-                .filter { (name, type) -> name == type.name }
-                .filter { (_, type) -> type.isParallelizable() }
-                .map { (_, type) -> genGroupType(type) }
-                .partitionWrite("groups")
 
-            unionTypes.parallelStream()
-                .filter { (name, type) -> name == type.name }
-                .filter { (_, type) -> !type.isParallelizable() }
-                .map { (_, type) -> genGroupType(type) }
-                .forEach { ctx.writeOutput(groupsPath, it) }
-
-            typeAlias.joinAndWriteOutput(groupsPath, VKFFI.unionPackageName)
+        clusters.forEach { cluster ->
+            mergedClusters.find { it.size + cluster.size < targetClusterSize }?.addAll(cluster)
+                ?: mergedClusters.add(cluster.toMutableSet())
         }
+        mergedClusters.sortBy { it.size }
+
+        check(mergedClusters.size == 8)
+        mergedClusters.forEach { cluster ->
+            println(cluster.size)
+        }
+
+        mergedClusters.forEachIndexed { index, cluster ->
+            val clusterPath = Path("groups$index")
+            cluster.parallelStream()
+                .map { type -> genGroupType(type) }
+                .forEach { ctx.writeOutput(clusterPath, it) }
+        }
+
+        val groupsPath = Path("groups")
+        hasFunctionPointer.parallelStream()
+            .map { type -> genGroupType(type) }
+            .forEach { ctx.writeOutput(groupsPath, it) }
+
+        typeAlias.joinAndWriteOutput(groupsPath, VKFFI.structPackageName)
     }
 
     context(ctx: VKFFICodeGenContext)

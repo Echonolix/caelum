@@ -22,12 +22,12 @@ import kotlin.io.path.deleteRecursively
 import kotlin.io.path.walk
 
 fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
-    return currDepth + group.members.maxOf {
+    return group.members.maxOf {
         val memberType = it.type.deepReferenceResolve()
         if (memberType is CType.Group && memberType != group) {
             countDepth(memberType, currDepth + 1)
         } else {
-            0
+            currDepth
         }
     }
 }
@@ -104,7 +104,8 @@ class VKFFICodeGenProcessor : KtgenProcessor {
 //            .forEach { processRequire(it.require) }
 
         val list = ctx.filterType<CType.Group>()
-        val nestedCount = list.count { countDepth(it.second) > 1 }
+        val nestedCount = list.groupingBy { countDepth(it.second) }
+            .eachCount()
         val handleCount = list.count { s ->
             s.second.members.any {
                 it.type is CType.Handle
@@ -119,6 +120,8 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         println(handleCount)
         println(structInFuncPtrCount)
         println(list.size)
+        println()
+        System.out.flush()
 //        return emptySet()
 
         object : RecursiveAction() {
