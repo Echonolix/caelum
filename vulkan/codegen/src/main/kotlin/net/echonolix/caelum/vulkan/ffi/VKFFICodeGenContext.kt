@@ -320,6 +320,8 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             else -> {
                 throw IllegalStateException("Cannot resolve ext enum: ${xmlEnum.name}")
             }
+        }.also {
+            it.tags.set(RequiredByTag(registry.extEnumRequiredBy[xmlEnum.name]!!))
         }
     }
 

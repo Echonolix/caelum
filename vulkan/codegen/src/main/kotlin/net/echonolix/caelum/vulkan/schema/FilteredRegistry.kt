@@ -74,7 +74,7 @@ class FilteredRegistry(registry: Registry) {
         .associateBy { it.proto?.name ?: it.name }
 
     val extEnums = (
-        registryFeatures
+        registryFeatures.asSequence()
             .flatMap { it.require }
             .flatMap { it.enums } +
             registryExtensions.flatMap { extension ->
@@ -88,6 +88,24 @@ class FilteredRegistry(registry: Registry) {
             it.alias != null || it.value != null
         })
         .associateBy { it.name }
+
+    val extEnumRequiredBy = (
+        registryFeatures.asSequence().flatMap { feature ->
+            feature.require.asSequence()
+                .flatMap { it.enums }
+                .map { it to feature.name }
+        } + registryExtensions.flatMap { extension ->
+            extension.require.asSequence()
+                .flatMap { it.enums }
+                .map { it.copy(extnumber = it.extnumber ?: extension.number.toString()) }
+                .map { it to extension.name }
+        }
+        )
+        .filter { (it, _) -> it.api == null || it.api == API.vulkan }
+        .sortedWith(compareBy { (it, _) ->
+            it.alias != null || it.value != null
+        })
+        .associate { it.first.name to it.second }
 
     val enumValueOrders = (registry.enums.asSequence()
         .flatMap { it.enums }
