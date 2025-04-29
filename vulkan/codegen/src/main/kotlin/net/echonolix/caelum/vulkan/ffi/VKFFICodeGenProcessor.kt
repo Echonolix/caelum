@@ -1,6 +1,8 @@
 package net.echonolix.caelum.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
+import net.echonolix.caelum.CType
+import net.echonolix.caelum.deepReferenceResolve
 import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.schema.Registry
@@ -18,6 +20,17 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.walk
+
+fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
+    return currDepth + group.members.maxOf {
+        val memberType = it.type.deepReferenceResolve()
+        if (memberType is CType.Group && memberType != group) {
+            countDepth(memberType, currDepth + 1)
+        } else {
+            0
+        }
+    }
+}
 
 class VKFFICodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
@@ -68,27 +81,45 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 }
         }
 
-//        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-//        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
 
-        val includedVKVersion = setOf(
-            "VK_VERSION_1_0",
-            "VK_VERSION_1_1",
-            "VK_VERSION_1_2",
-            "VK_VERSION_1_3"
-        )
-        val includedExtension = setOf(
-            "VK_KHR_surface",
-            "VK_KHR_swapchain",
-            "VK_EXT_debug_utils",
-            "VK_EXT_present_mode_fifo_latest_ready"
-        )
-        filteredRegistry.registryFeatures.asSequence()
-            .filter { it.name in includedVKVersion }
-            .forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.asSequence()
-            .filter { it.name in includedExtension }
-            .forEach { processRequire(it.require) }
+//        val includedVKVersion = setOf(
+//            "VK_VERSION_1_0",
+//            "VK_VERSION_1_1",
+//            "VK_VERSION_1_2",
+//            "VK_VERSION_1_3"
+//        )
+//        val includedExtension = setOf(
+//            "VK_KHR_surface",
+//            "VK_KHR_swapchain",
+//            "VK_EXT_debug_utils",
+//            "VK_EXT_present_mode_fifo_latest_ready"
+//        )
+//        filteredRegistry.registryFeatures.asSequence()
+//            .filter { it.name in includedVKVersion }
+//            .forEach { processRequire(it.require) }
+//        filteredRegistry.registryExtensions.asSequence()
+//            .filter { it.name in includedExtension }
+//            .forEach { processRequire(it.require) }
+
+        val list = ctx.filterType<CType.Group>()
+        val nestedCount = list.count { countDepth(it.second) > 1 }
+        val handleCount = list.count { s ->
+            s.second.members.any {
+                it.type is CType.Handle
+            }
+        }
+        val structInFuncPtrCount = ctx.filterType<CType.FunctionPointer>().count { funcPtr ->
+            funcPtr.second.elementType.parameters.any {
+                it.type.deepReferenceResolve() is CType.Group
+            }
+        }
+        println(nestedCount)
+        println(handleCount)
+        println(structInFuncPtrCount)
+        println(list.size)
+//        return emptySet()
 
         object : RecursiveAction() {
             override fun compute() {
@@ -97,13 +128,13 @@ class VKFFICodeGenProcessor : KtgenProcessor {
                 val group = GenerateGroupTask(ctx).fork()
                 val typeDef = GenerateTypeDefTask(ctx).fork()
                 val function = GenerateFunctionTask(ctx).fork()
-                val overload = GenerateFunctionOverloadTask(ctx).fork()
+//                val overload = GenerateFunctionOverloadTask(ctx).fork()
                 handle.join()
                 enum.join()
                 group.join()
                 typeDef.join()
                 function.join()
-                overload.join()
+//                overload.join()
             }
         }.fork().join()
 

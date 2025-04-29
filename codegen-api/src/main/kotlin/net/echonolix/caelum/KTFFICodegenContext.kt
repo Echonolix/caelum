@@ -104,6 +104,12 @@ public abstract class KTFFICodegenContext(public val basePkgName: String, public
         }
     }
 
+    public fun writeOutput(path: Path, fileSpec: FileSpec.Builder) {
+        fileSpec.addSuppress()
+        fileSpec.indent("    ")
+        outputFiles0.add(fileSpec.build().writeTo(outputDir.resolve(path)))
+    }
+
     public fun writeOutput(fileSpec: FileSpec.Builder) {
         fileSpec.addSuppress()
         fileSpec.indent("    ")

@@ -253,6 +253,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
 
         val handleType = CType.Handle(handle.name)
         handleType.tags.set(VkHandleTag(parent, objectEnum, dispatchable))
+        handleType.tags.set(TypeNameRename(handle.name + "Handle"))
         return handleType
     }
 

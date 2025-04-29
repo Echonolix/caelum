@@ -5,10 +5,20 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.CBasicType
 import net.echonolix.caelum.CType
 import net.echonolix.caelum.CaelumCodegenHelper
+import kotlin.io.path.Path
 
 class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     override fun VKFFICodeGenContext.compute() {
-        ctx.filterTypeStream<CType.Function>().map { (_, funcType) -> genFunc(funcType) }.forEach(ctx::writeOutput)
+        val funcPtrPath = Path("groups")
+        ctx.filterTypeStream<CType.Function>()
+            .filter { (_, funcType) -> funcType.name.startsWith("VkFuncPtr") }
+            .map { (_, funcType) -> genFunc(funcType) }
+            .forEach { ctx.writeOutput(funcPtrPath, it) }
+
+        ctx.filterTypeStream<CType.Function>()
+            .filter { (_, funcType) -> !funcType.name.startsWith("VkFuncPtr") }
+            .map { (_, funcType) -> genFunc(funcType) }
+            .partitionWrite("functions")
     }
 
     private fun VKFFICodeGenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
@@ -30,9 +40,6 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 )
                 .build()
         )
-
-        fun ParameterSpec.clearAnnotations() =
-            this.toBuilder().apply { annotations.clear() }.build()
 
         val invokeFunc = FunSpec.builder("invoke")
         invokeFunc.addModifiers(KModifier.OPERATOR, KModifier.ABSTRACT)

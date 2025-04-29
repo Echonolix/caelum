@@ -4,7 +4,7 @@ import net.echonolix.caelum.NativeFunction
 import net.echonolix.caelum.TypeDescriptor
 import java.lang.invoke.MethodHandle
 
-public sealed interface VkFunction : NativeFunction {
+public interface VkFunction : NativeFunction {
     override val typeDescriptor: TypeDescriptorImpl<*>
 
     public abstract class TypeDescriptorImpl<T : VkFunction>(

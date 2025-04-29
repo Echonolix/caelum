@@ -23,6 +23,8 @@ public class TagStorage {
     public inline fun <reified T : Tag> set(value: T): Unit = set(T::class.java, value)
 }
 
+public class TypeNameRename(public val name: String): Tag
+
 public interface CElement : Comparable<CElement> {
     public val name: String
     public val tags: TagStorage
@@ -51,7 +53,7 @@ public interface CElement : Comparable<CElement> {
 
         context(ctx: KTFFICodegenContext)
         public fun typeName(): TypeName {
-            return ClassName(packageName(), name)
+            return ClassName(packageName(), tags.get<TypeNameRename>()?.name ?: name)
         }
 
         context(ctx: KTFFICodegenContext)
@@ -238,7 +240,11 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
-            return typeName()
+            return if (dstType is FunctionPointer) {
+                CaelumCodegenHelper.pointerCname
+            } else {
+                typeName()
+            }
         }
 
         context(ctx: KTFFICodegenContext)
@@ -570,7 +576,16 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     }
 }
 
-private tailrec fun CType.deepResolve(): CType {
+public tailrec fun CType.deepReferenceResolve(): CType {
+    return when (this) {
+        is CType.Pointer -> this.elementType.deepReferenceResolve()
+        is CType.Array -> this.elementType.deepReferenceResolve()
+        is CType.TypeDef -> this.dstType.deepReferenceResolve()
+        else -> this
+    }
+}
+
+public tailrec fun CType.deepResolve(): CType {
     if (this !is CType.TypeDef) return this
     return this.dstType.deepResolve()
 }

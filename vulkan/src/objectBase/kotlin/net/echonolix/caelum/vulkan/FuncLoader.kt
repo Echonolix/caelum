@@ -4,10 +4,10 @@ import net.echonolix.caelum.MemoryStack
 import net.echonolix.caelum.NativePointer
 import net.echonolix.caelum.c_str
 import net.echonolix.caelum.vulkan.functions.VkFunction
-import net.echonolix.caelum.vulkan.handles.VkDevice
-import net.echonolix.caelum.vulkan.handles.VkInstance
+import net.echonolix.caelum.vulkan.handles.VkDeviceObject
+import net.echonolix.caelum.vulkan.handles.VkInstanceObject
 
-public fun <T : VkFunction> VkInstance.getInstanceFunc(
+public fun <T : VkFunction> VkInstanceObject.getInstanceFunc(
     funcDescriptor: VkFunction.TypeDescriptorImpl<T>
 ): T {
     val funcAddress = MemoryStack {
@@ -22,7 +22,7 @@ public fun <T : VkFunction> VkInstance.getInstanceFunc(
     return funcDescriptor.fromNativeData(NativePointer(funcAddress))
 }
 
-public fun <T : VkFunction> VkDevice.getDeviceFunc(
+public fun <T : VkFunction> VkDeviceObject.getDeviceFunc(
     funcDescriptor: VkFunction.TypeDescriptorImpl<T>
 ): T {
     val funcAddress = MemoryStack {

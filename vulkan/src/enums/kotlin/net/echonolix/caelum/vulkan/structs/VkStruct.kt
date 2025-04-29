@@ -10,7 +10,7 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
 import java.lang.foreign.ValueLayout
 
-public sealed class VkStruct<T : VkStruct<T>>(
+public abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
 ) : NativeStruct<T>(*members), AllocateOverLoad<T> {
     public open val structType: VkStructureType?

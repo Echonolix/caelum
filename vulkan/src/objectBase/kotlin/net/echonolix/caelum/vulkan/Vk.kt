@@ -3,12 +3,10 @@ package net.echonolix.caelum.vulkan
 import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.enums.VkResult
 import net.echonolix.caelum.vulkan.functions.*
-import net.echonolix.caelum.vulkan.handles.VkInstance
+import net.echonolix.caelum.vulkan.handles.VkInstanceHandle
+import net.echonolix.caelum.vulkan.handles.VkInstanceObject
 import net.echonolix.caelum.vulkan.handles.value
-import net.echonolix.caelum.vulkan.structs.VkAllocationCallbacks
-import net.echonolix.caelum.vulkan.structs.VkExtensionProperties
-import net.echonolix.caelum.vulkan.structs.VkInstanceCreateInfo
-import net.echonolix.caelum.vulkan.structs.VkLayerProperties
+import net.echonolix.caelum.vulkan.structs.*
 
 public object Vk {
     init {
@@ -43,11 +41,11 @@ public object Vk {
     public fun createInstance(
         @CTypeName("VkInstanceCreateInfo*") pCreateInfo: NativePointer<VkInstanceCreateInfo>,
         @CTypeName("VkAllocationCallbacks*") pAllocator: NativePointer<VkAllocationCallbacks>?
-    ): Result<VkInstance> {
+    ): Result<VkInstanceObject> {
         return MemoryStack {
-            val instanceV = VkInstance.malloc()
+            val instanceV = VkInstanceHandle.malloc()
             when (val result = vkCreateInstance(pCreateInfo, pAllocator, instanceV.ptr())) {
-                VkResult.VK_SUCCESS -> Result.success(VkInstance.fromNativeData(instanceV.value))
+                VkResult.VK_SUCCESS -> Result.success(VkInstanceObject.fromNativeData(instanceV.value))
                 VkResult.VK_ERROR_OUT_OF_HOST_MEMORY,
                 VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY,
                 VkResult.VK_ERROR_INITIALIZATION_FAILED,

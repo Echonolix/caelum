@@ -2,37 +2,26 @@ package net.echonolix.caelum.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.CBasicType
-import net.echonolix.caelum.CType
-import net.echonolix.caelum.CTypeName
-import net.echonolix.caelum.CaelumCodegenHelper
+import net.echonolix.caelum.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
+import kotlin.io.path.Path
 
 class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
+    private val groupsPath = Path("groups")
+
     override fun VKFFICodeGenContext.compute() {
         val struct = StructTask().fork()
         val union = UnionTask().fork()
-
-        val unionTypeVar = TypeVariableName("T", VKFFI.vkUnionCname.parameterizedBy(TypeVariableName("T")))
-        val vkUnionFile = FileSpec.builder(VKFFI.vkUnionCname)
-            .addType(
-                TypeSpec.classBuilder(VKFFI.vkUnionCname)
-                    .addTypeVariable(unionTypeVar)
-                    .addModifiers(KModifier.SEALED)
-                    .superclass(CaelumCodegenHelper.unionCname.parameterizedBy(unionTypeVar))
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter("members", CaelumCodegenHelper.memoryLayoutCname, KModifier.VARARG)
-                            .build()
-                    )
-                    .addSuperclassConstructorParameter("*members")
-                    .build()
-            )
-        ctx.writeOutput(vkUnionFile)
-
         struct.join()
         union.join()
+    }
+
+    private fun CType.Group.isParallelizable(): Boolean {
+        return members.none {
+            val memberType = it.type.deepReferenceResolve()
+            memberType is CType.Function || memberType is CType.Group
+        }
     }
 
     private inner class StructTask : VKFFITask<Unit>(ctx) {
@@ -49,10 +38,17 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             structTypes.parallelStream()
                 .filter { (name, type) -> name == type.name }
-                .map { (_, structType) -> genGroupType(structType) }
-                .forEach(ctx::writeOutput)
+                .filter { (_, type) -> type.isParallelizable() }
+                .map { (_, type) -> genGroupType(type) }
+                .partitionWrite("groups")
 
-            typeAlias.joinAndWriteOutput(VKFFI.structPackageName)
+            structTypes.parallelStream()
+                .filter { (name, type) -> name == type.name }
+                .filter { (_, type) -> !type.isParallelizable() }
+                .map { (_, type) -> genGroupType(type) }
+                .forEach { ctx.writeOutput(groupsPath, it) }
+
+            typeAlias.joinAndWriteOutput(groupsPath, VKFFI.structPackageName)
         }
     }
 
@@ -63,10 +59,17 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             unionTypes.parallelStream()
                 .filter { (name, type) -> name == type.name }
-                .map { (_, enumType) -> genGroupType(enumType) }
-                .forEach(ctx::writeOutput)
+                .filter { (_, type) -> type.isParallelizable() }
+                .map { (_, type) -> genGroupType(type) }
+                .partitionWrite("groups")
 
-            typeAlias.joinAndWriteOutput(VKFFI.unionPackageName)
+            unionTypes.parallelStream()
+                .filter { (name, type) -> name == type.name }
+                .filter { (_, type) -> !type.isParallelizable() }
+                .map { (_, type) -> genGroupType(type) }
+                .forEach { ctx.writeOutput(groupsPath, it) }
+
+            typeAlias.joinAndWriteOutput(groupsPath, VKFFI.unionPackageName)
         }
     }
 
@@ -99,7 +102,11 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         .addModifiers(KModifier.OVERRIDE)
                         .getter(
                             FunSpec.getterBuilder()
-                                .addStatement("return %T.%N", vkStructureTypeCname, it.structType.name)
+                                .addStatement(
+                                    "return %T.%N",
+                                    vkStructureTypeCname,
+                                    it.structType.tags.get<EnumEntryFixedName>()!!.name
+                                )
                                 .build()
                         )
                         .build()
@@ -117,7 +124,11 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
                             .addModifiers(KModifier.INTERNAL)
                             .addAnnotation(JvmField::class)
-                            .initializer("layout.varHandle(%M(%S))", CaelumCodegenHelper.groupElementMember, member.name)
+                            .initializer(
+                                "layout.varHandle(%M(%S))",
+                                CaelumCodegenHelper.groupElementMember,
+                                member.name
+                            )
                             .build()
                     )
 //                typeObject.addProperty(
@@ -142,7 +153,11 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             typeObject.addProperty(
                 PropertySpec.builder("${member.name}_byteSize", Long::class)
                     .addAnnotation(JvmField::class)
-                    .initializer("layout.select(%M(%S)).byteSize()", CaelumCodegenHelper.groupElementMember, member.name)
+                    .initializer(
+                        "layout.select(%M(%S)).byteSize()",
+                        CaelumCodegenHelper.groupElementMember,
+                        member.name
+                    )
                     .build()
             )
         }

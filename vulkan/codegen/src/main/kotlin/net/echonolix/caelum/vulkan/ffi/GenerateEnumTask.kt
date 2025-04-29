@@ -3,6 +3,7 @@ package net.echonolix.caelum.vulkan.ffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.*
+import kotlin.io.path.Path
 import kotlin.random.Random
 
 class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
@@ -23,12 +24,10 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             enumTypes.parallelStream()
                 .filter { (name, type) -> name == type.name }
-                .map { (_, enumType) ->
-                    genEnumType(enumType)
-                }
-                .forEach(ctx::writeOutput)
+                .map { (_, enumType) -> genEnumType(enumType) }
+                .partitionWrite("enums")
 
-            typeAlias.joinAndWriteOutput(VKFFI.enumPackageName)
+            typeAlias.joinAndWriteOutput(Path("enums"), VKFFI.enumPackageName)
         }
     }
 
@@ -41,37 +40,35 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
             flagTypes.parallelStream()
                 .filter { (name, type) -> name == type.name }
-                .map { (_, flagType) ->
-                    genFlagType(flagType)
-                }
-                .forEach(ctx::writeOutput)
+                .map { (_, flagType) -> genFlagType(flagType) }
+                .partitionWrite("enums")
 
-            typeAlias.joinAndWriteOutput(VKFFI.flagPackageName)
+            typeAlias.joinAndWriteOutput(Path("enums"), VKFFI.flagPackageName)
         }
     }
 
     private inner class ConstantsTask : VKFFITask<Unit>(ctx) {
         override fun VKFFICodeGenContext.compute() {
-            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCname)
-                .addType(
-                    TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
-                        .addSuperinterface(CaelumCodegenHelper.typeCname)
-                        .addTypeVariable(TypeVariableName("T"))
-                        .addProperty(
-                            PropertySpec.builder("value", TypeVariableName("T"))
-                                .build()
-                        )
-                        .addProperty(
-                            PropertySpec.builder("nativeType", NativeType::class)
-                                .build()
-                        )
-                        .build()
-                )
-            ctx.writeOutput(vkEnumBaseFile)
+//            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCname)
+//                .addType(
+//                    TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
+//                        .addSuperinterface(CaelumCodegenHelper.typeCname)
+//                        .addTypeVariable(TypeVariableName("T"))
+//                        .addProperty(
+//                            PropertySpec.builder("value", TypeVariableName("T"))
+//                                .build()
+//                        )
+//                        .addProperty(
+//                            PropertySpec.builder("nativeType", NativeType::class)
+//                                .build()
+//                        )
+//                        .build()
+//                )
+//            ctx.writeOutput(vkEnumBaseFile)
             val vkEnumFile = FileSpec.builder(VKFFI.vkEnumCname)
                 .addType(
                     TypeSpec.interfaceBuilder(VKFFI.vkEnumCname)
-                        .addModifiers(KModifier.SEALED)
+//                        .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
@@ -90,12 +87,12 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         )
                         .build()
                 )
-            ctx.writeOutput(vkEnumFile)
+            ctx.writeOutput(Path("baseSrc"), vkEnumFile)
 
             val vkFlagFile = FileSpec.builder(VKFFI.flagPackageName, "VkFlags")
                 .addType(
                     TypeSpec.interfaceBuilder(VKFFI.vkFlags32CNAME)
-                        .addModifiers(KModifier.SEALED)
+//                        .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
@@ -116,7 +113,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 )
                 .addType(
                     TypeSpec.interfaceBuilder(VKFFI.vkFlags64CNAME)
-                        .addModifiers(KModifier.SEALED)
+//                        .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Long::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
@@ -135,7 +132,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                         )
                         .build()
                 )
-            ctx.writeOutput(vkFlagFile)
+            ctx.writeOutput(Path("baseSrc"), vkFlagFile)
 
             val constantsFile = FileSpec.builder(VKFFI.basePkgName, "Constants")
             constantsFile.addProperties(
@@ -164,7 +161,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     }
                     .toList()
             )
-            ctx.writeOutput(constantsFile)
+            ctx.writeOutput(Path("baseSrc"), constantsFile)
         }
     }
 

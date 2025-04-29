@@ -6,6 +6,7 @@ import net.echonolix.caelum.CBasicType
 import net.echonolix.caelum.CType
 import net.echonolix.caelum.CaelumCodegenHelper
 import net.echonolix.caelum.decap
+import kotlin.io.path.Path
 
 class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     private fun CType.Handle.variableName(): String {
@@ -22,10 +23,12 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         val functions = ctx.filterVkFunction()
         handles.parallelStream()
             .filter { (name, dstType) -> name == dstType.name }
-            .map { (_, handleType) -> genHandle(functions, handleType) }
-            .forEach(ctx::writeOutput)
+            .forEach { (_, handleType) ->
+                genObjectHandle(handleType)
+                genObjectBase(functions, handleType)
+            }
 
-        typeAlias.joinAndWriteOutput(VKFFI.handlePackageName)
+        typeAlias.joinAndWriteOutput(Path("handles"), VKFFI.handlePackageName)
     }
 
     private enum class ContainerType(val getFuncMemberName: MemberName) {
@@ -57,42 +60,25 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
     }
 
-    private fun VKFFICodeGenContext.genHandle(
-        functions: List<CType.Function>,
+    private fun VKFFICodeGenContext.genObjectHandle(
         handleType: CType.Handle
-    ): FileSpec.Builder {
+    ) {
         val thisCname = handleType.className()
         val thisTypeDescriptor = CaelumCodegenHelper.typeDescriptorCname.parameterizedBy(thisCname)
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
-        val parent = vkHandleTag.parent
-
-        val baseCname = ClassName(VKFFI.handlePackageName, "${handleType.name}Base")
-        val baseType = TypeSpec.interfaceBuilder(baseCname)
-        parent?.let {
-            baseType.addSuperinterface(ClassName(VKFFI.handlePackageName, "${parent.name}Base"))
-        }
-        baseType.addProperty(handleType.variableName(), thisCname)
 
         val interfaceType = TypeSpec.interfaceBuilder(thisCname)
         interfaceType.addSuperinterface(VKFFI.vkHandleCname)
-        interfaceType.addSuperinterface(baseCname)
-        interfaceType.addProperty(
-            PropertySpec.builder(handleType.variableName(), thisCname)
-                .addModifiers(KModifier.OVERRIDE)
-                .getter(
-                    FunSpec.getterBuilder()
-                        .addStatement("return this")
-                        .build()
-                )
-                .build()
-        )
-
         interfaceType.addProperty(
             PropertySpec.builder("objectType", objTypeCname)
                 .addModifiers(KModifier.OVERRIDE)
                 .getter(
                     FunSpec.getterBuilder()
-                        .addStatement("return %T.%N", objTypeCname, vkHandleTag.objectTypeEnum.name)
+                        .addStatement(
+                            "return %T.%N",
+                            objTypeCname,
+                            vkHandleTag.objectTypeEnum.tags.get<EnumEntryFixedName>()!!.name
+                        )
                         .build()
                 )
                 .build()
@@ -108,36 +94,107 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 .build()
         )
 
+        val implType = TypeSpec.classBuilder("Impl")
+        implType.addModifiers(KModifier.PRIVATE)
+        implType.addSuperinterface(thisCname)
+        implType.addProperty(
+            PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
+                .addModifiers(KModifier.OVERRIDE)
+                .initializer(CodeBlock.of("handle"))
+                .build()
+        )
+        implType.primaryConstructor(
+            FunSpec.constructorBuilder()
+                .addParameter("handle", CBasicType.int64_t.ktApiTypeTypeName)
+                .build()
+        )
+        interfaceType.addType(implType.build())
+
+        val companion = TypeSpec.companionObjectBuilder()
+        companion.superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
+        companion.addFunction(
+            FunSpec.builder("fromNativeData")
+                .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
+                .returns(thisCname)
+                .addAnnotation(JvmStatic::class)
+                .addStatement("return Impl(value)")
+                .build()
+        )
+        companion.addFunction(
+            FunSpec.builder("toNativeData")
+                .addAnnotation(JvmStatic::class)
+                .addParameter("value", thisCname)
+                .returns(CBasicType.int64_t.ktApiTypeTypeName)
+                .addStatement("return value.handle")
+                .build()
+        )
+        interfaceType.addType(companion.build())
+
+        val file = FileSpec.builder(thisCname)
+        file.addType(interfaceType.build())
+
+        ctx.writeOutput(Path("objectHandles"), file)
+    }
+
+    context(_: VKFFICodeGenContext)
+    private fun CType.Handle.objectBaseCName(): ClassName {
+        return ClassName(packageName(), "${this.name}Object")
+    }
+
+    private fun VKFFICodeGenContext.genObjectBase(
+        functions: List<CType.Function>,
+        handleType: CType.Handle
+    ) {
+        val thisObjectHandleCname = handleType.className()
+        val thisCname = handleType.objectBaseCName()
+        val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
+        val parent = vkHandleTag.parent
+
+        val containerCname = ClassName(VKFFI.handlePackageName, "${handleType.name}Container")
+        val containerType = TypeSpec.interfaceBuilder(containerCname)
+        parent?.let {
+            containerType.addSuperinterface(ClassName(VKFFI.handlePackageName, "${parent.name}Container"))
+        }
+        containerType.addProperty(handleType.variableName(), thisCname)
+
+        val interfaceType = TypeSpec.interfaceBuilder(thisCname)
+        interfaceType.addSuperinterface(thisObjectHandleCname)
+        interfaceType.addSuperinterface(containerCname)
+        interfaceType.addProperty(
+            PropertySpec.builder(handleType.variableName(), thisCname)
+                .addModifiers(KModifier.OVERRIDE)
+                .getter(
+                    FunSpec.getterBuilder()
+                        .addStatement("return this")
+                        .build()
+                )
+                .build()
+        )
+
 
         val implType = TypeSpec.classBuilder("Impl")
         implType.addModifiers(KModifier.PRIVATE)
         implType.addSuperinterface(thisCname)
+        implType.addProperty(
+            PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
+                .addModifiers(KModifier.OVERRIDE)
+                .initializer(CodeBlock.of("handle"))
+                .build()
+        )
         if (parent != null) {
-            implType.addProperty(
-                PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
-                    .addModifiers(KModifier.OVERRIDE)
-                    .initializer(CodeBlock.of("handle"))
-                    .build()
-            )
             implType.primaryConstructor(
                 FunSpec.constructorBuilder()
-                    .addParameter("parent", parent.typeName())
+                    .addParameter("parent", parent.objectBaseCName())
                     .addParameter("handle", CBasicType.int64_t.ktApiTypeTypeName)
                     .build()
             )
             implType.addSuperinterface(
-                ClassName(VKFFI.handlePackageName, "${parent.name}Base"),
+                ClassName(VKFFI.handlePackageName, "${parent.name}Container"),
                 CodeBlock.of("parent")
             )
         } else {
             implType.addSuperclassConstructorParameter(
                 CodeBlock.of("%M", CBasicType.int64_t.valueLayoutMember)
-            )
-            implType.addProperty(
-                PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
-                    .addModifiers(KModifier.OVERRIDE)
-                    .initializer(CodeBlock.of("handle"))
-                    .build()
             )
             implType.primaryConstructor(
                 FunSpec.constructorBuilder()
@@ -192,32 +249,23 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         val companion = TypeSpec.companionObjectBuilder()
         companion.superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
-        companion.addFunction(
-            FunSpec.builder("fromNativeData")
-                .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
-                .returns(thisCname)
-                .apply {
-                    if (parent == null) {
-                        addAnnotation(JvmStatic::class)
-                        addStatement("return Impl(value)")
-                    } else {
-                        addModifiers(KModifier.INTERNAL)
-                        addStatement(
-                            "throw %T()",
-                            UnsupportedOperationException::class
-                        )
-                    }
-                }
-                .build()
-        )
         if (parent != null) {
             companion.addFunction(
                 FunSpec.builder("fromNativeData")
                     .addAnnotation(JvmStatic::class)
-                    .addParameter("parent", parent.typeName())
+                    .addParameter("parent", parent.objectBaseCName())
                     .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
                     .returns(thisCname)
                     .addStatement("return Impl(parent, value)")
+                    .build()
+            )
+        } else {
+            companion.addFunction(
+                FunSpec.builder("fromNativeData")
+                    .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
+                    .returns(thisCname)
+                    . addAnnotation(JvmStatic::class)
+                    . addStatement("return Impl(value)")
                     .build()
             )
         }
@@ -233,7 +281,8 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
         val file = FileSpec.builder(thisCname)
         file.addType(interfaceType.build())
-        file.addType(baseType.build())
-        return file
+        file.addType(containerType.build())
+
+        ctx.writeOutput(Path("objectBase"), file)
     }
 }
