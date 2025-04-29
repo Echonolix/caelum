@@ -411,11 +411,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of(
-                "%M(%L)",
-                CaelumCodegenHelper.addressLayoutMember,
-                elementType.memoryLayout()
-            )
+            throw UnsupportedOperationException("Flexible array is currently not supported")
+//            return CodeBlock.of(
+//                "%M(%L)",
+//                CaelumCodegenHelper.addressLayoutMember,
+//                elementType.memoryLayout()
+//            )
         }
 
         override fun toString(): String {
@@ -479,11 +480,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: KTFFICodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of(
-                "%M(%L)",
-                CaelumCodegenHelper.pointerLayoutMember,
-                elementType.memoryLayout()
-            )
+            return CodeBlock.of("%M", CaelumCodegenHelper.pointerLayoutMember)
         }
 
         override fun toString(): String {
@@ -504,11 +501,6 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         context(ctx: KTFFICodegenContext)
         override fun typeName(): TypeName {
             return CaelumCodegenHelper.pointerCname.parameterizedBy(elementType.typeName())
-        }
-
-        context(ctx: KTFFICodegenContext)
-        override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of("%M", CaelumCodegenHelper.pointerLayoutMember)
         }
     }
 
