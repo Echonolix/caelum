@@ -262,13 +262,13 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     .receiver(valueCnameP)
                     .getter(
                         FunSpec.getterBuilder()
-                            .addStatement("return ptr().${member.name}")
+                            .addStatement("return ptr().%N", member.name)
                             .build()
                     )
                     .setter(
                         FunSpec.setterBuilder()
                             .addParameter("value", cBasicType.ktApiTypeTypeName)
-                            .addStatement("ptr().${member.name} = value")
+                            .addStatement("ptr().%N = value", member.name)
                             .build()
                     )
                     .build()
@@ -465,11 +465,11 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             val pointerSetter: FunSpec
 
             valueGetter = FunSpec.getterBuilder()
-                .addStatement("return ptr().${member.name}")
+                .addStatement("return ptr().%N", member.name)
                 .build()
             valueSetter = FunSpec.setterBuilder()
                 .addParameter("value", ktApiType)
-                .addStatement("ptr().${member.name} = value")
+                .addStatement("ptr().%N = value", member.name)
                 .build()
             pointerGetter = FunSpec.getterBuilder()
                 .addStatement(
@@ -550,7 +550,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                     FunSpec.builder(member.name)
                         .receiver(valueCnameP)
                         .addParameter("value", STRING)
-                        .addCode("ptr().${member.name}(value)")
+                        .addCode("ptr().%N(value)", member.name)
                         .build()
                 )
                 file.addFunction(
@@ -576,7 +576,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
                 FunSpec.builder(member.name)
                     .receiver(valueCnameP)
                     .addParameter("func", funcPtrCname)
-                    .addStatement("ptr().${member.name}(func)")
+                    .addStatement("ptr().%N(func)", member.name)
                     .build()
             )
             file.addFunction(
