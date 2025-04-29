@@ -74,10 +74,7 @@ fun main() {
             pNext = debugCreateInfo.ptr()
         }
 
-        val instancePtr = VkInstance.malloc()
-        val result = vkCreateInstance(createInfo.ptr(), nullptr(), instancePtr.ptr())
-        println(result.name)
-        val instance = VkInstance.fromNativeData(instancePtr.value)
+        val instance = Vk.createInstance(createInfo.ptr(), null).getOrThrow()
         val debugUtilsMessenger = instance.createDebugUtilsMessengerEXT(debugCreateInfo.ptr(), null).getOrThrow()
 
         var physicalDeviceHandle = -1L
