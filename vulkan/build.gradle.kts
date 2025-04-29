@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.utils.extendsFrom
 
 plugins {
@@ -87,10 +86,8 @@ dependencies {
 }
 
 afterEvaluate {
-    listOf(tasks.named(baseSrc.compileJavaTaskName), tasks.named(baseSrc.getCompileTaskName("kotlin"))).forEach {
-        it.configure {
-            dependsOn(tasks.ktgen)
-        }
+    tasks.named(baseSrc.getCompileTaskName("kotlin")).configure {
+        dependsOn(tasks.ktgen)
     }
 }
 
