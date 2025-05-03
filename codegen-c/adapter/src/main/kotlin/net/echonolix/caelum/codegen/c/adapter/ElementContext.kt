@@ -19,7 +19,16 @@ class ElementContext {
         try {
             c.ast.parse(source, visitor)
         } catch (e: NodeVisitException) {
-            throw IllegalStateException("Error at line ${visitor.lineMarker.posOf(e.node)}", e)
+            System.err.println("Node content:")
+            System.err.println(
+                source.toByteArray(Charsets.UTF_8)
+                    .sliceArray(e.node.range.startByte.toInt()..<e.node.range.endByte.toInt())
+                    .toString(Charsets.UTF_8)
+            )
+            throw IllegalStateException(
+                "Error at line ${e.node.range.startPoint.row}(${visitor.lineMarker.posOf(e.node)})",
+                e
+            )
         }
     }
 
