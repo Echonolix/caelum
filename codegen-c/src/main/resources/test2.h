@@ -1,19 +1,27 @@
-# 1 "test.h"
-# 1 "<built-in>" 1
-# 1 "<built-in>" 3
-# 427 "<built-in>" 3
-# 1 "<command line>" 1
-# 1 "<built-in>" 2
-# 1 "test.h" 2
-typedef struct Foo {
-    int a;
-    float b;
-} Foo;
-
-enum Baz {
-    BAZ_A,
-    BAZ_B,
-    BAZ_C
-}
-
-double bar(Foo* a, int c, float d, enum Baz e);
+/*! @brief Gamma ramp.
+ *
+ *  This describes the gamma ramp for a monitor.
+ *
+ *  @sa @ref monitor_gamma
+ *  @sa @ref glfwGetGammaRamp
+ *  @sa @ref glfwSetGammaRamp
+ *
+ *  @since Added in version 3.0.
+ *
+ *  @ingroup monitor
+ */
+typedef struct GLFWgammaramp
+{
+    /*! An array of value describing the response of the red channel.
+     */
+    unsigned short* red;
+    /*! An array of value describing the response of the green channel.
+     */
+    unsigned short* green;
+    /*! An array of value describing the response of the blue channel.
+     */
+    unsigned short* blue;
+    /*! The number of elements in each array.
+     */
+    unsigned int size;
+} GLFWgammaramp;

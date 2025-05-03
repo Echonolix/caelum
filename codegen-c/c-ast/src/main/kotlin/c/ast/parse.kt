@@ -6,12 +6,14 @@ import tree_sitter.Parser
 import tree_sitter.Tree
 import tree_sitter.c.node.*
 
-data class ParseContext(
+class ParseContext(
     private val source: String,
-    private val lang: TSCLanguage
+    private val lang: TSCLanguage,
 ) {
+    private val sourceBytes: ByteArray = source.toByteArray(Charsets.UTF_8)
+
     internal fun content(node: Node): String {
-        return source.substring(node.startByte.toInt(), node.endByte.toInt())
+        return sourceBytes.sliceArray(node.startByte.toInt()..<node.endByte.toInt()).toString(Charsets.UTF_8)
     }
 
     internal fun content(base: CNodeBase): String {

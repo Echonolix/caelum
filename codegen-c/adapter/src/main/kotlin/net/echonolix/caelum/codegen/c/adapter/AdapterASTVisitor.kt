@@ -3,6 +3,8 @@ package net.echonolix.caelum.codegen.c.adapter
 import c.ast.visitor.*
 import tree_sitter.Range
 import tree_sitter.c.node.TypeDefinitionNode
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
     lateinit var lineMarker: LineMarker
@@ -19,12 +21,12 @@ class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
     }
 
     override fun visitComment(comment: String) {
-        TODO()
+//        println("Comment: $comment")
     }
 
     override fun visitTypedef(ast: TypeDefinitionNode): TypeDefVisitor {
-//        println(lineMarker.fileName)
-//        println(lineMarker.posOf(ast))
+        println(Path(lineMarker.fileName).absolutePathString())
+        println(lineMarker.posOf(ast))
         val visitor = BaseTypedefVisitor()
         return object : TypeDefVisitor by visitor {
             override fun visitEnd() {

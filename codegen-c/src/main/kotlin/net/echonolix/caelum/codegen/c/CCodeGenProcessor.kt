@@ -10,9 +10,18 @@ import kotlin.io.path.*
 class CCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val elementCtx = ElementContext()
-        inputs.forEach {
-            elementCtx.parse(it.readText())
-        }
+        val clangProcess = Runtime.getRuntime().exec(
+            arrayOf(
+                "clang",
+                "-E",
+                "-C",
+                "--target=x86_64-pc-windows-gnu",
+                "-std=c23",
+                *inputs.map { it.absolutePathString() }.toTypedArray()
+            )
+        )
+        val source = clangProcess.inputReader().readText()
+        elementCtx.parse(source)
         println("Typedefs:")
         elementCtx.typedefs.forEach { (name, type) ->
             println("\t$name -> $type")
@@ -40,6 +49,7 @@ class CCodeGenProcessor : KtgenProcessor {
         private val tempLibDir = Path(System.getProperty("java.io.tmpdir"), "net.echonolix.caelum")
 
         init {
+            tempLibDir.createDirectories()
             loadLibrary("libzstd")
             loadLibrary("wasmtime")
             loadLibrary("libtree-sitter-0.25")
@@ -58,13 +68,19 @@ class CCodeGenProcessor : KtgenProcessor {
             val libraryPath = CCodeGenProcessor::class.java.getResource("/$libraryFileName")
                 ?: error("Library $libraryFileName not found in resources")
 
-            if (libraryPath.protocol == "file") {
-                System.load(libraryPath.path)
+            val libraryFilePathStr = if (libraryPath.protocol == "file") {
+                libraryPath.path
             } else {
-                libraryPath.openStream().use {
-                    Files.copy(it, tempLibDir.resolve(libraryFileName))
+                val dst = tempLibDir.resolve(libraryFileName)
+                if (!dst.exists()) {
+                    libraryPath.openStream().use {
+                        Files.copy(it, dst)
+                    }
                 }
+                dst.pathString
             }
+
+            System.load(libraryFilePathStr)
         }
     }
 }
@@ -84,7 +100,9 @@ fun main() {
 
     val time = System.nanoTime()
     val inputs = setOf(
-        resourcePath("/test2.h")
+//        resourcePath("/test1.h")
+//        resourcePath("/test2.h")
+        Path("glfw/glfw3.h")
     )
     val outputDir = Path("testoutput")
     val updatedFiles = CCodeGenProcessor().process(inputs, outputDir).toMutableSet()

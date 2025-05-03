@@ -9,7 +9,7 @@ import java.util.Locale.getDefault
 
 private fun String.cap() = replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
 
-context(_: ParseContext)
+context(ctx: ParseContext)
 internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisitor) {
     when (n) {
         is EnumSpecifierNode -> {
@@ -38,7 +38,7 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
             }
             when (val type = n.type) {
                 is PrimitiveTypeNode -> sizedVisitor.visitType(CPrimitiveType.valueOf(type.content().cap()))
-                is TypeIdentifierNode -> TODO()
+                is TypeIdentifierNode -> {}
                 null -> {
 
                 }

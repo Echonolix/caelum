@@ -6,6 +6,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven("https://maven.endoqa.io")
     }
 }
 
@@ -18,6 +19,7 @@ subprojects {
     apply {
         plugin("kotlin")
     }
+
     configure<JavaPluginExtension> {
         withSourcesJar()
     }
