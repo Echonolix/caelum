@@ -1,5 +1,7 @@
 package net.echonolix.caelum.codegen.c.adapter
 
+import c.ast.NodeVisitException
+
 class ElementContext {
     private val typedefs0 = mutableMapOf<String, CType>()
     val typedefs: Map<String, CType> get() = typedefs0
@@ -14,7 +16,11 @@ class ElementContext {
 
     fun parse(source: String) {
         val visitor = AdapterASTVisitor(this)
-        c.ast.parse(source, visitor)
+        try {
+            c.ast.parse(source, visitor)
+        } catch (e: NodeVisitException) {
+            throw IllegalStateException("Error at line ${visitor.lineMarker.posOf(e.node)}", e)
+        }
     }
 
     fun addTypedef(name: String, type: CType) {
