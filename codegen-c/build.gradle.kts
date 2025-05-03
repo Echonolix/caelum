@@ -7,5 +7,5 @@ allprojects {
 dependencies {
     implementation(project(":codegen-api"))
     implementation(project(":caelum-core"))
-    implementation(project("c-ast"))
+    implementation(project(":codegen-c:adapter"))
 }

@@ -1,4 +1,4 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.c.adapter
 
 import c.ast.visitor.DeclaratorVisitor
 import c.ast.visitor.FunctionVisitor
@@ -7,8 +7,9 @@ import c.ast.visitor.TypeSpecifierVisitor
 
 
 class BuildTypedefVisitor() : TypeDefVisitor {
+
     lateinit var cType: CType
-    lateinit var identifier: String
+    var identifier: Identifier? = null
 
     override fun visitType(): TypeSpecifierVisitor {
         val visitor = CTypeSpecifierVisitor()
@@ -25,31 +26,36 @@ class BuildTypedefVisitor() : TypeDefVisitor {
         return object : DeclaratorVisitor by visitor {
 
             override fun visitIdentifier(name: String) {
-                identifier = name
+                identifier = Identifier(name)
             }
 
             override fun visitEnd() {
-                cType = visitor.cType
+                cType = visitor.type
             }
         }
     }
 
-    override fun visitEnd() {}
+    override fun visitEnd() {
+        println("TYPEDEF")
+        println(identifier!!)
+        println(cType)
+        println()
+    }
 }
 
 class CommonDeclaratorVisitor() : DeclaratorVisitor {
-    lateinit var cType: CType
+
+    lateinit var type: CType
 
     constructor(baseType: CType) : this() {
-        cType = baseType
+        type = baseType
     }
 
     override fun visitFunction(): FunctionVisitor {
-        val visitor = BuildFunctionVisitor(cType)
+        val visitor = BuildFunctionVisitor(type)
         return object : FunctionVisitor by visitor {
             override fun visitEnd() {
-                visitor.visitEnd()
-                cType = visitor.cFunction
+                type = visitor.cFunction
             }
         }
     }
@@ -63,11 +69,11 @@ class CommonDeclaratorVisitor() : DeclaratorVisitor {
     }
 
     override fun visitArray() {
-//        type = CArrayType(type, -1)
+        type = CArrayType(type, -1)
     }
 
     override fun visitPointer() {
-//        type = CPointer(type)
+        type = CPointer(type)
     }
 
     override fun visitEnd() {

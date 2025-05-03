@@ -1,35 +1,35 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.c.adapter
 
 import c.ast.visitor.DeclaratorVisitor
 import c.ast.visitor.FunctionVisitor
 import c.ast.visitor.ParameterVisitor
 import c.ast.visitor.TypeSpecifierVisitor
+import kotlin.collections.plus
 
+class BuildFunctionVisitor(returnType: CType) : FunctionVisitor {
 
-class BuildFunctionVisitor(val returnType: CType) : FunctionVisitor {
-    lateinit var cFunction: CType.Function
-    val params = mutableListOf<CType.Function.Parameter>()
+    var cFunction = CFunction(emptyList(), returnType)
 
     override fun visitParameter(): ParameterVisitor {
         val visitor = BuildParameterVisitor()
         return object : ParameterVisitor by visitor {
             override fun visitEnd() {
-                visitor.visitEnd()
-                params.add(visitor.parameter)
+                cFunction = cFunction.copy(params = cFunction.params + CFunctionParam(visitor.identifier, visitor.type))
             }
         }
     }
 
     override fun visitEnd() {
-        cFunction = CType.Function("UNNAMED", returnType, params)
+        println(cFunction)
     }
+
 }
 
 
 class BuildParameterVisitor() : ParameterVisitor {
     lateinit var type: CType
-    lateinit var identifier: String
-    lateinit var parameter: CType.Function.Parameter
+    var identifier: Identifier? = null
+
 
     override fun visitType(): TypeSpecifierVisitor {
         val visitor = CTypeSpecifierVisitor()
@@ -45,14 +45,15 @@ class BuildParameterVisitor() : ParameterVisitor {
         return object : DeclaratorVisitor by visitor {
             override fun visitEnd() {
                 identifier = visitor.identifier
-                type = visitor.common.cType
+                type = visitor.common.type
             }
         }
     }
 
     override fun visitEnd() {
-        parameter = CType.Function.Parameter(identifier, type)
+
     }
+
 }
 
 class ParameterDeclaratorVisitor(
@@ -60,13 +61,15 @@ class ParameterDeclaratorVisitor(
     private val build: BuildParameterVisitor
 ) : DeclaratorVisitor by common {
 
-    lateinit var identifier: String
+    var identifier: Identifier? = null
 
     init {
-        common.cType = build.type
+        common.type = build.type
     }
 
     override fun visitIdentifier(name: String) {
-        this.identifier = name
+        identifier = Identifier(name)
     }
+
+
 }

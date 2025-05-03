@@ -21,7 +21,8 @@ include(
     ":codegen-api",
     ":codegen-c",
     ":codegen-c:tree-sitter-lang-c",
-    ":codegen-c:c-ast"
+    ":codegen-c:c-ast",
+    ":codegen-c:adapter"
 )
 
 listOf(
