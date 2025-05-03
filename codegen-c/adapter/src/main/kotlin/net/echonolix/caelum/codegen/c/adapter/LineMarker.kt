@@ -3,6 +3,7 @@ package net.echonolix.caelum.codegen.c.adapter
 import tree_sitter.Node
 import tree_sitter.Range
 import tree_sitter.c.node.CNodeBase
+import kotlin.io.path.Path
 
 data class LineMarker(
     val lineNum: Int,
@@ -12,6 +13,7 @@ data class LineMarker(
     val fromSysHeader: Boolean,
     val range: Range
 ) {
+    fun filePath() = Path(fileName)
 
     /**
      * @return the line num at original source

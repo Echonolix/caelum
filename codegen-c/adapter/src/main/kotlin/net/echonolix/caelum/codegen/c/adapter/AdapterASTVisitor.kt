@@ -30,8 +30,10 @@ class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
         val visitor = BaseTypedefVisitor()
         return object : TypeDefVisitor by visitor {
             override fun visitEnd() {
-                val identifier = visitor.identifier!!
-                ctx.addTypedef(identifier.name, visitor.cType)
+                if (lineMarker.filePath().absolutePathString() in ctx.inputPathStrs) {
+                    val identifier = visitor.identifier!!
+                    ctx.addTypedef(identifier.name, visitor.cType)
+                }
             }
         }
     }

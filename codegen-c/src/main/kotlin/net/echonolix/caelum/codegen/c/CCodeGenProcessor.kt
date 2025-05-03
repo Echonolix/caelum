@@ -9,7 +9,7 @@ import kotlin.io.path.*
 
 class CCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
-        val elementCtx = ElementContext()
+        val elementCtx = ElementContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
         val clangProcess = Runtime.getRuntime().exec(
             arrayOf(
                 "clang",
