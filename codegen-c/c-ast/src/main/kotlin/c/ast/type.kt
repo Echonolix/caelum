@@ -38,7 +38,7 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
             }
             when (val type = n.type) {
                 is PrimitiveTypeNode -> sizedVisitor.visitType(CPrimitiveType.valueOf(type.content().cap()))
-                is TypeIdentifierNode -> {}
+                is TypeIdentifierNode -> sizedVisitor
                 null -> {
 
                 }
@@ -116,7 +116,7 @@ internal fun visitTypeDeclaratorNode(n: _TypeDeclaratorNode, v: DeclaratorVisito
                 is _TypeDeclaratorNode -> visitTypeDeclaratorNode(n, v)
                 is FieldIdentifierNode -> v.visitFieldIdentifier(n.content())
             }
-            v.visitPointer()
+
         }
 
         is PrimitiveTypeNode -> v.visitIdentifier(n.content())
@@ -132,6 +132,7 @@ internal fun visitAbstractTypeDeclaratorNode(n: _AbstractDeclaratorNode, v: Decl
         is AbstractFunctionDeclaratorNode -> TODO()
         is AbstractParenthesizedDeclaratorNode -> TODO()
         is AbstractPointerDeclaratorNode -> {
+            v.visitPointer()
             when (val n = n.declarator) {
                 is _AbstractDeclaratorNode -> {
                     visitAbstractTypeDeclaratorNode(n, v)
@@ -140,7 +141,6 @@ internal fun visitAbstractTypeDeclaratorNode(n: _AbstractDeclaratorNode, v: Decl
 
                 }
             }
-            v.visitPointer()
         }
     }
 }
