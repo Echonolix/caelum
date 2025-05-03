@@ -48,3 +48,5 @@ bin/
 .kotlin
 
 hs_err*.log
+
+testoutput/

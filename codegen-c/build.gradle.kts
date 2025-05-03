@@ -1,4 +1,4 @@
-subprojects {
+allprojects {
     repositories {
         maven("https://maven.endoqa.io")
     }
@@ -7,4 +7,5 @@ subprojects {
 dependencies {
     implementation(project(":codegen-api"))
     implementation(project(":caelum-core"))
+    implementation(project("c-ast"))
 }

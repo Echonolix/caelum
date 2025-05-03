@@ -58,7 +58,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
             }
             .map { it.groupValues }
             .map {
-                CType.Function.Parameter(it[2], resolveType(it[1]), false)
+                CType.Function.Parameter(it[2], resolveType(it[1]))
             }.toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         func.tags.set(OriginalFunctionNameTag(xmlTypeDefType.name))
@@ -285,7 +285,11 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
                 val matchEntire = CSyntax.typeRegex.matchEntire(innerStr)
                     ?: throw IllegalStateException("Cannot resolve function parameter for: $cmdName")
                 val (typeStr) = matchEntire.destructured
-                CType.Function.Parameter(it.name, resolveType(typeStr), it.optional == "true")
+                CType.Function.Parameter(it.name, resolveType(typeStr)).apply {
+                    if (it.optional == "true") {
+                        tags.set(OptionalTag)
+                    }
+                }
             }
             .toList()
         val function = CType.Function(funcName, returnType, parameters)

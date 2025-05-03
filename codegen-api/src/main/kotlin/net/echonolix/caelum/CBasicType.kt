@@ -251,6 +251,50 @@ public sealed class CBasicType<T : Any>(
         ClassName(CaelumCodegenHelper.basePkgName, caelumCoreTypeNameStr)
     }
 
+    public fun toSigned(): CBasicType<*> {
+        return when (this) {
+            int8_t -> int8_t
+            int16_t -> int16_t
+            int32_t -> int32_t
+            int64_t -> int64_t
+            else -> this
+        }
+    }
+
+    public fun toUnsigned(): CBasicType<*> {
+        return when (this) {
+            uint8_t -> uint8_t
+            uint16_t -> uint16_t
+            uint32_t -> uint32_t
+            uint64_t -> uint64_t
+            else -> this
+        }
+    }
+
+    public fun toShort(): CBasicType<*> {
+        return when (this) {
+            int8_t -> int16_t
+            uint8_t -> uint16_t
+            int32_t -> int16_t
+            uint32_t -> uint16_t
+            int64_t -> int32_t
+            uint64_t -> uint32_t
+            else -> this
+        }
+    }
+
+    public fun toLong(): CBasicType<*> {
+        return when (this) {
+            int8_t -> int64_t
+            uint8_t -> uint64_t
+            int16_t -> int64_t
+            uint16_t -> uint64_t
+            int32_t -> int64_t
+            uint32_t -> uint64_t
+            else -> this
+        }
+    }
+
     public open fun codeBlock(valueStr: String): CodeBlock {
         throw UnsupportedOperationException("Not implemented for $cTypeNameStr")
     }

@@ -64,7 +64,7 @@ fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) 
     toParamSpecs(annotations) {
         val paramType = it.type
         var pType = paramType.ktApiType()
-        if (paramType is CType.Pointer && it.optional) {
+        if (paramType is CType.Pointer && it.tags.has<OptionalTag>()) {
             pType = pType.copy(nullable = true)
         }
         if (paramType is CType.Handle) {
@@ -77,7 +77,7 @@ context(ctx: VKFFICodeGenContext)
 fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
     toParamSpecs(annotations) {
         var pType = it.type.ktApiType()
-        if (it.type is CType.Pointer && it.optional) {
+        if (it.type is CType.Pointer && it.tags.has<OptionalTag>()) {
             pType = pType.copy(nullable = true)
         }
         pType

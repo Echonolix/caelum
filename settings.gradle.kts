@@ -1,6 +1,10 @@
 pluginManagement {
     includeBuild("../ktgen")
 
+    repositories {
+        gradlePluginPortal()
+    }
+
     plugins {
         id("org.jetbrains.kotlin.jvm") version "2.1.20"
     }
