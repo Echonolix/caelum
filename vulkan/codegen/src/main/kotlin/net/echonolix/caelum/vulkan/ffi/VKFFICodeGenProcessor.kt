@@ -17,6 +17,7 @@ import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import java.nio.file.Path
 import java.util.concurrent.RecursiveAction
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.walk
@@ -33,7 +34,7 @@ fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
 }
 
 class VKFFICodeGenProcessor : KtgenProcessor {
-    override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
+    override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> { 
         val registryText = javaClass.getResource("/vk.xml")!!.readText()
         val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs")
         val xml = XML {
@@ -155,7 +156,7 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 @OptIn(ExperimentalPathApi::class)
 fun main() {
     val time = System.nanoTime()
-    val outputDir = Path.of("vulkan/build/generated/ktgen")
+    val outputDir = Path("vulkan/build/generated/ktgen")
     val updatedFiles = VKFFICodeGenProcessor().process(emptySet(), outputDir).toMutableSet()
     updatedFiles.toList()
         .forEach {
