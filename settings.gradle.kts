@@ -10,12 +10,7 @@ pluginManagement {
     }
 }
 
-includeBuild("../ktgen") {
-    dependencySubstitution {
-        substitute(module("net.echonolix:ktgen-api")).using(project(":api"))
-        substitute(module("net.echonolix:ktgen-runtime")).using(project(":runtime"))
-    }
-}
+includeBuild("../ktgen")
 
 include(
     ":codegen-api",

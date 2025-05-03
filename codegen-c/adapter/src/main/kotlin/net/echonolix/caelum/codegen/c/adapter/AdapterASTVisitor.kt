@@ -25,8 +25,8 @@ class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
     }
 
     override fun visitTypedef(ast: TypeDefinitionNode): TypeDefVisitor {
-        println(Path(lineMarker.fileName).absolutePathString())
-        println(lineMarker.posOf(ast))
+//        println(Path(lineMarker.fileName).absolutePathString())
+//        println(lineMarker.posOf(ast))
         val visitor = BaseTypedefVisitor()
         return object : TypeDefVisitor by visitor {
             override fun visitEnd() {

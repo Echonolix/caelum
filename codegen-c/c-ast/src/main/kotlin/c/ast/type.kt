@@ -18,7 +18,7 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
             enumVisitor.visitEnd()
         }
         is MacroTypeSpecifierNode -> {
-            println("MACRO: ${n.content()}")
+//            println("MACRO: ${n.content()}")
         }
         is PrimitiveTypeNode -> {
             val primitive = CPrimitiveType.entries.find { it.name == (n.content().cap()) }
