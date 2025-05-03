@@ -13,9 +13,14 @@ includeBuild("../ktgen") {
     }
 }
 
-(listOf(
-    "codegen-api" to file("codegen-api")
-) + listOf(
+include(
+    ":codegen-api",
+    ":codegen-c",
+    ":codegen-c:tree-sitter-lang-c",
+    ":codegen-c:c-ast"
+)
+
+listOf(
     "core",
     "vulkan",
     "glfw",
@@ -27,7 +32,7 @@ includeBuild("../ktgen") {
         "caelum-$it" to file(it),
         "caelum-$it:codegen" to file("$it/codegen")
     )
-}).forEach { (name, dir) ->
+}.forEach { (name, dir) ->
     include(name)
     project(":$name").projectDir = dir
 }

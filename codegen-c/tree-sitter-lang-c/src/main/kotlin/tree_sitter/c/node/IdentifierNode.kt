@@ -1,0 +1,35 @@
+package tree_sitter.c.node
+
+import tree_sitter.Node
+
+public class IdentifierNode(
+    override val `$node`: Node,
+) : CNodeBase,
+    _DeclaratorNode,
+    ExpressionNode,
+    ConcatenatedStringNodeChildren,
+    FunctionDeclaratorNodeChildren,
+    MsDeclspecModifierNodeChildren,
+    ParameterListNodeChildren,
+    PreprocDefinedNodeChildren,
+    PreprocParamsNodeChildren,
+    AssignmentExpressionNodeChildren,
+    AttributeNodeChildren,
+    DeclarationNodeChildren,
+    EnumeratorNodeChildren,
+    GnuAsmGotoListNodeChildren,
+    GnuAsmInputOperandNodeChildren,
+    GnuAsmOutputOperandNodeChildren,
+    MacroTypeSpecifierNodeChildren,
+    PreprocDefNodeChildren,
+    PreprocElifNodeChildren,
+    PreprocElifdefNodeChildren,
+    PreprocFunctionDefNodeChildren,
+    PreprocIfNodeChildren,
+    PreprocIfdefNodeChildren,
+    PreprocIncludeNodeChildren,
+    AssignmentExpressionNodeLeft,
+    DeclarationNodeDeclarator,
+    PreprocElifNodeCondition,
+    PreprocIfNodeCondition,
+    PreprocIncludeNodePath
