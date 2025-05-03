@@ -139,6 +139,6 @@ public fun createNode(node: Node): CNodeBase {
         TSCLanguage.Lang.system_lib_string -> SystemLibStringNode(node)
         TSCLanguage.Lang.`true` -> TrueNode(node)
         TSCLanguage.Lang.type_identifier -> TypeIdentifierNode(node)
-        else -> error("Unknown node type")
+        else -> error("Unknown node type ${node.kind}")
     }
 }
