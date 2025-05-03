@@ -57,7 +57,11 @@ private fun processTree(tree: Tree, source: String, visitor: ASTVisitor) {
     do {
         val n = cursor.node
         if (!n.isNamed) continue
-        processTranslationUnit(n, visitor)
+        try {
+            processTranslationUnit(n, visitor)
+        } catch (e: Exception) {
+            throw NodeVisitException(n, e)
+        }
     } while (cursor.gotoNextSibling())
 
 }
@@ -65,69 +69,65 @@ private fun processTree(tree: Tree, source: String, visitor: ASTVisitor) {
 context(_: ParseContext)
 private fun processTranslationUnit(node: Node, visitor: ASTVisitor) {
     val n = createNode(node)
-    try {
-        when (n) {
-            is PreprocCallNode -> {
-                parseLineMarker(n, visitor)
-            }
-
-            is CommentNode -> {
-                visitor.visitComment(n.content())
-            }
-
-            is TypeDefinitionNode -> {
-                val v = visitor.visitTypedef(n)
-                processTypedef(n, v)
-            }
-
-            is StructSpecifierNode -> {
-                val v = visitor.visitStructSpecifier()
-                processStruct(n, v)
-                v.visitEnd()
-            }
-
-            is EnumSpecifierNode -> {
-                val v = visitor.visitEnumSpecifier()
-                processEnum(n, v)
-                v.visitEnd()
-            }
-
-            is DeclarationNode -> {
-                val v = visitor.visitDeclaration()
-                processDeclaration(n.type, n.declarator[0], v)
-                v.visitEnd()
-            }
-
-            is FunctionDefinitionNode -> {
-                // ignore function body here
-                val v = visitor.visitDeclaration()
-
-
-                run {
-                    val typeVisitor = v.visitType()
-                    visitTypeSpecifierNode(n.type, typeVisitor)
-                    typeVisitor.visitEnd()
-                }
-
-                run {
-                    val declaratorVisitor = v.visitDeclarator()
-                    visitDeclaratorNode(n.declarator, declaratorVisitor)
-                    declaratorVisitor.visitEnd()
-                }
-
-                v.visitEnd()
-            }
-
-            else -> {
-                println("unknown node: ${n::class.simpleName}")
-            }
+    when (n) {
+        is PreprocCallNode -> {
+            parseLineMarker(n, visitor)
         }
-    } catch (e: Exception) {
-        throw NodeVisitException(n, e)
+
+        is CommentNode -> {
+            visitor.visitComment(n.content())
+        }
+
+        is TypeDefinitionNode -> {
+            val v = visitor.visitTypedef(n)
+            processTypedef(n, v)
+        }
+
+        is StructSpecifierNode -> {
+            val v = visitor.visitStructSpecifier()
+            processStruct(n, v)
+            v.visitEnd()
+        }
+
+        is EnumSpecifierNode -> {
+            val v = visitor.visitEnumSpecifier()
+            processEnum(n, v)
+            v.visitEnd()
+        }
+
+        is DeclarationNode -> {
+            val v = visitor.visitDeclaration()
+            processDeclaration(n.type, n.declarator[0], v)
+            v.visitEnd()
+        }
+
+        is FunctionDefinitionNode -> {
+            // ignore function body here
+            val v = visitor.visitDeclaration()
+
+
+            run {
+                val typeVisitor = v.visitType()
+                visitTypeSpecifierNode(n.type, typeVisitor)
+                typeVisitor.visitEnd()
+            }
+
+            run {
+                val declaratorVisitor = v.visitDeclarator()
+                visitDeclaratorNode(n.declarator, declaratorVisitor)
+                declaratorVisitor.visitEnd()
+            }
+
+            v.visitEnd()
+        }
+
+        else -> {
+            println("unknown node: ${n::class.simpleName}")
+        }
     }
 }
 
 class NodeVisitException(
-    val node: CNodeBase,
+    val node: Node,
     override val cause: Throwable
 ) : Exception()

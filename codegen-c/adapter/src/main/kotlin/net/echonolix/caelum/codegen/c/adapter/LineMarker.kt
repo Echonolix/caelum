@@ -1,5 +1,6 @@
 package net.echonolix.caelum.codegen.c.adapter
 
+import tree_sitter.Node
 import tree_sitter.Range
 import tree_sitter.c.node.CNodeBase
 
@@ -17,6 +18,14 @@ data class LineMarker(
      */
     fun posOf(ast: CNodeBase): Int {
         val offsetLine = ast.`$node`.range.endPoint.row - range.endPoint.row
+        return lineNum + offsetLine.toInt()
+    }
+
+    /**
+     * @return the line num at original source
+     */
+    fun posOf(node: Node): Int {
+        val offsetLine = node.range.endPoint.row - range.endPoint.row
         return lineNum + offsetLine.toInt()
     }
 }
