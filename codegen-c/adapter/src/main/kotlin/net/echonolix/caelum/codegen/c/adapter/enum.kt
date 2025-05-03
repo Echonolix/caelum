@@ -15,13 +15,10 @@ class BuildEnumVisitor() : EnumVisitor {
         identifier = Identifier(name)
     }
 
-    override fun visitComment(comment: String) {
-
-    }
+    override fun visitComment(comment: String) {}
 
     override fun visitEnumerator(name: String, value: ExpressionNode?, ctx: ParseContext) {
         with(ctx) {
-
             val exp = if (value != null) {
                 parseASTNumber(value, enumerators)
             } else {
@@ -34,10 +31,7 @@ class BuildEnumVisitor() : EnumVisitor {
         }
     }
 
-    override fun visitEnd() {
-
-    }
-
+    override fun visitEnd() {}
 
     fun build(): CEnum {
         return CEnum(identifier, enumerators)
@@ -46,11 +40,8 @@ class BuildEnumVisitor() : EnumVisitor {
 
 context(_: ParseContext)
 internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnumerator>): ASTNumberValue {
-
     return when (node) {
-
         is NumberLiteralNode -> ASTNumberValue.Literal(node.content())
-
         is UnaryExpressionNode -> {
             val opStr = node.operator.content()
             val exp = node.argument
@@ -63,9 +54,7 @@ internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnu
             }
             ASTNumberValue.Unary(op, parseASTNumber(exp, existingEnumerators))
         }
-
         is BinaryExpressionNode -> {
-
             val leftNode = node.left
             val rightNode = node.right
 
@@ -85,12 +74,10 @@ internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnu
 
             ASTNumberValue.Binary(op, left, right)
         }
-
         is IdentifierNode -> {
             val id = node.content()
             ASTNumberValue.Ref(id)
         }
-
         is ParenthesizedExpressionNode -> {
 
             val exp = node.children()
@@ -98,7 +85,6 @@ internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnu
 
             ASTNumberValue.Paraenthesized(parseASTNumber(exp, existingEnumerators))
         }
-
         else -> error("Unknown node for number literal: $node")
     }
 }

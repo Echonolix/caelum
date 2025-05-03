@@ -10,4 +10,10 @@ typedef struct Foo {
     float b;
 } Foo;
 
-double bar(int c, float d);
+enum Baz {
+    BAZ_A,
+    BAZ_B,
+    BAZ_C
+}
+
+double bar(Foo* a, int c, float d, enum Baz e);

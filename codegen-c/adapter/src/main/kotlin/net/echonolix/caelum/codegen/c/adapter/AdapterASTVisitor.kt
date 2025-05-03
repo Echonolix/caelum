@@ -1,14 +1,6 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.c.adapter
 
 import c.ast.visitor.*
-import c.ast.visitor.ASTVisitor
-import net.echonolix.caelum.codegen.c.adapter.BuildDeclarationVisitor
-import net.echonolix.caelum.codegen.c.adapter.BuildEnumVisitor
-import net.echonolix.caelum.codegen.c.adapter.BuildTypedefVisitor
-import net.echonolix.caelum.codegen.c.adapter.CStruct
-import net.echonolix.caelum.codegen.c.adapter.CommonGroupSpecifierVisitor
-import net.echonolix.caelum.codegen.c.adapter.ElementContext
-import net.echonolix.caelum.codegen.c.adapter.LineMarker
 import tree_sitter.Range
 import tree_sitter.c.node.TypeDefinitionNode
 
@@ -27,44 +19,48 @@ class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
     }
 
     override fun visitComment(comment: String) {
-
-//        println(ctx.lineMarker.lineNum)
-//        println(ctx.lineMarker.fileName)
-//
-//        println(comment)
-//
-//        TODO()
+        TODO()
     }
 
     override fun visitTypedef(ast: TypeDefinitionNode): TypeDefVisitor {
-        println(lineMarker.fileName)
-        println(lineMarker.posOf(ast))
-        return BuildTypedefVisitor()
+//        println(lineMarker.fileName)
+//        println(lineMarker.posOf(ast))
+        val visitor = BaseTypedefVisitor()
+        return object : TypeDefVisitor by visitor {
+            override fun visitEnd() {
+                val identifier = visitor.identifier!!
+                ctx.addTypedef(identifier.name, visitor.cType)
+            }
+        }
     }
 
     override fun visitStructSpecifier(): GroupSpecifierVisitor {
-        val visitor = CommonGroupSpecifierVisitor()
+        val visitor = BaseGroupSpecifierVisitor()
         return object : GroupSpecifierVisitor by visitor {
             override fun visitEnd() {
-                println(
-                    CStruct(
-                        id = visitor.identifier,
-                        fields = visitor.fields,
-                    )
-                )
+                val identifier = visitor.identifier!!
+                ctx.addStruct(identifier.name, CStruct(identifier, visitor.fields))
             }
         }
     }
 
     override fun visitUnionSpecifier(): GroupSpecifierVisitor {
-        TODO("Not yet implemented")
+        val visitor = BaseGroupSpecifierVisitor()
+        return object : GroupSpecifierVisitor by visitor {
+            override fun visitEnd() {
+                val identifier = visitor.identifier!!
+                ctx.addUnion(identifier.name, CUnion(identifier, visitor.fields))
+            }
+        }
     }
 
     override fun visitEnumSpecifier(): EnumVisitor {
         val visitor = BuildEnumVisitor()
         return object : EnumVisitor by visitor {
             override fun visitEnd() {
-                println(visitor.build())
+                val cEnum = visitor.build()
+                val identifier = cEnum.id!!
+                ctx.addEnum(identifier.name, cEnum)
             }
         }
     }
@@ -72,9 +68,13 @@ class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
     override fun visitDeclaration(): DeclarationVisitor {
         val visitor = BuildDeclarationVisitor()
         return object : DeclarationVisitor by visitor {
-
             override fun visitEnd() {
-                println("DECL: ${visitor.identifier} ${visitor.cType} ")
+                val identifier = visitor.identifier!!
+                val cType = visitor.cType
+                when (cType) {
+                    is CFunction -> ctx.addFunction(identifier.name, cType)
+                    else -> throw UnsupportedOperationException("Unsupported type: $identifier $cType")
+                }
             }
         }
     }

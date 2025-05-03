@@ -1,10 +1,45 @@
 package net.echonolix.caelum.codegen.c.adapter
 
-import net.echonolix.caelum.AdapterASTVisitor
-
 class ElementContext {
+    private val typedefs0 = mutableMapOf<String, CType>()
+    val typedefs: Map<String, CType> get() = typedefs0
+    private val structs0 = mutableMapOf<String, CStruct>()
+    val structs: Map<String, CStruct> get() = structs0
+    private val unions0 = mutableMapOf<String, CUnion>()
+    val unions: Map<String, CUnion> get() = unions0
+    private val enums0 = mutableMapOf<String, CEnum>()
+    val enums: Map<String, CEnum> get() = enums0
+    private val functions0 = mutableMapOf<String, CFunction>()
+    val functions: Map<String, CFunction> get() = functions0
+
     fun parse(source: String) {
         val visitor = AdapterASTVisitor(this)
         c.ast.parse(source, visitor)
+    }
+
+    fun addTypedef(name: String, type: CType) {
+        typedefs0[name] = type
+    }
+
+    fun addStruct(name: String, struct: CStruct) {
+        structs0.compute(name) { _, existing ->
+            existing?.copy(fields = existing.fields + struct.fields) ?: struct
+        }
+    }
+
+    fun addUnion(name: String, union: CUnion) {
+        unions0.compute(name) { _, existing ->
+            existing?.copy(fields = existing.fields + union.fields) ?: union
+        }
+    }
+
+    fun addEnum(name: String, enum: CEnum) {
+        enums0.compute(name) { _, existing ->
+            existing?.copy(enumerators = existing.enumerators + enum.enumerators) ?: enum
+        }
+    }
+
+    fun addFunction(name: String, function: CFunction) {
+        functions0[name] = function
     }
 }

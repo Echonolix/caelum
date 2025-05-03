@@ -13,6 +13,26 @@ class CCodeGenProcessor : KtgenProcessor {
         inputs.forEach {
             elementCtx.parse(it.readText())
         }
+        println("Typedefs:")
+        elementCtx.typedefs.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Structs:")
+        elementCtx.structs.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Unions:")
+        elementCtx.unions.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Functions:")
+        elementCtx.functions.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
         return emptySet()
     }
 
@@ -61,6 +81,7 @@ fun main() {
     fun resourcePath(path: String): Path {
         return Paths.get(CCodeGenProcessor::class.java.getResource(path)!!.toURI())
     }
+
     val time = System.nanoTime()
     val inputs = setOf(
         resourcePath("/test2.h")
