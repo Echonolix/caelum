@@ -7,7 +7,7 @@ import tree_sitter.c.node.EnumeratorNode
 
 
 
-context(ParseContext)
+context(ctx: ParseContext)
 internal fun processEnum(n: EnumSpecifierNode, v: EnumVisitor) {
     n.name?.let { v.visitName(it.content()) }
 
@@ -21,7 +21,7 @@ internal fun processEnum(n: EnumSpecifierNode, v: EnumVisitor) {
 
             is EnumeratorNode -> {
                 val name = node.name.content()
-                v.visitEnumerator(name, node.value, this@ParseContext)
+                v.visitEnumerator(name, node.value, ctx)
             }
 
             else -> error("unexpected child: ${it::class.simpleName}")

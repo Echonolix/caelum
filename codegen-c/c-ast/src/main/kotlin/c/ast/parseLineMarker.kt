@@ -5,7 +5,7 @@ import tree_sitter.c.node.PreprocCallNode
 
 private val pattern = Regex("# (?<linenum>\\d+) \"(?<path>(((.+\\..+))|(<.*>)))\"(?<flags>( \\d)*)")
 
-context(ParseContext)
+context(_: ParseContext)
 fun parseLineMarker(node: PreprocCallNode, visitor: ASTVisitor) {
     val match = pattern.matchEntire(node.content().trim()) ?: return
     val linenum = match.groups["linenum"]!!.value.toInt()

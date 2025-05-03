@@ -4,7 +4,7 @@ import c.ast.visitor.DeclarationVisitor
 import tree_sitter.c.node.*
 
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun processDeclaration(
     type: TypeSpecifierNode,
     declarator: DeclarationNodeDeclarator,

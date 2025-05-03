@@ -4,7 +4,7 @@ import c.ast.visitor.GroupSpecifierVisitor
 import tree_sitter.c.node.*
 
 
-context(ParseContext)
+context(_: ParseContext)
 private fun processGroup(name: TypeIdentifierNode?, body: FieldDeclarationListNode?, v: GroupSpecifierVisitor) {
     name?.let { v.visitName(it.content()) }
 
@@ -40,12 +40,12 @@ private fun processGroup(name: TypeIdentifierNode?, body: FieldDeclarationListNo
 
 }
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun processStruct(n: StructSpecifierNode, v: GroupSpecifierVisitor) {
     processGroup(n.name, n.body, v)
 }
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun processUnion(n: UnionSpecifierNode, v: GroupSpecifierVisitor) {
     processGroup(n.name, n.body, v)
 }

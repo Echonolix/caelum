@@ -10,15 +10,24 @@ data class ParseContext(
     private val source: String,
     private val lang: TSCLanguage
 ) {
-    fun Node.content(): String {
-        return source.substring(startByte.toInt(), endByte.toInt())
+    internal fun content(node: Node): String {
+        return source.substring(node.startByte.toInt(), node.endByte.toInt())
     }
 
-    fun CNodeBase.content(): String {
-        return this.`$node`.content()
+    internal fun content(base: CNodeBase): String {
+        return content(base.`$node`)
     }
 }
 
+context(ctx: ParseContext)
+fun Node.content(): String {
+    return ctx.content(this)
+}
+
+context(ctx: ParseContext)
+fun CNodeBase.content(): String {
+    return ctx.content(this)
+}
 
 fun parse(
     source: String,
@@ -36,7 +45,7 @@ fun parse(
     }
 }
 
-context(ParseContext)
+context(_: ParseContext)
 private fun processTree(tree: Tree, source: String, visitor: ASTVisitor) {
     val cursor = tree.rootNode.walk()
     if (!cursor.gotoFirstChild()) {
@@ -51,7 +60,7 @@ private fun processTree(tree: Tree, source: String, visitor: ASTVisitor) {
 
 }
 
-context(ParseContext)
+context(_: ParseContext)
 private fun processTranslationUnit(node: Node, visitor: ASTVisitor) {
     val n = createNode(node)
     when (n) {

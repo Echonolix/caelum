@@ -3,7 +3,7 @@ package c.ast
 import c.ast.visitor.TypeDefVisitor
 import tree_sitter.c.node.TypeDefinitionNode
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun processTypedef(n: TypeDefinitionNode, visitor: TypeDefVisitor) {
 
     val typeVisitor = visitor.visitType()

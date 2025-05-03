@@ -5,8 +5,11 @@ import c.ast.visitor.TypeSpecifierVisitor
 import c.lang.CPrimitiveType
 import c.lang.CSizeSpecifier
 import tree_sitter.c.node.*
+import java.util.Locale.getDefault
 
-context(ParseContext)
+private fun String.cap() = replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
+
+context(_: ParseContext)
 internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisitor) {
     when (n) {
         is EnumSpecifierNode -> {
@@ -18,7 +21,7 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
             println("MACRO: ${n.content()}")
         }
         is PrimitiveTypeNode -> {
-            val primitive = CPrimitiveType.entries.find { it.name == (n.content().capitalize()) }
+            val primitive = CPrimitiveType.entries.find { it.name == (n.content().cap()) }
             if (primitive != null) {
                 v.visitPrimitiveType(primitive)
             } else {
@@ -31,10 +34,10 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
             val sizedVisitor = v.visitSizedTypeSpecifier()
 
             n.sizeSpecifier.forEach {
-                sizedVisitor.visitSizedSpecifier(CSizeSpecifier.valueOf(it.content().capitalize()))
+                sizedVisitor.visitSizedSpecifier(CSizeSpecifier.valueOf(it.content().cap()))
             }
             when (val type = n.type) {
-                is PrimitiveTypeNode -> sizedVisitor.visitType(CPrimitiveType.valueOf(type.content().capitalize()))
+                is PrimitiveTypeNode -> sizedVisitor.visitType(CPrimitiveType.valueOf(type.content().cap()))
                 is TypeIdentifierNode -> TODO()
                 null -> {
 
@@ -60,7 +63,7 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
     }
 }
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun visitDeclaratorNode(n: _DeclaratorNode, v: DeclaratorVisitor) {
     when (n) {
         is _TypeDeclaratorNode -> {
@@ -71,7 +74,7 @@ internal fun visitDeclaratorNode(n: _DeclaratorNode, v: DeclaratorVisitor) {
     }
 }
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun visitFieldDeclaratorNode(n: _FieldDeclaratorNode, v: DeclaratorVisitor) {
     when (n) {
         is _TypeDeclaratorNode -> {
@@ -82,7 +85,7 @@ internal fun visitFieldDeclaratorNode(n: _FieldDeclaratorNode, v: DeclaratorVisi
     }
 }
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun visitTypeDeclaratorNode(n: _TypeDeclaratorNode, v: DeclaratorVisitor) {
     when (n) {
         is ArrayDeclaratorNode -> {
@@ -122,7 +125,7 @@ internal fun visitTypeDeclaratorNode(n: _TypeDeclaratorNode, v: DeclaratorVisito
 }
 
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun visitAbstractTypeDeclaratorNode(n: _AbstractDeclaratorNode, v: DeclaratorVisitor) {
     when (n) {
         is AbstractArrayDeclaratorNode -> TODO()
@@ -143,7 +146,7 @@ internal fun visitAbstractTypeDeclaratorNode(n: _AbstractDeclaratorNode, v: Decl
 }
 
 
-context(ParseContext)
+context(_: ParseContext)
 internal fun visitFunctionDeclaratorNode(n: FunctionDeclaratorNode, v: DeclaratorVisitor) {
     val p = n.parameters
     val functionVisitor = v.visitFunction()
@@ -187,19 +190,19 @@ internal fun visitFunctionDeclaratorNode(n: FunctionDeclaratorNode, v: Declarato
 
 }
 
-//context(ParseContext)
+//context(_: ParseContext)
 //internal fun visitTypeDeclarationNode(type: TypeSpecifierNode, declarator: _TypeDeclaratorNode?, visitor: TypeVisitor) {
 //    visitTypeSpecifierNode(type, visitor)
 //    declarator?.let { visitTypeDeclaratorNode(it, visitor) }
 //}
 
-//context(ParseContext)
+//context(_: ParseContext)
 //internal fun visitDeclarationNode(type: TypeSpecifierNode, declarator: _DeclaratorNode?, visitor: DeclaratorVisitor) {
 //    visitTypeSpecifierNode(type, visitor)
 //    declarator?.let { visitDeclaratorNode(declarator, visitor) }
 //}
 //
-//context(ParseContext)
+//context(_: ParseContext)
 //internal fun visitAbstractDeclarationNode(
 //    type: TypeSpecifierNode,
 //    declarator: _AbstractDeclaratorNode?,
