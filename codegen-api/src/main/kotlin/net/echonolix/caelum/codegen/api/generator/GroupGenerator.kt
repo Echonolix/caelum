@@ -2,10 +2,7 @@ package net.echonolix.caelum.codegen.api.generator
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.codegen.api.CBasicType
-import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
-import net.echonolix.caelum.codegen.api.CaelumCoreAnnotation
+import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.addKdoc
 import java.lang.invoke.MethodHandle
@@ -32,6 +29,34 @@ public open class GroupGenerator(
     context(ctx: CodegenContext)
     protected open fun memberKtApiType(member: CType.Group.Member): TypeName {
         return member.type.ktApiType()
+    }
+
+    context(ctx: CodegenContext)
+    protected open fun addMemberAccessor(member: CType.Group.Member) {
+        when (val memberType = member.type.deepResolve()) {
+            is CType.BasicType -> {
+                basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr)
+            }
+            is CType.Handle -> {
+                commonAccess(member)
+            }
+            is CType.Pointer -> {
+                commonAccess(member)
+                if (memberType is CType.FunctionPointer) {
+                    funcPointerOverload(member, memberType)
+                }
+            }
+            is CType.EnumBase -> {
+                commonAccess(member)
+            }
+            is CType.Group -> {
+                groupAccess(member, memberType)
+            }
+            is CType.Array -> {
+                arrayAccess(member, memberType)
+            }
+            else -> throw IllegalStateException("Unsupported member type: ${memberType.toSimpleString()}")
+        }
     }
 
     context(ctx: CodegenContext)
@@ -102,6 +127,9 @@ public open class GroupGenerator(
         with(ctx) {
             val typeObjectType = buildTypeObjectType()
             file.addType(typeObjectType.build())
+            element.members.forEach {
+                addMemberAccessor(it)
+            }
             return file
         }
     }
@@ -297,12 +325,12 @@ public open class GroupGenerator(
         }
         val returnType = memberKtApiType(member)
         var fromIntTypeParamBlock = CodeBlock.of("")
-        
-        if (memberType is CType.Pointer) {
-            val eType = memberType.elementType
-            if (eType is CType.BasicType && eType.baseType == CBasicType.void) {
-                fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.caelumCoreTypeName)
-            }
+
+        if (returnType is ParameterizedTypeName
+            && returnType.rawType == CaelumCodegenHelper.pointerCname
+            && returnType.typeArguments.first() == CaelumCodegenHelper.starWildcard
+        ) {
+            fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.caelumCoreTypeName)
         }
 
         val nativeType = memberType.nativeType()
