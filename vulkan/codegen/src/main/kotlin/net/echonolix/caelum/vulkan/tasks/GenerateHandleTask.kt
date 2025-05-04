@@ -1,22 +1,31 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.codegen.api.CBasicType
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.codegen.api.decap
+import net.echonolix.caelum.vulkan.VulkanCodegen
+import net.echonolix.caelum.vulkan.EnumEntryFixedName
+import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
+import net.echonolix.caelum.vulkan.VkHandleTag
+import net.echonolix.caelum.vulkan.VulkanCodegenContext
+import net.echonolix.caelum.vulkan.filterVkFunction
+import net.echonolix.caelum.vulkan.isDeviceBase
+import net.echonolix.caelum.vulkan.objectBaseCName
 import kotlin.io.path.Path
 
-class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
+class GenerateHandleTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
     private fun CType.Handle.variableName(): String {
         return name.removePrefix("Vk").decap()
     }
 
     private val objTypeCname = with(ctx) { resolveElement<CType>("VkObjectType").typeName() }
-    val vkTypeDescriptorCname = CaelumVulkanCodegen.vkHandleCname.nestedClass("TypeDescriptor")
+    val vkTypeDescriptorCname = VulkanCodegen.vkHandleCname.nestedClass("TypeDescriptor")
 
-    override fun VulkanCodeGenContext.compute() {
+    override fun VulkanCodegenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
 
@@ -28,16 +37,16 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
                 genObjectBase(functions, handleType)
             }
 
-        typeAlias.joinAndWriteOutput(Path("handles"), CaelumVulkanCodegen.handlePackageName)
+        typeAlias.joinAndWriteOutput(Path("handles"), VulkanCodegen.handlePackageName)
     }
 
     private enum class ContainerType(val getFuncMemberName: MemberName) {
-        Instance(CaelumVulkanCodegen.getInstanceFuncMember) {
+        Instance(VulkanCodegen.getInstanceFuncMember) {
             override fun filterFunc(funcType: CType.Function): Boolean {
                 return !isDeviceFunc(funcType)
             }
         },
-        Device(CaelumVulkanCodegen.getDeviceFuncMember) {
+        Device(VulkanCodegen.getDeviceFuncMember) {
             override fun filterFunc(funcType: CType.Function): Boolean {
                 return isDeviceFunc(funcType)
             }
@@ -60,7 +69,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
         }
     }
 
-    private fun VulkanCodeGenContext.genObjectHandle(
+    private fun VulkanCodegenContext.genObjectHandle(
         handleType: CType.Handle
     ) {
         val thisCname = handleType.className()
@@ -68,7 +77,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
 
         val interfaceType = TypeSpec.interfaceBuilder(thisCname)
-        interfaceType.addSuperinterface(CaelumVulkanCodegen.vkHandleCname)
+        interfaceType.addSuperinterface(VulkanCodegen.vkHandleCname)
         interfaceType.addProperty(
             PropertySpec.builder("objectType", objTypeCname)
                 .addModifiers(KModifier.OVERRIDE)
@@ -136,7 +145,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
         ctx.writeOutput(Path("objectHandles"), file)
     }
 
-    private fun VulkanCodeGenContext.genObjectBase(
+    private fun VulkanCodegenContext.genObjectBase(
         functions: List<CType.Function>,
         handleType: CType.Handle
     ) {
@@ -145,10 +154,10 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
         val parent = vkHandleTag.parent
 
-        val containerCname = ClassName(CaelumVulkanCodegen.handlePackageName, "${handleType.name}Container")
+        val containerCname = ClassName(VulkanCodegen.handlePackageName, "${handleType.name}Container")
         val containerType = TypeSpec.interfaceBuilder(containerCname)
         parent?.let {
-            containerType.addSuperinterface(ClassName(CaelumVulkanCodegen.handlePackageName, "${parent.name}Container"))
+            containerType.addSuperinterface(ClassName(VulkanCodegen.handlePackageName, "${parent.name}Container"))
         }
         containerType.addProperty(handleType.variableName(), thisCname)
 
@@ -184,7 +193,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
                     .build()
             )
             implType.addSuperinterface(
-                ClassName(CaelumVulkanCodegen.handlePackageName, "${parent.name}Container"),
+                ClassName(VulkanCodegen.handlePackageName, "${parent.name}Container"),
                 CodeBlock.of("parent")
             )
         } else {
@@ -215,7 +224,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Un
                 property.addModifiers(KModifier.OVERRIDE)
                 when (funcName) {
                     "vkGetInstanceProcAddr" -> {
-                        property.initializer("%T.$funcName", CaelumVulkanCodegen.vkCname)
+                        property.initializer("%T.$funcName", VulkanCodegen.vkCname)
                     }
                     "vkGetDeviceProcAddr" -> {
                         property.initializer(

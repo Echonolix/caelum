@@ -1,4 +1,4 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan
 
 import net.echonolix.caelum.codegen.api.CDeclaration
 import net.echonolix.caelum.codegen.api.CType

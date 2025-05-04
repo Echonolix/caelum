@@ -1,21 +1,22 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.codegen.api.task
 
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeAliasSpec
-import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenContext
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.RecursiveTask
 import java.util.stream.Stream
 import kotlin.io.path.Path
 
-abstract class CaelumVulkanCodegenTask<R>(protected val ctx: VulkanCodeGenContext) : RecursiveTask<R>() {
+public abstract class CaelumCodegenTaskBase<CTX : CaelumCodegenContext, R>(protected val ctx: CTX) :
+    RecursiveTask<R>() {
     public final override fun compute(): R {
         return ctx.compute()
     }
 
     protected fun ForkJoinTask<List<TypeAliasSpec>>.joinAndWriteOutput(packageName: String) {
-        val file = FileSpec.builder(packageName, "TypeAliases")
+        val file = FileSpec.Companion.builder(packageName, "TypeAliases")
         this.join().forEach {
             file.addTypeAlias(it)
         }
@@ -23,7 +24,7 @@ abstract class CaelumVulkanCodegenTask<R>(protected val ctx: VulkanCodeGenContex
     }
 
     protected fun ForkJoinTask<List<TypeAliasSpec>>.joinAndWriteOutput(path: Path, packageName: String) {
-        val file = FileSpec.builder(packageName, "TypeAliases")
+        val file = FileSpec.Companion.builder(packageName, "TypeAliases")
         this.join().forEach {
             file.addTypeAlias(it)
         }
@@ -40,18 +41,7 @@ abstract class CaelumVulkanCodegenTask<R>(protected val ctx: VulkanCodeGenContex
             }
     }
 
-    protected abstract fun VulkanCodeGenContext.compute(): R
+    protected abstract fun CTX.compute(): R
 }
 
-class GenTypeAliasTask(ctx: VulkanCodeGenContext, private val inputs: List<Pair<String, CType>>) :
-    CaelumVulkanCodegenTask<List<TypeAliasSpec>>(ctx) {
-    override fun VulkanCodeGenContext.compute(): List<TypeAliasSpec> {
-        return inputs.parallelStream()
-            .filter { (name, dstType) -> name != dstType.name }
-            .map { (name, dstType) ->
-                TypeAliasSpec.builder(name, dstType.typeName())
-                    .build()
-            }
-            .toList()
-    }
-}
+public typealias CaelumCodegenTask<R> = CaelumCodegenTaskBase<CaelumCodegenContext, R>

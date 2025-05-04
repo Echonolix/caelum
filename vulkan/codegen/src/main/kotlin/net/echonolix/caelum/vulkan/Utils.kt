@@ -1,17 +1,9 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.Documentable
-import com.squareup.kotlinpoet.ParameterSpec
-import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.*
 import kotlinx.serialization.decodeFromString
-import net.echonolix.caelum.*
-import net.echonolix.caelum.codegen.api.CElement
-import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.CaelumCodegenContext
-import net.echonolix.caelum.codegen.api.removeContinuousSpaces
-import net.echonolix.caelum.codegen.api.toXMLTagFreeString
+import net.echonolix.caelum.CTypeName
+import net.echonolix.caelum.codegen.api.*
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
 
@@ -28,7 +20,7 @@ inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
 fun List<CompactFragment>.toXmlTagFreeString() =
     joinToString(" ") { it.contentString.toXMLTagFreeString() }.removeContinuousSpaces()
 
-context(ctx: VulkanCodeGenContext)
+context(ctx: VulkanCodegenContext)
 fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     val docs = element.tags.get<ElementCommentTag>()?.comment
     val since = element.tags.get<RequiredByTag>()?.requiredBy
@@ -51,7 +43,7 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     addKdoc(sb.toString())
 }
 
-fun VulkanCodeGenContext.filterVkFunction(): List<CType.Function> =
+fun VulkanCodegenContext.filterVkFunction(): List<CType.Function> =
     filterTypeStream<CType.Function>()
         .filter { it.first == it.second.tags.get<OriginalFunctionNameTag>()!!.name }
         .map { it.second }
@@ -64,7 +56,7 @@ fun VulkanCodeGenContext.filterVkFunction(): List<CType.Function> =
         )
         .toList()
 
-context(ctx: VulkanCodeGenContext)
+context(ctx: VulkanCodegenContext)
 fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) =
     toParamSpecs(annotations) {
         val paramType = it.type
@@ -77,20 +69,6 @@ fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) 
         }
         pType
     }
-
-context(ctx: VulkanCodeGenContext)
-fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
-    toParamSpecs(annotations) {
-        var pType = it.type.ktApiType()
-        if (it.type is CType.Pointer && it.tags.has<OptionalTag>()) {
-            pType = pType.copy(nullable = true)
-        }
-        pType
-    }
-
-context(ctx: VulkanCodeGenContext)
-fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) =
-    toParamSpecs(annotations) { it.type.nativeType() }
 
 context(ctx: CaelumCodegenContext)
 inline fun List<CType.Function.Parameter>.toParamSpecs(
@@ -114,7 +92,7 @@ tailrec fun isDeviceBase(type: CType.Handle): Boolean {
     return isDeviceBase(parent)
 }
 
-context(_: VulkanCodeGenContext)
+context(_: VulkanCodegenContext)
 fun CType.Handle.objectBaseCName(): ClassName {
     return ClassName(packageName(), this.name)
 }

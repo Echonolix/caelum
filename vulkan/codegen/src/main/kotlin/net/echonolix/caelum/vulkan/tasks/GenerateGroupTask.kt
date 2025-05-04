@@ -1,4 +1,4 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -6,7 +6,13 @@ import net.echonolix.caelum.*
 import net.echonolix.caelum.codegen.api.CBasicType
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.codegen.api.deepReferenceResolve
+import net.echonolix.caelum.vulkan.VulkanCodegen
+import net.echonolix.caelum.vulkan.EnumEntryFixedName
+import net.echonolix.caelum.vulkan.StructTypeTag
+import net.echonolix.caelum.vulkan.VulkanCodegenContext
+import net.echonolix.caelum.vulkan.tryAddKdoc
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 import java.util.concurrent.ConcurrentHashMap
@@ -14,13 +20,13 @@ import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.io.path.Path
 
-class GenerateGroupTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
+class GenerateGroupTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
     private val skippedStructs = setOf(
         "VkBaseInStructure",
         "VkBaseOutStructure"
     )
 
-    override fun VulkanCodeGenContext.compute() {
+    override fun VulkanCodegenContext.compute() {
         val groupTypes = ctx.filterTypeStream<CType.Group>()
             .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
             .toList()
@@ -109,10 +115,10 @@ class GenerateGroupTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Uni
             .map { type -> genGroupType(type) }
             .forEach { ctx.writeOutput(groupsPath, it) }
 
-        typeAlias.joinAndWriteOutput(groupsPath, CaelumVulkanCodegen.structPackageName)
+        typeAlias.joinAndWriteOutput(groupsPath, VulkanCodegen.structPackageName)
     }
 
-    context(ctx: VulkanCodeGenContext)
+    context(ctx: VulkanCodegenContext)
     private fun genGroupType(groupType: CType.Group): FileSpec.Builder {
         val thisCname = groupType.className()
         val file = FileSpec.builder(thisCname)
@@ -120,8 +126,8 @@ class GenerateGroupTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Uni
         val typeObject = TypeSpec.objectBuilder(thisCname)
         typeObject.tryAddKdoc(groupType)
         val superCname = when (groupType) {
-            is CType.Struct -> CaelumVulkanCodegen.vkStructCname
-            is CType.Union -> CaelumVulkanCodegen.vkUnionCname
+            is CType.Struct -> VulkanCodegen.vkStructCname
+            is CType.Union -> VulkanCodegen.vkUnionCname
         }
         typeObject.superclass(superCname.parameterizedBy(thisCname))
         typeObject.addSuperclassConstructorParameter(
@@ -498,7 +504,7 @@ class GenerateGroupTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Uni
             var returnType = memberType.ktApiType()
             var fromIntTypeParamBlock = CodeBlock.of("")
             if (member.name == "pNext") {
-                val vkStructStar = CaelumVulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard)
+                val vkStructStar = VulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard)
                 val outVkStruct = WildcardTypeName.producerOf(vkStructStar)
                 returnType = CaelumCodegenHelper.pointerCname.parameterizedBy(outVkStruct)
             } else if (memberType is CType.Pointer) {

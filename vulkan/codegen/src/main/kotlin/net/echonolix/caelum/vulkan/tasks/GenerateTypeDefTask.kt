@@ -1,14 +1,16 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeAliasSpec
 import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.vulkan.VulkanCodegen
+import net.echonolix.caelum.vulkan.VulkanCodegenContext
 import kotlin.io.path.Path
 
-class GenerateTypeDefTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
-    override fun VulkanCodeGenContext.compute() {
-        val typeDefFileBase = FileSpec.builder(CaelumVulkanCodegen.basePkgName, "TypeDefs")
-        val typeDefFileFuncPtr = FileSpec.builder(CaelumVulkanCodegen.basePkgName, "FuncPtrTypeDefs")
+class GenerateTypeDefTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
+    override fun VulkanCodegenContext.compute() {
+        val typeDefFileBase = FileSpec.builder(VulkanCodegen.basePkgName, "TypeDefs")
+        val typeDefFileFuncPtr = FileSpec.builder(VulkanCodegen.basePkgName, "FuncPtrTypeDefs")
         ctx.filterTypeStream<CType.TypeDef>().forEach { (_, typeDefType) ->
             val dstFile = if (typeDefType.dstType is CType.FunctionPointer) {
                 typeDefFileFuncPtr

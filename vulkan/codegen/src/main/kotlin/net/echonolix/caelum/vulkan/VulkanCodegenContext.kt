@@ -1,4 +1,4 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -19,17 +19,18 @@ import net.echonolix.caelum.codegen.api.toLiteralHexString
 import net.echonolix.caelum.codegen.api.toXMLTagFreeString
 import net.echonolix.caelum.vulkan.schema.*
 import java.nio.file.Path
+import kotlin.collections.get
 
-class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
+class VulkanCodegenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
     CaelumCodegenContext(basePkgName, outputDir) {
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
-            is CType.FunctionPointer, is CType.Function -> CaelumVulkanCodegen.functionPackageName
-            is CType.Enum -> CaelumVulkanCodegen.enumPackageName
-            is CType.Bitmask -> CaelumVulkanCodegen.flagPackageName
-            is CType.Struct -> CaelumVulkanCodegen.structPackageName
-            is CType.Union -> CaelumVulkanCodegen.unionPackageName
-            is CType.Handle -> CaelumVulkanCodegen.handlePackageName
+            is CType.FunctionPointer, is CType.Function -> VulkanCodegen.functionPackageName
+            is CType.Enum -> VulkanCodegen.enumPackageName
+            is CType.Bitmask -> VulkanCodegen.flagPackageName
+            is CType.Struct -> VulkanCodegen.structPackageName
+            is CType.Union -> VulkanCodegen.unionPackageName
+            is CType.Handle -> VulkanCodegen.handlePackageName
             is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
             is CType.TypeDef -> basePkgName
             is CTopLevelConst -> basePkgName
@@ -81,11 +82,11 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
     }
 
     private val bitSuffixRegex =
-        """(${CSyntax.nameRegex.pattern})_BIT(|_${CaelumVulkanCodegen.VENDOR_TAGS.joinToString("|_")})""".toRegex()
+        """(${CSyntax.nameRegex.pattern})_BIT(|_${VulkanCodegen.VENDOR_TAGS.joinToString("|_")})""".toRegex()
     private val flagNameRegex =
         """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
     private val enumTypeNameRegex =
-        """(${CSyntax.nameRegex.pattern}?)(|${CaelumVulkanCodegen.VENDOR_TAGS.joinToString("|")})""".toRegex()
+        """(${CSyntax.nameRegex.pattern}?)(|${VulkanCodegen.VENDOR_TAGS.joinToString("|")})""".toRegex()
 
     private fun CType.EnumBase.fixEntryName(entryName: String): String {
         return when (this) {
@@ -141,7 +142,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
                     val extNumber = xmlEnum.extnumber!!.decOrHexToInt()
                     val sign = if (xmlEnum.dir == "-") -1 else 1
                     val offset = xmlEnum.offset!!.decOrHexToInt()
-                    valueNum = sign * ((extNumber - 1) * CaelumVulkanCodegen.VK_EXT_ENUM_BLOCKSIZE + offset + CaelumVulkanCodegen.VK_EXT_ENUM_BASE)
+                    valueNum = sign * ((extNumber - 1) * VulkanCodegen.VK_EXT_ENUM_BLOCKSIZE + offset + VulkanCodegen.VK_EXT_ENUM_BASE)
                     valueCode = CodeBlock.of(
                         "%L$literalSuffix",
                         valueNum
@@ -232,7 +233,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
             object : CType.Struct(xmlStructType.name, members) {
                 context(ctx: CaelumCodegenContext)
                 override fun ktApiType(): TypeName {
-                    return WildcardTypeName.producerOf(CaelumVulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard))
+                    return WildcardTypeName.producerOf(VulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard))
                 }
             }
         } else {
@@ -403,7 +404,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
         }
 
         @OptIn(ExperimentalStdlibApi::class)
-        CaelumVulkanCodegen.vkVersionConstRegex.matchEntire(cElementStr)?.let {
+        VulkanCodegen.vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
             val expression =

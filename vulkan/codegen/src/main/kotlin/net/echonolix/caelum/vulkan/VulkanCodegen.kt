@@ -1,9 +1,9 @@
-package net.echonolix.caelum.vulkan.ffi
+package net.echonolix.caelum.vulkan
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 
-object CaelumVulkanCodegen {
+object VulkanCodegen {
     const val VK_EXT_ENUM_BASE = 1000000000
     const val VK_EXT_ENUM_BLOCKSIZE = 1000
 
