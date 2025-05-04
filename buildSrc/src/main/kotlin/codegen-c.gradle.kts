@@ -15,6 +15,6 @@ dependencies {
 
 tasks.ktgen {
     jvmArgs("--enable-native-access=ALL-UNNAMED")
-    systemProperty("codegenc.packageName", codegenCExtension.packageName)
-    systemProperty("codegenc.excludeConsts", codegenCExtension.excludedConsts.map { it.joinToString(",") })
+    systemProperty("codegenc.packageName", codegenCExtension.packageName.get())
+    systemProperty("codegenc.excludeConsts", codegenCExtension.excludedConsts.get().joinToString(","))
 }

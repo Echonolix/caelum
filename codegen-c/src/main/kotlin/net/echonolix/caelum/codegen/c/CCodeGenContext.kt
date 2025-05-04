@@ -15,6 +15,8 @@ import net.echonolix.caelum.codegen.c.adapter.CBasicType as CAstBasicType
 import net.echonolix.caelum.codegen.c.adapter.CType as CAstType
 
 class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
+    lateinit var ctx: CodegenContext
+
     private fun resolveCType(type: CAstType): CType {
         return when (type) {
             is CAstBasicType -> {
@@ -128,7 +130,6 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
         )
     }
 
-    context(ctx: CodegenContext)
     private fun ASTNumberValue.asKotlinCode(): CodeBlock {
         return when (this) {
             is ASTNumberValue.Binary -> CodeBlock.of("%L %L %L", left.asKotlinCode(), op.ktRep, right.asKotlinCode())
@@ -139,9 +140,10 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
         }
     }
 
-    context(ctx: CodegenContext)
     private fun ASTNumberValue.Ref.asKotlinCode(): CodeBlock {
-        return CodeBlock.of("%M", resolveTypedElement<CTopLevelConst>(this.enumName).memberName())
+        return with(ctx) {
+            CodeBlock.of("%M", resolveTypedElement<CTopLevelConst>(enumName).memberName())
+        }
     }
 
     private fun resolveEnum(name: String, cEnum: CEnum): CType.Enum {
@@ -151,7 +153,7 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
             val entryName = it.id.name
             cTypeEnum.entries[entryName] = cTypeEnum.Entry(
                 entryName,
-                CExpression.Const(CBasicType.int32_t) { it.value.asKotlinCode() }
+                CExpression.Const(CBasicType.int32_t, it.value.asKotlinCode())
             )
         }
 
@@ -161,7 +163,7 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
     private fun resolveConst(name: String, type: CBasicType<*>, value: ASTNumberValue): CTopLevelConst {
         return CTopLevelConst(
             name,
-            CExpression.Const(type) { value.asKotlinCode() }
+            CExpression.Const(type, value.asKotlinCode())
         )
     }
 

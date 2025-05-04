@@ -11,7 +11,7 @@ public inline fun List<CType.Function.Parameter>.toParamSpecs(
 ) = map {
     val builder = ParameterSpec.builder(it.name, typeMapper(it))
     if (annotations) {
-        builder.addAnnotation(CaelumCoreAnnotation.cTypeName(it.type.name))
+        builder.addAnnotation(CaelumCoreAnnotation.cTypeName(it.type.toSimpleString()))
     }
     builder.build()
 }

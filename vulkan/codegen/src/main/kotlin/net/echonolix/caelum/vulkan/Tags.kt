@@ -20,6 +20,4 @@ class StructTypeTag(val structType: CType.EnumBase.Entry) : Tag
 
 class VkHandleTag(val parent: CType.Handle?, val objectTypeEnum: CType.EnumBase.Entry, val dispatchable: Boolean) : Tag
 
-class OriginalFunctionNameTag(val name: String) : Tag
-
 object OptionalTag : Tag

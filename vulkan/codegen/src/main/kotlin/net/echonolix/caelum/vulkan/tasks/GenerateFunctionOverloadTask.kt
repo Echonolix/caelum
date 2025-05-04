@@ -4,11 +4,11 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.OriginalNameTag
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.decap
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
-import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
 import net.echonolix.caelum.vulkan.ResultCodeTag
 import net.echonolix.caelum.vulkan.VkHandleTag
 import net.echonolix.caelum.vulkan.filterVkFunction
@@ -21,7 +21,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
     override fun CodegenContext.compute() {
         val skippedNames = setOf("vkGetInstanceProcAddr", "vkGetDeviceProcAddr")
         ctx.filterVkFunction().asSequence()
-            .filter { it.tags.get<OriginalFunctionNameTag>()!!.name !in skippedNames }
+            .filter { it.tags.get<OriginalNameTag>()!!.name !in skippedNames }
             .groupBy { it.parameters.first().type }
             .map { Task(it.key as CType.Handle, it.value) }
             .onEach(Task::fork)
@@ -55,7 +55,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
             val prefixRemoved = funcType.name.removePrefix("VkFunc")
             val funcName = prefixRemoved.decap()
             val resultCodeTag = funcType.tags.get<ResultCodeTag>() ?: error("$funcType is missing result code tag")
-            val origName = funcType.tags.get<OriginalFunctionNameTag>()?.name
+            val origName = funcType.tags.get<OriginalNameTag>()?.name
                 ?: error("$funcType is missing original function name tag")
 
             val dispatcher = if (isDeviceBase(handleType)) "device" else "instance"

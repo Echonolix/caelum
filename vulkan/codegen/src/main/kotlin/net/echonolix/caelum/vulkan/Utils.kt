@@ -24,7 +24,7 @@ fun List<CompactFragment>.toXmlTagFreeString() =
 
 fun CodegenContext.filterVkFunction(): List<CType.Function> =
     filterTypeStream<CType.Function>()
-        .filter { it.first == it.second.tags.get<OriginalFunctionNameTag>()!!.name }
+        .filter { it.first == it.second.tags.get<OriginalNameTag>()!!.name }
         .map { it.second }
         .filter { !it.name.startsWith("VkFuncPtr") }
         .filter { it.parameters.isNotEmpty() }

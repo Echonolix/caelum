@@ -13,7 +13,6 @@ import net.echonolix.caelum.vulkan.BitWidthTag
 import net.echonolix.caelum.vulkan.LenTag
 import net.echonolix.caelum.vulkan.LineCommentTag
 import net.echonolix.caelum.vulkan.OptionalTag
-import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
 import net.echonolix.caelum.vulkan.RequiredByTag
 import net.echonolix.caelum.vulkan.ResultCodeTag
 import net.echonolix.caelum.vulkan.StructTypeTag
@@ -61,7 +60,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
                 CType.Function.Parameter(it[2], resolveTypedElement<CType>(it[1]))
             }.toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
-        func.tags.set(OriginalFunctionNameTag(xmlTypeDefType.name))
+        func.tags.set(OriginalNameTag(xmlTypeDefType.name))
         addToCache(func.name, func)
         val funcPointer = CType.FunctionPointer(func)
         addToCache(funcPointer.name, func)
@@ -294,7 +293,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             }
             .toList()
         val function = CType.Function(funcName, returnType, parameters)
-        function.tags.set(OriginalFunctionNameTag(cmdName))
+        function.tags.set(OriginalNameTag(cmdName))
         xmlCommand.comment?.let {
             function.tags.set(ElementCommentTag(it))
         }

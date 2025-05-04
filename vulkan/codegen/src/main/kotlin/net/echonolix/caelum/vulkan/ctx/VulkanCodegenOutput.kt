@@ -7,7 +7,7 @@ import net.echonolix.caelum.codegen.api.ctx.CodegenOutput
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import java.nio.file.Path
 
-class VulkanCodegenOutput(outputDir: Path) : CodegenOutput.Base(outputDir) {
+class VulkanCodegenOutput(outputDir: Path) : CodegenOutput.Base(outputDir, VulkanCodegen.basePkgName) {
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
             is CType.FunctionPointer, is CType.Function -> VulkanCodegen.functionPackageName

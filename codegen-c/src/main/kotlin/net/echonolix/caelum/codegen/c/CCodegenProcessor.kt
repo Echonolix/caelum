@@ -100,11 +100,13 @@ class CCodegenProcessor : KtgenProcessor {
 //        }
 //        println()
 
+        val elementResolver = CElementResolver(elementCtx)
         val ctx = CodegenContext(
             CodegenOutput.Base(outputDir, System.getProperty("codegenc.packageName")),
-            CElementResolver(elementCtx),
+            elementResolver,
             ElementDocumenter.Base(),
         )
+        elementResolver.ctx = ctx
         elementCtx.typedefs.forEach { (name, _) ->
             ctx.resolveElement(name)
         }

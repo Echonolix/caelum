@@ -83,12 +83,10 @@ public sealed class CExpression<T : Any>(public val type: CType, public val valu
     context(ctx: CodegenContext)
     public abstract fun codeBlock(): CodeBlock
 
-    public class Const(type: CBasicType<*>, value: CodegenContext.() -> CodeBlock) : CExpression<CodegenContext.() -> CodeBlock>(type.cType, value) {
-        public constructor(type: CBasicType<*>, value: CodeBlock) : this(type, { value })
-
+    public class Const(type: CBasicType<*>, value: CodeBlock) : CExpression<CodeBlock>(type.cType, value) {
         context(ctx: CodegenContext)
         override fun codeBlock(): CodeBlock {
-            return ctx.value()
+            return value
         }
 
         override fun toString(): String {

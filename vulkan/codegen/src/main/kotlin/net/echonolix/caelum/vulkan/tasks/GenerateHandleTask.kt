@@ -2,22 +2,13 @@ package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.codegen.api.CBasicType
-import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
-import net.echonolix.caelum.codegen.api.EnumEntryFixedName
+import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterType
 import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
-import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
-import net.echonolix.caelum.codegen.api.decap
 import net.echonolix.caelum.codegen.api.task.CodegenTask
-import net.echonolix.caelum.vulkan.VulkanCodegen
-import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
-import net.echonolix.caelum.vulkan.VkHandleTag
-import net.echonolix.caelum.vulkan.filterVkFunction
-import net.echonolix.caelum.vulkan.isDeviceBase
-import net.echonolix.caelum.vulkan.objectBaseCName
+import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
+import net.echonolix.caelum.vulkan.*
 import kotlin.io.path.Path
 
 class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
@@ -210,7 +201,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             )
         }
         ContainerType[handleType.name]?.let { containerType ->
-            fun CType.Function.funcName() = tags.get<OriginalFunctionNameTag>()!!.name
+            fun CType.Function.funcName() = tags.get<OriginalNameTag>()!!.name
 
             val filteredFunctions = functions.parallelStream()
                 .filter(containerType::filterFunc)
@@ -271,8 +262,8 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 FunSpec.builder("fromNativeData")
                     .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
                     .returns(thisCName)
-                    . addAnnotation(JvmStatic::class)
-                    . addStatement("return Impl(value)")
+                    .addAnnotation(JvmStatic::class)
+                    .addStatement("return Impl(value)")
                     .build()
             )
         }

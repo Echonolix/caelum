@@ -1,14 +1,16 @@
 package net.echonolix.caelum.vulkan.tasks
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.TypeName
 import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.OriginalNameTag
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import net.echonolix.caelum.codegen.api.generator.FunctionGenerator
 import net.echonolix.caelum.codegen.api.task.CodegenTask
-import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.OptionalTag
-import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
+import net.echonolix.caelum.vulkan.VulkanCodegen
 import kotlin.io.path.Path
 
 class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
@@ -48,7 +50,7 @@ class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
             context(ctx: CodegenContext)
             override fun nativeName(): String {
-                return funcType.tags.get<OriginalFunctionNameTag>()!!.name
+                return funcType.tags.get<OriginalNameTag>()!!.name
             }
         }
         return generator.generate()
