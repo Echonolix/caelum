@@ -38,7 +38,7 @@ internal fun visitTypeSpecifierNode(n: TypeSpecifierNode, v: TypeSpecifierVisito
             }
             when (val type = n.type) {
                 is PrimitiveTypeNode -> sizedVisitor.visitType(CPrimitiveType.valueOf(type.content().cap()))
-                is TypeIdentifierNode -> sizedVisitor
+                is TypeIdentifierNode -> TODO()
                 null -> {
 
                 }
