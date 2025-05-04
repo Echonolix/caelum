@@ -1,9 +1,14 @@
+dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven("https://maven.endoqa.io")
+    }
+}
+
 pluginManagement {
     includeBuild("../ktgen")
-
-    repositories {
-        gradlePluginPortal()
-    }
 
     plugins {
         id("org.jetbrains.kotlin.jvm") version "2.1.20"
@@ -24,9 +29,9 @@ listOf(
     "core",
     "vulkan",
     "glfw",
-    "vma",
-    "jemalloc",
-    "assimp"
+//    "vma",
+//    "jemalloc",
+//    "assimp"
 ).flatMap {
     sequenceOf(
         "caelum-$it" to file(it),

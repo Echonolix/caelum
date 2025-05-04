@@ -1,12 +1,7 @@
 plugins {
-    id("net.echonolix.ktgen")
+    id("buildsrc.convention.codegen-c")
 }
 
-dependencies {
-    ktgen(project(":codegen-c"))
-    ktgenInput(files(projectDir.resolve("glfw3.h")))
-}
-
-tasks.ktgen {
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
+codegenC {
+    packageName.set("net.echonolix.caelum.glfw")
 }

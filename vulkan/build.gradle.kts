@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.utils.extendsFrom
 
 plugins {
+    id("buildsrc.convention.published-module")
     id("net.echonolix.ktgen")
 }
 

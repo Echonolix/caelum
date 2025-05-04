@@ -7,7 +7,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.*
 
-class CCodeGenProcessor : KtgenProcessor {
+class CCodegenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val elementCtx = CAstContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
         val clangProcess = Runtime.getRuntime().exec(
@@ -44,7 +44,8 @@ class CCodeGenProcessor : KtgenProcessor {
         }
         println()
 
-
+        val ctx = CCodeGenContext(System.getProperty("codegenc.packageName"), outputDir, elementCtx)
+        println(ctx.basePkgName)
 
         return emptySet()
     }
@@ -69,7 +70,7 @@ class CCodeGenProcessor : KtgenProcessor {
                 else -> "so"
             }
             val libraryFileName = "$libName.$libExt"
-            val libraryPath = CCodeGenProcessor::class.java.getResource("/$libraryFileName")
+            val libraryPath = CCodegenProcessor::class.java.getResource("/$libraryFileName")
                 ?: error("Library $libraryFileName not found in resources")
 
             val libraryFilePathStr = if (libraryPath.protocol == "file") {
@@ -98,8 +99,10 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
+    System.setProperty("codegenc.packageName", "net.echonolix.caelum.glfw")
+
     fun resourcePath(path: String): Path {
-        return Paths.get(CCodeGenProcessor::class.java.getResource(path)!!.toURI())
+        return Paths.get(CCodegenProcessor::class.java.getResource(path)!!.toURI())
     }
 
     val time = System.nanoTime()
@@ -109,7 +112,7 @@ fun main() {
         Path("glfw/glfw3.h")
     )
     val outputDir = Path("testoutput")
-    val updatedFiles = CCodeGenProcessor().process(inputs, outputDir).toMutableSet()
+    val updatedFiles = CCodegenProcessor().process(inputs, outputDir).toMutableSet()
     updatedFiles.toList().forEach {
         addParentUpTo(it.parent, outputDir, updatedFiles)
     }

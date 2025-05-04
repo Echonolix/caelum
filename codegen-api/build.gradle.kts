@@ -1,4 +1,5 @@
 plugins {
+    id("buildsrc.convention.kotlin-jvm")
     kotlin("plugin.serialization") version "2.1.0"
 }
 

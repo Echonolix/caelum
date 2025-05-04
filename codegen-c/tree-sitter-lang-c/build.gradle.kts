@@ -1,3 +1,7 @@
+plugins {
+    id("buildsrc.convention.kotlin-jvm")
+}
+
 kotlin {
     explicitApi()
 }

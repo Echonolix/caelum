@@ -1,0 +1,31 @@
+# Version catalog is a central place for you to declare and version dependencies
+# https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+# https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
+
+[versions]
+kotlinDSLGradlePlugin = "5.2.0"
+
+kotlin = "2.1.20"
+
+kotlinxSerialization = "1.8.0"
+xmlUtil = "0.91.0"
+
+fastutil = "8.5.15"
+
+[libraries]
+kotlinDSLGradlePlugin = { module = "org.gradle.kotlin.kotlin-dsl:org.gradle.kotlin.kotlin-dsl.gradle.plugin", version.ref = "kotlinDSLGradlePlugin" }
+
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
+kotlinxSerializationCore = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinxSerializationXml = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "xmlUtil" }
+
+fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
+
+# Libraries can be bundled together for easier import
+[bundles]
+collections = ["fastutil"]
+
+[plugins]
+kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
