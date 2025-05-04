@@ -4,17 +4,19 @@ import c.ast.NodeVisitException
 
 class CAstContext(val inputPathStrs: Set<String>) {
     private val typedefs0 = mutableMapOf<String, CType>()
-    private val structs0 = mutableMapOf<String, CStruct>()
-    private val unions0 = mutableMapOf<String, CUnion>()
+    private val consts0 = mutableMapOf<String, CConst>()
     private val enums0 = mutableMapOf<String, CEnum>()
     private val globalEnums0 = mutableMapOf<String, CEnumerator>()
+    private val structs0 = mutableMapOf<String, CStruct>()
+    private val unions0 = mutableMapOf<String, CUnion>()
     private val functions0 = mutableMapOf<String, CFunction>()
 
     val typedefs: Map<String, CType> get() = typedefs0
-    val structs: Map<String, CStruct> get() = structs0
-    val unions: Map<String, CUnion> get() = unions0
+    val consts: Map<String, CConst> get() = consts0
     val enums: Map<String, CEnum> get() = enums0
     val globalEnums: Map<String, CEnumerator> get() = globalEnums0
+    val structs: Map<String, CStruct> get() = structs0
+    val unions: Map<String, CUnion> get() = unions0
     val functions: Map<String, CFunction> get() = functions0
 
     fun parse(source: String) {
@@ -71,5 +73,9 @@ class CAstContext(val inputPathStrs: Set<String>) {
 
     fun addFunction(name: String, function: CFunction) {
         functions0[name] = function
+    }
+
+    fun addConst(name: String, const: CConst) {
+        consts0[name] = const
     }
 }

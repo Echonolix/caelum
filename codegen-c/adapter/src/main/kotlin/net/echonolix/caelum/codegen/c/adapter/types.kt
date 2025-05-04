@@ -85,3 +85,9 @@ data class CEnum(
     val id: Identifier?,
     val enumerators: List<CEnumerator>,
 ) : CType
+
+data class CConst(
+    val id: Identifier,
+    val type: CType,
+    val value: ASTNumberValue,
+)

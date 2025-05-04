@@ -141,6 +141,10 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
         }
     }
 
+    private fun ASTNumberValue.Ref.asKotlinCode(): CodeBlock {
+        return CodeBlock.of("%M", resolveElement<CTopLevelConst>(this.enumName).memberName())
+    }
+
     private fun resolveEnum(name: String, cEnum: CEnum): CType.Enum {
         val cTypeEnum = CType.Enum(name, CBasicType.int32_t.cType)
 
@@ -155,20 +159,24 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
         return cTypeEnum
     }
 
-    private fun resolveConst(name: String, value: ASTNumberValue): CTopLevelConst {
+    private fun resolveConst(name: String, type: CBasicType<*>, value: ASTNumberValue): CTopLevelConst {
         return CTopLevelConst(
             name,
-            CExpression.Const(CBasicType.int32_t, value.asKotlinCode())
+            CExpression.Const(type, value.asKotlinCode())
         )
     }
 
     override fun resolveElementImpl(cElementStr: String): CElement {
-        cAstContext.enums[cElementStr]?.let {
-            return resolveEnum(cElementStr, it)
+        cAstContext.typedefs[cElementStr]?.let {
+            return resolveTypedef(cElementStr, it)
         }
 
-        cAstContext.globalEnums[cElementStr]?.let {
-            return resolveConst(cElementStr, it.value)
+        cAstContext.consts[cElementStr]?.let {
+            return resolveConst(cElementStr, (resolveCType(it.type) as CType.BasicType).baseType, it.value)
+        }
+
+        cAstContext.enums[cElementStr]?.let {
+            return resolveEnum(cElementStr, it)
         }
 
         cAstContext.structs[cElementStr]?.let {
@@ -179,8 +187,8 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
             return resolveUnion(cElementStr, it)
         }
 
-        cAstContext.typedefs[cElementStr]?.let {
-            return resolveTypedef(cElementStr, it)
+        cAstContext.globalEnums[cElementStr]?.let {
+            return resolveConst(cElementStr, CBasicType.int, it.value)
         }
 
         cAstContext.functions[cElementStr]?.let {

@@ -4,4 +4,11 @@ plugins {
 
 codegenC {
     packageName.set("net.echonolix.caelum.glfw")
+    excludedConsts.addAll(
+        "APIENTRY",
+        "WINGDIAPI",
+        "CALLBACK",
+        "GLFWAPI",
+        "GLAPIENTRY"
+    )
 }

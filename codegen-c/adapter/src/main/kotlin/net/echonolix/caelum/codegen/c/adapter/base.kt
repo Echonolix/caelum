@@ -1,6 +1,7 @@
 package net.echonolix.caelum.codegen.c.adapter
 
 import c.ast.visitor.*
+import c.lang.ASTNumberValue
 import c.lang.CPrimitiveType
 import c.lang.CSizeSpecifier
 
@@ -83,6 +84,7 @@ class CTypeSpecifierVisitor : TypeSpecifierVisitor {
 class BuildDeclarationVisitor() : DeclarationVisitor {
     lateinit var cType: CType
     var identifier: Identifier? = null
+    var initializer: ASTNumberValue? = null
 
     override fun visitType(): TypeSpecifierVisitor {
         val visitor = CTypeSpecifierVisitor()
@@ -107,10 +109,47 @@ class BuildDeclarationVisitor() : DeclarationVisitor {
         }
     }
 
-    override fun visitEnd() {
-
+    override fun visitInitDeclarator(): InitDeclaratorVisitor {
+        val visitor = BaseInitDeclaratorVisitor(cType)
+        return object : InitDeclaratorVisitor by visitor {
+            override fun visitEnd() {
+                cType = visitor.cType
+                identifier = visitor.identifier
+                initializer = visitor.initializer
+            }
+        }
     }
 
+    override fun visitEnd() {}
+}
+
+class BaseInitDeclaratorVisitor() : InitDeclaratorVisitor {
+    var identifier: Identifier? = null
+    lateinit var cType: CType
+    lateinit var initializer: ASTNumberValue
+
+    constructor(baseType: CType) : this() {
+        cType = baseType
+    }
+
+    override fun visitDeclarator(): DeclaratorVisitor {
+        val visitor = BaseDeclaratorVisitor(cType)
+        return object : DeclaratorVisitor by visitor {
+            override fun visitIdentifier(name: String) {
+                identifier = Identifier(name)
+            }
+
+            override fun visitEnd() {
+                cType = visitor.type
+            }
+        }
+    }
+
+    override fun visitInitializer(initializer: ASTNumberValue) {
+        this.initializer = initializer
+    }
+
+    override fun visitEnd() {}
 }
 
 class BaseTypedefVisitor() : TypeDefVisitor {

@@ -1,5 +1,6 @@
 package net.echonolix.caelum.codegen.c
 
+import net.echonolix.caelum.CSyntax
 import net.echonolix.caelum.codegen.c.adapter.CAstContext
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Files
@@ -10,51 +11,93 @@ import kotlin.io.path.*
 class CCodegenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val elementCtx = CAstContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
-        val clangProcess = Runtime.getRuntime().exec(
-            arrayOf(
-                "clang",
-                "-E",
-                "-C",
-                "--target=x86_64-pc-windows-gnu",
-                "-std=c23",
-                *inputs.map { it.absolutePathString() }.toTypedArray()
+        val excludedConsts = (System.getProperty("codegenc.excludeConsts") ?: "")
+            .splitToSequence(",")
+            .mapTo(mutableSetOf()) { it.trim() }
+        run {
+            val defineRegex = """^\s*#define\s+(${CSyntax.nameRegex.pattern})\s+(.+)$""".toRegex()
+            val defineLines = inputs.asSequence()
+                .flatMap { path ->
+                    return@flatMap path.useLines { lines ->
+                        lines.mapNotNull { line ->
+                            defineRegex.matchEntire(line)?.let {
+                                val (name, value) = it.destructured
+                                if (name in excludedConsts) return@let null
+                                "const int $name = $value;"
+                            }
+                        }.toList()
+                    }
+                }
+                .joinToString("\n")
+            val clangProcess = Runtime.getRuntime().exec(
+                arrayOf(
+                    "clang",
+                    "-E",
+                    "-C",
+                    "--target=x86_64-pc-windows-gnu",
+                    "-std=c23",
+                    "-"
+                )
             )
-        )
-        val source = clangProcess.inputReader().readText()
-        elementCtx.parse(source)
+            clangProcess.outputWriter().use {
+                it.write(defineLines)
+            }
+            elementCtx.parse(clangProcess.inputReader().readText())
+        }
 
-//        println("Typedefs:")
-//        elementCtx.typedefs.forEach { (name, type) ->
-//            println("\t$name -> $type")
+//        run {
+//            val clangProcess = Runtime.getRuntime().exec(
+//                arrayOf(
+//                    "clang",
+//                    "-E",
+//                    "-C",
+//                    "--target=x86_64-pc-windows-gnu",
+//                    "-std=c23",
+//                    *inputs.map { it.absolutePathString() }.toTypedArray()
+//                )
+//            )
+//            elementCtx.parse(clangProcess.inputReader().readText())
 //        }
-//        println()
-//        println("Enums:")
-//        elementCtx.enums.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Global Enums:")
-//        elementCtx.globalEnums.forEach { type ->
-//            println("\t$type")
-//        }
-//        println("Structs:")
-//        elementCtx.structs.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Unions:")
-//        elementCtx.unions.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Functions:")
-//        elementCtx.functions.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
+
+        println("Typedefs:")
+        elementCtx.typedefs.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Consts:")
+        elementCtx.consts.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println("Enums:")
+        elementCtx.enums.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Global Enums:")
+        elementCtx.globalEnums.forEach { type ->
+            println("\t$type")
+        }
+        println("Structs:")
+        elementCtx.structs.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Unions:")
+        elementCtx.unions.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Functions:")
+        elementCtx.functions.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
 
         val ctx = CCodeGenContext(System.getProperty("codegenc.packageName"), outputDir, elementCtx)
         elementCtx.typedefs.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
+        }
+        elementCtx.consts.forEach { (name, _) ->
             println(ctx.resolveElement(name))
         }
         elementCtx.enums.forEach { (name, _) ->
@@ -126,7 +169,7 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 @OptIn(ExperimentalPathApi::class)
 fun main() {
     System.setProperty("codegenc.packageName", "net.echonolix.caelum.glfw")
-
+    System.setProperty("codegenc.excludeConsts", "APIENTRY,WINGDIAPI,CALLBACK,GLFWAPI,GLAPIENTRY")
     fun resourcePath(path: String): Path {
         return Paths.get(CCodegenProcessor::class.java.getResource(path)!!.toURI())
     }

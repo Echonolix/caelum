@@ -20,7 +20,7 @@ class BuildEnumVisitor() : EnumVisitor {
     override fun visitEnumerator(name: String, value: ExpressionNode?, ctx: ParseContext) {
         with(ctx) {
             val exp = if (value != null) {
-                parseASTNumber(value, enumerators)
+                parseASTNumber(value)
             } else {
                 enumerators.lastOrNull()?.value?.let { left ->
                     ASTNumberValue.Binary(ASTNumberValue.BinaryOp.Add, left, ASTNumberValue.Literal("1"))
@@ -39,7 +39,7 @@ class BuildEnumVisitor() : EnumVisitor {
 }
 
 context(_: ParseContext)
-internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnumerator>): ASTNumberValue {
+internal fun parseASTNumber(node: ExpressionNode): ASTNumberValue {
     return when (node) {
         is NumberLiteralNode -> ASTNumberValue.Literal(node.content())
         is UnaryExpressionNode -> {
@@ -52,7 +52,7 @@ internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnu
                 "-" -> ASTNumberValue.UnaryOp.Negative
                 else -> error("Unknown unary op: $opStr")
             }
-            ASTNumberValue.Unary(op, parseASTNumber(exp, existingEnumerators))
+            ASTNumberValue.Unary(op, parseASTNumber(exp))
         }
         is BinaryExpressionNode -> {
             val leftNode = node.left
@@ -61,8 +61,8 @@ internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnu
             require(leftNode is ExpressionNode)
             require(rightNode is ExpressionNode)
 
-            val left = parseASTNumber(leftNode, existingEnumerators)
-            val right = parseASTNumber(rightNode, existingEnumerators)
+            val left = parseASTNumber(leftNode)
+            val right = parseASTNumber(rightNode)
             val opStr = node.operator
 
             val op = when (opStr.content()) {
@@ -83,7 +83,7 @@ internal fun parseASTNumber(node: ExpressionNode, existingEnumerators: List<CEnu
             val exp = node.children()
             require(exp is ExpressionNode)
 
-            ASTNumberValue.Paraenthesized(parseASTNumber(exp, existingEnumerators))
+            ASTNumberValue.Paraenthesized(parseASTNumber(exp))
         }
         else -> error("Unknown node for number literal: $node")
     }

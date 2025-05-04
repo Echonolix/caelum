@@ -15,4 +15,5 @@ val codegenCExtension = extensions.create("codegenC", CodegenCExtension::class.j
 tasks.ktgen {
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("codegenc.packageName", codegenCExtension.packageName)
+    systemProperty("codegenc.excludeConsts", codegenCExtension.excludedConsts.map { it.joinToString(",") })
 }

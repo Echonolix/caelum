@@ -76,10 +76,11 @@ class AdapterASTVisitor(val ctx: CAstContext) : ASTVisitor {
         val visitor = BuildDeclarationVisitor()
         return object : DeclarationVisitor by visitor {
             override fun visitEnd() {
-                val identifier = visitor.identifier!!
+                val identifier = visitor.identifier ?: return
                 val cType = visitor.cType
                 when (cType) {
                     is CFunction -> ctx.addFunction(identifier.name, cType)
+                    is CBasicType -> ctx.addConst(identifier.name, CConst(identifier, cType, visitor.initializer!!))
                     else -> throw UnsupportedOperationException("Unsupported type: $identifier $cType")
                 }
             }

@@ -1,6 +1,7 @@
 package c.ast.visitor
 
 import c.ast.ParseContext
+import c.lang.ASTNumberValue
 import c.lang.CPrimitiveType
 import c.lang.CSizeSpecifier
 import tree_sitter.Range
@@ -35,6 +36,7 @@ interface ASTVisitor {
 interface DeclarationVisitor {
     fun visitType(): TypeSpecifierVisitor
     fun visitDeclarator(): DeclaratorVisitor
+    fun visitInitDeclarator(): InitDeclaratorVisitor
     fun visitEnd()
 }
 
@@ -89,8 +91,6 @@ interface TypeDefVisitor {
 }
 
 interface DeclaratorVisitor {
-
-
     fun visitFunction(): FunctionVisitor
 
     fun visitIdentifier(name: String)
@@ -101,7 +101,12 @@ interface DeclaratorVisitor {
     fun visitPointer()
 
     fun visitEnd()
+}
 
+interface InitDeclaratorVisitor {
+    fun visitDeclarator(): DeclaratorVisitor
+    fun visitInitializer(initializer: ASTNumberValue)
+    fun visitEnd()
 }
 
 interface FunctionVisitor {

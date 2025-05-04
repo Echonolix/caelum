@@ -1,12 +1,9 @@
 package c.lang
 
 sealed interface ASTNumberValue {
-
     data class Literal(val literal: String) : ASTNumberValue
 
-
     data class Unary(val op: UnaryOp, val v: ASTNumberValue) : ASTNumberValue
-
 
     enum class UnaryOp(val ktRep: String) {
         Negative("-")
