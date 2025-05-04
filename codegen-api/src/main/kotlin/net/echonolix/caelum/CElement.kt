@@ -288,7 +288,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
     public abstract class EnumBase(override val name: String, public val entryType: BasicType) :
         ValueType(entryType.baseType) {
-        public val entries: MutableMap<String, Entry> = ConcurrentHashMap()
+        public val entries: MutableMap<String, Entry> = mutableMapOf()
 
         context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {

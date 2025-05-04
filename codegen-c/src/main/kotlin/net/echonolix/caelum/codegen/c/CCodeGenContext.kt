@@ -1,12 +1,14 @@
 package net.echonolix.caelum.codegen.c
 
+import c.lang.ASTNumberValue
 import c.lang.CPrimitiveType
 import c.lang.CSizeSpecifier
+import com.squareup.kotlinpoet.CodeBlock
+import net.echonolix.caelum.*
 import net.echonolix.caelum.CBasicType
-import net.echonolix.caelum.CElement
 import net.echonolix.caelum.CType
-import net.echonolix.caelum.CaelumCodegenContext
 import net.echonolix.caelum.codegen.c.adapter.*
+import net.echonolix.caelum.codegen.c.adapter.CArrayType
 import java.nio.file.Path
 import net.echonolix.caelum.codegen.c.adapter.CBasicType as CAstBasicType
 import net.echonolix.caelum.codegen.c.adapter.CType as CAstType
@@ -24,7 +26,7 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
                     when (type.basic) {
                         CPrimitiveType.Void -> CBasicType.void
                         CPrimitiveType.Char -> CBasicType.char
-                        CPrimitiveType.Bool -> throw UnsupportedOperationException("bool")
+                        CPrimitiveType.Bool -> CBasicType.char
                         CPrimitiveType.Int -> CBasicType.int
                         CPrimitiveType.Float -> CBasicType.float
                         CPrimitiveType.Double -> CBasicType.double
@@ -52,6 +54,15 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
             is Identifier -> {
                 return resolveElement<CType>(type.name)
             }
+            is CStruct -> {
+                val identifier = type.id!!
+                val struct = resolveStruct(identifier.name, type)
+                addToCache(identifier.name, struct)
+                struct
+            }
+            is CEnum -> {
+                return resolveElement<CType.Enum>(type.id!!.name)
+            }
             else -> throw UnsupportedOperationException("Unsupported type: $type")
         }
     }
@@ -62,8 +73,8 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
         ) {
             emptyList()
         } else {
-            function.params.map {
-                CType.Function.Parameter(it.name!!.name, resolveCType(it.type))
+            function.params.mapIndexed { i, it ->
+                CType.Function.Parameter(it.name?.name ?: "p$i", resolveCType(it.type))
             }
         }
         return CType.Function(
@@ -98,25 +109,57 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
     }
 
     private fun resolveTypedef(name: String, type: CAstType): CType {
-        return when (type) {
+        when (type) {
             is CPointer -> {
                 val pointee = type.pointee
                 if (pointee is CFunction) {
                     val func = resolveFunction(name, pointee)
                     addToCache(name, func)
                     val funcPtr = CType.FunctionPointer(func)
-                    funcPtr
-                } else {
-                    val pointer = CType.Pointer { resolveCType(pointee) }
-                    addToCache(name, pointer)
-                    pointer
+                    return funcPtr
                 }
             }
-            else -> throw UnsupportedOperationException("Unsupported type: $type")
+            is CEnum -> {
+                return resolveEnum(name, type)
+            }
+            else -> {}
+        }
+
+        return CType.TypeDef(
+            name,
+            resolveCType(type)
+        )
+    }
+
+    private fun ASTNumberValue.asKotlinCode(): CodeBlock {
+        return when (this) {
+            is ASTNumberValue.Binary -> CodeBlock.of("%L %L %L", left.asKotlinCode(), op.ktRep, right.asKotlinCode())
+            is ASTNumberValue.Literal -> CodeBlock.of("%L", literal)
+            is ASTNumberValue.Paraenthesized -> CodeBlock.of("(%L)", v.asKotlinCode())
+            is ASTNumberValue.Ref -> this.asKotlinCode()
+            is ASTNumberValue.Unary -> CodeBlock.of("%L%L", op.ktRep, v.asKotlinCode())
         }
     }
 
+    private fun resolveEnum(name: String, cEnum: CEnum): CType.Enum {
+        val cTypeEnum = CType.Enum(name, CBasicType.int32_t.cType)
+
+        cEnum.enumerators.forEach {
+            val entryName = it.id.name
+            cTypeEnum.entries[entryName] = cTypeEnum.Entry(
+                entryName,
+                CExpression.Const(CBasicType.int32_t, it.value.asKotlinCode())
+            )
+        }
+
+        return cTypeEnum
+    }
+
     override fun resolveElementImpl(cElementStr: String): CElement {
+        cAstContext.enums[cElementStr]?.let {
+            return resolveEnum(cElementStr, it)
+        }
+
         cAstContext.structs[cElementStr]?.let {
             return resolveStruct(cElementStr, it)
         }

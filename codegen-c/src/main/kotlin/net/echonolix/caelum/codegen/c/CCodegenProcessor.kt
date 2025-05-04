@@ -61,7 +61,6 @@ class CCodegenProcessor : KtgenProcessor {
             println(ctx.resolveElement(name))
         }
         elementCtx.globalEnums.forEach { enum ->
-            TODO()
 //            println(ctx.resolveElement(enum))
         }
         elementCtx.structs.forEach { (name, _) ->

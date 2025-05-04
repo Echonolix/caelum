@@ -22,9 +22,9 @@ class BuildEnumVisitor() : EnumVisitor {
             val exp = if (value != null) {
                 parseASTNumber(value, enumerators)
             } else {
-                val left = enumerators.lastOrNull()?.value ?: ASTNumberValue.Literal("0")
-                val newV = ASTNumberValue.Binary(ASTNumberValue.BinaryOp.Add, left, ASTNumberValue.Literal("1"))
-                newV
+                enumerators.lastOrNull()?.value?.let { left ->
+                    ASTNumberValue.Binary(ASTNumberValue.BinaryOp.Add, left, ASTNumberValue.Literal("1"))
+                } ?: ASTNumberValue.Literal("0")
             }
 
             enumerators += CEnumerator(Identifier(name), exp)

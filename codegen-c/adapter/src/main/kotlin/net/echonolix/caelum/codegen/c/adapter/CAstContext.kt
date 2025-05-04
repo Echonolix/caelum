@@ -7,14 +7,14 @@ class CAstContext(val inputPathStrs: Set<String>) {
     private val structs0 = mutableMapOf<String, CStruct>()
     private val unions0 = mutableMapOf<String, CUnion>()
     private val enums0 = mutableMapOf<String, CEnum>()
-    private val globalEnums0 = mutableListOf<CEnum>()
+    private val globalEnums0 = mutableMapOf<String, CEnumerator>()
     private val functions0 = mutableMapOf<String, CFunction>()
 
     val typedefs: Map<String, CType> get() = typedefs0
     val structs: Map<String, CStruct> get() = structs0
     val unions: Map<String, CUnion> get() = unions0
     val enums: Map<String, CEnum> get() = enums0
-    val globalEnums: List<CEnum> get() = globalEnums0
+    val globalEnums: Map<String, CEnumerator> get() = globalEnums0
     val functions: Map<String, CFunction> get() = functions0
 
     fun parse(source: String) {
@@ -37,9 +37,6 @@ class CAstContext(val inputPathStrs: Set<String>) {
 
     fun addTypedef(name: String, type: CType) {
         when (type) {
-            is CEnum -> {
-                addEnum(name, type)
-            }
             is CStruct -> {
                 addStruct(name, type)
             }
@@ -52,7 +49,7 @@ class CAstContext(val inputPathStrs: Set<String>) {
 
     fun addEnum(name: String?, enum: CEnum) {
         if (name == null) {
-            globalEnums0.add(enum)
+            enum.enumerators.associateByTo(globalEnums0) { it.id.name }
             return
         }
         enums0.compute(name) { _, existing ->
