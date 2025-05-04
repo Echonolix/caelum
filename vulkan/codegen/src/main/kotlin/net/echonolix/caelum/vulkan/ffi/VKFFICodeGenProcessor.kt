@@ -63,7 +63,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
-        val ctx = VKFFICodeGenContext(VKFFI.basePkgName, outputDir, filteredRegistry)
+        val ctx = VulkanCodeGenContext(VKFFI.basePkgName, outputDir, filteredRegistry)
         fun processRequire(requires: List<Registry.Feature.Require>) {
             requires.asSequence()
                 .filter { it.comment !in skipped }

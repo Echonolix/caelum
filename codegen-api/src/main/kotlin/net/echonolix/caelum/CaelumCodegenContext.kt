@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.Stream
 
-public abstract class KTFFICodegenContext(public val basePkgName: String, public val outputDir: Path) {
+public abstract class CaelumCodegenContext(public val basePkgName: String, public val outputDir: Path) {
     private val allElements0 = ConcurrentHashMap<String, CElement>()
     public val allElements: Map<String, CElement>
         get() = allElements0

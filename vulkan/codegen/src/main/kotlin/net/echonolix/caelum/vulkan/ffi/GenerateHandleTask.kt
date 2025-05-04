@@ -8,7 +8,7 @@ import net.echonolix.caelum.CaelumCodegenHelper
 import net.echonolix.caelum.decap
 import kotlin.io.path.Path
 
-class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
     private fun CType.Handle.variableName(): String {
         return name.removePrefix("Vk").decap()
     }
@@ -16,7 +16,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     private val objTypeCname = with(ctx) { resolveType("VkObjectType").typeName() }
     val vkTypeDescriptorCname = VKFFI.vkHandleCname.nestedClass("TypeDescriptor")
 
-    override fun VKFFICodeGenContext.compute() {
+    override fun VulkanCodeGenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
 
@@ -60,7 +60,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
     }
 
-    private fun VKFFICodeGenContext.genObjectHandle(
+    private fun VulkanCodeGenContext.genObjectHandle(
         handleType: CType.Handle
     ) {
         val thisCname = handleType.className()
@@ -136,7 +136,7 @@ class GenerateHandleTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         ctx.writeOutput(Path("objectHandles"), file)
     }
 
-    private fun VKFFICodeGenContext.genObjectBase(
+    private fun VulkanCodeGenContext.genObjectBase(
         functions: List<CType.Function>,
         handleType: CType.Handle
     ) {

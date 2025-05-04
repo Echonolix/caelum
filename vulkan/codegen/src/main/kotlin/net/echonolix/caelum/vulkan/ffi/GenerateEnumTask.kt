@@ -6,8 +6,8 @@ import net.echonolix.caelum.*
 import kotlin.io.path.Path
 import kotlin.random.Random
 
-class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
-    override fun VKFFICodeGenContext.compute() {
+class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+    override fun VulkanCodeGenContext.compute() {
         val constants = ConstantsTask().fork()
         val enum = EnumTask().fork()
         val bitmask = BitmaskTask().fork()
@@ -18,7 +18,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     }
 
     private inner class EnumTask : VKFFITask<Unit>(ctx) {
-        override fun VKFFICodeGenContext.compute() {
+        override fun VulkanCodeGenContext.compute() {
             val enumTypes = ctx.filterType<CType.Enum>()
             val typeAlias = GenTypeAliasTask(this, enumTypes).fork()
 
@@ -32,7 +32,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     }
 
     private inner class BitmaskTask : VKFFITask<Unit>(ctx) {
-        override fun VKFFICodeGenContext.compute() {
+        override fun VulkanCodeGenContext.compute() {
             val flagTypes = ctx.filterTypeStream<CType.Bitmask>()
                 .filter { !it.first.contains("FlagBits") }
                 .toList()
@@ -48,7 +48,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
     }
 
     private inner class ConstantsTask : VKFFITask<Unit>(ctx) {
-        override fun VKFFICodeGenContext.compute() {
+        override fun VulkanCodeGenContext.compute() {
 //            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCname)
 //                .addType(
 //                    TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
@@ -165,7 +165,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         }
     }
 
-    context(ctx: VKFFICodeGenContext)
+    context(ctx: VulkanCodeGenContext)
     private fun TypeSpec.Builder.addSuper(enumBase: CType.EnumBase): TypeSpec.Builder {
         val baseType = enumBase.baseType
         val superCname = when (enumBase) {
@@ -206,7 +206,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return this
     }
 
-    private fun VKFFICodeGenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
+    private fun VulkanCodeGenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
         val thisCname = flagType.className()
 
         val type = TypeSpec.classBuilder(thisCname)
@@ -309,7 +309,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         return file
     }
 
-    private fun VKFFICodeGenContext.genEnumType(enumType: CType.Enum): FileSpec.Builder {
+    private fun VulkanCodeGenContext.genEnumType(enumType: CType.Enum): FileSpec.Builder {
         val thisCname = enumType.className()
 
         val type = TypeSpec.enumBuilder(thisCname)
@@ -406,7 +406,7 @@ class GenerateEnumTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
 
     private val validChars = ('a'..'z').toList()
 
-    context(ctx: VKFFICodeGenContext)
+    context(ctx: VulkanCodeGenContext)
     private fun TypeSpec.Builder.addCompanionSuper(enumBase: CType.EnumBase) {
         addAnnotation(
             AnnotationSpec.builder(Suppress::class)

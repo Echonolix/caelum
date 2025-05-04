@@ -8,8 +8,8 @@ import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.schema.*
 import java.nio.file.Path
 
-class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
-    KTFFICodegenContext(basePkgName, outputDir) {
+class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: FilteredRegistry) :
+    CaelumCodegenContext(basePkgName, outputDir) {
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
             is CType.FunctionPointer, is CType.Function -> VKFFI.functionPackageName
@@ -218,7 +218,7 @@ class VKFFICodeGenContext(basePkgName: String, outputDir: Path, val registry: Fi
         val members = resolveGroupMembers(xmlStructType)
         val struct = if (xmlStructType.name == "VkBaseOutStructure") {
             object : CType.Struct(xmlStructType.name, members) {
-                context(ctx: KTFFICodegenContext)
+                context(ctx: CaelumCodegenContext)
                 override fun ktApiType(): TypeName {
                     return WildcardTypeName.producerOf(VKFFI.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard))
                 }

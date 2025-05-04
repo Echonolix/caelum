@@ -23,7 +23,7 @@ inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
 fun List<CompactFragment>.toXmlTagFreeString() =
     joinToString(" ") { it.contentString.toXMLTagFreeString() }.removeContinuousSpaces()
 
-context(ctx: VKFFICodeGenContext)
+context(ctx: VulkanCodeGenContext)
 fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     val docs = element.tags.get<ElementCommentTag>()?.comment
     val since = element.tags.get<RequiredByTag>()?.requiredBy
@@ -46,7 +46,7 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     addKdoc(sb.toString())
 }
 
-fun VKFFICodeGenContext.filterVkFunction(): List<CType.Function> =
+fun VulkanCodeGenContext.filterVkFunction(): List<CType.Function> =
     filterTypeStream<CType.Function>()
         .filter { it.first == it.second.tags.get<OriginalFunctionNameTag>()!!.name }
         .map { it.second }
@@ -59,7 +59,7 @@ fun VKFFICodeGenContext.filterVkFunction(): List<CType.Function> =
         )
         .toList()
 
-context(ctx: VKFFICodeGenContext)
+context(ctx: VulkanCodeGenContext)
 fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) =
     toParamSpecs(annotations) {
         val paramType = it.type
@@ -73,7 +73,7 @@ fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) 
         pType
     }
 
-context(ctx: VKFFICodeGenContext)
+context(ctx: VulkanCodeGenContext)
 fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
     toParamSpecs(annotations) {
         var pType = it.type.ktApiType()
@@ -83,11 +83,11 @@ fun List<CType.Function.Parameter>.toKtParamSpecs(annotations: Boolean) =
         pType
     }
 
-context(ctx: VKFFICodeGenContext)
+context(ctx: VulkanCodeGenContext)
 fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) =
     toParamSpecs(annotations) { it.type.nativeType() }
 
-context(ctx: VKFFICodeGenContext)
+context(ctx: VulkanCodeGenContext)
 inline fun List<CType.Function.Parameter>.toParamSpecs(
     annotations: Boolean,
     typeMapper: (CType.Function.Parameter) -> TypeName
@@ -109,7 +109,7 @@ tailrec fun isDeviceBase(type: CType.Handle): Boolean {
     return isDeviceBase(parent)
 }
 
-context(_: VKFFICodeGenContext)
+context(_: VulkanCodeGenContext)
 fun CType.Handle.objectBaseCName(): ClassName {
     return ClassName(packageName(), this.name)
 }

@@ -7,8 +7,8 @@ import net.echonolix.caelum.CaelumCodegenHelper
 import net.echonolix.caelum.decap
 import kotlin.io.path.Path
 
-class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
-    override fun VKFFICodeGenContext.compute() {
+class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+    override fun VulkanCodeGenContext.compute() {
         val skippedNames = setOf("vkGetInstanceProcAddr", "vkGetDeviceProcAddr")
         ctx.filterVkFunction().asSequence()
             .filter { it.tags.get<OriginalFunctionNameTag>()!!.name !in skippedNames }
@@ -25,7 +25,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
         private val vkResultCname = with(ctx) { (ctx.resolveElement("VkResult") as CType.Enum).className() }
         private val resultCname = Result::class.asClassName()
 
-        override fun VKFFICodeGenContext.compute() {
+        override fun VulkanCodeGenContext.compute() {
             val file = FileSpec.builder(VKFFI.basePkgName, "${handleType.name}Functions")
             file.addProperty(
                 PropertySpec.builder("_UNIT_RESULT_", resultCname.parameterizedBy(UNIT))
@@ -41,7 +41,7 @@ class GenerateFunctionOverloadTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(c
             ctx.writeOutput(Path("main"), file)
         }
 
-        private fun VKFFICodeGenContext.vkFuncOverload(funcType: CType.Function): FunSpec {
+        private fun VulkanCodeGenContext.vkFuncOverload(funcType: CType.Function): FunSpec {
             val prefixRemoved = funcType.name.removePrefix("VkFunc")
             val funcName = prefixRemoved.decap()
             val resultCodeTag = funcType.tags.get<ResultCodeTag>() ?: error("$funcType is missing result code tag")

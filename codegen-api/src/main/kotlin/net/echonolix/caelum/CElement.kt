@@ -60,17 +60,17 @@ public interface CElement : Comparable<CElement> {
     }
 
     public interface TopLevel : CElement {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public fun packageName(): String {
             return ctx.resolvePackageName(this)
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public fun typeName(): TypeName {
             return ClassName(packageName(), tags.get<TypeNameRename>()?.name ?: name)
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public fun className(): ClassName {
             return typeName() as? ClassName
                 ?: throw UnsupportedOperationException("${javaClass.simpleName} doesn't have a class name")
@@ -80,11 +80,11 @@ public interface CElement : Comparable<CElement> {
 
 public sealed class CExpression<T : Any>(public val type: CType, public val value: T) :
     CElement.Impl(value.toString()) {
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     public abstract fun codeBlock(): CodeBlock
 
     public class Const(type: CBasicType<*>, value: CodeBlock) : CExpression<CodeBlock>(type.cType, value) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun codeBlock(): CodeBlock {
             return value
         }
@@ -95,7 +95,7 @@ public sealed class CExpression<T : Any>(public val type: CType, public val valu
     }
 
     public class StringLiteral(value: String) : CExpression<String>(CType.Pointer(CBasicType.char::cType), value) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun codeBlock(): CodeBlock {
             return CodeBlock.of("%S", value)
         }
@@ -106,7 +106,7 @@ public sealed class CExpression<T : Any>(public val type: CType, public val valu
     }
 
     public class Reference(const: CTopLevelConst) : CExpression<CTopLevelConst>(const.type, const) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun codeBlock(): CodeBlock {
             return CodeBlock.of("%M", value.memberName())
         }
@@ -129,7 +129,7 @@ public interface CDeclaration : CElement {
     }
 
     public interface TopLevel : CDeclaration, CElement.TopLevel {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public fun memberName(): MemberName
     }
 }
@@ -143,28 +143,28 @@ public open class CConst(name: String, public val expression: CExpression<*>) :
 
 public open class CTopLevelConst(name: String, expression: CExpression<*>) : CConst(name, expression),
     CDeclaration.TopLevel {
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     override fun memberName(): MemberName {
         return MemberName(packageName(), name)
     }
 }
 
 public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel {
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     public abstract fun nativeType(): TypeName
 
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     public abstract fun ktApiType(): TypeName
 
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     public open fun typeDescriptorTypeName(): TypeName? {
         return typeName()
     }
 
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     public abstract fun memoryLayoutDeep(): CodeBlock
 
-    context(ctx: KTFFICodegenContext)
+    context(ctx: CaelumCodegenContext)
     public open fun memoryLayout(): CodeBlock {
         return memoryLayoutDeep()
     }
@@ -172,33 +172,33 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     public sealed class ValueType(public val baseType: CBasicType<*>) : CType(baseType.cTypeNameStr)
 
     public class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             return baseType.nativeDataTypeName
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             return baseType.ktApiTypeTypeName
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun packageName(): String {
             return CaelumCodegenHelper.basePkgName
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun typeName(): ClassName {
             return baseType.caelumCoreTypeName as ClassName
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
             if (baseType === CBasicType.void) return null
             return typeName()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             if (baseType === CBasicType.void) {
                 return CodeBlock.of("%M", baseType.valueLayoutMember)
@@ -221,17 +221,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     public sealed class CompositeType(name: String) : CType(name)
 
     public class Handle(name: String) : CompositeType(name) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             return LONG
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             return this.typeName()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of("%T.layout", typeName())
         }
@@ -242,17 +242,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     }
 
     public class TypeDef(name: String, public val dstType: CType) : CompositeType(name) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             return dstType.nativeType()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             return dstType.ktApiType()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
             return if (dstType is FunctionPointer) {
                 CaelumCodegenHelper.pointerCname
@@ -261,7 +261,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             }
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of("%T.layout", typeName())
         }
@@ -290,22 +290,22 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         ValueType(entryType.baseType) {
         public val entries: MutableMap<String, Entry> = ConcurrentHashMap()
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             return entryType.nativeType()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             return typeName()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun typeName(): TypeName {
             return ClassName(packageName(), name)
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             return entryType.memoryLayout()
         }
@@ -330,7 +330,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         public inner class Entry(name: String, expression: CExpression<*>) : CTopLevelConst(name, expression) {
             public val parent: EnumBase get() = this@EnumBase
 
-            context(ctx: KTFFICodegenContext)
+            context(ctx: CaelumCodegenContext)
             override fun memberName(): MemberName {
                 return parent.className().member(name)
             }
@@ -359,17 +359,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
     public class Function(name: String, public val returnType: CType, public val parameters: List<Parameter>) :
         CompositeType(name) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             return typeName()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             throw UnsupportedOperationException()
         }
@@ -399,17 +399,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     public open class Array(public open val elementType: CType) : CompositeType("") {
         override val name: String by lazy { compositeName("") }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             return LONG
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
             return CaelumCodegenHelper.pointerCname
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             val eType = elementType.deepResolve()
             return if (eType is BasicType) {
@@ -419,17 +419,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             }
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun packageName(): String {
             throw UnsupportedOperationException("Array isn't a top level type")
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun typeName(): TypeName {
             throw UnsupportedOperationException("Array isn't a top level type")
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             throw UnsupportedOperationException("Flexible array is currently not supported")
 //            return CodeBlock.of(
@@ -452,7 +452,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
                 return elementType.compositeName("$parentStr[$length]")
             }
 
-            context(ctx: KTFFICodegenContext)
+            context(ctx: CaelumCodegenContext)
             override fun memoryLayoutDeep(): CodeBlock {
                 return CodeBlock.of(
                     "%M(%L.toLong(), %L)",
@@ -468,17 +468,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         public open val elementType: CType by lazy { elementTypeProvider() }
         override val name: String by lazy { compositeName("") }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             return LONG
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
             return CaelumCodegenHelper.pointerCname
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             val eType = elementType.deepResolve()
             return when (eType) {
@@ -494,17 +494,17 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             }
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun packageName(): String {
             return CaelumCodegenHelper.basePkgName
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun typeName(): TypeName {
             return CBasicType.size_t.caelumCoreTypeName
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             return CodeBlock.of("%M", CaelumCodegenHelper.pointerLayoutMember)
         }
@@ -519,29 +519,29 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
     }
 
     public class FunctionPointer(override val elementType: Function) : Pointer({ elementType }) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun packageName(): String {
             return ctx.resolvePackageName(this)
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun typeName(): TypeName {
             return CaelumCodegenHelper.pointerCname.parameterizedBy(elementType.typeName())
         }
     }
 
     public sealed class Group(name: String, public val members: List<Member>) : CompositeType(name) {
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun nativeType(): TypeName {
             throw UnsupportedOperationException()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun ktApiType(): TypeName {
             return typeName()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
             val builder = CodeBlock.builder()
             members.forEach {
@@ -550,7 +550,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             return builder.build()
         }
 
-        context(ctx: KTFFICodegenContext)
+        context(ctx: CaelumCodegenContext)
         override fun memoryLayout(): CodeBlock {
             return CodeBlock.of("%T.layout", typeName())
         }

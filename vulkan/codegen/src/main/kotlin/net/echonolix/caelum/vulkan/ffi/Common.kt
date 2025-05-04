@@ -9,7 +9,7 @@ import java.util.concurrent.RecursiveTask
 import java.util.stream.Stream
 import kotlin.io.path.Path
 
-abstract class VKFFITask<R>(protected val ctx: VKFFICodeGenContext) : RecursiveTask<R>() {
+abstract class VKFFITask<R>(protected val ctx: VulkanCodeGenContext) : RecursiveTask<R>() {
     public final override fun compute(): R {
         return ctx.compute()
     }
@@ -40,12 +40,12 @@ abstract class VKFFITask<R>(protected val ctx: VKFFICodeGenContext) : RecursiveT
             }
     }
 
-    protected abstract fun VKFFICodeGenContext.compute(): R
+    protected abstract fun VulkanCodeGenContext.compute(): R
 }
 
-class GenTypeAliasTask(ctx: VKFFICodeGenContext, private val inputs: List<Pair<String, CType>>) :
+class GenTypeAliasTask(ctx: VulkanCodeGenContext, private val inputs: List<Pair<String, CType>>) :
     VKFFITask<List<TypeAliasSpec>>(ctx) {
-    override fun VKFFICodeGenContext.compute(): List<TypeAliasSpec> {
+    override fun VulkanCodeGenContext.compute(): List<TypeAliasSpec> {
         return inputs.parallelStream()
             .filter { (name, dstType) -> name != dstType.name }
             .map { (name, dstType) ->

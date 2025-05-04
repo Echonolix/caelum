@@ -5,8 +5,8 @@ import com.squareup.kotlinpoet.TypeAliasSpec
 import net.echonolix.caelum.CType
 import kotlin.io.path.Path
 
-class GenerateTypeDefTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
-    override fun VKFFICodeGenContext.compute() {
+class GenerateTypeDefTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+    override fun VulkanCodeGenContext.compute() {
         val typeDefFileBase = FileSpec.builder(VKFFI.basePkgName, "TypeDefs")
         val typeDefFileFuncPtr = FileSpec.builder(VKFFI.basePkgName, "FuncPtrTypeDefs")
         ctx.filterTypeStream<CType.TypeDef>().forEach { (_, typeDefType) ->

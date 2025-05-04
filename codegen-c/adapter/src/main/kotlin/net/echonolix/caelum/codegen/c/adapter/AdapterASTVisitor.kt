@@ -3,10 +3,9 @@ package net.echonolix.caelum.codegen.c.adapter
 import c.ast.visitor.*
 import tree_sitter.Range
 import tree_sitter.c.node.TypeDefinitionNode
-import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
-class AdapterASTVisitor(val ctx: ElementContext) : ASTVisitor {
+class AdapterASTVisitor(val ctx: CAstContext) : ASTVisitor {
     lateinit var lineMarker: LineMarker
 
     override fun visitLineMarker(

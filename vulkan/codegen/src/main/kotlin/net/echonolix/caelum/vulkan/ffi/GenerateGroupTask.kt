@@ -10,13 +10,13 @@ import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.io.path.Path
 
-class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateGroupTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
     private val skippedStructs = setOf(
         "VkBaseInStructure",
         "VkBaseOutStructure"
     )
 
-    override fun VKFFICodeGenContext.compute() {
+    override fun VulkanCodeGenContext.compute() {
         val groupTypes = ctx.filterTypeStream<CType.Group>()
             .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
             .toList()
@@ -108,7 +108,7 @@ class GenerateGroupTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
         typeAlias.joinAndWriteOutput(groupsPath, VKFFI.structPackageName)
     }
 
-    context(ctx: VKFFICodeGenContext)
+    context(ctx: VulkanCodeGenContext)
     private fun genGroupType(groupType: CType.Group): FileSpec.Builder {
         val thisCname = groupType.className()
         val file = FileSpec.builder(thisCname)

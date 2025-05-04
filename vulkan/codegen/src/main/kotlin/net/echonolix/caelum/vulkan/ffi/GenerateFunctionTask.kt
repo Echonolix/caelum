@@ -7,8 +7,8 @@ import net.echonolix.caelum.CType
 import net.echonolix.caelum.CaelumCodegenHelper
 import kotlin.io.path.Path
 
-class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
-    override fun VKFFICodeGenContext.compute() {
+class GenerateFunctionTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+    override fun VulkanCodeGenContext.compute() {
         val funcPtrPath = Path("groups")
         ctx.filterTypeStream<CType.Function>()
             .filter { (_, funcType) -> funcType.name.startsWith("VkFuncPtr") }
@@ -21,7 +21,7 @@ class GenerateFunctionTask(ctx: VKFFICodeGenContext) : VKFFITask<Unit>(ctx) {
             .partitionWrite("functions")
     }
 
-    private fun VKFFICodeGenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
+    private fun VulkanCodeGenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
         val rawName = funcType.tags.get<OriginalFunctionNameTag>()!!.name
         val thisCname = funcType.className()
         val returnType = funcType.returnType

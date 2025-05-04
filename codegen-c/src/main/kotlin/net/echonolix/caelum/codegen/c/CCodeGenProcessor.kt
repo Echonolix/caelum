@@ -1,6 +1,6 @@
 package net.echonolix.caelum.codegen.c
 
-import net.echonolix.caelum.codegen.c.adapter.ElementContext
+import net.echonolix.caelum.codegen.c.adapter.CAstContext
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Files
 import java.nio.file.Path
@@ -9,7 +9,7 @@ import kotlin.io.path.*
 
 class CCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
-        val elementCtx = ElementContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
+        val elementCtx = CAstContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
         val clangProcess = Runtime.getRuntime().exec(
             arrayOf(
                 "clang",
@@ -22,6 +22,7 @@ class CCodeGenProcessor : KtgenProcessor {
         )
         val source = clangProcess.inputReader().readText()
         elementCtx.parse(source)
+
         println("Typedefs:")
         elementCtx.typedefs.forEach { (name, type) ->
             println("\t$name -> $type")
@@ -42,6 +43,9 @@ class CCodeGenProcessor : KtgenProcessor {
             println("\t$name -> $type")
         }
         println()
+
+
+
         return emptySet()
     }
 
