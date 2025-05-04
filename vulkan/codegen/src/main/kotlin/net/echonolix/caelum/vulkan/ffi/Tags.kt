@@ -1,8 +1,8 @@
 package net.echonolix.caelum.vulkan.ffi
 
-import net.echonolix.caelum.CDeclaration
-import net.echonolix.caelum.CType
-import net.echonolix.caelum.Tag
+import net.echonolix.caelum.codegen.api.CDeclaration
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.Tag
 
 class BitWidthTag(val width: Int) : Tag
 

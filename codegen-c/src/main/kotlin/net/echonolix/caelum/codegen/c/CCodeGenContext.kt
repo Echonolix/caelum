@@ -4,9 +4,12 @@ import c.lang.ASTNumberValue
 import c.lang.CPrimitiveType
 import c.lang.CSizeSpecifier
 import com.squareup.kotlinpoet.CodeBlock
-import net.echonolix.caelum.*
-import net.echonolix.caelum.CBasicType
-import net.echonolix.caelum.CType
+import net.echonolix.caelum.codegen.api.CBasicType
+import net.echonolix.caelum.codegen.api.CElement
+import net.echonolix.caelum.codegen.api.CExpression
+import net.echonolix.caelum.codegen.api.CTopLevelConst
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenContext
 import net.echonolix.caelum.codegen.c.adapter.*
 import net.echonolix.caelum.codegen.c.adapter.CArrayType
 import java.nio.file.Path

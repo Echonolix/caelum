@@ -2,19 +2,19 @@ package net.echonolix.caelum.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.CBasicType
-import net.echonolix.caelum.CType
-import net.echonolix.caelum.CaelumCodegenHelper
-import net.echonolix.caelum.decap
+import net.echonolix.caelum.codegen.api.CBasicType
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.decap
 import kotlin.io.path.Path
 
-class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateHandleTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
     private fun CType.Handle.variableName(): String {
         return name.removePrefix("Vk").decap()
     }
 
     private val objTypeCname = with(ctx) { resolveElement<CType>("VkObjectType").typeName() }
-    val vkTypeDescriptorCname = VKFFI.vkHandleCname.nestedClass("TypeDescriptor")
+    val vkTypeDescriptorCname = CaelumVulkanCodegen.vkHandleCname.nestedClass("TypeDescriptor")
 
     override fun VulkanCodeGenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
@@ -28,16 +28,16 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                 genObjectBase(functions, handleType)
             }
 
-        typeAlias.joinAndWriteOutput(Path("handles"), VKFFI.handlePackageName)
+        typeAlias.joinAndWriteOutput(Path("handles"), CaelumVulkanCodegen.handlePackageName)
     }
 
     private enum class ContainerType(val getFuncMemberName: MemberName) {
-        Instance(VKFFI.getInstanceFuncMember) {
+        Instance(CaelumVulkanCodegen.getInstanceFuncMember) {
             override fun filterFunc(funcType: CType.Function): Boolean {
                 return !isDeviceFunc(funcType)
             }
         },
-        Device(VKFFI.getDeviceFuncMember) {
+        Device(CaelumVulkanCodegen.getDeviceFuncMember) {
             override fun filterFunc(funcType: CType.Function): Boolean {
                 return isDeviceFunc(funcType)
             }
@@ -68,7 +68,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
 
         val interfaceType = TypeSpec.interfaceBuilder(thisCname)
-        interfaceType.addSuperinterface(VKFFI.vkHandleCname)
+        interfaceType.addSuperinterface(CaelumVulkanCodegen.vkHandleCname)
         interfaceType.addProperty(
             PropertySpec.builder("objectType", objTypeCname)
                 .addModifiers(KModifier.OVERRIDE)
@@ -145,10 +145,10 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
         val parent = vkHandleTag.parent
 
-        val containerCname = ClassName(VKFFI.handlePackageName, "${handleType.name}Container")
+        val containerCname = ClassName(CaelumVulkanCodegen.handlePackageName, "${handleType.name}Container")
         val containerType = TypeSpec.interfaceBuilder(containerCname)
         parent?.let {
-            containerType.addSuperinterface(ClassName(VKFFI.handlePackageName, "${parent.name}Container"))
+            containerType.addSuperinterface(ClassName(CaelumVulkanCodegen.handlePackageName, "${parent.name}Container"))
         }
         containerType.addProperty(handleType.variableName(), thisCname)
 
@@ -184,7 +184,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                     .build()
             )
             implType.addSuperinterface(
-                ClassName(VKFFI.handlePackageName, "${parent.name}Container"),
+                ClassName(CaelumVulkanCodegen.handlePackageName, "${parent.name}Container"),
                 CodeBlock.of("parent")
             )
         } else {
@@ -215,7 +215,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                 property.addModifiers(KModifier.OVERRIDE)
                 when (funcName) {
                     "vkGetInstanceProcAddr" -> {
-                        property.initializer("%T.$funcName", VKFFI.vkCname)
+                        property.initializer("%T.$funcName", CaelumVulkanCodegen.vkCname)
                     }
                     "vkGetDeviceProcAddr" -> {
                         property.initializer(

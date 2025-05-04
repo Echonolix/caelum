@@ -1,9 +1,8 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.api
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import java.util.concurrent.ConcurrentHashMap
 
 public interface Tag
 

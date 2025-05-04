@@ -1,4 +1,4 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.api
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member

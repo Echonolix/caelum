@@ -4,8 +4,19 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.WildcardTypeName
-import net.echonolix.caelum.*
-import net.echonolix.caelum.CType
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CBasicType
+import net.echonolix.caelum.codegen.api.CElement
+import net.echonolix.caelum.codegen.api.CExpression
+import net.echonolix.caelum.codegen.api.CSyntax
+import net.echonolix.caelum.codegen.api.CTopLevelConst
+import net.echonolix.caelum.codegen.api.CaelumCodegenContext
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.TypeNameRename
+import net.echonolix.caelum.codegen.api.decOrHexToInt
+import net.echonolix.caelum.codegen.api.pascalCaseToAllCaps
+import net.echonolix.caelum.codegen.api.toLiteralHexString
+import net.echonolix.caelum.codegen.api.toXMLTagFreeString
 import net.echonolix.caelum.vulkan.schema.*
 import java.nio.file.Path
 
@@ -13,12 +24,12 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
     CaelumCodegenContext(basePkgName, outputDir) {
     override fun resolvePackageName(element: CElement): String {
         return when (element) {
-            is CType.FunctionPointer, is CType.Function -> VKFFI.functionPackageName
-            is CType.Enum -> VKFFI.enumPackageName
-            is CType.Bitmask -> VKFFI.flagPackageName
-            is CType.Struct -> VKFFI.structPackageName
-            is CType.Union -> VKFFI.unionPackageName
-            is CType.Handle -> VKFFI.handlePackageName
+            is CType.FunctionPointer, is CType.Function -> CaelumVulkanCodegen.functionPackageName
+            is CType.Enum -> CaelumVulkanCodegen.enumPackageName
+            is CType.Bitmask -> CaelumVulkanCodegen.flagPackageName
+            is CType.Struct -> CaelumVulkanCodegen.structPackageName
+            is CType.Union -> CaelumVulkanCodegen.unionPackageName
+            is CType.Handle -> CaelumVulkanCodegen.handlePackageName
             is CType.EnumBase.Entry -> throw IllegalStateException("Entry should not be resolved")
             is CType.TypeDef -> basePkgName
             is CTopLevelConst -> basePkgName
@@ -70,11 +81,11 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
     }
 
     private val bitSuffixRegex =
-        """(${CSyntax.nameRegex.pattern})_BIT(|_${VKFFI.VENDOR_TAGS.joinToString("|_")})""".toRegex()
+        """(${CSyntax.nameRegex.pattern})_BIT(|_${CaelumVulkanCodegen.VENDOR_TAGS.joinToString("|_")})""".toRegex()
     private val flagNameRegex =
         """Vk(${CSyntax.nameRegex.pattern})Flags(\d*)(${CSyntax.nameRegex.pattern})?""".toRegex()
     private val enumTypeNameRegex =
-        """(${CSyntax.nameRegex.pattern}?)(|${VKFFI.VENDOR_TAGS.joinToString("|")})""".toRegex()
+        """(${CSyntax.nameRegex.pattern}?)(|${CaelumVulkanCodegen.VENDOR_TAGS.joinToString("|")})""".toRegex()
 
     private fun CType.EnumBase.fixEntryName(entryName: String): String {
         return when (this) {
@@ -130,7 +141,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
                     val extNumber = xmlEnum.extnumber!!.decOrHexToInt()
                     val sign = if (xmlEnum.dir == "-") -1 else 1
                     val offset = xmlEnum.offset!!.decOrHexToInt()
-                    valueNum = sign * ((extNumber - 1) * VKFFI.VK_EXT_ENUM_BLOCKSIZE + offset + VKFFI.VK_EXT_ENUM_BASE)
+                    valueNum = sign * ((extNumber - 1) * CaelumVulkanCodegen.VK_EXT_ENUM_BLOCKSIZE + offset + CaelumVulkanCodegen.VK_EXT_ENUM_BASE)
                     valueCode = CodeBlock.of(
                         "%L$literalSuffix",
                         valueNum
@@ -221,7 +232,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
             object : CType.Struct(xmlStructType.name, members) {
                 context(ctx: CaelumCodegenContext)
                 override fun ktApiType(): TypeName {
-                    return WildcardTypeName.producerOf(VKFFI.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard))
+                    return WildcardTypeName.producerOf(CaelumVulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard))
                 }
             }
         } else {
@@ -392,7 +403,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
         }
 
         @OptIn(ExperimentalStdlibApi::class)
-        VKFFI.vkVersionConstRegex.matchEntire(cElementStr)?.let {
+        CaelumVulkanCodegen.vkVersionConstRegex.matchEntire(cElementStr)?.let {
             val (major, minor) = it.destructured
             val apiVersionBits = makeApiVersion(0u, major.toUInt(), minor.toUInt(), 0u)
             val expression =

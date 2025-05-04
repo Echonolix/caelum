@@ -1,4 +1,4 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.api
 
 public object CSyntax {
     public val nameRegex: Regex = """[a-zA-Z_][a-zA-Z0-9_]*""".toRegex()

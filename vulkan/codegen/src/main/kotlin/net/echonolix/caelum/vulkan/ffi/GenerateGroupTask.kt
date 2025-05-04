@@ -3,6 +3,10 @@ package net.echonolix.caelum.vulkan.ffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.*
+import net.echonolix.caelum.codegen.api.CBasicType
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.deepReferenceResolve
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 import java.util.concurrent.ConcurrentHashMap
@@ -10,7 +14,7 @@ import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.io.path.Path
 
-class GenerateGroupTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateGroupTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
     private val skippedStructs = setOf(
         "VkBaseInStructure",
         "VkBaseOutStructure"
@@ -105,7 +109,7 @@ class GenerateGroupTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
             .map { type -> genGroupType(type) }
             .forEach { ctx.writeOutput(groupsPath, it) }
 
-        typeAlias.joinAndWriteOutput(groupsPath, VKFFI.structPackageName)
+        typeAlias.joinAndWriteOutput(groupsPath, CaelumVulkanCodegen.structPackageName)
     }
 
     context(ctx: VulkanCodeGenContext)
@@ -116,8 +120,8 @@ class GenerateGroupTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
         val typeObject = TypeSpec.objectBuilder(thisCname)
         typeObject.tryAddKdoc(groupType)
         val superCname = when (groupType) {
-            is CType.Struct -> VKFFI.vkStructCname
-            is CType.Union -> VKFFI.vkUnionCname
+            is CType.Struct -> CaelumVulkanCodegen.vkStructCname
+            is CType.Union -> CaelumVulkanCodegen.vkUnionCname
         }
         typeObject.superclass(superCname.parameterizedBy(thisCname))
         typeObject.addSuperclassConstructorParameter(
@@ -494,7 +498,7 @@ class GenerateGroupTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
             var returnType = memberType.ktApiType()
             var fromIntTypeParamBlock = CodeBlock.of("")
             if (member.name == "pNext") {
-                val vkStructStar = VKFFI.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard)
+                val vkStructStar = CaelumVulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard)
                 val outVkStruct = WildcardTypeName.producerOf(vkStructStar)
                 returnType = CaelumCodegenHelper.pointerCname.parameterizedBy(outVkStruct)
             } else if (memberType is CType.Pointer) {

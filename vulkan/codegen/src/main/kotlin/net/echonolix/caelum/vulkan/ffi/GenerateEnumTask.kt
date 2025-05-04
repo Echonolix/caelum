@@ -3,10 +3,16 @@ package net.echonolix.caelum.vulkan.ffi
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.*
+import net.echonolix.caelum.codegen.api.CBasicType
+import net.echonolix.caelum.codegen.api.CExpression
+import net.echonolix.caelum.codegen.api.CSyntax
+import net.echonolix.caelum.codegen.api.CTopLevelConst
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
 import kotlin.io.path.Path
 import kotlin.random.Random
 
-class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateEnumTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
     override fun VulkanCodeGenContext.compute() {
         val constants = ConstantsTask().fork()
         val enum = EnumTask().fork()
@@ -17,7 +23,7 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
         bitmask.join()
     }
 
-    private inner class EnumTask : VKFFITask<Unit>(ctx) {
+    private inner class EnumTask : CaelumVulkanCodegenTask<Unit>(ctx) {
         override fun VulkanCodeGenContext.compute() {
             val enumTypes = ctx.filterType<CType.Enum>()
             val typeAlias = GenTypeAliasTask(this, enumTypes).fork()
@@ -27,11 +33,11 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                 .map { (_, enumType) -> genEnumType(enumType) }
                 .partitionWrite("enums")
 
-            typeAlias.joinAndWriteOutput(Path("enums"), VKFFI.enumPackageName)
+            typeAlias.joinAndWriteOutput(Path("enums"), CaelumVulkanCodegen.enumPackageName)
         }
     }
 
-    private inner class BitmaskTask : VKFFITask<Unit>(ctx) {
+    private inner class BitmaskTask : CaelumVulkanCodegenTask<Unit>(ctx) {
         override fun VulkanCodeGenContext.compute() {
             val flagTypes = ctx.filterTypeStream<CType.Bitmask>()
                 .filter { !it.first.contains("FlagBits") }
@@ -43,11 +49,11 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                 .map { (_, flagType) -> genFlagType(flagType) }
                 .partitionWrite("enums")
 
-            typeAlias.joinAndWriteOutput(Path("enums"), VKFFI.flagPackageName)
+            typeAlias.joinAndWriteOutput(Path("enums"), CaelumVulkanCodegen.flagPackageName)
         }
     }
 
-    private inner class ConstantsTask : VKFFITask<Unit>(ctx) {
+    private inner class ConstantsTask : CaelumVulkanCodegenTask<Unit>(ctx) {
         override fun VulkanCodeGenContext.compute() {
 //            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCname)
 //                .addType(
@@ -65,11 +71,11 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
 //                        .build()
 //                )
 //            ctx.writeOutput(vkEnumBaseFile)
-            val vkEnumFile = FileSpec.builder(VKFFI.vkEnumCname)
+            val vkEnumFile = FileSpec.builder(CaelumVulkanCodegen.vkEnumCname)
                 .addType(
-                    TypeSpec.interfaceBuilder(VKFFI.vkEnumCname)
+                    TypeSpec.interfaceBuilder(CaelumVulkanCodegen.vkEnumCname)
 //                        .addModifiers(KModifier.SEALED)
-                        .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
+                        .addSuperinterface(CaelumVulkanCodegen.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
                                 .addModifiers(KModifier.OVERRIDE)
@@ -89,11 +95,11 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                 )
             ctx.writeOutput(Path("baseSrc"), vkEnumFile)
 
-            val vkFlagFile = FileSpec.builder(VKFFI.flagPackageName, "VkFlags")
+            val vkFlagFile = FileSpec.builder(CaelumVulkanCodegen.flagPackageName, "VkFlags")
                 .addType(
-                    TypeSpec.interfaceBuilder(VKFFI.vkFlags32CNAME)
+                    TypeSpec.interfaceBuilder(CaelumVulkanCodegen.vkFlags32CNAME)
 //                        .addModifiers(KModifier.SEALED)
-                        .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
+                        .addSuperinterface(CaelumVulkanCodegen.vkEnumBaseCname.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
                                 .addModifiers(KModifier.OVERRIDE)
@@ -112,9 +118,9 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                         .build()
                 )
                 .addType(
-                    TypeSpec.interfaceBuilder(VKFFI.vkFlags64CNAME)
+                    TypeSpec.interfaceBuilder(CaelumVulkanCodegen.vkFlags64CNAME)
 //                        .addModifiers(KModifier.SEALED)
-                        .addSuperinterface(VKFFI.vkEnumBaseCname.parameterizedBy(Long::class.asTypeName()))
+                        .addSuperinterface(CaelumVulkanCodegen.vkEnumBaseCname.parameterizedBy(Long::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
                                 .addModifiers(KModifier.OVERRIDE)
@@ -134,10 +140,10 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
                 )
             ctx.writeOutput(Path("baseSrc"), vkFlagFile)
 
-            val constantsFile = FileSpec.builder(VKFFI.basePkgName, "Constants")
+            val constantsFile = FileSpec.builder(CaelumVulkanCodegen.basePkgName, "Constants")
             constantsFile.addProperties(
                 ctx.filterTypeStream<CTopLevelConst>()
-                    .filter { !VKFFI.vkVersionConstRegex.matches(it.first) }
+                    .filter { !CaelumVulkanCodegen.vkVersionConstRegex.matches(it.first) }
                     .sorted(
                         compareBy<Pair<String, CTopLevelConst>> { (_, const) ->
                             const.expression is CExpression.StringLiteral
@@ -169,11 +175,11 @@ class GenerateEnumTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
     private fun TypeSpec.Builder.addSuper(enumBase: CType.EnumBase): TypeSpec.Builder {
         val baseType = enumBase.baseType
         val superCname = when (enumBase) {
-            is CType.Enum -> VKFFI.vkEnumCname
+            is CType.Enum -> CaelumVulkanCodegen.vkEnumCname
             is CType.Bitmask -> {
                 when (baseType) {
-                    CBasicType.int32_t -> VKFFI.vkFlags32CNAME
-                    CBasicType.int64_t -> VKFFI.vkFlags64CNAME
+                    CBasicType.int32_t -> CaelumVulkanCodegen.vkFlags32CNAME
+                    CBasicType.int64_t -> CaelumVulkanCodegen.vkFlags64CNAME
                     else -> throw IllegalArgumentException("Unsupported base type: $baseType")
                 }
             }

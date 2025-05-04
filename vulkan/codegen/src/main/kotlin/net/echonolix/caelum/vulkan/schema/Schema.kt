@@ -1,7 +1,7 @@
 package net.echonolix.caelum.vulkan.schema
 
 import kotlinx.serialization.Serializable
-import net.echonolix.caelum.CBasicType
+import net.echonolix.caelum.codegen.api.CBasicType
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlElement
 import nl.adaptivity.xmlutil.serialization.XmlSerialName

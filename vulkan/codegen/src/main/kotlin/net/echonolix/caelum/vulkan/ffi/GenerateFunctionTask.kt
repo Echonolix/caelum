@@ -1,14 +1,11 @@
 package net.echonolix.caelum.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.CBasicType
-import net.echonolix.caelum.CType
-import net.echonolix.caelum.CaelumCodegenHelper
-import net.echonolix.caelum.FunctionGenerator
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.FunctionGenerator
 import kotlin.io.path.Path
 
-class GenerateFunctionTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateFunctionTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
     override fun VulkanCodeGenContext.compute() {
         val funcPtrPath = Path("groups")
         ctx.filterTypeStream<CType.Function>()
@@ -35,12 +32,12 @@ class GenerateFunctionTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
 
             context(ctx: VulkanCodeGenContext)
             override fun functionBaseCName(): ClassName {
-                return VKFFI.vkFunctionCname
+                return CaelumVulkanCodegen.vkFunctionCname
             }
 
             context(ctx: VulkanCodeGenContext)
             override fun functionTypeDescriptorBaseCName(): ClassName {
-                return VKFFI.vkFunctionTypeDescriptorImplCname
+                return CaelumVulkanCodegen.vkFunctionTypeDescriptorImplCname
             }
 
             context(ctx: VulkanCodeGenContext)

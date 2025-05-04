@@ -1,4 +1,4 @@
-package net.echonolix.caelum
+package net.echonolix.caelum.codegen.api
 
 public class KDoc {
     public val lines: MutableList<String> = mutableListOf()

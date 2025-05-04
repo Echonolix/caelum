@@ -1,6 +1,6 @@
 package net.echonolix.caelum.codegen.c
 
-import net.echonolix.caelum.CSyntax
+import net.echonolix.caelum.codegen.api.CSyntax
 import net.echonolix.caelum.codegen.c.adapter.CAstContext
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Files

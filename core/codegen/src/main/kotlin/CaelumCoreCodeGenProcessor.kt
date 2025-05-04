@@ -1,8 +1,8 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.CaelumCodegenHelper
-import net.echonolix.caelum.addSuppress
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.addSuppress
 import net.echonolix.ktgen.KtgenProcessor
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.VarHandle
@@ -10,7 +10,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.reflect.KClass
 
-class KTFFICoreCodeGenProcessor : KtgenProcessor {
+class CaelumCoreCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val validChars = ('a'..'z').toList()
         val random = Random(0)

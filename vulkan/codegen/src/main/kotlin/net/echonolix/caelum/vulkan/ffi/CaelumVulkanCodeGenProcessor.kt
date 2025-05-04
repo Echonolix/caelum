@@ -1,8 +1,8 @@
 package net.echonolix.caelum.vulkan.ffi
 
 import kotlinx.serialization.decodeFromString
-import net.echonolix.caelum.CType
-import net.echonolix.caelum.deepReferenceResolve
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.deepReferenceResolve
 import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.schema.Registry
@@ -33,7 +33,7 @@ fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
     }
 }
 
-class VKFFICodeGenProcessor : KtgenProcessor {
+class CaelumVulkanCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> { 
         val registryText = javaClass.getResource("/vk.xml")!!.readText()
         val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs")
@@ -63,7 +63,7 @@ class VKFFICodeGenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
-        val ctx = VulkanCodeGenContext(VKFFI.basePkgName, outputDir, filteredRegistry)
+        val ctx = VulkanCodeGenContext(CaelumVulkanCodegen.basePkgName, outputDir, filteredRegistry)
         fun processRequire(requires: List<Registry.Feature.Require>) {
             requires.asSequence()
                 .filter { it.comment !in skipped }
@@ -157,7 +157,7 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 fun main() {
     val time = System.nanoTime()
     val outputDir = Path("vulkan/build/generated/ktgen")
-    val updatedFiles = VKFFICodeGenProcessor().process(emptySet(), outputDir).toMutableSet()
+    val updatedFiles = CaelumVulkanCodeGenProcessor().process(emptySet(), outputDir).toMutableSet()
     updatedFiles.toList()
         .forEach {
             addParentUpTo(it.parent, outputDir, updatedFiles)

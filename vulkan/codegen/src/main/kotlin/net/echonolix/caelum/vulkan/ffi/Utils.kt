@@ -7,6 +7,11 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
 import kotlinx.serialization.decodeFromString
 import net.echonolix.caelum.*
+import net.echonolix.caelum.codegen.api.CElement
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenContext
+import net.echonolix.caelum.codegen.api.removeContinuousSpaces
+import net.echonolix.caelum.codegen.api.toXMLTagFreeString
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
 

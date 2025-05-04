@@ -2,12 +2,12 @@ package net.echonolix.caelum.vulkan.ffi
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.CType
-import net.echonolix.caelum.CaelumCodegenHelper
-import net.echonolix.caelum.decap
+import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.decap
 import kotlin.io.path.Path
 
-class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
+class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : CaelumVulkanCodegenTask<Unit>(ctx) {
     override fun VulkanCodeGenContext.compute() {
         val skippedNames = setOf("vkGetInstanceProcAddr", "vkGetDeviceProcAddr")
         ctx.filterVkFunction().asSequence()
@@ -21,12 +21,12 @@ class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(
     private inner class Task(
         private val handleType: CType.Handle,
         private val functions: List<CType.Function>
-    ) : VKFFITask<Unit>(ctx) {
+    ) : CaelumVulkanCodegenTask<Unit>(ctx) {
         private val vkResultCname = with(ctx) { (ctx.resolveElement("VkResult") as CType.Enum).className() }
         private val resultCname = Result::class.asClassName()
 
         override fun VulkanCodeGenContext.compute() {
-            val file = FileSpec.builder(VKFFI.basePkgName, "${handleType.name}Functions")
+            val file = FileSpec.builder(CaelumVulkanCodegen.basePkgName, "${handleType.name}Functions")
             file.addProperty(
                 PropertySpec.builder("_UNIT_RESULT_", resultCname.parameterizedBy(UNIT))
                     .addModifiers(KModifier.PRIVATE)
@@ -108,7 +108,7 @@ class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(
                     funcCode.add(thisAtFunc)
                 }
 
-                funcCode.addStatement(", handle114514.%M))", VKFFI.handleValueMember)
+                funcCode.addStatement(", handle114514.%M))", CaelumVulkanCodegen.handleValueMember)
                 funcCode.add(resultCodeTag.errorCodes.joinToCode(",\n") {
                     CodeBlock.of(
                         "%T.%N",
@@ -116,7 +116,7 @@ class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(
                         it.name
                     )
                 })
-                funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, VKFFI.vkExceptionCname)
+                funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, CaelumVulkanCodegen.vkExceptionCname)
                 funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
                 funcCode.endControlFlow()
                 funcCode.endControlFlow()
@@ -149,7 +149,7 @@ class GenerateFunctionOverloadTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(
                             it.name
                         )
                     })
-                    funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, VKFFI.vkExceptionCname)
+                    funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, CaelumVulkanCodegen.vkExceptionCname)
                 }
                 funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
                 funcCode.endControlFlow()

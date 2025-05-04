@@ -1,6 +1,6 @@
 package net.echonolix.caelum.vulkan.schema
 
-import net.echonolix.caelum.vulkan.ffi.VKFFI
+import net.echonolix.caelum.vulkan.ffi.CaelumVulkanCodegen
 import net.echonolix.caelum.vulkan.ffi.tryParseXML
 
 class FilteredRegistry(registry: Registry) {
@@ -11,7 +11,7 @@ class FilteredRegistry(registry: Registry) {
     val registryExtensions = registry.extensions.extensions.asSequence()
         .filter { it.platform == null }
         .filter { it.supported != "disabled" }
-        .filter { extension -> VKFFI.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
+        .filter { extension -> CaelumVulkanCodegen.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
         .toList()
     val registryTypes = registry.types.types.associate { type ->
         val name = type.name ?: type.inner.firstNotNullOf {
@@ -22,7 +22,7 @@ class FilteredRegistry(registry: Registry) {
     val typeDefTypes = registryTypes.values.asSequence()
         .filter { it.category != Registry.Types.Type.Category.funcpointer }
         .filter { it.category != Registry.Types.Type.Category.bitmask }
-        .filter { it.name !in VKFFI.typedefBlackList }
+        .filter { it.name !in CaelumVulkanCodegen.typedefBlackList }
         .filter { it.inner.getOrNull(0)?.contentString?.startsWith("typedef") == true }
         .associateBy { it.name!! }
 
