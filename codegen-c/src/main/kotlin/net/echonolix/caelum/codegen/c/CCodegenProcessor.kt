@@ -54,6 +54,9 @@ class CCodegenProcessor : KtgenProcessor {
         println()
 
         val ctx = CCodeGenContext(System.getProperty("codegenc.packageName"), outputDir, elementCtx)
+        elementCtx.typedefs.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
+        }
         elementCtx.enums.forEach { (name, _) ->
             println(ctx.resolveElement(name))
         }
