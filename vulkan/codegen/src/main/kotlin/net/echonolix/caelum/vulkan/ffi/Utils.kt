@@ -87,7 +87,7 @@ context(ctx: VulkanCodeGenContext)
 fun List<CType.Function.Parameter>.toNativeParamSpecs(annotations: Boolean) =
     toParamSpecs(annotations) { it.type.nativeType() }
 
-context(ctx: VulkanCodeGenContext)
+context(ctx: CaelumCodegenContext)
 inline fun List<CType.Function.Parameter>.toParamSpecs(
     annotations: Boolean,
     typeMapper: (CType.Function.Parameter) -> TypeName
