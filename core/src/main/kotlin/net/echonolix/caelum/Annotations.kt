@@ -1,6 +1,6 @@
 package net.echonolix.caelum
 
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE, AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER)
 public annotation class CTypeName(val name: String)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
 public annotation class CHandleType

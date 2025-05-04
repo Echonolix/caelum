@@ -5,12 +5,13 @@ plugins {
     id("net.echonolix.ktgen")
 }
 
+val codegenCExtension = extensions.create("codegenC", CodegenCExtension::class.java)
+
 dependencies {
     ktgen(project(":codegen-c"))
-    ktgenInput(files(projectDir.resolve("glfw3.h")))
+    implementation(kotlin("reflect"))
+    api(project(":caelum-core"))
 }
-
-val codegenCExtension = extensions.create("codegenC", CodegenCExtension::class.java)
 
 tasks.ktgen {
     jvmArgs("--enable-native-access=ALL-UNNAMED")

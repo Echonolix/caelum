@@ -62,6 +62,7 @@ public open class GroupGenerator(
     context(ctx: CodegenContext)
     protected open fun buildTypeObjectType(): TypeSpec.Builder {
         val typeObject = TypeSpec.objectBuilder(thisCName)
+        typeObject.addAnnotation(CaelumCoreAnnotation.cTypeName(element.toSimpleString()))
         typeObject.superclass(groupBaseCName().parameterizedBy(thisCName))
         typeObject.addSuperclassConstructorParameter(
             CodeBlock.builder()

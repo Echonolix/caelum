@@ -109,8 +109,9 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
             is CPointer -> {
                 val pointee = type.pointee
                 if (pointee is CFunction) {
-                    val func = resolveFunction(name, pointee)
-                    addToCache(name, func)
+                    val funcPtrName = "FuncPtr${name}"
+                    val func = resolveFunction(funcPtrName, pointee)
+                    addToCache(funcPtrName, func)
                     val funcPtr = CType.FunctionPointer(func)
                     return funcPtr
                 }

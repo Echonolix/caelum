@@ -93,7 +93,8 @@ public interface NativeFunction : NativeType {
             )
         }
 
-        protected abstract val manager: Manager
+        protected open val manager: Manager
+            get() = Manager.Global
 
         public abstract fun fromNativeData(value: MemorySegment): T
 
@@ -118,12 +119,20 @@ public interface NativeFunction : NativeType {
         }
     }
 
-    public abstract class Manager {
-        public var stubAllocator: Arena = Arena.ofShared(); private set
+    public interface Manager {
+        public val stubAllocator: Arena
 
-        public fun freeFunctionStubs() {
-            stubAllocator.close()
-            stubAllocator = Arena.ofShared()
+        public abstract class Impl : Manager {
+            public final override var stubAllocator: Arena = Arena.ofShared(); private set
+
+            public fun freeFunctionStubs() {
+                stubAllocator.close()
+                stubAllocator = Arena.ofShared()
+            }
+        }
+
+        public object Global : Manager {
+            public override val stubAllocator: Arena = Arena.ofShared()
         }
     }
 }

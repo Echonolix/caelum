@@ -17,5 +17,5 @@ public interface VkFunction : NativeFunction {
             get() = Companion
     }
 
-    public companion object : NativeFunction.Manager()
+    public companion object : NativeFunction.Manager.Impl()
 }

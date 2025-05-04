@@ -4,6 +4,7 @@ plugins {
 
 codegenC {
     packageName.set("net.echonolix.caelum.glfw")
+    libPrefix.set("glfw")
     excludedConsts.addAll(
         "APIENTRY",
         "WINGDIAPI",
@@ -11,4 +12,8 @@ codegenC {
         "GLFWAPI",
         "GLAPIENTRY"
     )
+}
+
+dependencies {
+    ktgenInput(files(projectDir.resolve("glfw3.h")))
 }

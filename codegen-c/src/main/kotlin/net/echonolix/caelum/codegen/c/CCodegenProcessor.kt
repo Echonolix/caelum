@@ -5,10 +5,14 @@ import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.CodegenOutput
 import net.echonolix.caelum.codegen.api.ctx.ElementDocumenter
 import net.echonolix.caelum.codegen.c.adapter.CAstContext
+import net.echonolix.caelum.codegen.c.tasks.GenerateEnumTask
+import net.echonolix.caelum.codegen.c.tasks.GenerateFunctionTask
+import net.echonolix.caelum.codegen.c.tasks.GenerateGroupTask
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.RecursiveAction
 import kotlin.io.path.*
 
 class CCodegenProcessor : KtgenProcessor {
@@ -48,82 +52,96 @@ class CCodegenProcessor : KtgenProcessor {
             elementCtx.parse(clangProcess.inputReader().readText())
         }
 
-//        run {
-//            val clangProcess = Runtime.getRuntime().exec(
-//                arrayOf(
-//                    "clang",
-//                    "-E",
-//                    "-C",
-//                    "--target=x86_64-pc-windows-gnu",
-//                    "-std=c23",
-//                    *inputs.map { it.absolutePathString() }.toTypedArray()
-//                )
-//            )
-//            elementCtx.parse(clangProcess.inputReader().readText())
-//        }
+        run {
+            val clangProcess = Runtime.getRuntime().exec(
+                arrayOf(
+                    "clang",
+                    "-E",
+                    "-C",
+                    "--target=x86_64-pc-windows-gnu",
+                    "-std=c23",
+                    *inputs.map { it.absolutePathString() }.toTypedArray()
+                )
+            )
+            elementCtx.parse(clangProcess.inputReader().readText())
+        }
 
-        println("Typedefs:")
-        elementCtx.typedefs.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Consts:")
-        elementCtx.consts.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println("Enums:")
-        elementCtx.enums.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Global Enums:")
-        elementCtx.globalEnums.forEach { type ->
-            println("\t$type")
-        }
-        println("Structs:")
-        elementCtx.structs.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Unions:")
-        elementCtx.unions.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Functions:")
-        elementCtx.functions.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
+//        println("Typedefs:")
+//        elementCtx.typedefs.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Consts:")
+//        elementCtx.consts.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println("Enums:")
+//        elementCtx.enums.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Global Enums:")
+//        elementCtx.globalEnums.forEach { type ->
+//            println("\t$type")
+//        }
+//        println("Structs:")
+//        elementCtx.structs.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Unions:")
+//        elementCtx.unions.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Functions:")
+//        elementCtx.functions.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
 
         val ctx = CodegenContext(
-            CodegenOutput.Default(outputDir, System.getProperty("codegenc.packageName")),
+            CodegenOutput.Base(outputDir, System.getProperty("codegenc.packageName")),
             CElementResolver(elementCtx),
             ElementDocumenter.Base(),
         )
         elementCtx.typedefs.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
         elementCtx.consts.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
         elementCtx.enums.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
         elementCtx.globalEnums.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
         elementCtx.structs.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
         elementCtx.unions.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
         elementCtx.functions.forEach { (name, _) ->
-            println(ctx.resolveElement(name))
+            ctx.resolveElement(name)
         }
 
-        return emptySet()
+
+        object : RecursiveAction() {
+            override fun compute() {
+                val enum = GenerateEnumTask(ctx).fork()
+                val group = GenerateGroupTask(ctx).fork()
+//                val typeDef = GenerateTypeDefTask(ctx).fork()
+                val function = GenerateFunctionTask(ctx).fork()
+                enum.join()
+                group.join()
+//                typeDef.join()
+                function.join()
+            }
+        }.fork().join()
+
+        return ctx.outputFiles
     }
 
     companion object {
@@ -189,7 +207,7 @@ fun main() {
 //        Path("codegen-c/llvm-c.h")
 //        Path("codegen-c/test.h")
     )
-    val outputDir = Path("testoutput")
+    val outputDir = Path("glfw/build/generated/ktgen")
     val updatedFiles = CCodegenProcessor().process(inputs, outputDir).toMutableSet()
     updatedFiles.toList().forEach {
         addParentUpTo(it.parent, outputDir, updatedFiles)
