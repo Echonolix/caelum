@@ -2,6 +2,8 @@ package net.echonolix.caelum.vulkan
 
 import kotlinx.serialization.decodeFromString
 import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.filterType
 import net.echonolix.caelum.codegen.api.deepReferenceResolve
 import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
@@ -69,7 +71,10 @@ class VulkanCodegenProcessor : KtgenProcessor {
         val registry = xml.decodeFromString<Registry>(registryText)
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
-        val ctx = VulkanCodegenContext(VulkanCodegen.basePkgName, outputDir, filteredRegistry)
+        val ctx = CodegenContext(
+            VulkanCodegenOutput( outputDir),
+            VulkanElementResolver(filteredRegistry)
+        )
         fun processRequire(requires: List<Registry.Feature.Require>) {
             requires.asSequence()
                 .filter { it.comment !in skipped }
@@ -134,7 +139,7 @@ class VulkanCodegenProcessor : KtgenProcessor {
         object : RecursiveAction() {
             override fun compute() {
                 val handle = GenerateHandleTask(ctx).fork()
-                val enum = GenerateEnumTask(ctx).fork()
+                val enum = GenerateEnumTask(ctx, filteredRegistry).fork()
                 val group = GenerateGroupTask(ctx).fork()
                 val typeDef = GenerateTypeDefTask(ctx).fork()
                 val function = GenerateFunctionTask(ctx).fork()

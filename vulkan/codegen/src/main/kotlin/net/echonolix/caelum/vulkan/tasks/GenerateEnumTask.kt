@@ -3,23 +3,21 @@ package net.echonolix.caelum.vulkan.tasks
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.*
-import net.echonolix.caelum.codegen.api.CBasicType
-import net.echonolix.caelum.codegen.api.CExpression
-import net.echonolix.caelum.codegen.api.CSyntax
-import net.echonolix.caelum.codegen.api.CTopLevelConst
-import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
-import net.echonolix.caelum.codegen.api.task.CaelumCodegenTaskBase
+import net.echonolix.caelum.codegen.api.*
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.filterType
+import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
+import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
-import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.EnumEntryFixedName
-import net.echonolix.caelum.vulkan.VulkanCodegenContext
+import net.echonolix.caelum.vulkan.VulkanCodegen
+import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.tryAddKdoc
 import kotlin.io.path.Path
 import kotlin.random.Random
 
-class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
-    override fun VulkanCodegenContext.compute() {
+class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : CodegenTask<Unit>(ctx) {
+    override fun CodegenContext.compute() {
         val constants = ConstantsTask().fork()
         val enum = EnumTask().fork()
         val bitmask = BitmaskTask().fork()
@@ -29,8 +27,8 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         bitmask.join()
     }
 
-    private inner class EnumTask : VulkanCodegenTask<Unit>(ctx) {
-        override fun VulkanCodegenContext.compute() {
+    private inner class EnumTask : CodegenTask<Unit>(ctx) {
+        override fun CodegenContext.compute() {
             val enumTypes = ctx.filterType<CType.Enum>()
             val typeAlias = GenTypeAliasTask(this, enumTypes).fork()
 
@@ -43,8 +41,8 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         }
     }
 
-    private inner class BitmaskTask : VulkanCodegenTask<Unit>(ctx) {
-        override fun VulkanCodegenContext.compute() {
+    private inner class BitmaskTask : CodegenTask<Unit>(ctx) {
+        override fun CodegenContext.compute() {
             val flagTypes = ctx.filterTypeStream<CType.Bitmask>()
                 .filter { !it.first.contains("FlagBits") }
                 .toList()
@@ -59,8 +57,8 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         }
     }
 
-    private inner class ConstantsTask : VulkanCodegenTask<Unit>(ctx) {
-        override fun VulkanCodegenContext.compute() {
+    private inner class ConstantsTask : CodegenTask<Unit>(ctx) {
+        override fun CodegenContext.compute() {
 //            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCname)
 //                .addType(
 //                    TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCname)
@@ -177,7 +175,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         }
     }
 
-    context(ctx: VulkanCodegenContext)
+    context(ctx: CodegenContext)
     private fun TypeSpec.Builder.addSuper(enumBase: CType.EnumBase): TypeSpec.Builder {
         val baseType = enumBase.baseType
         val superCname = when (enumBase) {
@@ -218,7 +216,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         return this
     }
 
-    private fun VulkanCodegenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
+    private fun CodegenContext.genFlagType(flagType: CType.Bitmask): FileSpec.Builder {
         val thisCname = flagType.className()
 
         val type = TypeSpec.classBuilder(thisCname)
@@ -253,7 +251,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         )
 
         val companion = TypeSpec.companionObjectBuilder()
-        val flagBitEntries = flagType.entries.values.sortedBy { ctx.registry.enumValueOrders[it.name] }
+        val flagBitEntries = flagType.entries.values.sortedBy { registry.enumValueOrders[it.name] }
         val internalAliases = mutableListOf<PropertySpec>()
         flagBitEntries.forEach {
             val expression = it.expression
@@ -321,7 +319,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         return file
     }
 
-    private fun VulkanCodegenContext.genEnumType(enumType: CType.Enum): FileSpec.Builder {
+    private fun CodegenContext.genEnumType(enumType: CType.Enum): FileSpec.Builder {
         val thisCname = enumType.className()
 
         val type = TypeSpec.enumBuilder(thisCname)
@@ -331,7 +329,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
         val companion = TypeSpec.companionObjectBuilder()
         val internalAliases = mutableListOf<PropertySpec>()
         enumType.entries.values.asSequence()
-            .sortedBy { ctx.registry.enumValueOrders[it.name] }
+            .sortedBy { registry.enumValueOrders[it.name] }
             .forEach { entry ->
                 val expression = entry.expression
                 val fixedName = entry.tags.get<EnumEntryFixedName>()!!.name
@@ -384,7 +382,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
                         .beginControlFlow("return when (value)")
                         .apply {
                             enumType.entries.values.asSequence()
-                                .sortedBy { ctx.registry.enumValueOrders[it.name] }
+                                .sortedBy { registry.enumValueOrders[it.name] }
                                 .filter { it.expression is CExpression.Const }
                                 .forEach { entry ->
                                     addStatement(
@@ -418,7 +416,7 @@ class GenerateEnumTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx)
 
     private val validChars = ('a'..'z').toList()
 
-    context(ctx: VulkanCodegenContext)
+    context(ctx: CodegenContext)
     private fun TypeSpec.Builder.addCompanionSuper(enumBase: CType.EnumBase) {
         addAnnotation(
             AnnotationSpec.builder(Suppress::class)

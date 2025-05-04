@@ -2,15 +2,18 @@ package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.*
 import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import net.echonolix.caelum.codegen.api.generator.FunctionGenerator
+import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.OptionalTag
 import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
-import net.echonolix.caelum.vulkan.VulkanCodegenContext
+import net.echonolix.caelum.vulkan.VulkanElementResolver
 import kotlin.io.path.Path
 
-class GenerateFunctionTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
-    override fun VulkanCodegenContext.compute() {
+class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
+    override fun CodegenContext.compute() {
         val funcPtrPath = Path("groups")
         ctx.filterTypeStream<CType.Function>()
             .filter { (_, funcType) -> funcType.name.startsWith("VkFuncPtr") }
@@ -23,9 +26,9 @@ class GenerateFunctionTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(
             .partitionWrite("functions")
     }
 
-    private fun VulkanCodegenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
-        val generator = object : FunctionGenerator<VulkanCodegenContext>(ctx, funcType) {
-            context(ctx: VulkanCodegenContext)
+    private fun CodegenContext.genFunc(funcType: CType.Function): FileSpec.Builder {
+        val generator = object : FunctionGenerator(ctx, funcType) {
+            context(ctx: CodegenContext)
             override fun toKtType(type: CType.Function.Parameter): TypeName {
                 var pType = type.type.ktApiType()
                 if (type.type is CType.Pointer && type.tags.has<OptionalTag>()) {
@@ -34,17 +37,17 @@ class GenerateFunctionTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(
                 return pType
             }
 
-            context(ctx: VulkanCodegenContext)
+            context(ctx: CodegenContext)
             override fun functionBaseCName(): ClassName {
                 return VulkanCodegen.vkFunctionCname
             }
 
-            context(ctx: VulkanCodegenContext)
+            context(ctx: CodegenContext)
             override fun functionTypeDescriptorBaseCName(): ClassName {
                 return VulkanCodegen.vkFunctionTypeDescriptorImplCname
             }
 
-            context(ctx: VulkanCodegenContext)
+            context(ctx: CodegenContext)
             override fun nativeName(): String {
                 return funcType.tags.get<OriginalFunctionNameTag>()!!.name
             }

@@ -4,20 +4,22 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.decap
+import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
 import net.echonolix.caelum.vulkan.ResultCodeTag
 import net.echonolix.caelum.vulkan.VkHandleTag
-import net.echonolix.caelum.vulkan.VulkanCodegenContext
+import net.echonolix.caelum.vulkan.VulkanElementResolver
 import net.echonolix.caelum.vulkan.filterVkFunction
 import net.echonolix.caelum.vulkan.isDeviceBase
 import net.echonolix.caelum.vulkan.objectBaseCName
 import net.echonolix.caelum.vulkan.toKtParamOverloadSpecs
 import kotlin.io.path.Path
 
-class GenerateFunctionOverloadTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
-    override fun VulkanCodegenContext.compute() {
+class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
+    override fun CodegenContext.compute() {
         val skippedNames = setOf("vkGetInstanceProcAddr", "vkGetDeviceProcAddr")
         ctx.filterVkFunction().asSequence()
             .filter { it.tags.get<OriginalFunctionNameTag>()!!.name !in skippedNames }
@@ -30,11 +32,11 @@ class GenerateFunctionOverloadTask(ctx: VulkanCodegenContext) : VulkanCodegenTas
     private inner class Task(
         private val handleType: CType.Handle,
         private val functions: List<CType.Function>
-    ) : VulkanCodegenTask<Unit>(ctx) {
+    ) : CodegenTask<Unit>(ctx) {
         private val vkResultCname = with(ctx) { (ctx.resolveElement("VkResult") as CType.Enum).className() }
         private val resultCname = Result::class.asClassName()
 
-        override fun VulkanCodegenContext.compute() {
+        override fun CodegenContext.compute() {
             val file = FileSpec.builder(VulkanCodegen.basePkgName, "${handleType.name}Functions")
             file.addProperty(
                 PropertySpec.builder("_UNIT_RESULT_", resultCname.parameterizedBy(UNIT))
@@ -50,7 +52,7 @@ class GenerateFunctionOverloadTask(ctx: VulkanCodegenContext) : VulkanCodegenTas
             ctx.writeOutput(Path("main"), file)
         }
 
-        private fun VulkanCodegenContext.vkFuncOverload(funcType: CType.Function): FunSpec {
+        private fun CodegenContext.vkFuncOverload(funcType: CType.Function): FunSpec {
             val prefixRemoved = funcType.name.removePrefix("VkFunc")
             val funcName = prefixRemoved.decap()
             val resultCodeTag = funcType.tags.get<ResultCodeTag>() ?: error("$funcType is missing result code tag")

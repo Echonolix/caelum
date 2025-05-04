@@ -5,27 +5,30 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.codegen.api.CBasicType
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.filterType
+import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.codegen.api.decap
+import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.EnumEntryFixedName
 import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
 import net.echonolix.caelum.vulkan.VkHandleTag
-import net.echonolix.caelum.vulkan.VulkanCodegenContext
 import net.echonolix.caelum.vulkan.filterVkFunction
 import net.echonolix.caelum.vulkan.isDeviceBase
 import net.echonolix.caelum.vulkan.objectBaseCName
 import kotlin.io.path.Path
 
-class GenerateHandleTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
+class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     private fun CType.Handle.variableName(): String {
         return name.removePrefix("Vk").decap()
     }
 
-    private val objTypeCname = with(ctx) { resolveElement<CType>("VkObjectType").typeName() }
+    private val objTypeCname = with(ctx) { resolveTypedElement<CType>("VkObjectType").typeName() }
     val vkTypeDescriptorCname = VulkanCodegen.vkHandleCname.nestedClass("TypeDescriptor")
 
-    override fun VulkanCodegenContext.compute() {
+    override fun CodegenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
         val typeAlias = GenTypeAliasTask(this, handles).fork()
 
@@ -69,7 +72,7 @@ class GenerateHandleTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ct
         }
     }
 
-    private fun VulkanCodegenContext.genObjectHandle(
+    private fun CodegenContext.genObjectHandle(
         handleType: CType.Handle
     ) {
         val thisCname = handleType.className()
@@ -145,7 +148,7 @@ class GenerateHandleTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ct
         ctx.writeOutput(Path("objectHandles"), file)
     }
 
-    private fun VulkanCodegenContext.genObjectBase(
+    private fun CodegenContext.genObjectBase(
         functions: List<CType.Function>,
         handleType: CType.Handle
     ) {

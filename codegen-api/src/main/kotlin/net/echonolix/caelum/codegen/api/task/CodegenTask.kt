@@ -2,14 +2,14 @@ package net.echonolix.caelum.codegen.api.task
 
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeAliasSpec
-import net.echonolix.caelum.codegen.api.CaelumCodegenContext
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.RecursiveTask
 import java.util.stream.Stream
 import kotlin.io.path.Path
 
-public abstract class CaelumCodegenTaskBase<CTX : CaelumCodegenContext, R>(protected val ctx: CTX) :
+public abstract class CodegenTask<R>(protected val ctx: CodegenContext) :
     RecursiveTask<R>() {
     public final override fun compute(): R {
         return ctx.compute()
@@ -41,7 +41,5 @@ public abstract class CaelumCodegenTaskBase<CTX : CaelumCodegenContext, R>(prote
             }
     }
 
-    protected abstract fun CTX.compute(): R
+    protected abstract fun CodegenContext.compute(): R
 }
-
-public typealias CaelumCodegenTask<R> = CaelumCodegenTaskBase<CaelumCodegenContext, R>

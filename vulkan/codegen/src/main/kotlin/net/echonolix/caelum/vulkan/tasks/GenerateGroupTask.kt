@@ -6,12 +6,16 @@ import net.echonolix.caelum.*
 import net.echonolix.caelum.codegen.api.CBasicType
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.codegen.api.deepReferenceResolve
+import net.echonolix.caelum.codegen.api.deepResolve
+import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.EnumEntryFixedName
 import net.echonolix.caelum.vulkan.StructTypeTag
-import net.echonolix.caelum.vulkan.VulkanCodegenContext
+import net.echonolix.caelum.vulkan.VulkanElementResolver
 import net.echonolix.caelum.vulkan.tryAddKdoc
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
@@ -20,13 +24,13 @@ import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.io.path.Path
 
-class GenerateGroupTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx) {
+class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     private val skippedStructs = setOf(
         "VkBaseInStructure",
         "VkBaseOutStructure"
     )
 
-    override fun VulkanCodegenContext.compute() {
+    override fun CodegenContext.compute() {
         val groupTypes = ctx.filterTypeStream<CType.Group>()
             .filter { (name, type) -> name !in skippedStructs && type.name !in skippedStructs }
             .toList()
@@ -118,7 +122,7 @@ class GenerateGroupTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx
         typeAlias.joinAndWriteOutput(groupsPath, VulkanCodegen.structPackageName)
     }
 
-    context(ctx: VulkanCodegenContext)
+    context(ctx: CodegenContext)
     private fun genGroupType(groupType: CType.Group): FileSpec.Builder {
         val thisCname = groupType.className()
         val file = FileSpec.builder(thisCname)
@@ -649,12 +653,7 @@ class GenerateGroupTask(ctx: VulkanCodegenContext) : VulkanCodegenTask<Unit>(ctx
         }
 
         groupType.members.asSequence().forEach { member ->
-            var memberType = member.type
-            while (memberType is CType.TypeDef) {
-                memberType = memberType.dstType
-            }
-
-            when (memberType) {
+            when (val memberType = member.type.deepResolve()) {
                 is CType.BasicType -> {
                     basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr)
                 }

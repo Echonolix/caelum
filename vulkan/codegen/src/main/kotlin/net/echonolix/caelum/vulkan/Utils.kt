@@ -4,6 +4,8 @@ import com.squareup.kotlinpoet.*
 import kotlinx.serialization.decodeFromString
 import net.echonolix.caelum.CTypeName
 import net.echonolix.caelum.codegen.api.*
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
 
@@ -20,7 +22,7 @@ inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
 fun List<CompactFragment>.toXmlTagFreeString() =
     joinToString(" ") { it.contentString.toXMLTagFreeString() }.removeContinuousSpaces()
 
-context(ctx: VulkanCodegenContext)
+context(ctx: CodegenContext)
 fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     val docs = element.tags.get<ElementCommentTag>()?.comment
     val since = element.tags.get<RequiredByTag>()?.requiredBy
@@ -43,7 +45,7 @@ fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
     addKdoc(sb.toString())
 }
 
-fun VulkanCodegenContext.filterVkFunction(): List<CType.Function> =
+fun CodegenContext.filterVkFunction(): List<CType.Function> =
     filterTypeStream<CType.Function>()
         .filter { it.first == it.second.tags.get<OriginalFunctionNameTag>()!!.name }
         .map { it.second }
@@ -56,7 +58,7 @@ fun VulkanCodegenContext.filterVkFunction(): List<CType.Function> =
         )
         .toList()
 
-context(ctx: VulkanCodegenContext)
+context(ctx: CodegenContext)
 fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) =
     toParamSpecs(annotations) {
         val paramType = it.type
@@ -70,7 +72,7 @@ fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) 
         pType
     }
 
-context(ctx: CaelumCodegenContext)
+context(ctx: CodegenContext)
 inline fun List<CType.Function.Parameter>.toParamSpecs(
     annotations: Boolean,
     typeMapper: (CType.Function.Parameter) -> TypeName
@@ -92,7 +94,7 @@ tailrec fun isDeviceBase(type: CType.Handle): Boolean {
     return isDeviceBase(parent)
 }
 
-context(_: VulkanCodegenContext)
+context(_: CodegenContext)
 fun CType.Handle.objectBaseCName(): ClassName {
     return ClassName(packageName(), this.name)
 }

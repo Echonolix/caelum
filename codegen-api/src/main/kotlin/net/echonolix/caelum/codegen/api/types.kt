@@ -2,8 +2,9 @@ package net.echonolix.caelum.codegen.api
 
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 
-context(ctx: CaelumCodegenContext)
+context(ctx: CodegenContext)
 public inline fun List<CType.Function.Parameter>.toParamSpecs(
     annotations: Boolean,
     typeMapper: (CType.Function.Parameter) -> TypeName

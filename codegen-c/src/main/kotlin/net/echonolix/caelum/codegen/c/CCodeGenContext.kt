@@ -4,24 +4,17 @@ import c.lang.ASTNumberValue
 import c.lang.CPrimitiveType
 import c.lang.CSizeSpecifier
 import com.squareup.kotlinpoet.CodeBlock
+import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.CBasicType
-import net.echonolix.caelum.codegen.api.CElement
-import net.echonolix.caelum.codegen.api.CExpression
-import net.echonolix.caelum.codegen.api.CTopLevelConst
 import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.CaelumCodegenContext
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.ElementResolver
+import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.codegen.c.adapter.*
-import net.echonolix.caelum.codegen.c.adapter.CArrayType
-import java.nio.file.Path
 import net.echonolix.caelum.codegen.c.adapter.CBasicType as CAstBasicType
 import net.echonolix.caelum.codegen.c.adapter.CType as CAstType
 
-class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAstContext) :
-    CaelumCodegenContext(basePkgName, outputDir) {
-    override fun resolvePackageName(element: CElement): String {
-        return basePkgName
-    }
-
+class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
     private fun resolveCType(type: CAstType): CType {
         return when (type) {
             is CAstBasicType -> {
@@ -55,7 +48,7 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
                 CType.Pointer { resolveCType(type.pointee) }
             }
             is Identifier -> {
-                return resolveElement<CType>(type.name)
+                return resolveTypedElement<CType>(type.name)
             }
             is CStruct -> {
                 val identifier = type.id!!
@@ -64,7 +57,7 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
                 struct
             }
             is CEnum -> {
-                return resolveElement<CType.Enum>(type.id!!.name)
+                return resolveTypedElement<CType.Enum>(type.id!!.name)
             }
             else -> throw UnsupportedOperationException("Unsupported type: $type")
         }
@@ -134,6 +127,7 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
         )
     }
 
+    context(ctx: CodegenContext)
     private fun ASTNumberValue.asKotlinCode(): CodeBlock {
         return when (this) {
             is ASTNumberValue.Binary -> CodeBlock.of("%L %L %L", left.asKotlinCode(), op.ktRep, right.asKotlinCode())
@@ -144,8 +138,9 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
         }
     }
 
+    context(ctx: CodegenContext)
     private fun ASTNumberValue.Ref.asKotlinCode(): CodeBlock {
-        return CodeBlock.of("%M", resolveElement<CTopLevelConst>(this.enumName).memberName())
+        return CodeBlock.of("%M", resolveTypedElement<CTopLevelConst>(this.enumName).memberName())
     }
 
     private fun resolveEnum(name: String, cEnum: CEnum): CType.Enum {
@@ -155,7 +150,7 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
             val entryName = it.id.name
             cTypeEnum.entries[entryName] = cTypeEnum.Entry(
                 entryName,
-                CExpression.Const(CBasicType.int32_t, it.value.asKotlinCode())
+                CExpression.Const(CBasicType.int32_t) { it.value.asKotlinCode() }
             )
         }
 
@@ -165,7 +160,7 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
     private fun resolveConst(name: String, type: CBasicType<*>, value: ASTNumberValue): CTopLevelConst {
         return CTopLevelConst(
             name,
-            CExpression.Const(type, value.asKotlinCode())
+            CExpression.Const(type) { value.asKotlinCode() }
         )
     }
 
