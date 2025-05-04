@@ -23,35 +23,35 @@ class CCodegenProcessor : KtgenProcessor {
         val source = clangProcess.inputReader().readText()
         elementCtx.parse(source)
 
-        println("Typedefs:")
-        elementCtx.typedefs.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Enums:")
-        elementCtx.enums.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Global Enums:")
-        elementCtx.globalEnums.forEach { type ->
-            println("\t$type")
-        }
-        println("Structs:")
-        elementCtx.structs.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Unions:")
-        elementCtx.unions.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
-        println("Functions:")
-        elementCtx.functions.forEach { (name, type) ->
-            println("\t$name -> $type")
-        }
-        println()
+//        println("Typedefs:")
+//        elementCtx.typedefs.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Enums:")
+//        elementCtx.enums.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Global Enums:")
+//        elementCtx.globalEnums.forEach { type ->
+//            println("\t$type")
+//        }
+//        println("Structs:")
+//        elementCtx.structs.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Unions:")
+//        elementCtx.unions.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
+//        println("Functions:")
+//        elementCtx.functions.forEach { (name, type) ->
+//            println("\t$name -> $type")
+//        }
+//        println()
 
         val ctx = CCodeGenContext(System.getProperty("codegenc.packageName"), outputDir, elementCtx)
         elementCtx.typedefs.forEach { (name, _) ->
@@ -60,8 +60,8 @@ class CCodegenProcessor : KtgenProcessor {
         elementCtx.enums.forEach { (name, _) ->
             println(ctx.resolveElement(name))
         }
-        elementCtx.globalEnums.forEach { enum ->
-//            println(ctx.resolveElement(enum))
+        elementCtx.globalEnums.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
         }
         elementCtx.structs.forEach { (name, _) ->
             println(ctx.resolveElement(name))

@@ -155,9 +155,20 @@ class CCodeGenContext(basePkgName: String, outputDir: Path, val cAstContext: CAs
         return cTypeEnum
     }
 
+    private fun resolveConst(name: String, value: ASTNumberValue): CTopLevelConst {
+        return CTopLevelConst(
+            name,
+            CExpression.Const(CBasicType.int32_t, value.asKotlinCode())
+        )
+    }
+
     override fun resolveElementImpl(cElementStr: String): CElement {
         cAstContext.enums[cElementStr]?.let {
             return resolveEnum(cElementStr, it)
+        }
+
+        cAstContext.globalEnums[cElementStr]?.let {
+            return resolveConst(cElementStr, it.value)
         }
 
         cAstContext.structs[cElementStr]?.let {
