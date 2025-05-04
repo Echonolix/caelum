@@ -1,4 +1,4 @@
-package net.echonolix.caelum.vulkan
+package net.echonolix.caelum.vulkan.ctx
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -8,7 +8,22 @@ import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.ElementResolver
 import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
+import net.echonolix.caelum.vulkan.AliasedTag
+import net.echonolix.caelum.vulkan.BitWidthTag
+import net.echonolix.caelum.vulkan.EnumEntryFixedName
+import net.echonolix.caelum.vulkan.LenTag
+import net.echonolix.caelum.vulkan.LineCommentTag
+import net.echonolix.caelum.vulkan.OptionalTag
+import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
+import net.echonolix.caelum.vulkan.RequiredByTag
+import net.echonolix.caelum.vulkan.ResultCodeTag
+import net.echonolix.caelum.vulkan.StructTypeTag
+import net.echonolix.caelum.vulkan.VkHandleTag
+import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.schema.*
+import net.echonolix.caelum.vulkan.toXmlTagFreeString
+import net.echonolix.caelum.vulkan.tryParseXML
+import kotlin.collections.get
 
 class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Base() {
     private fun resolveTypeDef(xmlTypeDefType: Registry.Types.Type): CType.TypeDef {

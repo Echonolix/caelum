@@ -1,9 +1,10 @@
-package net.echonolix.caelum.vulkan
+package net.echonolix.caelum.vulkan.ctx
 
 import net.echonolix.caelum.codegen.api.CElement
 import net.echonolix.caelum.codegen.api.CTopLevelConst
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.ctx.CodegenOutput
+import net.echonolix.caelum.vulkan.VulkanCodegen
 import java.nio.file.Path
 
 class VulkanCodegenOutput(outputDir: Path) : CodegenOutput.Base(outputDir) {

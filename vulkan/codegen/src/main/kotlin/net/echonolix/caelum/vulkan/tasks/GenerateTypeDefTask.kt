@@ -7,7 +7,6 @@ import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
-import net.echonolix.caelum.vulkan.VulkanElementResolver
 import kotlin.io.path.Path
 
 class GenerateTypeDefTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {

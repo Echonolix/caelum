@@ -5,6 +5,9 @@ import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterType
 import net.echonolix.caelum.codegen.api.deepReferenceResolve
+import net.echonolix.caelum.vulkan.ctx.VulkanCodegenOutput
+import net.echonolix.caelum.vulkan.ctx.VulkanElementDocumenter
+import net.echonolix.caelum.vulkan.ctx.VulkanElementResolver
 import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.schema.Registry
@@ -72,8 +75,9 @@ class VulkanCodegenProcessor : KtgenProcessor {
         val filteredRegistry = FilteredRegistry(registry)
         val skipped = setOf("Header boilerplate", "API version macros")
         val ctx = CodegenContext(
-            VulkanCodegenOutput( outputDir),
-            VulkanElementResolver(filteredRegistry)
+            VulkanCodegenOutput(outputDir),
+            VulkanElementResolver(filteredRegistry),
+            VulkanElementDocumenter()
         )
         fun processRequire(requires: List<Registry.Feature.Require>) {
             requires.asSequence()

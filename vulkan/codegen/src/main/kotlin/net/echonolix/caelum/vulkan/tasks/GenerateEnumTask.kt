@@ -12,7 +12,7 @@ import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.vulkan.EnumEntryFixedName
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
-import net.echonolix.caelum.vulkan.tryAddKdoc
+import net.echonolix.caelum.codegen.api.ctx.addKdoc
 import kotlin.io.path.Path
 import kotlin.random.Random
 
@@ -220,7 +220,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
         val thisCname = flagType.className()
 
         val type = TypeSpec.classBuilder(thisCname)
-        type.tryAddKdoc(flagType)
+        type.addKdoc(flagType)
         type.addSuper(flagType)
 
         type.addAnnotation(JvmInline::class)
@@ -270,7 +270,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
             companion.addProperty(
                 PropertySpec.builder(fixedName, thisCname)
                     .initializer(initilizer)
-                    .tryAddKdoc(it)
+                    .addKdoc(it)
                     .build()
             )
             if (it.name != fixedName) {
@@ -323,7 +323,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
         val thisCname = enumType.className()
 
         val type = TypeSpec.enumBuilder(thisCname)
-        type.tryAddKdoc(enumType)
+        type.addKdoc(enumType)
         type.addSuper(enumType)
 
         val companion = TypeSpec.companionObjectBuilder()
@@ -338,7 +338,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                         type.addEnumConstant(
                             fixedName,
                             TypeSpec.anonymousClassBuilder()
-                                .tryAddKdoc(entry)
+                                .addKdoc(entry)
                                 .superclass(thisCname)
                                 .addSuperclassConstructorParameter(entry.expression.codeBlock())
                                 .build()
@@ -349,7 +349,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                         companion.addProperty(
                             PropertySpec.builder(fixedName, thisCname)
                                 .initializer("%N", expression.value.name)
-                                .tryAddKdoc(entry)
+                                .addKdoc(entry)
                                 .build()
                         )
                     }

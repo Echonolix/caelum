@@ -2,10 +2,10 @@ package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.*
 import net.echonolix.caelum.codegen.api.CBasicType
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.CaelumCoreAnnotation
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
@@ -15,8 +15,7 @@ import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.EnumEntryFixedName
 import net.echonolix.caelum.vulkan.StructTypeTag
-import net.echonolix.caelum.vulkan.VulkanElementResolver
-import net.echonolix.caelum.vulkan.tryAddKdoc
+import net.echonolix.caelum.codegen.api.ctx.addKdoc
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.VarHandle
 import java.util.concurrent.ConcurrentHashMap
@@ -128,7 +127,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         val file = FileSpec.builder(thisCname)
 
         val typeObject = TypeSpec.objectBuilder(thisCname)
-        typeObject.tryAddKdoc(groupType)
+        typeObject.addKdoc(groupType)
         val superCname = when (groupType) {
             is CType.Struct -> VulkanCodegen.vkStructCname
             is CType.Union -> VulkanCodegen.vkUnionCname
@@ -316,12 +315,8 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         fun basicTypeAccess(member: CType.Group.Member, cBasicType: CBasicType<*>, cTypeName: String) {
             file.addProperty(
                 PropertySpec.builder(member.name, cBasicType.ktApiTypeTypeName)
-                    .addAnnotation(
-                        AnnotationSpec.builder(CTypeName::class)
-                            .addMember("%S", cTypeName)
-                            .build()
-                    )
-                    .tryAddKdoc(member)
+                    .addAnnotation(CaelumCoreAnnotation.cTypeName(cTypeName))
+                    .addKdoc(member)
                     .mutable()
                     .receiver(valueCnameP)
                     .getter(
@@ -339,12 +334,8 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             )
             file.addProperty(
                 PropertySpec.builder(member.name, cBasicType.ktApiTypeTypeName)
-                    .addAnnotation(
-                        AnnotationSpec.builder(CTypeName::class)
-                            .addMember("%S", cTypeName)
-                            .build()
-                    )
-                    .tryAddKdoc(member)
+                    .addAnnotation(CaelumCoreAnnotation.cTypeName(cTypeName))
+                    .addKdoc(member)
                     .mutable()
                     .receiver(pointerCnameP)
                     .getter(
@@ -395,7 +386,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             file.addProperty(
                 PropertySpec.builder(member.name, memberPointerCnameP)
                     .addAnnotation(cTypeNameAnnotation)
-                    .tryAddKdoc(member)
+                    .addKdoc(member)
                     .mutable()
                     .receiver(valueCnameP)
                     .getter(
@@ -435,7 +426,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             file.addProperty(
                 PropertySpec.builder(member.name, memberPointerCnameP)
                     .addAnnotation(cTypeNameAnnotation)
-                    .tryAddKdoc(member)
+                    .addKdoc(member)
                     .mutable()
                     .receiver(pointerCnameP)
                     .getter(
@@ -519,9 +510,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             }
 
             val nativeType = memberType.nativeType()
-            val cTypeNameAnnotation = AnnotationSpec.builder(CTypeName::class)
-                .addMember("%S", memberType.name)
-                .build()
+            val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
 
             val valueGetter: FunSpec
             val valueSetter: FunSpec
@@ -559,7 +548,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
             val valueProperty = PropertySpec.builder(member.name, returnType)
             valueProperty.addAnnotation(cTypeNameAnnotation)
-            valueProperty.tryAddKdoc(member)
+            valueProperty.addKdoc(member)
             valueProperty.receiver(valueCnameP)
             valueProperty.getter(valueGetter)
             if (mutable) {
@@ -569,7 +558,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
             val pointerProperty = PropertySpec.builder(member.name, returnType)
             pointerProperty.addAnnotation(cTypeNameAnnotation)
-            pointerProperty.tryAddKdoc(member)
+            pointerProperty.addKdoc(member)
             pointerProperty.receiver(pointerCnameP)
             pointerProperty.getter(pointerGetter)
             if (mutable) {
@@ -583,18 +572,14 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         fun groupAccess(member: CType.Group.Member, memberType: CType.Group) {
             val groupCname = memberType.typeName()
             val memberPointerCnameP = CaelumCodegenHelper.pointerCname.parameterizedBy(groupCname)
-            val cTypeNameAnnotation = AnnotationSpec.builder(CTypeName::class)
-                .addMember("%S", memberType.toSimpleString())
-                .build()
+            val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
             nestedAccess(member, memberPointerCnameP, cTypeNameAnnotation)
         }
 
         fun arrayAccess(member: CType.Group.Member, memberType: CType.Array) {
             val eType = memberType.elementType
             val memberPointerCnameP = memberType.ktApiType()
-            val cTypeNameAnnotation = AnnotationSpec.builder(CTypeName::class)
-                .addMember("%S", memberType.toSimpleString())
-                .build()
+            val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
             nestedAccess(member, memberPointerCnameP, cTypeNameAnnotation)
             if (eType is CType.BasicType && eType.baseType == CBasicType.char) {
                 val checkCodeBlock = CodeBlock.builder()

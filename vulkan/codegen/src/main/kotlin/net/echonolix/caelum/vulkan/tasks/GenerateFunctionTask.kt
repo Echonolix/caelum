@@ -9,7 +9,6 @@ import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.OptionalTag
 import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
-import net.echonolix.caelum.vulkan.VulkanElementResolver
 import kotlin.io.path.Path
 
 class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {

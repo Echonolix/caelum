@@ -10,8 +10,6 @@ class LenTag(val len: String) : Tag
 
 class LineCommentTag(val comment: String) : Tag
 
-class ElementCommentTag(val comment: String) : Tag
-
 class RequiredByTag(val requiredBy: String) : Tag
 
 class ResultCodeTag(val successCodes: List<CType.EnumBase.Entry>, val errorCodes: List<CType.EnumBase.Entry>) : Tag

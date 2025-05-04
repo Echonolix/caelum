@@ -3,6 +3,7 @@ package net.echonolix.caelum.codegen.c
 import net.echonolix.caelum.codegen.api.CSyntax
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.CodegenOutput
+import net.echonolix.caelum.codegen.api.ctx.ElementDocumenter
 import net.echonolix.caelum.codegen.c.adapter.CAstContext
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Files
@@ -97,7 +98,8 @@ class CCodegenProcessor : KtgenProcessor {
 
         val ctx = CodegenContext(
             CodegenOutput.Default(outputDir, System.getProperty("codegenc.packageName")),
-            CElementResolver(elementCtx)
+            CElementResolver(elementCtx),
+            ElementDocumenter.Base(),
         )
         elementCtx.typedefs.forEach { (name, _) ->
             println(ctx.resolveElement(name))

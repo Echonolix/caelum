@@ -22,29 +22,6 @@ inline fun <reified T : Any> CompactFragment.tryParseXML(): T? {
 fun List<CompactFragment>.toXmlTagFreeString() =
     joinToString(" ") { it.contentString.toXMLTagFreeString() }.removeContinuousSpaces()
 
-context(ctx: CodegenContext)
-fun <T : Documentable.Builder<T>> T.tryAddKdoc(element: CElement) = apply {
-    val docs = element.tags.get<ElementCommentTag>()?.comment
-    val since = element.tags.get<RequiredByTag>()?.requiredBy
-    val aliasDst = element.tags.get<AliasedTag>()?.dst
-    if (docs == null && since == null && aliasDst == null) {
-        return@apply
-    }
-    val sb = StringBuilder()
-    if (docs != null) {
-        sb.appendLine(docs.removePrefix("//").trim())
-    }
-    if (aliasDst != null) {
-        sb.appendLine("Alias for [${aliasDst.memberName()}]")
-    }
-    if (since != null) {
-        sb.append("@since: ")
-        sb.append(since)
-    }
-
-    addKdoc(sb.toString())
-}
-
 fun CodegenContext.filterVkFunction(): List<CType.Function> =
     filterTypeStream<CType.Function>()
         .filter { it.first == it.second.tags.get<OriginalFunctionNameTag>()!!.name }

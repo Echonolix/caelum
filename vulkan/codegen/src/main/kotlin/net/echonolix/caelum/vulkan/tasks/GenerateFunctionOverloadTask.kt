@@ -11,7 +11,6 @@ import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
 import net.echonolix.caelum.vulkan.ResultCodeTag
 import net.echonolix.caelum.vulkan.VkHandleTag
-import net.echonolix.caelum.vulkan.VulkanElementResolver
 import net.echonolix.caelum.vulkan.filterVkFunction
 import net.echonolix.caelum.vulkan.isDeviceBase
 import net.echonolix.caelum.vulkan.objectBaseCName
