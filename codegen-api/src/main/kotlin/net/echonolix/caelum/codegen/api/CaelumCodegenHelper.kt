@@ -11,21 +11,23 @@ import java.lang.invoke.MethodHandles
 public object CaelumCodegenHelper {
     public const val basePkgName: String = "net.echonolix.caelum"
 
-    public val typeCname: ClassName = ClassName(basePkgName, "NativeType")
-    public val typeImplCname: ClassName = typeCname.nestedClass("Impl")
+    public val typeCName: ClassName = ClassName(basePkgName, "NativeType")
+    public val typeImplCName: ClassName = typeCName.nestedClass("Impl")
 
-    public val typeDescriptorCname: ClassName = ClassName(basePkgName, "TypeDescriptor")
-    public val typeDescriptorImplCname: ClassName = typeDescriptorCname.nestedClass("Impl")
+    public val typeDescriptorCName: ClassName = ClassName(basePkgName, "TypeDescriptor")
+    public val typeDescriptorImplCName: ClassName = typeDescriptorCName.nestedClass("Impl")
 
-    public val structCname: ClassName = ClassName(basePkgName, "NativeStruct")
-    public val unionCname: ClassName = ClassName(basePkgName, "NativeUnion")
-    public val arrayCname: ClassName = ClassName(basePkgName, "NativeArray")
-    public val valueCname: ClassName = ClassName(basePkgName, "NativeValue")
-    public val pointerCname: ClassName = ClassName(basePkgName, "NativePointer")
+    public val enumCName: ClassName = ClassName(basePkgName, "NativeEnum")
+    
+    public val structCName: ClassName = ClassName(basePkgName, "NativeStruct")
+    public val unionCName: ClassName = ClassName(basePkgName, "NativeUnion")
+    public val arrayCName: ClassName = ClassName(basePkgName, "NativeArray")
+    public val valueCName: ClassName = ClassName(basePkgName, "NativeValue")
+    public val pointerCName: ClassName = ClassName(basePkgName, "NativePointer")
 
-    public val functionCname: ClassName = ClassName(basePkgName, "NativeFunction")
-    public val functionImplCname: ClassName = functionCname.nestedClass("Impl")
-    public val functionTypeDescriptorImplCname: ClassName = functionCname.nestedClass("TypeDescriptorImpl")
+    public val functionCName: ClassName = ClassName(basePkgName, "NativeFunction")
+    public val functionImplCName: ClassName = functionCName.nestedClass("Impl")
+    public val functionTypeDescriptorImplCName: ClassName = functionCName.nestedClass("TypeDescriptorImpl")
 
     public val helper: ClassName = ClassName(basePkgName, "APIHelper")
     public val omniSegment: MemberName = helper.member("_\$OMNI_SEGMENT\$_")
@@ -35,26 +37,26 @@ public object CaelumCodegenHelper {
     public val symbolLookup: MemberName = helper.member("symbolLookup")
     public val findSymbol: MemberName = helper.member("findSymbol")
 
-    public val memoryLayoutCname: ClassName = MemoryLayout::class.asClassName()
-    public val structLayoutMember: MemberName = memoryLayoutCname.member("structLayout")
-    public val unionLayoutMember: MemberName = memoryLayoutCname.member("unionLayout")
-    public val sequenceLayout: MemberName = memoryLayoutCname.member("sequenceLayout")
-    public val paddingLayout: MemberName = memoryLayoutCname.member("paddingLayout")
+    public val memoryLayoutCName: ClassName = MemoryLayout::class.asClassName()
+    public val structLayoutMember: MemberName = memoryLayoutCName.member("structLayout")
+    public val unionLayoutMember: MemberName = memoryLayoutCName.member("unionLayout")
+    public val sequenceLayout: MemberName = memoryLayoutCName.member("sequenceLayout")
+    public val paddingLayout: MemberName = memoryLayoutCName.member("paddingLayout")
 
-    public val pathElementCname: ClassName = memoryLayoutCname.nestedClass("PathElement")
-    public val groupElementMember: MemberName = pathElementCname.member("groupElement")
+    public val pathElementCName: ClassName = memoryLayoutCName.nestedClass("PathElement")
+    public val groupElementMember: MemberName = pathElementCName.member("groupElement")
 
-    public val valueLayoutCname: ClassName = ValueLayout::class.asClassName()
-    public val addressLayoutMember: MemberName = valueLayoutCname.member("ADDRESS")
+    public val valueLayoutCName: ClassName = ValueLayout::class.asClassName()
+    public val addressLayoutMember: MemberName = valueLayoutCName.member("ADDRESS")
 
-    public val methodHandleCname: ClassName = MethodHandle::class.asClassName()
-    public val methodHandlesCname: ClassName = MethodHandles::class.asClassName()
+    public val methodHandleCName: ClassName = MethodHandle::class.asClassName()
+    public val methodHandlesCName: ClassName = MethodHandles::class.asClassName()
     public val javaMethodMemberName: MemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
 
-    public val methodTypeCname: ClassName = ClassName("java.lang.invoke", "MethodType")
+    public val methodTypeCName: ClassName = ClassName("java.lang.invoke", "MethodType")
 
-    public val memorySegmentCname: ClassName = MemorySegment::class.asClassName()
-    public val copyMember: MemberName = memorySegmentCname.member("copy")
+    public val memorySegmentCName: ClassName = MemorySegment::class.asClassName()
+    public val copyMember: MemberName = memorySegmentCName.member("copy")
 
     public val cstrMember: MemberName = MemberName("net.echonolix.caelum", "c_str")
 

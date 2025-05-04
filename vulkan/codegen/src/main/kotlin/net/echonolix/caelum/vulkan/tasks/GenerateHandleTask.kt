@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.codegen.api.CBasicType
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.EnumEntryFixedName
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterType
 import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
@@ -12,7 +13,6 @@ import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.codegen.api.decap
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
-import net.echonolix.caelum.vulkan.EnumEntryFixedName
 import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
 import net.echonolix.caelum.vulkan.VkHandleTag
 import net.echonolix.caelum.vulkan.filterVkFunction
@@ -25,8 +25,8 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         return name.removePrefix("Vk").decap()
     }
 
-    private val objTypeCname = with(ctx) { resolveTypedElement<CType>("VkObjectType").typeName() }
-    val vkTypeDescriptorCname = VulkanCodegen.vkHandleCname.nestedClass("TypeDescriptor")
+    private val objTypeCName = with(ctx) { resolveTypedElement<CType>("VkObjectType").typeName() }
+    val vkTypeDescriptorCName = VulkanCodegen.vkHandleCName.nestedClass("TypeDescriptor")
 
     override fun CodegenContext.compute() {
         val handles = ctx.filterType<CType.Handle>()
@@ -75,20 +75,20 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     private fun CodegenContext.genObjectHandle(
         handleType: CType.Handle
     ) {
-        val thisCname = handleType.className()
-        val thisTypeDescriptor = CaelumCodegenHelper.typeDescriptorCname.parameterizedBy(thisCname)
+        val thisCName = handleType.className()
+        val thisTypeDescriptor = CaelumCodegenHelper.typeDescriptorCName.parameterizedBy(thisCName)
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
 
-        val interfaceType = TypeSpec.interfaceBuilder(thisCname)
-        interfaceType.addSuperinterface(VulkanCodegen.vkHandleCname)
+        val interfaceType = TypeSpec.interfaceBuilder(thisCName)
+        interfaceType.addSuperinterface(VulkanCodegen.vkHandleCName)
         interfaceType.addProperty(
-            PropertySpec.builder("objectType", objTypeCname)
+            PropertySpec.builder("objectType", objTypeCName)
                 .addModifiers(KModifier.OVERRIDE)
                 .getter(
                     FunSpec.getterBuilder()
                         .addStatement(
                             "return %T.%N",
-                            objTypeCname,
+                            objTypeCName,
                             vkHandleTag.objectTypeEnum.tags.get<EnumEntryFixedName>()!!.name
                         )
                         .build()
@@ -108,7 +108,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
         val implType = TypeSpec.classBuilder("Impl")
         implType.addModifiers(KModifier.PRIVATE)
-        implType.addSuperinterface(thisCname)
+        implType.addSuperinterface(thisCName)
         implType.addProperty(
             PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
                 .addModifiers(KModifier.OVERRIDE)
@@ -123,11 +123,11 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         interfaceType.addType(implType.build())
 
         val companion = TypeSpec.companionObjectBuilder()
-        companion.superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
+        companion.superclass(vkTypeDescriptorCName.parameterizedBy(thisCName))
         companion.addFunction(
             FunSpec.builder("fromNativeData")
                 .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
-                .returns(thisCname)
+                .returns(thisCName)
                 .addAnnotation(JvmStatic::class)
                 .addStatement("return Impl(value)")
                 .build()
@@ -135,14 +135,14 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         companion.addFunction(
             FunSpec.builder("toNativeData")
                 .addAnnotation(JvmStatic::class)
-                .addParameter("value", thisCname)
+                .addParameter("value", thisCName)
                 .returns(CBasicType.int64_t.ktApiTypeTypeName)
                 .addStatement("return value.handle")
                 .build()
         )
         interfaceType.addType(companion.build())
 
-        val file = FileSpec.builder(thisCname)
+        val file = FileSpec.builder(thisCName)
         file.addType(interfaceType.build())
 
         ctx.writeOutput(Path("objectHandles"), file)
@@ -152,23 +152,23 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         functions: List<CType.Function>,
         handleType: CType.Handle
     ) {
-        val thisObjectHandleCname = handleType.className()
-        val thisCname = handleType.objectBaseCName()
+        val thisObjectHandleCName = handleType.className()
+        val thisCName = handleType.objectBaseCName()
         val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
         val parent = vkHandleTag.parent
 
-        val containerCname = ClassName(VulkanCodegen.handlePackageName, "${handleType.name}Container")
-        val containerType = TypeSpec.interfaceBuilder(containerCname)
+        val containerCName = ClassName(VulkanCodegen.handlePackageName, "${handleType.name}Container")
+        val containerType = TypeSpec.interfaceBuilder(containerCName)
         parent?.let {
             containerType.addSuperinterface(ClassName(VulkanCodegen.handlePackageName, "${parent.name}Container"))
         }
-        containerType.addProperty(handleType.variableName(), thisCname)
+        containerType.addProperty(handleType.variableName(), thisCName)
 
-        val interfaceType = TypeSpec.interfaceBuilder(thisCname)
-        interfaceType.addSuperinterface(thisObjectHandleCname)
-        interfaceType.addSuperinterface(containerCname)
+        val interfaceType = TypeSpec.interfaceBuilder(thisCName)
+        interfaceType.addSuperinterface(thisObjectHandleCName)
+        interfaceType.addSuperinterface(containerCName)
         interfaceType.addProperty(
-            PropertySpec.builder(handleType.variableName(), thisCname)
+            PropertySpec.builder(handleType.variableName(), thisCName)
                 .addModifiers(KModifier.OVERRIDE)
                 .getter(
                     FunSpec.getterBuilder()
@@ -181,7 +181,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
         val implType = TypeSpec.classBuilder("Impl")
         implType.addModifiers(KModifier.PRIVATE)
-        implType.addSuperinterface(thisCname)
+        implType.addSuperinterface(thisCName)
         implType.addProperty(
             PropertySpec.builder("handle", CBasicType.int64_t.ktApiTypeTypeName)
                 .addModifiers(KModifier.OVERRIDE)
@@ -227,7 +227,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 property.addModifiers(KModifier.OVERRIDE)
                 when (funcName) {
                     "vkGetInstanceProcAddr" -> {
-                        property.initializer("%T.$funcName", VulkanCodegen.vkCname)
+                        property.initializer("%T.$funcName", VulkanCodegen.vkCName)
                     }
                     "vkGetDeviceProcAddr" -> {
                         property.initializer(
@@ -255,14 +255,14 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
 
         val companion = TypeSpec.companionObjectBuilder()
-        companion.superclass(vkTypeDescriptorCname.parameterizedBy(thisCname))
+        companion.superclass(vkTypeDescriptorCName.parameterizedBy(thisCName))
         if (parent != null) {
             companion.addFunction(
                 FunSpec.builder("fromNativeData")
                     .addAnnotation(JvmStatic::class)
                     .addParameter("parent", parent.objectBaseCName())
                     .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
-                    .returns(thisCname)
+                    .returns(thisCName)
                     .addStatement("return Impl(parent, value)")
                     .build()
             )
@@ -270,7 +270,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             companion.addFunction(
                 FunSpec.builder("fromNativeData")
                     .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)
-                    .returns(thisCname)
+                    .returns(thisCName)
                     . addAnnotation(JvmStatic::class)
                     . addStatement("return Impl(value)")
                     .build()
@@ -279,14 +279,14 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         companion.addFunction(
             FunSpec.builder("toNativeData")
                 .addAnnotation(JvmStatic::class)
-                .addParameter("value", thisCname)
+                .addParameter("value", thisCName)
                 .returns(CBasicType.int64_t.ktApiTypeTypeName)
                 .addStatement("return value.handle")
                 .build()
         )
         interfaceType.addType(companion.build())
 
-        val file = FileSpec.builder(thisCname)
+        val file = FileSpec.builder(thisCName)
         file.addType(interfaceType.build())
         file.addType(containerType.build())
 

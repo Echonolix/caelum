@@ -20,14 +20,14 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
             .addSuppress()
 
         CBasicType.entries.forEach { basicType ->
-            val thisCname = ClassName(CaelumCodegenHelper.basePkgName, basicType.name)
-            val arrayCNameP = CaelumCodegenHelper.arrayCname.parameterizedBy(thisCname)
-            val valueCNameP = CaelumCodegenHelper.valueCname.parameterizedBy(thisCname)
-            val pointerCNameP = CaelumCodegenHelper.pointerCname.parameterizedBy(thisCname)
+            val thisCName = ClassName(CaelumCodegenHelper.basePkgName, basicType.name)
+            val arrayCNameP = CaelumCodegenHelper.arrayCName.parameterizedBy(thisCName)
+            val valueCNameP = CaelumCodegenHelper.valueCName.parameterizedBy(thisCName)
+            val pointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(thisCName)
             val nullableAny = Any::class.asClassName().copy(nullable = true)
             file.addType(
-                TypeSpec.objectBuilder(thisCname)
-                    .superclass(CaelumCodegenHelper.typeImplCname.parameterizedBy(thisCname))
+                TypeSpec.objectBuilder(thisCName)
+                    .superclass(CaelumCodegenHelper.typeImplCName.parameterizedBy(thisCName))
                     .addSuperclassConstructorParameter("%M", ValueLayout::class.member(basicType.valueLayoutName))
                     .addProperty(
                         PropertySpec.builder("valueVarHandle", VarHandle::class)
@@ -63,7 +63,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
             fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
                 .addMember(
                     "%S",
-                    "${thisCname.simpleName}_${base}_${
+                    "${thisCName.simpleName}_${base}_${
                         (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
                     }"
                 )
@@ -110,7 +110,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                             .addAnnotation(randomName("getValue"))
                             .addStatement(
                                 "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
-                                thisCname,
+                                thisCName,
                                 "valueVarHandle",
                                 CaelumCodegenHelper.omniSegment,
                                 basicType.nativeDataType.asTypeName()
@@ -123,7 +123,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                             .addParameter("value", returnTypeName)
                             .addStatement(
                                 "%T.%N.set(%M, _address, value${basicType.toNativeData})",
-                                thisCname,
+                                thisCName,
                                 "valueVarHandle",
                                 CaelumCodegenHelper.omniSegment,
                             )
@@ -140,7 +140,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .returns(returnTypeName)
                     .addStatement(
                         "return (%T.%N.get(%M, _address, index) as %T)${basicType.fromNativeData}",
-                        thisCname,
+                        thisCName,
                         "arrayVarHandle",
                         CaelumCodegenHelper.omniSegment,
                         basicType.nativeDataType.asTypeName()
@@ -158,7 +158,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", returnTypeName)
                     .addStatement(
                         "%T.%N.set(%M, _address, index, value${basicType.toNativeData})",
-                        thisCname,
+                        thisCName,
                         "arrayVarHandle",
                         CaelumCodegenHelper.omniSegment
                     )
@@ -176,7 +176,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .returns(returnTypeName)
                     .addStatement(
                         "return (%T.%N.get(%M, _address) as %T)${basicType.fromNativeData}",
-                        thisCname,
+                        thisCName,
                         "valueVarHandle",
                         CaelumCodegenHelper.omniSegment,
                         basicType.nativeDataType.asTypeName()
@@ -193,7 +193,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", returnTypeName)
                     .addStatement(
                         "return %T.%N.set(%M, _address, value)",
-                        thisCname,
+                        thisCName,
                         "valueVarHandle",
                         CaelumCodegenHelper.omniSegment
                     )

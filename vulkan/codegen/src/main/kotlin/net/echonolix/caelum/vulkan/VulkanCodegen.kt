@@ -62,16 +62,16 @@ object VulkanCodegen {
     val handlePackageName = "${basePkgName}.handles"
     val functionPackageName = "${basePkgName}.functions"
 
-    val vkCname = ClassName(basePkgName, "Vk")
-    val vkEnumBaseCname = ClassName(basePkgName, "VkEnumBase")
-    val vkEnumCname = ClassName(enumPackageName, "VkEnum")
+    val vkCName = ClassName(basePkgName, "Vk")
+    val vkEnumBaseCName = ClassName(basePkgName, "VkEnumBase")
+    val vkEnumCName = ClassName(enumPackageName, "VkEnum")
     val vkFlags32CNAME = ClassName(flagPackageName, "VkFlags32")
     val vkFlags64CNAME = ClassName(flagPackageName, "VkFlags64")
-    val vkStructCname = ClassName(structPackageName, "VkStruct")
-    val vkUnionCname = ClassName(unionPackageName, "VkUnion")
-    val vkHandleCname = ClassName(handlePackageName, "VkHandle")
-    val vkFunctionCname = ClassName(functionPackageName, "VkFunction")
-    val vkFunctionTypeDescriptorImplCname = vkFunctionCname.nestedClass("TypeDescriptorImpl")
+    val vkStructCName = ClassName(structPackageName, "VkStruct")
+    val vkUnionCName = ClassName(unionPackageName, "VkUnion")
+    val vkHandleCName = ClassName(handlePackageName, "VkHandle")
+    val vkFunctionCName = ClassName(functionPackageName, "VkFunction")
+    val vkFunctionTypeDescriptorImplCName = vkFunctionCName.nestedClass("TypeDescriptorImpl")
 
     val typedefBlackList = setOf(
         "ANativeWindow",
@@ -91,7 +91,7 @@ object VulkanCodegen {
 
 
     val vkVersionConstRegex = """VK_API_VERSION_(\d+)_(\d+)""".toRegex()
-    val vkExceptionCname = ClassName(basePkgName, "VkException")
+    val vkExceptionCName = ClassName(basePkgName, "VkException")
 
     val getInstanceFuncMember = MemberName(basePkgName, "getInstanceFunc")
     val getDeviceFuncMember = MemberName(basePkgName, "getDeviceFunc")

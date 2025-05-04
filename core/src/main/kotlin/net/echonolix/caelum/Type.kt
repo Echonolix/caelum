@@ -47,6 +47,11 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
 }
 
+public interface NativeEnum<T> : NativeType {
+    public val value: T
+    public val nativeType: NativeType
+}
+
 public abstract class NativeStruct<T : NativeType> private constructor(override val layout: StructLayout) :
     NativeType.Impl<T>(layout), TypeDescriptor<T> {
     public constructor(vararg members: MemoryLayout) : this(

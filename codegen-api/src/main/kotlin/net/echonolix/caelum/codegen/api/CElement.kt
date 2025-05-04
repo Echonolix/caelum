@@ -257,7 +257,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         context(ctx: CodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
             return if (dstType is FunctionPointer) {
-                CaelumCodegenHelper.pointerCname
+                CaelumCodegenHelper.pointerCName
             } else {
                 typeName()
             }
@@ -408,16 +408,16 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: CodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
-            return CaelumCodegenHelper.pointerCname
+            return CaelumCodegenHelper.pointerCName
         }
 
         context(ctx: CodegenContext)
         override fun ktApiType(): TypeName {
             val eType = elementType.deepResolve()
             return if (eType is BasicType) {
-                CaelumCodegenHelper.pointerCname.parameterizedBy(eType.baseType.caelumCoreTypeName)
+                CaelumCodegenHelper.pointerCName.parameterizedBy(eType.baseType.caelumCoreTypeName)
             } else {
-                CaelumCodegenHelper.pointerCname.parameterizedBy(eType.ktApiType())
+                CaelumCodegenHelper.pointerCName.parameterizedBy(eType.ktApiType())
             }
         }
 
@@ -477,7 +477,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: CodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
-            return CaelumCodegenHelper.pointerCname
+            return CaelumCodegenHelper.pointerCName
         }
 
         context(ctx: CodegenContext)
@@ -485,13 +485,13 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
             val eType = elementType.deepResolve()
             return when (eType) {
                 is BasicType -> {
-                    CaelumCodegenHelper.pointerCname.parameterizedBy(eType.baseType.caelumCoreTypeName)
+                    CaelumCodegenHelper.pointerCName.parameterizedBy(eType.baseType.caelumCoreTypeName)
                 }
                 is Handle -> {
-                    CaelumCodegenHelper.pointerCname.parameterizedBy(WildcardTypeName.producerOf(elementType.ktApiType()))
+                    CaelumCodegenHelper.pointerCName.parameterizedBy(WildcardTypeName.producerOf(elementType.ktApiType()))
                 }
                 else -> {
-                    CaelumCodegenHelper.pointerCname.parameterizedBy(elementType.ktApiType())
+                    CaelumCodegenHelper.pointerCName.parameterizedBy(elementType.ktApiType())
                 }
             }
         }
@@ -528,7 +528,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: CodegenContext)
         override fun typeName(): TypeName {
-            return CaelumCodegenHelper.pointerCname.parameterizedBy(elementType.typeName())
+            return CaelumCodegenHelper.pointerCName.parameterizedBy(elementType.typeName())
         }
     }
 

@@ -1,27 +1,20 @@
 package net.echonolix.caelum.vulkan.tasks
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.codegen.api.CBasicType
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.WildcardTypeName
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
-import net.echonolix.caelum.codegen.api.CaelumCoreAnnotation
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
-import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.codegen.api.deepReferenceResolve
 import net.echonolix.caelum.codegen.api.deepResolve
-import net.echonolix.caelum.codegen.api.task.CodegenTask
-import net.echonolix.caelum.vulkan.VulkanCodegen
-import net.echonolix.caelum.vulkan.EnumEntryFixedName
-import net.echonolix.caelum.vulkan.StructTypeTag
-import net.echonolix.caelum.codegen.api.ctx.addKdoc
-import net.echonolix.caelum.codegen.api.generator.FunctionGenerator
 import net.echonolix.caelum.codegen.api.generator.GroupGenerator
-import net.echonolix.caelum.vulkan.OptionalTag
-import net.echonolix.caelum.vulkan.OriginalFunctionNameTag
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.VarHandle
+import net.echonolix.caelum.codegen.api.task.CodegenTask
+import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
+import net.echonolix.caelum.vulkan.VulkanCodegen
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.stream.Collectors
@@ -131,17 +124,17 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             context(ctx: CodegenContext)
             override fun groupBaseCName(): ClassName {
                 return when (groupType) {
-                    is CType.Struct -> VulkanCodegen.vkStructCname
-                    is CType.Union -> VulkanCodegen.vkUnionCname
+                    is CType.Struct -> VulkanCodegen.vkStructCName
+                    is CType.Union -> VulkanCodegen.vkUnionCName
                 }
             }
 
             context(ctx: CodegenContext)
             override fun memberKtApiType(member: CType.Group.Member): TypeName {
                 if (member.name == "pNext") {
-                    val vkStructStar = VulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard)
+                    val vkStructStar = VulkanCodegen.vkStructCName.parameterizedBy(CaelumCodegenHelper.starWildcard)
                     val outVkStruct = WildcardTypeName.producerOf(vkStructStar)
-                    return CaelumCodegenHelper.pointerCname.parameterizedBy(outVkStruct)
+                    return CaelumCodegenHelper.pointerCName.parameterizedBy(outVkStruct)
                 }
                 return super.memberKtApiType(member)
             }
@@ -155,6 +148,6 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 super.addMemberAccessor(member)
             }
         }
-        return generator.build()
+        return generator.generate()
     }
 }

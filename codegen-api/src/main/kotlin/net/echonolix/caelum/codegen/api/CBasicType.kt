@@ -244,7 +244,7 @@ public sealed class CBasicType<T : Any>(
 
     public val nativeDataTypeName: TypeName = nativeDataType.asTypeName()
     public val ktApiTypeTypeName: TypeName = kotlinType.asTypeName()
-    public val valueLayoutMember: MemberName = CaelumCodegenHelper.valueLayoutCname.member(valueLayoutName)
+    public val valueLayoutMember: MemberName = CaelumCodegenHelper.valueLayoutCName.member(valueLayoutName)
     public val caelumCoreTypeName: TypeName = if (cTypeNameStr == "void") {
         WildcardTypeName.producerOf(ANY.copy(nullable = true))
     } else {

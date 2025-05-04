@@ -14,8 +14,6 @@ class RequiredByTag(val requiredBy: String) : Tag
 
 class ResultCodeTag(val successCodes: List<CType.EnumBase.Entry>, val errorCodes: List<CType.EnumBase.Entry>) : Tag
 
-class EnumEntryFixedName(val name: String) : Tag
-
 class AliasedTag(val dst: CDeclaration.TopLevel) : Tag
 
 class StructTypeTag(val structType: CType.EnumBase.Entry) : Tag

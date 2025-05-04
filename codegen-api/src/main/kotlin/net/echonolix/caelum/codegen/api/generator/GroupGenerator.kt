@@ -12,17 +12,17 @@ public open class GroupGenerator(
     ctx: CodegenContext,
     element: CType.Group
 ) : Generator<CType.Group>(ctx, element) {
-    protected val arrayCnameP: TypeName = CaelumCodegenHelper.arrayCname.parameterizedBy(thisCname)
-    protected val pointerCnameP: TypeName = CaelumCodegenHelper.pointerCname.parameterizedBy(thisCname)
-    protected val valueCnameP: TypeName = CaelumCodegenHelper.valueCname.parameterizedBy(thisCname)
+    protected val arrayCNameP: TypeName = CaelumCodegenHelper.arrayCName.parameterizedBy(thisCName)
+    protected val pointerCNameP: TypeName = CaelumCodegenHelper.pointerCName.parameterizedBy(thisCName)
+    protected val valueCNameP: TypeName = CaelumCodegenHelper.valueCName.parameterizedBy(thisCName)
 
-    protected val file: FileSpec.Builder = FileSpec.builder(thisCname)
+    protected val file: FileSpec.Builder = FileSpec.builder(thisCName)
 
     context(ctx: CodegenContext)
     protected open fun groupBaseCName(): ClassName {
         return when (element) {
-            is CType.Struct -> CaelumCodegenHelper.structCname
-            is CType.Union -> CaelumCodegenHelper.unionCname
+            is CType.Struct -> CaelumCodegenHelper.structCName
+            is CType.Union -> CaelumCodegenHelper.unionCName
         }
     }
 
@@ -61,8 +61,8 @@ public open class GroupGenerator(
 
     context(ctx: CodegenContext)
     protected open fun buildTypeObjectType(): TypeSpec.Builder {
-        val typeObject = TypeSpec.objectBuilder(thisCname)
-        typeObject.superclass(groupBaseCName().parameterizedBy(thisCname))
+        val typeObject = TypeSpec.objectBuilder(thisCName)
+        typeObject.superclass(groupBaseCName().parameterizedBy(thisCName))
         typeObject.addSuperclassConstructorParameter(
             CodeBlock.builder()
                 .add("\n")
@@ -123,7 +123,7 @@ public open class GroupGenerator(
         return typeObject
     }
 
-    override fun build(): FileSpec.Builder {
+    override fun generate(): FileSpec.Builder {
         with(ctx) {
             val typeObjectType = buildTypeObjectType()
             file.addType(typeObjectType.build())
@@ -141,7 +141,7 @@ public open class GroupGenerator(
                 .addAnnotation(CaelumCoreAnnotation.cTypeName(cTypeName))
                 .addKdoc(member)
                 .mutable()
-                .receiver(valueCnameP)
+                .receiver(valueCNameP)
                 .getter(
                     FunSpec.getterBuilder()
                         .addStatement("return ptr().%N", member.name)
@@ -160,12 +160,12 @@ public open class GroupGenerator(
                 .addAnnotation(CaelumCoreAnnotation.cTypeName(cTypeName))
                 .addKdoc(member)
                 .mutable()
-                .receiver(pointerCnameP)
+                .receiver(pointerCNameP)
                 .getter(
                     FunSpec.getterBuilder()
                         .addStatement(
                             "return (%T.%N.get(%M, _address) as %T)${cBasicType.fromBase}",
-                            thisCname,
+                            thisCName,
                             "${member.name}_valueVarHandle",
                             CaelumCodegenHelper.omniSegment,
                             cBasicType.nativeDataType.asTypeName()
@@ -177,7 +177,7 @@ public open class GroupGenerator(
                         .addParameter("value", cBasicType.ktApiTypeTypeName)
                         .addStatement(
                             "%T.%N.set(%M, _address, value${cBasicType.toBase})",
-                            thisCname,
+                            thisCName,
                             "${member.name}_valueVarHandle",
                             CaelumCodegenHelper.omniSegment
                         )
@@ -190,36 +190,36 @@ public open class GroupGenerator(
     context(ctx: CodegenContext)
     protected fun CType.Group.Member.valueMemberOffset(): CodeBlock {
         return CodeBlock.builder()
-            .addStatement("%T.${this.name}_offsetHandle.invokeExact(_segment.address()) as Long", thisCname)
+            .addStatement("%T.${this.name}_offsetHandle.invokeExact(_segment.address()) as Long", thisCName)
             .build()
     }
 
     context(ctx: CodegenContext)
     protected fun CType.Group.Member.pointerMemberOffset(): CodeBlock {
         return CodeBlock.builder()
-            .addStatement("%T.${this.name}_offsetHandle.invokeExact(_address) as Long", thisCname)
+            .addStatement("%T.${this.name}_offsetHandle.invokeExact(_address) as Long", thisCName)
             .build()
     }
 
     context(ctx: CodegenContext)
     protected fun nestedAccess(
         member: CType.Group.Member,
-        memberPointerCnameP: TypeName,
+        memberPointerCNameP: TypeName,
         cTypeNameAnnotation: AnnotationSpec
     ) {
         val valueMemberOffset = member.valueMemberOffset()
         val pointerMemberOffset = member.pointerMemberOffset()
         file.addProperty(
-            PropertySpec.builder(member.name, memberPointerCnameP)
+            PropertySpec.builder(member.name, memberPointerCNameP)
                 .addAnnotation(cTypeNameAnnotation)
                 .addKdoc(member)
                 .mutable()
-                .receiver(valueCnameP)
+                .receiver(valueCNameP)
                 .getter(
                     FunSpec.getterBuilder()
                         .addCode(
                             CodeBlock.builder()
-                                .add("return %T(", CaelumCodegenHelper.pointerCname)
+                                .add("return %T(", CaelumCodegenHelper.pointerCName)
                                 .add(valueMemberOffset)
                                 .add(")")
                                 .build()
@@ -228,7 +228,7 @@ public open class GroupGenerator(
                 )
                 .setter(
                     FunSpec.setterBuilder()
-                        .addParameter("value", memberPointerCnameP)
+                        .addParameter("value", memberPointerCNameP)
                         .addCode(
                             CodeBlock.builder()
                                 .add(
@@ -240,7 +240,7 @@ public open class GroupGenerator(
                                 .add(valueMemberOffset)
                                 .add(
                                     ", %T.%N)",
-                                    thisCname,
+                                    thisCName,
                                     "${member.name}_byteSize"
                                 )
                                 .build()
@@ -250,18 +250,18 @@ public open class GroupGenerator(
                 .build()
         )
         file.addProperty(
-            PropertySpec.builder(member.name, memberPointerCnameP)
+            PropertySpec.builder(member.name, memberPointerCNameP)
                 .addAnnotation(cTypeNameAnnotation)
                 .addKdoc(member)
                 .mutable()
-                .receiver(pointerCnameP)
+                .receiver(pointerCNameP)
                 .getter(
                     FunSpec.getterBuilder()
                         .addCode(
                             CodeBlock.builder()
                                 .add(
                                     "return %T(",
-                                    CaelumCodegenHelper.pointerCname,
+                                    CaelumCodegenHelper.pointerCName,
                                 )
                                 .add(pointerMemberOffset)
                                 .add(")")
@@ -271,7 +271,7 @@ public open class GroupGenerator(
                 )
                 .setter(
                     FunSpec.setterBuilder()
-                        .addParameter("value", memberPointerCnameP)
+                        .addParameter("value", memberPointerCNameP)
                         .addCode(
                             CodeBlock.builder()
                                 .add(
@@ -283,7 +283,7 @@ public open class GroupGenerator(
                                 .add(pointerMemberOffset)
                                 .add(
                                     ", %T.%N)",
-                                    thisCname,
+                                    thisCName,
                                     "${member.name}_byteSize"
                                 )
                                 .build()
@@ -295,16 +295,16 @@ public open class GroupGenerator(
         file.addFunction(
             FunSpec.builder(member.name)
                 .addModifiers(KModifier.INLINE)
-                .receiver(valueCnameP)
-                .addParameter("block", LambdaTypeName.get(receiver = memberPointerCnameP, returnType = UNIT))
+                .receiver(valueCNameP)
+                .addParameter("block", LambdaTypeName.get(receiver = memberPointerCNameP, returnType = UNIT))
                 .addStatement("%N.block()", member.name)
                 .build()
         )
         file.addFunction(
             FunSpec.builder(member.name)
                 .addModifiers(KModifier.INLINE)
-                .receiver(pointerCnameP)
-                .addParameter("block", LambdaTypeName.get(receiver = memberPointerCnameP, returnType = UNIT))
+                .receiver(pointerCNameP)
+                .addParameter("block", LambdaTypeName.get(receiver = memberPointerCNameP, returnType = UNIT))
                 .addStatement("%N.block()", member.name)
                 .build()
         )
@@ -317,7 +317,7 @@ public open class GroupGenerator(
         val descType = memberType.typeDescriptorTypeName()!!
         val ktApiType = when (memberType) {
             is CType.Pointer -> {
-                CaelumCodegenHelper.pointerCname
+                CaelumCodegenHelper.pointerCName
             }
             else -> {
                 memberType.ktApiType()
@@ -327,7 +327,7 @@ public open class GroupGenerator(
         var fromIntTypeParamBlock = CodeBlock.of("")
 
         if (returnType is ParameterizedTypeName
-            && returnType.rawType == CaelumCodegenHelper.pointerCname
+            && returnType.rawType == CaelumCodegenHelper.pointerCName
             && returnType.typeArguments.first() == CaelumCodegenHelper.starWildcard
         ) {
             fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.caelumCoreTypeName)
@@ -353,7 +353,7 @@ public open class GroupGenerator(
                 "return %T.fromNativeData%L((%T.%N.get(%M, _address) as %T))",
                 descType,
                 fromIntTypeParamBlock,
-                thisCname,
+                thisCName,
                 "${member.name}_valueVarHandle",
                 CaelumCodegenHelper.omniSegment,
                 nativeType
@@ -363,7 +363,7 @@ public open class GroupGenerator(
             .addParameter("value", ktApiType)
             .addStatement(
                 "%T.%N.set(%M, _address, %T.toNativeData(value))",
-                thisCname,
+                thisCName,
                 "${member.name}_valueVarHandle",
                 CaelumCodegenHelper.omniSegment,
                 descType
@@ -373,7 +373,7 @@ public open class GroupGenerator(
         val valueProperty = PropertySpec.builder(member.name, returnType)
         valueProperty.addAnnotation(cTypeNameAnnotation)
         valueProperty.addKdoc(member)
-        valueProperty.receiver(valueCnameP)
+        valueProperty.receiver(valueCNameP)
         valueProperty.getter(valueGetter)
         if (mutable) {
             valueProperty.mutable()
@@ -383,7 +383,7 @@ public open class GroupGenerator(
         val pointerProperty = PropertySpec.builder(member.name, returnType)
         pointerProperty.addAnnotation(cTypeNameAnnotation)
         pointerProperty.addKdoc(member)
-        pointerProperty.receiver(pointerCnameP)
+        pointerProperty.receiver(pointerCNameP)
         pointerProperty.getter(pointerGetter)
         if (mutable) {
             pointerProperty.mutable()
@@ -395,18 +395,18 @@ public open class GroupGenerator(
 
     context(ctx: CodegenContext)
     protected fun groupAccess(member: CType.Group.Member, memberType: CType.Group) {
-        val groupCname = memberType.typeName()
-        val memberPointerCnameP = CaelumCodegenHelper.pointerCname.parameterizedBy(groupCname)
+        val groupCName = memberType.typeName()
+        val memberPointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(groupCName)
         val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
-        nestedAccess(member, memberPointerCnameP, cTypeNameAnnotation)
+        nestedAccess(member, memberPointerCNameP, cTypeNameAnnotation)
     }
 
     context(ctx: CodegenContext)
     protected fun arrayAccess(member: CType.Group.Member, memberType: CType.Array) {
         val eType = memberType.elementType
-        val memberPointerCnameP = memberType.ktApiType()
+        val memberPointerCNameP = memberType.ktApiType()
         val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
-        nestedAccess(member, memberPointerCnameP, cTypeNameAnnotation)
+        nestedAccess(member, memberPointerCNameP, cTypeNameAnnotation)
         if (eType is CType.BasicType && eType.baseType == CBasicType.char) {
             val checkCodeBlock = CodeBlock.builder()
                 .apply {
@@ -423,14 +423,14 @@ public open class GroupGenerator(
                 .build()
             file.addFunction(
                 FunSpec.builder(member.name)
-                    .receiver(valueCnameP)
+                    .receiver(valueCNameP)
                     .addParameter("value", STRING)
                     .addCode("ptr().%N(value)", member.name)
                     .build()
             )
             file.addFunction(
                 FunSpec.builder(member.name)
-                    .receiver(pointerCnameP)
+                    .receiver(pointerCNameP)
                     .addParameter("value", STRING)
                     .addCode(
                         CodeBlock.builder()
@@ -447,19 +447,19 @@ public open class GroupGenerator(
 
     context(ctx: CodegenContext)
     protected fun funcPointerOverload(member: CType.Group.Member, functionPtrType: CType.FunctionPointer) {
-        val funcPtrCname = functionPtrType.elementType.className()
+        val funcPtrCName = functionPtrType.elementType.className()
         file.addFunction(
             FunSpec.builder(member.name)
-                .receiver(valueCnameP)
-                .addParameter("func", funcPtrCname)
+                .receiver(valueCNameP)
+                .addParameter("func", funcPtrCName)
                 .addStatement("ptr().%N(func)", member.name)
                 .build()
         )
         file.addFunction(
             FunSpec.builder(member.name)
-                .receiver(pointerCnameP)
-                .addParameter("func", funcPtrCname)
-                .addStatement("%N = %T.toNativeData(func)", member.name, funcPtrCname)
+                .receiver(pointerCNameP)
+                .addParameter("func", funcPtrCName)
+                .addStatement("%N = %T.toNativeData(func)", member.name, funcPtrCName)
                 .build()
         )
     }

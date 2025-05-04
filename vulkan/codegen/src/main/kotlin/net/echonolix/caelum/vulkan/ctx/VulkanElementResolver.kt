@@ -10,7 +10,6 @@ import net.echonolix.caelum.codegen.api.ctx.ElementResolver
 import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.vulkan.AliasedTag
 import net.echonolix.caelum.vulkan.BitWidthTag
-import net.echonolix.caelum.vulkan.EnumEntryFixedName
 import net.echonolix.caelum.vulkan.LenTag
 import net.echonolix.caelum.vulkan.LineCommentTag
 import net.echonolix.caelum.vulkan.OptionalTag
@@ -222,7 +221,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             object : CType.Struct(xmlStructType.name, members) {
                 context(ctx: CodegenContext)
                 override fun ktApiType(): TypeName {
-                    return WildcardTypeName.producerOf(VulkanCodegen.vkStructCname.parameterizedBy(CaelumCodegenHelper.starWildcard))
+                    return WildcardTypeName.producerOf(VulkanCodegen.vkStructCName.parameterizedBy(CaelumCodegenHelper.starWildcard))
                 }
             }
         } else {

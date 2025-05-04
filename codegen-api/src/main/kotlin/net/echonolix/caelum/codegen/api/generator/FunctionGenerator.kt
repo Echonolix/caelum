@@ -34,12 +34,12 @@ public open class FunctionGenerator(
 
     context(ctx: CodegenContext)
     protected open fun functionBaseCName(): ClassName {
-        return CaelumCodegenHelper.functionCname
+        return CaelumCodegenHelper.functionCName
     }
 
     context(ctx: CodegenContext)
     protected open fun functionTypeDescriptorBaseCName(): ClassName {
-        return CaelumCodegenHelper.functionTypeDescriptorImplCname
+        return CaelumCodegenHelper.functionTypeDescriptorImplCName
     }
 
     context(ctx: CodegenContext)
@@ -49,12 +49,12 @@ public open class FunctionGenerator(
 
     context(ctx: CodegenContext)
     protected open fun buildFunInterfaceType(): TypeSpec.Builder {
-        val funInterfaceType = TypeSpec.Companion.funInterfaceBuilder(thisCname)
+        val funInterfaceType = TypeSpec.Companion.funInterfaceBuilder(thisCName)
         funInterfaceType.addSuperinterface(functionBaseCName())
         funInterfaceType.addProperty(
             PropertySpec.Companion.builder(
                 "typeDescriptor",
-                functionTypeDescriptorBaseCName().parameterizedBy(thisCname)
+                functionTypeDescriptorBaseCName().parameterizedBy(thisCName)
             )
                 .addModifiers(KModifier.OVERRIDE)
                 .getter(
@@ -104,7 +104,7 @@ public open class FunctionGenerator(
     context(ctx: CodegenContext)
     protected open fun buildTypeDescriptorCompanionType(): TypeSpec.Builder {
         val companionType = TypeSpec.Companion.companionObjectBuilder("TypeDescriptor")
-        companionType.superclass(functionTypeDescriptorBaseCName().parameterizedBy(thisCname))
+        companionType.superclass(functionTypeDescriptorBaseCName().parameterizedBy(thisCName))
         val nullCodeBlock = CodeBlock.Companion.of("null")
         fun typeDescriptorCodeBlock(type: CType): CodeBlock {
             return type.typeDescriptorTypeName()?.let {
@@ -116,8 +116,8 @@ public open class FunctionGenerator(
             CodeBlock.Companion.of("%S", nativeName()),
             CodeBlock.Companion.of(
                 "%T.lookup().unreflect(%T::invokeNative.%M)",
-                CaelumCodegenHelper.methodHandlesCname,
-                thisCname,
+                CaelumCodegenHelper.methodHandlesCName,
+                thisCName,
                 CaelumCodegenHelper.javaMethodMemberName
             ),
             typeDescriptorCodeBlock(returnType)
@@ -139,9 +139,9 @@ public open class FunctionGenerator(
                 .addModifiers(KModifier.OVERRIDE)
                 .addParameter(
                     "value",
-                    CaelumCodegenHelper.memorySegmentCname
+                    CaelumCodegenHelper.memorySegmentCName
                 )
-                .returns(thisCname)
+                .returns(thisCName)
                 .addStatement("return Impl(downcallHandle(value))")
                 .build()
         )
@@ -154,12 +154,12 @@ public open class FunctionGenerator(
 
         val implType = TypeSpec.Companion.classBuilder("Impl")
         implType.addModifiers(KModifier.PRIVATE)
-        implType.addSuperinterface(thisCname)
-        implType.superclass(CaelumCodegenHelper.functionImplCname)
+        implType.addSuperinterface(thisCName)
+        implType.superclass(CaelumCodegenHelper.functionImplCName)
         implType.addSuperclassConstructorParameter("funcHandle")
         implType.primaryConstructor(
             FunSpec.Companion.constructorBuilder()
-                .addParameter("funcHandle", CaelumCodegenHelper.methodHandleCname)
+                .addParameter("funcHandle", CaelumCodegenHelper.methodHandleCName)
                 .build()
         )
 
@@ -207,14 +207,14 @@ public open class FunctionGenerator(
         return implType
     }
 
-    public final override fun build(): FileSpec.Builder {
+    public final override fun generate(): FileSpec.Builder {
         with(ctx) {
             val funInterfaceType = buildFunInterfaceType()
             val typeDescriptorCompanionType = buildTypeDescriptorCompanionType()
             val implType = buildImplType()
             typeDescriptorCompanionType.addType(implType.build())
             funInterfaceType.addType(typeDescriptorCompanionType.build())
-            val file = FileSpec.Companion.builder(thisCname)
+            val file = FileSpec.Companion.builder(thisCName)
             file.addType(funInterfaceType.build())
             return file
         }

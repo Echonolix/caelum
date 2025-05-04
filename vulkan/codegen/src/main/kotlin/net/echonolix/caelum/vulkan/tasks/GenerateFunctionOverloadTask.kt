@@ -32,15 +32,15 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
         private val handleType: CType.Handle,
         private val functions: List<CType.Function>
     ) : CodegenTask<Unit>(ctx) {
-        private val vkResultCname = with(ctx) { (ctx.resolveElement("VkResult") as CType.Enum).className() }
-        private val resultCname = Result::class.asClassName()
+        private val vkResultCName = with(ctx) { (ctx.resolveElement("VkResult") as CType.Enum).className() }
+        private val resultCName = Result::class.asClassName()
 
         override fun CodegenContext.compute() {
             val file = FileSpec.builder(VulkanCodegen.basePkgName, "${handleType.name}Functions")
             file.addProperty(
-                PropertySpec.builder("_UNIT_RESULT_", resultCname.parameterizedBy(UNIT))
+                PropertySpec.builder("_UNIT_RESULT_", resultCName.parameterizedBy(UNIT))
                     .addModifiers(KModifier.PRIVATE)
-                    .initializer("%T.success(%T)", resultCname, UNIT)
+                    .initializer("%T.success(%T)", resultCName, UNIT)
                     .build()
             )
             file.addFunctions(
@@ -82,7 +82,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 val returnHandleType = lastParamElementType
                 params1 = firstDropped.dropLast(1)
 
-                func1.returns(resultCname.parameterizedBy(returnType1))
+                func1.returns(resultCName.parameterizedBy(returnType1))
                 func1.addParameters(params1.toKtParamOverloadSpecs(true))
                 val funcCode = CodeBlock.builder()
                 funcCode.beginControlFlow("return %M", CaelumCodegenHelper.memoryStackMember)
@@ -101,11 +101,11 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
                     CodeBlock.of(
                         "%T.%N",
-                        vkResultCname,
+                        vkResultCName,
                         it.name
                     )
                 })
-                funcCode.add(" -> %T.success(%T.fromNativeData(", resultCname, returnType1)
+                funcCode.add(" -> %T.success(%T.fromNativeData(", resultCName, returnType1)
 
                 val returnHandleParentType = returnHandleType.tags.get<VkHandleTag>()!!.parent
                 if (returnHandleParentType != handleType) {
@@ -122,17 +122,17 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 funcCode.add(resultCodeTag.errorCodes.joinToCode(",\n") {
                     CodeBlock.of(
                         "%T.%N",
-                        vkResultCname,
+                        vkResultCName,
                         it.name
                     )
                 })
-                funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, VulkanCodegen.vkExceptionCname)
+                funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCName, VulkanCodegen.vkExceptionCName)
                 funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
                 funcCode.endControlFlow()
                 funcCode.endControlFlow()
                 func1.addCode(funcCode.build())
             } else if (funcType.returnType.name == "VkResult") {
-                returnType1 = resultCname.parameterizedBy(UNIT)
+                returnType1 = resultCName.parameterizedBy(UNIT)
                 params1 = firstDropped
 
                 func1.returns(returnType1)
@@ -146,7 +146,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
                     CodeBlock.of(
                         "%T.%N",
-                        vkResultCname,
+                        vkResultCName,
                         it.name
                     )
                 })
@@ -155,11 +155,11 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                     funcCode.add(resultCodeTag.errorCodes.joinToCode(",\n") {
                         CodeBlock.of(
                             "%T.%N",
-                            vkResultCname,
+                            vkResultCName,
                             it.name
                         )
                     })
-                    funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCname, VulkanCodegen.vkExceptionCname)
+                    funcCode.addStatement(" -> %T.failure(%T(result69420))", resultCName, VulkanCodegen.vkExceptionCName)
                 }
                 funcCode.addStatement("else -> error(%P)", "Unexpected result from $origName: \$result69420")
                 funcCode.endControlFlow()
@@ -201,7 +201,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
 //                    var pType = it.type.ktApiType()
 //                    if (it.type is CType.Pointer) {
 //                        val typeArguments = (pType as ParameterizedTypeName).typeArguments
-//                        pType = CaelumCodegenHelper.valueCname.parameterizedBy(typeArguments)
+//                        pType = CaelumCodegenHelper.valueCName.parameterizedBy(typeArguments)
 //                    }
 //                    pType
 //                })
@@ -212,7 +212,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
 //                    var pType = it.type.ktApiType()
 //                    if (it.type is CType.Pointer) {
 //                        val typeArguments = (pType as ParameterizedTypeName).typeArguments
-//                        pType = CaelumCodegenHelper.arrayCname.parameterizedBy(typeArguments)
+//                        pType = CaelumCodegenHelper.arrayCName.parameterizedBy(typeArguments)
 //                    }
 //                    pType
 //                })

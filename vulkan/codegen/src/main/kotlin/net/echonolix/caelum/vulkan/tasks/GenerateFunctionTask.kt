@@ -38,12 +38,12 @@ class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
             context(ctx: CodegenContext)
             override fun functionBaseCName(): ClassName {
-                return VulkanCodegen.vkFunctionCname
+                return VulkanCodegen.vkFunctionCName
             }
 
             context(ctx: CodegenContext)
             override fun functionTypeDescriptorBaseCName(): ClassName {
-                return VulkanCodegen.vkFunctionTypeDescriptorImplCname
+                return VulkanCodegen.vkFunctionTypeDescriptorImplCName
             }
 
             context(ctx: CodegenContext)
@@ -51,6 +51,6 @@ class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 return funcType.tags.get<OriginalFunctionNameTag>()!!.name
             }
         }
-        return generator.build()
+        return generator.generate()
     }
 }

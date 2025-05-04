@@ -9,7 +9,7 @@ public abstract class Generator<T : CElement.TopLevel>(
     protected val ctx: CodegenContext,
     protected val element: T
 ) {
-    protected val thisCname: ClassName = with(ctx) { element.className() }
+    protected val thisCName: ClassName = with(ctx) { element.className() }
 
-    public abstract fun build(): FileSpec.Builder
+    public abstract fun generate(): FileSpec.Builder
 }
