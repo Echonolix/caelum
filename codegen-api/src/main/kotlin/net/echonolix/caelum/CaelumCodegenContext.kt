@@ -56,9 +56,9 @@ public abstract class CaelumCodegenContext(public val basePkgName: String, publi
         }
     }
 
-    public fun resolveType(cElementStr: String): CType {
-        return resolveElement(cElementStr) as? CType
-            ?: throw IllegalArgumentException("Not a type: $cElementStr")
+    public inline fun <reified T> resolveElement(cElementStr: String): T {
+        return resolveElement(cElementStr) as? T
+            ?: throw IllegalArgumentException("Not a ${T::class.simpleName}: $cElementStr")
     }
 
     public fun resolveElement(cElementStr: String): CElement {
@@ -74,17 +74,17 @@ public abstract class CaelumCodegenContext(public val basePkgName: String, publi
                     return when {
                         it.value.endsWith("*") -> {
                             CType.Pointer {
-                                resolveType(trimStr.removeRange(it.range))
+                                resolveElement<CType>(trimStr.removeRange(it.range))
                             }
                         }
                         it.value.isEmpty() -> {
                             CType.Array(
-                                resolveType(trimStr.removeRange(it.range)),
+                                resolveElement<CType>(trimStr.removeRange(it.range)),
                             )
                         }
                         else -> {
                             CType.Array.Sized(
-                                resolveType(trimStr.removeRange(it.range)),
+                                resolveElement<CType>(trimStr.removeRange(it.range)),
                                 resolveExpression(it.value.removeSurrounding("[", "]"))
                             )
                         }

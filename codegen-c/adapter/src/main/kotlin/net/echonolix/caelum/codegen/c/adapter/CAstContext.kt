@@ -4,14 +4,17 @@ import c.ast.NodeVisitException
 
 class CAstContext(val inputPathStrs: Set<String>) {
     private val typedefs0 = mutableMapOf<String, CType>()
-    val typedefs: Map<String, CType> get() = typedefs0
     private val structs0 = mutableMapOf<String, CStruct>()
-    val structs: Map<String, CStruct> get() = structs0
     private val unions0 = mutableMapOf<String, CUnion>()
-    val unions: Map<String, CUnion> get() = unions0
     private val enums0 = mutableMapOf<String, CEnum>()
-    val enums: Map<String, CEnum> get() = enums0
+    private val globalEnums0 = mutableListOf<CEnum>()
     private val functions0 = mutableMapOf<String, CFunction>()
+
+    val typedefs: Map<String, CType> get() = typedefs0
+    val structs: Map<String, CStruct> get() = structs0
+    val unions: Map<String, CUnion> get() = unions0
+    val enums: Map<String, CEnum> get() = enums0
+    val globalEnums: List<CEnum> get() = globalEnums0
     val functions: Map<String, CFunction> get() = functions0
 
     fun parse(source: String) {
@@ -33,7 +36,28 @@ class CAstContext(val inputPathStrs: Set<String>) {
     }
 
     fun addTypedef(name: String, type: CType) {
-        typedefs0[name] = type
+        when (type) {
+            is CEnum -> {
+                addEnum(name, type)
+            }
+            is CStruct -> {
+                addStruct(name, type)
+            }
+            is CUnion -> {
+                addUnion(name, type)
+            }
+            else -> typedefs0[name] = type
+        }
+    }
+
+    fun addEnum(name: String?, enum: CEnum) {
+        if (name == null) {
+            globalEnums0.add(enum)
+            return
+        }
+        enums0.compute(name) { _, existing ->
+            existing?.copy(enumerators = existing.enumerators + enum.enumerators) ?: enum
+        }
     }
 
     fun addStruct(name: String, struct: CStruct) {
@@ -45,12 +69,6 @@ class CAstContext(val inputPathStrs: Set<String>) {
     fun addUnion(name: String, union: CUnion) {
         unions0.compute(name) { _, existing ->
             existing?.copy(fields = existing.fields + union.fields) ?: union
-        }
-    }
-
-    fun addEnum(name: String, enum: CEnum) {
-        enums0.compute(name) { _, existing ->
-            existing?.copy(enumerators = existing.enumerators + enum.enumerators) ?: enum
         }
     }
 

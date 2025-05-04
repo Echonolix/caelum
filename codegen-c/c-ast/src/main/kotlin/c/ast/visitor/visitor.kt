@@ -96,7 +96,7 @@ interface DeclaratorVisitor {
     fun visitIdentifier(name: String)
     fun visitFieldIdentifier(name: String)
 
-    fun visitArray()
+    fun visitArray(size: String?)
 
     fun visitPointer()
 

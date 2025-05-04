@@ -168,8 +168,8 @@ class BaseDeclaratorVisitor() : DeclaratorVisitor {
         TODO("Not yet implemented")
     }
 
-    override fun visitArray() {
-        type = CArrayType(type, -1)
+    override fun visitArray(size: String?) {
+        type = CArrayType(type, size)
     }
 
     override fun visitPointer() {

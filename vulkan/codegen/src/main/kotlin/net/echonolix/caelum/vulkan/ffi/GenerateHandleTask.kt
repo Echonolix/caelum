@@ -13,7 +13,7 @@ class GenerateHandleTask(ctx: VulkanCodeGenContext) : VKFFITask<Unit>(ctx) {
         return name.removePrefix("Vk").decap()
     }
 
-    private val objTypeCname = with(ctx) { resolveType("VkObjectType").typeName() }
+    private val objTypeCname = with(ctx) { resolveElement<CType>("VkObjectType").typeName() }
     val vkTypeDescriptorCname = VKFFI.vkHandleCname.nestedClass("TypeDescriptor")
 
     override fun VulkanCodeGenContext.compute() {

@@ -20,7 +20,7 @@ class BuildFunctionVisitor(returnType: CType) : FunctionVisitor {
     }
 
     override fun visitEnd() {
-        println(cFunction)
+//        println(cFunction)
     }
 
 }

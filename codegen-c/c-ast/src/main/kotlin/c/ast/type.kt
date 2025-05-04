@@ -95,7 +95,7 @@ internal fun visitTypeDeclaratorNode(n: _TypeDeclaratorNode, v: DeclaratorVisito
                 is IdentifierNode -> v.visitIdentifier(d.content())
                 is FieldIdentifierNode -> v.visitFieldIdentifier(d.content())
             }
-            v.visitArray()
+            v.visitArray(n.size?.content())
         }
 
         is AttributedDeclaratorNode -> TODO()
@@ -111,12 +111,12 @@ internal fun visitTypeDeclaratorNode(n: _TypeDeclaratorNode, v: DeclaratorVisito
 
 
         is PointerDeclaratorNode -> {
+            v.visitPointer()
             when (val n = n.declarator) {
                 is _DeclaratorNode -> visitDeclaratorNode(n, v)
                 is _TypeDeclaratorNode -> visitTypeDeclaratorNode(n, v)
                 is FieldIdentifierNode -> v.visitFieldIdentifier(n.content())
             }
-
         }
 
         is PrimitiveTypeNode -> v.visitIdentifier(n.content())

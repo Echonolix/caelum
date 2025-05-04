@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.WildcardTypeName
 import net.echonolix.caelum.*
+import net.echonolix.caelum.CType
 import net.echonolix.caelum.vulkan.schema.*
 import java.nio.file.Path
 
@@ -33,7 +34,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
                 ?: throw IllegalStateException("Cannot resolve typedef: $typeDefStr")
         val (dstTypeStr, srcTypeStr) = matchResult.destructured
         assert(srcTypeStr == xmlTypeDefType.name)
-        val dstType = resolveType(dstTypeStr)
+        val dstType = resolveElement<CType>(dstTypeStr)
         return CType.TypeDef(xmlTypeDefType.name, dstType)
     }
 
@@ -47,7 +48,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
             )
         assert(xmlTypeDefType.name == headerMatchResult.groupValues[2])
         val returnTypeStr = headerMatchResult.groupValues[1]
-        val returnType = resolveType(returnTypeStr)
+        val returnType = resolveElement<CType>(returnTypeStr)
         val parameters = funcStrLines.asSequence()
             .drop(1)
             .flatMap { it.split(CSyntax.funcPointerParamSplitRegex) }
@@ -58,7 +59,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
             }
             .map { it.groupValues }
             .map {
-                CType.Function.Parameter(it[2], resolveType(it[1]))
+                CType.Function.Parameter(it[2], resolveElement<CType>(it[1]))
             }.toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         func.tags.set(OriginalFunctionNameTag(xmlTypeDefType.name))
@@ -190,7 +191,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
                 ?: throw IllegalStateException("Cannot resolve struct member type: $typeStr")
             val member = CType.Group.Member(
                 xmlMember.name,
-                resolveType(typeStr),
+                resolveElement<CType>(typeStr),
             )
             if (bits != -1) {
                 member.tags.set(BitWidthTag(bits))
@@ -275,7 +276,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
         val cmdName = xmlCommand.proto.name
         val funcName = "VkFunc${cmdName.removePrefix("vk")}"
         val returnTypeStr = xmlCommand.proto.type
-        val returnType = resolveType(returnTypeStr)
+        val returnType = resolveElement<CType>(returnTypeStr)
         val parameters = xmlCommand.params.asSequence()
             .filter { it.name != null }
             .filter { it.api == null || it.api == API.vulkan }
@@ -285,7 +286,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
                 val matchEntire = CSyntax.typeRegex.matchEntire(innerStr)
                     ?: throw IllegalStateException("Cannot resolve function parameter for: $cmdName")
                 val (typeStr) = matchEntire.destructured
-                CType.Function.Parameter(it.name, resolveType(typeStr)).apply {
+                CType.Function.Parameter(it.name, resolveElement<CType>(typeStr)).apply {
                     if (it.optional == "true") {
                         tags.set(OptionalTag)
                     }
@@ -313,7 +314,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
         return when {
             xmlEnum.extends != null -> {
                 val enumTypeStr = xmlEnum.extends
-                val enumType = resolveType(enumTypeStr) as CType.EnumBase
+                val enumType = resolveElement<CType>(enumTypeStr) as CType.EnumBase
                 enumType.addEntry(xmlEnum)
             }
             xmlEnum.alias != null -> {
@@ -332,7 +333,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
 
     override fun resolveElementImpl(cElementStr: String): CElement {
         registry.registryTypes[cElementStr]?.alias?.let {
-            return resolveType(it)
+            return resolveElement<CType>(it)
         }
 
         registry.typeDefTypes[cElementStr]?.let {
@@ -381,7 +382,7 @@ class VulkanCodeGenContext(basePkgName: String, outputDir: Path, val registry: F
 
         registry.commands[cElementStr]?.let { commandType ->
             commandType.alias?.let {
-                return resolveType(it)
+                return resolveElement<CType>(it)
             }
             return resolveCommand(commandType)
         }

@@ -62,8 +62,8 @@ class AdapterASTVisitor(val ctx: CAstContext) : ASTVisitor {
         return object : EnumVisitor by visitor {
             override fun visitEnd() {
                 val cEnum = visitor.build()
-                val identifier = cEnum.id!!
-                ctx.addEnum(identifier.name, cEnum)
+                val identifier = cEnum.id
+                ctx.addEnum(identifier?.name, cEnum)
             }
         }
     }

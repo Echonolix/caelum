@@ -24,7 +24,7 @@ value class Identifier(val name: String) : CType {
 
 data class CArrayType(
     val type: CType,
-    val size: Int = -1
+    val size: String?
 ) : CType
 
 data class CPointer(

@@ -28,6 +28,15 @@ class CCodegenProcessor : KtgenProcessor {
             println("\t$name -> $type")
         }
         println()
+        println("Enums:")
+        elementCtx.enums.forEach { (name, type) ->
+            println("\t$name -> $type")
+        }
+        println()
+        println("Global Enums:")
+        elementCtx.globalEnums.forEach { type ->
+            println("\t$type")
+        }
         println("Structs:")
         elementCtx.structs.forEach { (name, type) ->
             println("\t$name -> $type")
@@ -45,7 +54,22 @@ class CCodegenProcessor : KtgenProcessor {
         println()
 
         val ctx = CCodeGenContext(System.getProperty("codegenc.packageName"), outputDir, elementCtx)
-        println(ctx.basePkgName)
+        elementCtx.enums.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
+        }
+        elementCtx.globalEnums.forEach { enum ->
+            TODO()
+//            println(ctx.resolveElement(enum))
+        }
+        elementCtx.structs.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
+        }
+        elementCtx.unions.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
+        }
+        elementCtx.functions.forEach { (name, _) ->
+            println(ctx.resolveElement(name))
+        }
 
         return emptySet()
     }
@@ -110,6 +134,8 @@ fun main() {
 //        resourcePath("/test1.h")
 //        resourcePath("/test2.h")
         Path("glfw/glfw3.h")
+//        Path("codegen-c/llvm-c.h")
+//        Path("codegen-c/test.h")
     )
     val outputDir = Path("testoutput")
     val updatedFiles = CCodegenProcessor().process(inputs, outputDir).toMutableSet()
