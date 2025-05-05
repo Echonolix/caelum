@@ -19,6 +19,45 @@ class CAstContext(val inputPathStrs: Set<String>) {
     val unions: Map<String, CUnion> get() = unions0
     val functions: Map<String, CFunction> get() = functions0
 
+    private val allElements0 = mapOf(
+        ElementType.TYPEDEF to typedefs0,
+        ElementType.CONST to consts0,
+        ElementType.ENUM to enums0,
+        ElementType.GLOBAL_ENUM to globalEnums0,
+        ElementType.STRUCT to structs0,
+        ElementType.UNION to unions0,
+        ElementType.FUNCTION to functions0
+    )
+
+    val allElements = mapOf(
+        ElementType.TYPEDEF to typedefs,
+        ElementType.CONST to consts,
+        ElementType.ENUM to enums,
+        ElementType.GLOBAL_ENUM to globalEnums,
+        ElementType.STRUCT to structs,
+        ElementType.UNION to unions,
+        ElementType.FUNCTION to functions
+    )
+
+    fun renameElements(updater: (ElementType, String) -> String?) {
+        allElements0.forEach { (type, elements) ->
+            val iterator = elements.iterator()
+            val renamed = mutableMapOf<String, Any>()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                val oldName = entry.key
+                val newName = updater(type, oldName)
+                if (newName != oldName) {
+                    iterator.remove()
+                }
+                if (newName != null && newName != "null") {
+                    renamed[newName] = entry.value
+                }
+            }
+            (elements as MutableMap<String, Any>).putAll(renamed)
+        }
+    }
+
     fun parse(source: String) {
         val visitor = AdapterASTVisitor(this)
         try {
@@ -77,5 +116,15 @@ class CAstContext(val inputPathStrs: Set<String>) {
 
     fun addConst(name: String, const: CConst) {
         consts0[name] = const
+    }
+
+    enum class ElementType{
+        TYPEDEF,
+        CONST,
+        ENUM,
+        GLOBAL_ENUM,
+        STRUCT,
+        UNION,
+        FUNCTION
     }
 }

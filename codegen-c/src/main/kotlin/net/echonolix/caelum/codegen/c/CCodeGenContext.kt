@@ -14,8 +14,17 @@ import net.echonolix.caelum.codegen.c.adapter.*
 import net.echonolix.caelum.codegen.c.adapter.CBasicType as CAstBasicType
 import net.echonolix.caelum.codegen.c.adapter.CType as CAstType
 
-class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
+class CElementResolver(
+    private val cAstContext: CAstContext,
+    private val renameMap: Map<String, String>,
+) : ElementResolver.Base() {
     lateinit var ctx: CodegenContext
+
+    private val reverseMap = renameMap.entries.associate { (key, value) -> value to key }
+
+    private fun renamed(name: String): String {
+        return renameMap[name] ?: name
+    }
 
     private fun resolveCType(type: CAstType): CType {
         return when (type) {
@@ -50,16 +59,13 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
                 CType.Pointer { resolveCType(type.pointee) }
             }
             is Identifier -> {
-                return resolveTypedElement<CType>(type.name)
+                return resolveTypedElement<CType>(renamed(type.name))
             }
             is CStruct -> {
-                val identifier = type.id!!
-                val struct = resolveStruct(identifier.name, type)
-                addToCache(identifier.name, struct)
-                struct
+                return resolveTypedElement<CType.Struct>(renamed(type.id!!.name))
             }
             is CEnum -> {
-                return resolveTypedElement<CType.Enum>(type.id!!.name)
+                return resolveTypedElement<CType.Enum>(renamed(type.id!!.name))
             }
             else -> throw UnsupportedOperationException("Unsupported type: $type")
         }
@@ -111,9 +117,7 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
             is CPointer -> {
                 val pointee = type.pointee
                 if (pointee is CFunction) {
-                    val funcPtrName = "FuncPtr${name}"
-                    val func = resolveFunction(funcPtrName, pointee)
-                    addToCache(funcPtrName, func)
+                    val func = resolveFunction(name, pointee)
                     val funcPtr = CType.FunctionPointer(func)
                     return funcPtr
                 }
@@ -168,34 +172,43 @@ class CElementResolver(val cAstContext: CAstContext) : ElementResolver.Base() {
     }
 
     override fun resolveElementImpl(cElementStr: String): CElement {
-        cAstContext.typedefs[cElementStr]?.let {
-            return resolveTypedef(cElementStr, it)
-        }
+        return run {
+            cAstContext.typedefs[cElementStr]?.let {
+                return@run resolveTypedef(cElementStr, it)
+            }
 
-        cAstContext.consts[cElementStr]?.let {
-            return resolveConst(cElementStr, (resolveCType(it.type) as CType.BasicType).baseType, it.value)
-        }
+            cAstContext.consts[cElementStr]?.let {
+                return@run resolveConst(cElementStr, (resolveCType(it.type) as CType.BasicType).baseType, it.value)
+            }
 
-        cAstContext.enums[cElementStr]?.let {
-            return resolveEnum(cElementStr, it)
-        }
+            cAstContext.enums[cElementStr]?.let {
+                return@run resolveEnum(cElementStr, it)
+            }
 
-        cAstContext.structs[cElementStr]?.let {
-            return resolveStruct(cElementStr, it)
-        }
+            cAstContext.structs[cElementStr]?.let {
+                return@run resolveStruct(cElementStr, it)
+            }
 
-        cAstContext.unions[cElementStr]?.let {
-            return resolveUnion(cElementStr, it)
-        }
+            cAstContext.unions[cElementStr]?.let {
+                return@run resolveUnion(cElementStr, it)
+            }
 
-        cAstContext.globalEnums[cElementStr]?.let {
-            return resolveConst(cElementStr, CBasicType.int, it.value)
-        }
+            cAstContext.globalEnums[cElementStr]?.let {
+                return@run resolveConst(cElementStr, CBasicType.int, it.value)
+            }
 
-        cAstContext.functions[cElementStr]?.let {
-            return resolveFunction(cElementStr, it)
-        }
+            cAstContext.functions[cElementStr]?.let {
+                val function = resolveFunction(cElementStr, it)
+                function.tags.set(GlobalFunctionTag)
+                return@run function
+            }
 
-        throw IllegalStateException("Cannot resolve type: $cElementStr")
+            throw IllegalStateException("Cannot resolve type: $cElementStr")
+        }.also {
+            val originalName = reverseMap[it.name]
+            if (originalName != null && originalName != it.name) {
+                it.tags.set(OriginalNameTag(originalName))
+            }
+        }
     }
 }

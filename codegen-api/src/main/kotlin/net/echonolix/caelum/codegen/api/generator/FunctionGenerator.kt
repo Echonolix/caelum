@@ -1,25 +1,14 @@
 package net.echonolix.caelum.codegen.api.generator
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.joinToCode
-import net.echonolix.caelum.codegen.api.CBasicType
-import net.echonolix.caelum.codegen.api.CType
+import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
-import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
-import net.echonolix.caelum.codegen.api.toParamSpecs
 
 public open class FunctionGenerator(
     ctx: CodegenContext,
     element: CType.Function
-): Generator<CType.Function>(ctx, element) {
+) : Generator<CType.Function>(ctx, element) {
     public val returnType: CType = element.returnType
 
     context(ctx: CodegenContext)
@@ -44,7 +33,7 @@ public open class FunctionGenerator(
 
     context(ctx: CodegenContext)
     protected open fun nativeName(): String {
-        return element.name
+        return element.tags.get<OriginalNameTag>()?.name ?: element.name
     }
 
     context(ctx: CodegenContext)
@@ -215,6 +204,19 @@ public open class FunctionGenerator(
             typeDescriptorCompanionType.addType(implType.build())
             funInterfaceType.addType(typeDescriptorCompanionType.build())
             val file = FileSpec.Companion.builder(thisCName)
+            if (element.tags.has<GlobalFunctionTag>()) {
+                file.addProperty(
+                    PropertySpec.builder(nativeName(), thisCName)
+                        .addModifiers(KModifier.PUBLIC)
+                        .initializer(
+                            "%T.fromNativeData(%T.findSymbol(%S))",
+                            thisCName,
+                            CaelumCodegenHelper.helperCName,
+                            nativeName()
+                        )
+                        .build()
+                )
+            }
             file.addType(funInterfaceType.build())
             return file
         }

@@ -2,6 +2,8 @@ package net.echonolix.caelum.codegen.api.ctx
 
 import com.squareup.kotlinpoet.FileSpec
 import net.echonolix.caelum.codegen.api.CElement
+import net.echonolix.caelum.codegen.api.CTopLevelConst
+import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.addSuppress
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -23,7 +25,14 @@ public interface CodegenOutput {
         private val outputFiles0 = ConcurrentLinkedQueue<Path>()
 
         override fun resolvePackageName(element: CElement): String {
-            return basePackageName
+            return when (element) {
+                is CType.Enum -> "${basePackageName}.enums"
+                is CType.Struct -> "${basePackageName}.structs"
+                is CType.Union -> "${basePackageName}.unions"
+                is CType.Function -> "${basePackageName}.functions"
+                is CTopLevelConst -> "${basePackageName}.consts"
+                else -> throw IllegalArgumentException("Unsupported element type: ${element::class}")
+            }
         }
 
         public override fun writeOutput(path: Path, fileSpec: FileSpec.Builder) {

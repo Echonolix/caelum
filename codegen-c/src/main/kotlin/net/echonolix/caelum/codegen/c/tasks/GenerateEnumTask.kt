@@ -18,7 +18,7 @@ class GenerateEnumTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             .map { (_, enumType) -> genEnumType(enumType) }
             .forEach(ctx::writeOutput)
 
-        typeAlias.joinAndWriteOutput(ctx.basePackageName)
+        typeAlias.joinAndWriteOutput("${ctx.basePackageName}.enums")
     }
 
     private fun genEnumType(enumType: CType.Enum): FileSpec.Builder {

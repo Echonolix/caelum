@@ -6,7 +6,7 @@ import net.echonolix.caelum.codegen.api.ElementCommentTag
 
 public interface ElementDocumenter {
     context(ctx: CodegenContext)
-    public fun buildKdocStr(builder: StringBuilder, element: CElement)
+    public fun buildKdocStr(sb: StringBuilder, element: CElement)
 
     public open class Base : ElementDocumenter {
         context(ctx: CodegenContext)

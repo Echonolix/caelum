@@ -47,11 +47,6 @@ class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             override fun functionTypeDescriptorBaseCName(): ClassName {
                 return VulkanCodegen.vkFunctionTypeDescriptorImplCName
             }
-
-            context(ctx: CodegenContext)
-            override fun nativeName(): String {
-                return funcType.tags.get<OriginalNameTag>()!!.name
-            }
         }
         return generator.generate()
     }

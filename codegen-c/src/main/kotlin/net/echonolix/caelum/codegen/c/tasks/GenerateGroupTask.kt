@@ -10,15 +10,24 @@ import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 
 class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     override fun CodegenContext.compute() {
-        val types = ctx.filterType<CType.Group>()
-        val typeAlias = GenTypeAliasTask(this, types).fork()
+        val structTypes = ctx.filterType<CType.Struct>()
+        val unionTypes = ctx.filterType<CType.Union>()
 
-        types.parallelStream()
+        val structTypeAliases = GenTypeAliasTask(this, structTypes).fork()
+        val unionTypeAliases = GenTypeAliasTask(this, unionTypes).fork()
+
+        structTypes.parallelStream()
             .filter { (name, type) -> name == type.name }
             .map { (_, type) -> genGroupType(type) }
             .forEach(ctx::writeOutput)
 
-        typeAlias.joinAndWriteOutput(ctx.basePackageName)
+        unionTypes.parallelStream()
+            .filter { (name, type) -> name == type.name }
+            .map { (_, type) -> genGroupType(type) }
+            .forEach(ctx::writeOutput)
+
+        structTypeAliases.joinAndWriteOutput("${ctx.basePackageName}.structs")
+        unionTypeAliases.joinAndWriteOutput("${ctx.basePackageName}.unions")
     }
 
     context(ctx: CodegenContext)

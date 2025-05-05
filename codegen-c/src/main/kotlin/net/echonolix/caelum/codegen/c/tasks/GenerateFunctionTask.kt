@@ -12,6 +12,9 @@ class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         ctx.filterTypeStream<CType.Function>()
             .map { (_, funcType) -> genFunc(funcType) }
             .forEach(ctx::writeOutput)
+        ctx.filterTypeStream<CType.FunctionPointer>()
+            .map { (_, funcType) -> genFunc(funcType.elementType) }
+            .forEach(ctx::writeOutput)
     }
 
     private fun genFunc(funcType: CType.Function): FileSpec.Builder {

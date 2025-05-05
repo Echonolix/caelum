@@ -9,6 +9,7 @@ import net.echonolix.caelum.codegen.c.tasks.GenerateEnumTask
 import net.echonolix.caelum.codegen.c.tasks.GenerateFunctionTask
 import net.echonolix.caelum.codegen.c.tasks.GenerateGroupTask
 import net.echonolix.ktgen.KtgenProcessor
+import java.io.BufferedReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -16,26 +17,49 @@ import java.util.concurrent.RecursiveAction
 import kotlin.io.path.*
 
 class CCodegenProcessor : KtgenProcessor {
+    private fun BufferedReader.readNLines(n: Int): List<String> {
+        return lineSequence().take(n).toList()
+    }
+
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
+        val stdinReader = System.`in`.bufferedReader()
+        val renameMap = mutableMapOf<String, String>()
         val elementCtx = CAstContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
-        val excludedConsts = (System.getProperty("codegenc.excludeConsts") ?: "")
-            .splitToSequence(",")
-            .mapTo(mutableSetOf()) { it.trim() }
         run {
             val defineRegex = """^\s*#define\s+(${CSyntax.nameRegex.pattern})\s+(.+)$""".toRegex()
-            val defineLines = inputs.asSequence()
+            val defines = inputs.asSequence()
                 .flatMap { path ->
                     return@flatMap path.useLines { lines ->
                         lines.mapNotNull { line ->
                             defineRegex.matchEntire(line)?.let {
                                 val (name, value) = it.destructured
-                                if (name in excludedConsts) return@let null
-                                "const int $name = $value;"
+                                name to value
                             }
                         }.toList()
                     }
                 }
+                .toList()
+
+            defines.forEach { (name, _) ->
+                println("${CAstContext.ElementType.CONST} $name")
+            }
+
+            System.out.flush()
+
+            val constMapResult = stdinReader.readNLines(defines.size)
+
+            val defineLines = defines.asSequence()
+                .mapIndexedNotNull { index, (name, value) ->
+                    val newName = constMapResult[index]
+                    if (newName == "null") {
+                        null
+                    } else {
+                        renameMap[name] = newName
+                        "const int $newName = $value;"
+                    }
+                }
                 .joinToString("\n")
+
             val clangProcess = Runtime.getRuntime().exec(
                 arrayOf(
                     "clang",
@@ -66,69 +90,41 @@ class CCodegenProcessor : KtgenProcessor {
             elementCtx.parse(clangProcess.inputReader().readText())
         }
 
-//        println("Typedefs:")
-//        elementCtx.typedefs.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Consts:")
-//        elementCtx.consts.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println("Enums:")
-//        elementCtx.enums.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Global Enums:")
-//        elementCtx.globalEnums.forEach { type ->
-//            println("\t$type")
-//        }
-//        println("Structs:")
-//        elementCtx.structs.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Unions:")
-//        elementCtx.unions.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
-//        println("Functions:")
-//        elementCtx.functions.forEach { (name, type) ->
-//            println("\t$name -> $type")
-//        }
-//        println()
+        var totalLines = 0
+        elementCtx.allElements.asSequence()
+            .filter { (typeName, _) -> typeName != CAstContext.ElementType.CONST }
+            .forEach { (typeName, elements) ->
+                elements.forEach { (name) ->
+                    println("$typeName $name")
+                    totalLines++
+                }
+            }
+        System.out.flush()
 
-        val elementResolver = CElementResolver(elementCtx)
+        val results = stdinReader.readNLines(totalLines)
+        var index = 0
+        elementCtx.renameElements { elementType, name ->
+            if (elementType == CAstContext.ElementType.CONST) {
+                return@renameElements name
+            }
+            val newName = results[index++]
+            renameMap[name] = newName
+            newName
+        }
+
+        val elementResolver = CElementResolver(elementCtx, renameMap)
         val ctx = CodegenContext(
             CodegenOutput.Base(outputDir, System.getProperty("codegenc.packageName")),
             elementResolver,
             ElementDocumenter.Base(),
         )
         elementResolver.ctx = ctx
-        elementCtx.typedefs.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-        elementCtx.consts.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-        elementCtx.enums.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-        elementCtx.globalEnums.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-        elementCtx.structs.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-        elementCtx.unions.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-        elementCtx.functions.forEach { (name, _) ->
-            ctx.resolveElement(name)
-        }
-
+        elementCtx.consts.keys.forEach(ctx::resolveElement)
+        elementCtx.allElements.asSequence()
+            .filter { (typeName, _) -> typeName != CAstContext.ElementType.CONST }
+            .map { it.value }
+            .flatMap { it.keys }
+            .forEach(ctx::resolveElement)
 
         object : RecursiveAction() {
             override fun compute() {
@@ -196,7 +192,6 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 @OptIn(ExperimentalPathApi::class)
 fun main() {
     System.setProperty("codegenc.packageName", "net.echonolix.caelum.glfw")
-    System.setProperty("codegenc.excludeConsts", "APIENTRY,WINGDIAPI,CALLBACK,GLFWAPI,GLAPIENTRY")
     fun resourcePath(path: String): Path {
         return Paths.get(CCodegenProcessor::class.java.getResource(path)!!.toURI())
     }
@@ -218,5 +213,5 @@ fun main() {
         .filter { it != outputDir }.filter { it !in updatedFiles }.forEach {
             it.deleteRecursively()
         }
-    println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
+//    println("Time: %.2fs".format((System.nanoTime() - time) / 1_000_000.0 / 1000.0))
 }
