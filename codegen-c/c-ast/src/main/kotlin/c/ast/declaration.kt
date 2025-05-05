@@ -16,6 +16,7 @@ internal fun parseASTNumber(node: ExpressionNode): ASTNumberValue {
 
             val op = when (opStr) {
                 "-" -> ASTNumberValue.UnaryOp.Negative
+                "~" -> ASTNumberValue.UnaryOp.BitwiseNot
                 else -> error("Unknown unary op: $opStr")
             }
             ASTNumberValue.Unary(op, parseASTNumber(exp))

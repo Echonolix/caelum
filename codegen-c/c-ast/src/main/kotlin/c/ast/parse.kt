@@ -59,8 +59,8 @@ private fun processTree(tree: Tree, source: String, visitor: ASTVisitor) {
         if (!n.isNamed) continue
         try {
             processTranslationUnit(n, visitor)
-        } catch (e: Exception) {
-            throw NodeVisitException(n, e)
+        } catch (t: Throwable) {
+            throw NodeVisitException(n, t)
         }
     } while (cursor.gotoNextSibling())
 

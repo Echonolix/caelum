@@ -6,7 +6,8 @@ sealed interface ASTNumberValue {
     data class Unary(val op: UnaryOp, val v: ASTNumberValue) : ASTNumberValue
 
     enum class UnaryOp(val ktRep: String) {
-        Negative("-")
+        Negative("-"),
+        BitwiseNot("not")
     }
 
     data class Binary(val op: BinaryOp, val left: ASTNumberValue, val right: ASTNumberValue) : ASTNumberValue

@@ -65,5 +65,5 @@ codegenC {
 }
 
 dependencies {
-    ktgenInput(files(projectDir.resolve("glfw3.h")))
+    ktgenInput(project.layout.projectDirectory.dir("include").asFileTree)
 }
