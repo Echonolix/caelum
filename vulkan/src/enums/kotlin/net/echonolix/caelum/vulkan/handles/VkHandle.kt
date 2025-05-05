@@ -15,11 +15,12 @@ interface VkHandle : NativeType {
     abstract class TypeDescriptor<T : VkHandle> : net.echonolix.caelum.TypeDescriptor.Impl<T>(JAVA_LONG)
 }
 
-var NativeValue<out VkHandle>.value: Long
+val NativeValue<out VkHandle>.value: Long
     get() = reinterpretCast<NativeInt64>(this).value
-    set(value) {
-        reinterpretCast<NativeInt64>(this).value = value
-    }
+
+fun <T : VkHandle> NativeValue<T>.set(handle: T) {
+    reinterpretCast<NativeInt64>(this).value = handle.handle
+}
 
 operator fun NativePointer<out VkHandle>.get(index: Long): Long =
     reinterpretCast<NativeInt64>(this)[index]
