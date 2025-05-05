@@ -15,7 +15,7 @@ val codegenCExtension = extensions.create("codegenC", CodegenCExtension::class.j
 dependencies {
     ktgen(project(":codegen-c"))
     implementation(kotlin("reflect"))
-    api(project(":caelum-core"))
+    implementation(project(":caelum-core"))
 }
 
 kotlin {
@@ -26,6 +26,18 @@ tasks.ktgen {
     extra.set("AAA", codegenCExtension.elementMapper)
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("codegenc.packageName", codegenCExtension.packageName.get())
+    systemProperty(
+        "codegenc.preprocessDefines",
+        codegenCExtension.preprocessDefines.get().entries
+            .filter { it.key.isNotBlank() }
+            .joinToString(",") { (key, value) ->
+                if (value.isBlank()) {
+                    key
+                } else {
+                    "$key=$value"
+                }
+            }
+    )
     @Suppress("UNCHECKED_CAST")
     val elementMapper = extra.get("AAA") as (ElementType, String) -> String?
     execWrapper = {

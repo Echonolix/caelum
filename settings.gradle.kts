@@ -29,6 +29,7 @@ listOf(
     "core",
     "vulkan",
     "glfw",
+    "glfw-vulkan",
 //    "vma",
 //    "jemalloc",
 //    "assimp"

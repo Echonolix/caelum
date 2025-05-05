@@ -78,6 +78,12 @@ class CCodegenProcessor : KtgenProcessor {
         }
 
         run {
+            val extraArgs = mutableListOf<String>()
+            System.getProperty("codegenc.preprocessDefines")
+                .splitToSequence(",")
+                .filter { it.isNotBlank() }
+                .mapTo(extraArgs) { "-D$it" }
+            inputs.mapTo(extraArgs) { it.absolutePathString() }
             val clangProcess = Runtime.getRuntime().exec(
                 arrayOf(
                     "clang",
@@ -85,7 +91,7 @@ class CCodegenProcessor : KtgenProcessor {
                     "-C",
                     "--target=x86_64-pc-windows-gnu",
                     "-std=c23",
-                    *inputs.map { it.absolutePathString() }.toTypedArray()
+                    *extraArgs.toTypedArray()
                 )
             )
             elementCtx.parse(clangProcess.inputReader().readText())
@@ -199,7 +205,7 @@ fun main() {
         return Paths.get(CCodegenProcessor::class.java.getResource(path)!!.toURI())
     }
 
-    val time = System.nanoTime()
+//    val time = System.nanoTime()
     val inputs = setOf(
 //        resourcePath("/test1.h")
 //        resourcePath("/test2.h")
