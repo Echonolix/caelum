@@ -18,6 +18,10 @@ dependencies {
     api(project(":caelum-core"))
 }
 
+kotlin {
+    explicitApi()
+}
+
 tasks.ktgen {
     extra.set("AAA", codegenCExtension.elementMapper)
     jvmArgs("--enable-native-access=ALL-UNNAMED")
