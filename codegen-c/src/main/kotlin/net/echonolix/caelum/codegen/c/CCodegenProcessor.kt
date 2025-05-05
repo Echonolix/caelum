@@ -5,6 +5,7 @@ import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.CodegenOutput
 import net.echonolix.caelum.codegen.api.ctx.ElementDocumenter
 import net.echonolix.caelum.codegen.c.adapter.CAstContext
+import net.echonolix.caelum.codegen.c.tasks.GenerateConstantTask
 import net.echonolix.caelum.codegen.c.tasks.GenerateEnumTask
 import net.echonolix.caelum.codegen.c.tasks.GenerateFunctionTask
 import net.echonolix.caelum.codegen.c.tasks.GenerateGroupTask
@@ -129,9 +130,11 @@ class CCodegenProcessor : KtgenProcessor {
         object : RecursiveAction() {
             override fun compute() {
                 val enum = GenerateEnumTask(ctx).fork()
+                val consts = GenerateConstantTask(ctx).fork()
                 val group = GenerateGroupTask(ctx).fork()
 //                val typeDef = GenerateTypeDefTask(ctx).fork()
                 val function = GenerateFunctionTask(ctx).fork()
+                consts.join()
                 enum.join()
                 group.join()
 //                typeDef.join()

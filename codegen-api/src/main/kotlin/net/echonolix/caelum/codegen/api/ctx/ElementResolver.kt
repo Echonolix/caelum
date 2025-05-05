@@ -18,7 +18,7 @@ public interface ElementResolver {
         public override val allElements: Map<String, CElement>
             get() = allElements0
 
-        private val allElements0 = ConcurrentHashMap<String, CElement>()
+        private val allElements0 = mutableMapOf<String, CElement>()
 
         public override fun resolveElement(cElementStr: String): CElement {
             try {
