@@ -59,26 +59,9 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
 
     private inner class ConstantsTask : CodegenTask<Unit>(ctx) {
         override fun CodegenContext.compute() {
-//            val vkEnumBaseFile = FileSpec.builder(VKFFI.vkEnumBaseCName)
-//                .addType(
-//                    TypeSpec.interfaceBuilder(VKFFI.vkEnumBaseCName)
-//                        .addSuperinterface(CaelumCodegenHelper.typeCName)
-//                        .addTypeVariable(TypeVariableName("T"))
-//                        .addProperty(
-//                            PropertySpec.builder("value", TypeVariableName("T"))
-//                                .build()
-//                        )
-//                        .addProperty(
-//                            PropertySpec.builder("nativeType", NativeType::class)
-//                                .build()
-//                        )
-//                        .build()
-//                )
-//            ctx.writeOutput(vkEnumBaseFile)
             val vkEnumFile = FileSpec.Companion.builder(VulkanCodegen.vkEnumCName)
                 .addType(
                     TypeSpec.Companion.interfaceBuilder(VulkanCodegen.vkEnumCName)
-//                        .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VulkanCodegen.vkEnumBaseCName.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
@@ -102,7 +85,6 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
             val vkFlagFile = FileSpec.builder(VulkanCodegen.flagPackageName, "VkFlags")
                 .addType(
                     TypeSpec.Companion.interfaceBuilder(VulkanCodegen.vkFlags32CNAME)
-//                        .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VulkanCodegen.vkEnumBaseCName.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)
@@ -123,7 +105,6 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 )
                 .addType(
                     TypeSpec.Companion.interfaceBuilder(VulkanCodegen.vkFlags64CNAME)
-//                        .addModifiers(KModifier.SEALED)
                         .addSuperinterface(VulkanCodegen.vkEnumBaseCName.parameterizedBy(Long::class.asTypeName()))
                         .addProperty(
                             PropertySpec.builder("nativeType", NativeType::class)

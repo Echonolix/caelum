@@ -8,6 +8,7 @@ import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
 import net.echonolix.caelum.codegen.api.EnumEntryFixedName
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.addKdoc
+import kotlin.random.Random
 
 public open class EnumBaseGenerator(
     ctx: CodegenContext,
@@ -120,6 +121,7 @@ public open class EnumBaseGenerator(
             type.addType(companionType.build())
             val file = FileSpec.builder(thisCName)
             file.addType(type.build())
+            file.addNativeAccess()
             return file
         }
     }
@@ -153,6 +155,147 @@ public open class EnumBaseGenerator(
                 .build()
         )
         return this
+    }
+
+    context(ctx: CodegenContext)
+    private fun FileSpec.Builder.addNativeAccess() {
+        val baseType = element.baseType
+        val random = Random(0)
+
+        val validChars = ('a'..'z').toList()
+
+        fun randomName(base: String): AnnotationSpec {
+            val randomChars = (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
+            return AnnotationSpec.builder(JvmName::class)
+                .addMember("%S", "${thisCName.simpleName}_${base}_$randomChars")
+                .build()
+        }
+
+        val pointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(thisCName)
+        val arrayCNameP = CaelumCodegenHelper.arrayCName.parameterizedBy(thisCName)
+        val valueCNameP = CaelumCodegenHelper.valueCName.parameterizedBy(thisCName)
+        val nullableAny = Any::class.asClassName().copy(nullable = true)
+
+        addFunction(
+            FunSpec.builder("get")
+                .receiver(arrayCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("index", LONG)
+                .returns(thisCName)
+                .addStatement(
+                    "return %T.fromNativeData(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
+                    thisCName,
+                    baseType.caelumCoreTypeName,
+                    baseType.ktApiTypeTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set")
+                .receiver(arrayCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("index", LONG)
+                .addParameter("value", thisCName)
+                .addStatement(
+                    "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNativeData(value))",
+                    baseType.caelumCoreTypeName,
+                    thisCName,
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("get")
+                .receiver(pointerCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("index", LONG)
+                .returns(thisCName)
+                .addStatement(
+                    "return %T.fromNativeData(%T.arrayVarHandle.get(%M, _address, index) as %T)",
+                    thisCName,
+                    baseType.caelumCoreTypeName,
+                    CaelumCodegenHelper.omniSegment,
+                    baseType.ktApiTypeTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set")
+                .receiver(pointerCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("index", LONG)
+                .addParameter("value", thisCName)
+                .addStatement(
+                    "%T.arrayVarHandle.set(%M, _address, index, %T.toNativeData(value))",
+                    baseType.caelumCoreTypeName,
+                    CaelumCodegenHelper.omniSegment,
+                    thisCName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getValue")
+                .addAnnotation(randomName("getValue"))
+                .receiver(pointerCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .returns(thisCName)
+                .addStatement(
+                    "return %T.fromNativeData(%T.valueVarHandle.get(%M, _address) as %T)",
+                    thisCName,
+                    baseType.caelumCoreTypeName,
+                    CaelumCodegenHelper.omniSegment,
+                    baseType.ktApiTypeTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("setValue")
+                .addAnnotation(randomName("setValue"))
+                .receiver(pointerCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .addParameter("value", thisCName)
+                .addStatement(
+                    "%T.valueVarHandle.set(%M, _address, %T.toNativeData(value))",
+                    baseType.caelumCoreTypeName,
+                    CaelumCodegenHelper.omniSegment,
+                    thisCName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getValue")
+                .addAnnotation(randomName("getValue"))
+                .receiver(valueCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .returns(thisCName)
+                .addStatement(
+                    "return %T.fromNativeData(%T.valueVarHandle.get(_segment, 0L) as %T)",
+                    thisCName,
+                    baseType.caelumCoreTypeName,
+                    baseType.ktApiTypeTypeName
+                )
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("setValue")
+                .addAnnotation(randomName("setValue"))
+                .receiver(valueCNameP)
+                .addModifiers(KModifier.OPERATOR)
+                .addParameter("thisRef", nullableAny)
+                .addParameter("property", nullableAny)
+                .addParameter("value", thisCName)
+                .addStatement(
+                    "%T.valueVarHandle.set(_segment, 0L, %T.toNativeData(value))",
+                    baseType.caelumCoreTypeName,
+                    thisCName
+                )
+                .build()
+        )
     }
 
 

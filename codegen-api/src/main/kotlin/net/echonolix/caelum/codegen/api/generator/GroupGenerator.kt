@@ -128,6 +128,101 @@ public open class GroupGenerator(
         with(ctx) {
             val typeObjectType = buildTypeObjectType()
             file.addType(typeObjectType.build())
+            run {
+                file.addFunction(
+                    FunSpec.builder("elementAddress")
+                        .receiver(arrayCNameP)
+                        .addParameter("index", LONG)
+                        .returns(LONG)
+                        .addStatement(
+                            "return %T.arrayByteOffsetHandle.invokeExact(_segment.address(), index) as Long",
+                            thisCName
+                        )
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("get")
+                        .receiver(arrayCNameP)
+                        .addModifiers(KModifier.OPERATOR)
+                        .addParameter("index", LONG)
+                        .returns(pointerCNameP)
+                        .addStatement(
+                            "return %T(elementAddress(index))",
+                            CaelumCodegenHelper.pointerCName
+                        )
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("set")
+                        .receiver(arrayCNameP)
+                        .addModifiers(KModifier.OPERATOR)
+                        .addParameter("index", LONG)
+                        .addParameter("value", valueCNameP)
+                        .addStatement("set(index, value.ptr())")
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("set")
+                        .receiver(arrayCNameP)
+                        .addModifiers(KModifier.OPERATOR)
+                        .addParameter("index", LONG)
+                        .addParameter("value", pointerCNameP)
+                        .addStatement(
+                            "%M(%M, value._address, _segment, elementAddress(index), %T.layout.byteSize())",
+                            CaelumCodegenHelper.copyMember,
+                            CaelumCodegenHelper.omniSegment,
+                            thisCName
+                        )
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("elementAddress")
+                        .receiver(pointerCNameP)
+                        .addParameter("index", LONG)
+                        .returns(LONG)
+                        .addStatement(
+                            "return %T.arrayByteOffsetHandle.invokeExact(_address, index) as Long",
+                            thisCName
+                        )
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("get")
+                        .receiver(pointerCNameP)
+                        .addModifiers(KModifier.OPERATOR)
+                        .addParameter("index", LONG)
+                        .returns(pointerCNameP)
+                        .addStatement(
+                            "return %T(elementAddress(index))",
+                            CaelumCodegenHelper.pointerCName
+                        )
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("set")
+                        .receiver(pointerCNameP)
+                        .addModifiers(KModifier.OPERATOR)
+                        .addParameter("index", LONG)
+                        .addParameter("value", valueCNameP)
+                        .addStatement("set(index, value.ptr())")
+                        .build()
+                )
+                file.addFunction(
+                    FunSpec.builder("set")
+                        .receiver(pointerCNameP)
+                        .addModifiers(KModifier.OPERATOR)
+                        .addParameter("index", LONG)
+                        .addParameter("value", pointerCNameP)
+                        .addStatement(
+                            "%M(%M, value._address, %M, elementAddress(index), %T.layout.byteSize())",
+                            CaelumCodegenHelper.copyMember,
+                            CaelumCodegenHelper.omniSegment,
+                            CaelumCodegenHelper.omniSegment,
+                            thisCName
+                        )
+                        .build()
+                )
+            }
             element.members.forEach {
                 addMemberAccessor(it)
             }
