@@ -10,11 +10,10 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
 import java.lang.foreign.ValueLayout
 
-public abstract class VkStruct<T : VkStruct<T>>(
+abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
 ) : NativeStruct<T>(*members), AllocateOverLoad<T> {
-    public open val structType: VkStructureType?
-        get() = null
+    abstract val structType: VkStructureType?
 
     private fun MemorySegment.initValue(): MemorySegment {
         this.fill(0)

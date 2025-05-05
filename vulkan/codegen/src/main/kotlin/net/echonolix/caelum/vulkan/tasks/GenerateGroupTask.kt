@@ -1,19 +1,15 @@
 package net.echonolix.caelum.vulkan.tasks
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.WildcardTypeName
-import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
-import net.echonolix.caelum.codegen.api.deepReferenceResolve
-import net.echonolix.caelum.codegen.api.deepResolve
+import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.codegen.api.generator.GroupGenerator
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
+import net.echonolix.caelum.vulkan.StructTypeTag
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -25,6 +21,9 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         "VkBaseInStructure",
         "VkBaseOutStructure"
     )
+    private val vkStructureTypeCName = with(ctx) {
+        ctx.resolveTypedElement<CType.Enum>("VkStructureType").ktApiType()
+    }
 
     override fun CodegenContext.compute() {
         val groupTypes = ctx.filterTypeStream<CType.Group>()
@@ -127,6 +126,36 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     is CType.Struct -> VulkanCodegen.vkStructCName
                     is CType.Union -> VulkanCodegen.vkUnionCName
                 }
+            }
+
+            context(ctx: CodegenContext)
+            override fun buildTypeObjectType(): TypeSpec.Builder {
+                val type = super.buildTypeObjectType()
+
+                if (groupType is CType.Struct) {
+                    val initializerCodeBlock = groupType.members
+                        .firstNotNullOfOrNull { it.tags.get<StructTypeTag>() }
+                        ?.let { tag ->
+                            CodeBlock.of(
+                                "return %T.%N",
+                                vkStructureTypeCName,
+                                tag.structType.tags.get<EnumEntryFixedName>()!!.name
+                            )
+                        } ?: CodeBlock.of("return null")
+
+                    type.addProperty(
+                        PropertySpec.builder("structType", vkStructureTypeCName.copy(nullable = true))
+                            .addModifiers(KModifier.OVERRIDE)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addCode(initializerCodeBlock)
+                                    .build()
+                            )
+                            .build()
+                    )
+                }
+
+                return type
             }
 
             context(ctx: CodegenContext)
