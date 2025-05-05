@@ -1,13 +1,13 @@
 package net.echonolix.caelum.glfw.functions
 
-import net.echonolix.caelum.APIHelper
-import net.echonolix.caelum.CTypeName
-import net.echonolix.caelum.NativeFunction
-import net.echonolix.caelum.NativePointer
+import net.echonolix.caelum.*
 import net.echonolix.caelum.glfw.structs.GLFWWindow
+import net.echonolix.caelum.vulkan.VkException
 import net.echonolix.caelum.vulkan.enums.VkResult
+import net.echonolix.caelum.vulkan.handles.VkInstance
 import net.echonolix.caelum.vulkan.handles.VkInstanceHandle
 import net.echonolix.caelum.vulkan.handles.VkSurfaceKHR
+import net.echonolix.caelum.vulkan.handles.value
 import net.echonolix.caelum.vulkan.structs.VkAllocationCallbacks
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandle
@@ -16,6 +16,20 @@ import kotlin.reflect.jvm.javaMethod
 
 public val glfwCreateWindowSurface: GLFWFuncCreateWindowSurface =
     GLFWFuncCreateWindowSurface.fromNativeData(APIHelper.findSymbol("glfwCreateWindowSurface"))
+
+public fun glfwCreateWindowSurface(
+    instance: VkInstance,
+    window: NativePointer<GLFWWindow>,
+    allocator: NativePointer<VkAllocationCallbacks>?,
+): Result<VkSurfaceKHR> = MemoryStack {
+    val handle114514 = VkSurfaceKHR.malloc()
+    when (val result69420 = glfwCreateWindowSurface(instance, window, allocator ?: nullptr(), handle114514.ptr())) {
+        VkResult.VK_SUCCESS -> Result.success(VkSurfaceKHR.fromNativeData(instance, handle114514.`value`))
+        VkResult.VK_ERROR_OUT_OF_HOST_MEMORY,
+        VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY -> Result.failure(VkException(result69420))
+        else -> error("""Unexpected result from vkCreateDevice: $result69420""")
+    }
+}
 
 public fun interface GLFWFuncCreateWindowSurface : NativeFunction {
     override val typeDescriptor: NativeFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>
@@ -26,18 +40,20 @@ public fun interface GLFWFuncCreateWindowSurface : NativeFunction {
         @CTypeName("GLFWwindow*") window: NativePointer<GLFWWindow>,
         @CTypeName("const VkAllocationCallbacks*") allocator: NativePointer<VkAllocationCallbacks>,
         @CTypeName("VkSurfaceKHR*") surface: NativePointer<VkSurfaceKHR>,
-    ): Int
+    ): VkResult
 
     public fun invokeNative(
         instance: Long,
         window: Long,
         allocator: Long,
         surface: Long,
-    ): Int = invoke(
-        VkInstanceHandle.fromNativeData(instance),
-        NativePointer.fromNativeData(window),
-        NativePointer.fromNativeData(allocator),
-        NativePointer.fromNativeData(surface),
+    ): Int = VkResult.toNativeData(
+        invoke(
+            VkInstanceHandle.fromNativeData(instance),
+            NativePointer.fromNativeData(window),
+            NativePointer.fromNativeData(allocator),
+            NativePointer.fromNativeData(surface),
+        )
     )
 
     public companion object TypeDescriptor : NativeFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>(
@@ -60,11 +76,13 @@ public fun interface GLFWFuncCreateWindowSurface : NativeFunction {
                 window: NativePointer<GLFWWindow>,
                 allocator: NativePointer<VkAllocationCallbacks>,
                 surface: NativePointer<VkSurfaceKHR>
-            ): Int = invokeNative(
-                VkInstanceHandle.toNativeData(instance),
-                NativePointer.toNativeData(window),
-                NativePointer.toNativeData(allocator),
-                NativePointer.toNativeData(surface)
+            ): VkResult = VkResult.fromNativeData(
+                invokeNative(
+                    VkInstanceHandle.toNativeData(instance),
+                    NativePointer.toNativeData(window),
+                    NativePointer.toNativeData(allocator),
+                    NativePointer.toNativeData(surface)
+                )
             )
 
             override fun invokeNative(
