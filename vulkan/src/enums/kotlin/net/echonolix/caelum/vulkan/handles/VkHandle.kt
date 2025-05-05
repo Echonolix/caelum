@@ -7,89 +7,92 @@ import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.enums.VkObjectType
 import java.lang.foreign.ValueLayout.JAVA_LONG
 
-public interface VkHandle : NativeType {
-    public val handle: Long
+interface VkHandle : NativeType {
+    val handle: Long
 
-    public val objectType: VkObjectType
+    val objectType: VkObjectType
 
-    public abstract class TypeDescriptor<T : VkHandle> : net.echonolix.caelum.TypeDescriptor.Impl<T>(JAVA_LONG)
+    abstract class TypeDescriptor<T : VkHandle> : net.echonolix.caelum.TypeDescriptor.Impl<T>(JAVA_LONG)
 }
 
-public val NativeValue<out VkHandle>.value: Long
+var NativeValue<out VkHandle>.value: Long
     get() = reinterpretCast<NativeInt64>(this).value
+    set(value) {
+        reinterpretCast<NativeInt64>(this).value = value
+    }
 
-public operator fun NativePointer<out VkHandle>.get(index: Long): Long =
+operator fun NativePointer<out VkHandle>.get(index: Long): Long =
     reinterpretCast<NativeInt64>(this)[index]
 
-public operator fun NativePointer<out VkHandle>.get(index: Int): Long =
+operator fun NativePointer<out VkHandle>.get(index: Int): Long =
     get(index.toLong())
 
-public operator fun NativePointer<out VkHandle>.get(index: ULong): Long =
+operator fun NativePointer<out VkHandle>.get(index: ULong): Long =
     get(index.toLong())
 
-public operator fun NativePointer<out VkHandle>.get(index: UInt): Long =
+operator fun NativePointer<out VkHandle>.get(index: UInt): Long =
     get(index.toLong())
 
-public operator fun NativeArray<out VkHandle>.get(index: Long): Long =
+operator fun NativeArray<out VkHandle>.get(index: Long): Long =
     ptr().get(index)
 
-public operator fun NativeArray<out VkHandle>.get(index: Int): Long =
+operator fun NativeArray<out VkHandle>.get(index: Int): Long =
     get(index.toLong())
 
-public operator fun NativeArray<out VkHandle>.get(index: ULong): Long =
+operator fun NativeArray<out VkHandle>.get(index: ULong): Long =
     get(index.toLong())
 
-public operator fun NativeArray<out VkHandle>.get(index: UInt): Long =
+operator fun NativeArray<out VkHandle>.get(index: UInt): Long =
     get(index.toLong())
 
 
-public operator fun NativePointer<out VkHandle>.set(index: Long, value: Long) {
+operator fun NativePointer<out VkHandle>.set(index: Long, value: Long) {
     reinterpretCast<NativeInt64>(this)[index] = value
 }
 
-public operator fun NativePointer<out VkHandle>.set(index: Int, value: Long): Unit =
+operator fun NativePointer<out VkHandle>.set(index: Int, value: Long): Unit =
     set(index.toLong(), value)
 
-public operator fun NativePointer<out VkHandle>.set(index: ULong, value: Long): Unit =
+operator fun NativePointer<out VkHandle>.set(index: ULong, value: Long): Unit =
     set(index.toLong(), value)
 
-public operator fun NativePointer<out VkHandle>.set(index: UInt, value: Long): Unit =
+operator fun NativePointer<out VkHandle>.set(index: UInt, value: Long): Unit =
     set(index.toLong(), value)
 
-public operator fun NativeArray<out VkHandle>.set(index: Long, value: Long): Unit =
+operator fun NativeArray<out VkHandle>.set(index: Long, value: Long): Unit =
     ptr().set(index, value)
 
-public operator fun NativeArray<out VkHandle>.set(index: Int, value: Long): Unit =
+operator fun NativeArray<out VkHandle>.set(index: Int, value: Long): Unit =
     set(index.toLong(), value)
 
-public operator fun NativeArray<out VkHandle>.set(index: ULong, value: Long): Unit =
+operator fun NativeArray<out VkHandle>.set(index: ULong, value: Long): Unit =
     set(index.toLong(), value)
 
-public operator fun NativeArray<out VkHandle>.set(index: UInt, value: Long): Unit =
+operator fun NativeArray<out VkHandle>.set(index: UInt, value: Long): Unit =
     set(index.toLong(), value)
 
 
-public operator fun <T : VkHandle> NativePointer<T>.set(index: Long, value: T) {
+operator fun <T : VkHandle> NativePointer<T>.set(index: Long, value: T) {
     reinterpretCast<NativeInt64>(this)[index] = value.handle
 }
 
-public operator fun <T : VkHandle> NativePointer<T>.set(index: Int, value: T): Unit =
+operator fun <T : VkHandle> NativePointer<T>.set(index: Int, value: T): Unit =
     set(index.toLong(), value)
 
-public operator fun <T : VkHandle> NativePointer<T>.set(index: ULong, value: T): Unit =
+operator fun <T : VkHandle> NativePointer<T>.set(index: ULong, value: T): Unit =
     set(index.toLong(), value)
 
-public operator fun <T : VkHandle> NativePointer<T>.set(index: UInt, value: T): Unit =
+operator fun <T : VkHandle> NativePointer<T>.set(index: UInt, value: T): Unit =
     set(index.toLong(), value)
 
-public operator fun <T : VkHandle> NativeArray<T>.set(index: Long, value: T): Unit =
+operator fun <T : VkHandle> NativeArray<T>.set(index: Long, value: T): Unit =
     ptr().set(index, value)
 
-public operator fun <T : VkHandle> NativeArray<T>.set(index: Int, value: T): Unit =
+operator fun <T : VkHandle> NativeArray<T>.set(index: Int, value: T): Unit =
     set(index.toLong(), value)
 
-public operator fun <T : VkHandle> NativeArray<T>.set(index: ULong, value: T): Unit =
+operator fun <T : VkHandle> NativeArray<T>.set(index: ULong, value: T): Unit =
     set(index.toLong(), value)
 
-public operator fun <T : VkHandle> NativeArray<T>.set(index: UInt, value: T): Unit =
+operator fun <T : VkHandle> NativeArray<T>.set(index: UInt, value: T): Unit =
     set(index.toLong(), value)
