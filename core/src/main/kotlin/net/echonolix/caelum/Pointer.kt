@@ -22,94 +22,74 @@ public value class NPointer<T : NType>(
         @JvmStatic
         public inline fun <T : NType> toNativeData(value: NPointer<T>?): Long = value?._address ?: 0L
 
-        @JvmName("malloc-114")
         public fun <T : NType> malloc(allocator: SegmentAllocator): NValue<NPointer<T>> =
             NValue(allocator.allocate(layout))
 
-        context(allocator: SegmentAllocator)
-        @JvmName("malloc-514")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> malloc(): NValue<NPointer<T>> =
             NValue(allocator.allocate(layout))
 
-        @JvmName("malloc-191")
         public fun <T : NType> malloc(allocator: SegmentAllocator, count: ULong): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()))
 
-        @JvmName("malloc-981")
         public fun <T : NType> malloc(allocator: SegmentAllocator, count: UInt): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()))
 
-        @JvmName("malloc-069")
         public fun <T : NType> malloc(allocator: SegmentAllocator, count: Long): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count))
 
-        @JvmName("malloc-420")
         public fun <T : NType> malloc(allocator: SegmentAllocator, count: Int): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()))
 
-        context(allocator: SegmentAllocator)
-        @JvmName("malloc-911")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> malloc(count: ULong): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()))
 
-        context(allocator: SegmentAllocator)
-        @JvmName("malloc-666")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> malloc(count: UInt): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()))
 
-        context(allocator: SegmentAllocator)
-        @JvmName("malloc-888")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> malloc(count: Long): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count))
 
-        context(allocator: SegmentAllocator)
-        @JvmName("malloc-233")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> malloc(count: Int): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()))
 
 
-        @JvmName("calloc-114")
         public fun <T : NType> calloc(allocator: SegmentAllocator, count: ULong): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-        @JvmName("calloc-514")
         public fun <T : NType> calloc(allocator: SegmentAllocator, count: UInt): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-        @JvmName("calloc-191")
         public fun <T : NType> calloc(allocator: SegmentAllocator, count: Long): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count).apply { fill(0) })
 
-        @JvmName("calloc-981")
         public fun <T : NType> calloc(allocator: SegmentAllocator, count: Int): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-        context(allocator: SegmentAllocator)
-        @JvmName("calloc-069")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> calloc(count: ULong): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-        context(allocator: SegmentAllocator)
-        @JvmName("calloc-420")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> calloc(count: UInt): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-        context(allocator: SegmentAllocator)
-        @JvmName("calloc-911")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> calloc(count: Long): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count).apply { fill(0) })
 
-        context(allocator: SegmentAllocator)
-        @JvmName("calloc-666")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> calloc(count: Int): NArray<NPointer<T>> =
             NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
-        @JvmName("calloc-888")
         public fun <T : NType> calloc(allocator: SegmentAllocator): NValue<NPointer<T>> =
             NValue(allocator.allocate(layout).apply { fill(0) })
 
-        context(allocator: SegmentAllocator)
-        @JvmName("calloc-233")
+        context(allocator: MemoryStack.Frame)
         public fun <T : NType> calloc(): NValue<NPointer<T>> =
             NValue(allocator.allocate(layout).apply { fill(0) })
     }

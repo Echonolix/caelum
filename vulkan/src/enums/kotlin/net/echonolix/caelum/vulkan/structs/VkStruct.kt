@@ -1,6 +1,6 @@
 package net.echonolix.caelum.vulkan.structs
 
-import net.echonolix.caelum.AllocateOverLoad
+import net.echonolix.caelum.CustomAllocateOnly
 import net.echonolix.caelum.NArray
 import net.echonolix.caelum.NStruct
 import net.echonolix.caelum.NValue
@@ -12,7 +12,7 @@ import java.lang.foreign.ValueLayout
 
 abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
-) : NStruct<T>(*members), AllocateOverLoad<T> {
+) : NStruct<T>(*members), CustomAllocateOnly<T> {
     abstract val structType: VkStructureType?
 
     private fun MemorySegment.initValue(): MemorySegment {
