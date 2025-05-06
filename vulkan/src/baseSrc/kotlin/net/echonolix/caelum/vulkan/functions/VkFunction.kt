@@ -2,20 +2,20 @@ package net.echonolix.caelum.vulkan.functions
 
 import net.echonolix.caelum.NativeFunction
 import net.echonolix.caelum.TypeDescriptor
-import java.lang.invoke.MethodHandle
+import kotlin.reflect.KFunction
 
-public interface VkFunction : NativeFunction {
+interface VkFunction : NativeFunction {
     override val typeDescriptor: TypeDescriptorImpl<*>
 
-    public abstract class TypeDescriptorImpl<T : VkFunction>(
+    abstract class TypeDescriptorImpl<T : VkFunction>(
         name: String,
-        upcallHandle: MethodHandle,
+        invokeNativeFunc: KFunction<*>,
         returnType: TypeDescriptor<*>?,
         vararg parameters: TypeDescriptor<*>
-    ) : NativeFunction.TypeDescriptorImpl<T>(name, upcallHandle, returnType, *parameters) {
+    ) : NativeFunction.TypeDescriptorImpl<T>(name, invokeNativeFunc, returnType, *parameters) {
         final override val manager: NativeFunction.Manager
             get() = Companion
     }
 
-    public companion object : NativeFunction.Manager.Impl()
+    companion object : NativeFunction.Manager.Impl()
 }

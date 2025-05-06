@@ -5,8 +5,6 @@ import net.echonolix.caelum.vulkan.handles.VkInstanceHandle
 import net.echonolix.caelum.vulkan.handles.VkPhysicalDeviceHandle
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import kotlin.reflect.jvm.javaMethod
 
 public val glfwGetPhysicalDevicePresentationSupport: GLFWFuncGetPhysicalDevicePresentationSupport =
     GLFWFuncGetPhysicalDevicePresentationSupport.fromNativeData(APIHelper.findSymbol("glfwGetPhysicalDevicePresentationSupport"))
@@ -34,7 +32,7 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NativeFuncti
     public companion object TypeDescriptor :
         NativeFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>(
             "glfwGetPhysicalDevicePresentationSupport",
-            MethodHandles.lookup().unreflect(GLFWFuncGetPhysicalDevicePresentationSupport::invokeNative.javaMethod),
+            GLFWFuncGetPhysicalDevicePresentationSupport::invokeNative,
             NativeInt,
             NativePointer,
             NativePointer,

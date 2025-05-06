@@ -84,8 +84,6 @@ sourceSets.main.configure {
 
 dependencies {
     ktgen(project("codegen"))
-
-    baseSrc.apiConfigurationName(kotlin("reflect"))
     baseSrc.apiConfigurationName(project(":caelum-core"))
 }
 

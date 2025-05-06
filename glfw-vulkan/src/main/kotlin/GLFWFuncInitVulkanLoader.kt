@@ -7,8 +7,6 @@ import net.echonolix.caelum.NativePointer
 import net.echonolix.caelum.vulkan.functions.VkFuncPtrGetInstanceProcAddrLUNARG
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import kotlin.reflect.jvm.javaMethod
 
 public val glfwInitVulkanLoader: GLFWFuncInitVulkanLoader =
     GLFWFuncInitVulkanLoader.fromNativeData(APIHelper.findSymbol("glfwInitVulkanLoader"))
@@ -27,7 +25,7 @@ public fun interface GLFWFuncInitVulkanLoader : NativeFunction {
 
     public companion object TypeDescriptor : NativeFunction.TypeDescriptorImpl<GLFWFuncInitVulkanLoader>(
         "glfwInitVulkanLoader",
-        MethodHandles.lookup().unreflect(GLFWFuncInitVulkanLoader::invokeNative.javaMethod),
+        GLFWFuncInitVulkanLoader::invokeNative,
         NativePointer,
     ) {
         override fun fromNativeData(value: MemorySegment): GLFWFuncInitVulkanLoader = Impl(downcallHandle(value))

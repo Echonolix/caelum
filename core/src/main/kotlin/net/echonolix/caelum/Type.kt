@@ -2,6 +2,9 @@ package net.echonolix.caelum
 
 import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import kotlin.reflect.KFunction
+import kotlin.reflect.jvm.javaMethod
 
 public interface TypeDescriptor<T : NativeType> {
     public val layout: MemoryLayout
@@ -76,10 +79,11 @@ public interface NativeFunction : NativeType {
 
     public abstract class TypeDescriptorImpl<T : NativeFunction>(
         public val name: String,
-        public val upcallHandle: MethodHandle,
+        public val invokeNativeFunc: KFunction<*>,
         public val returnType: TypeDescriptor<*>?,
         vararg parameters: TypeDescriptor<*>
     ) : NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
+        public val upcallHandle: MethodHandle = MethodHandles.lookup().unreflect(invokeNativeFunc.javaMethod)
         public val parameters: List<TypeDescriptor<*>> = parameters.toList()
 
         public val functionDescriptor: FunctionDescriptor = if (returnType == null) {

@@ -11,8 +11,6 @@ import net.echonolix.caelum.vulkan.handles.value
 import net.echonolix.caelum.vulkan.structs.VkAllocationCallbacks
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import kotlin.reflect.jvm.javaMethod
 
 public val glfwCreateWindowSurface: GLFWFuncCreateWindowSurface =
     GLFWFuncCreateWindowSurface.fromNativeData(APIHelper.findSymbol("glfwCreateWindowSurface"))
@@ -58,7 +56,7 @@ public fun interface GLFWFuncCreateWindowSurface : NativeFunction {
 
     public companion object TypeDescriptor : NativeFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>(
         "glfwCreateWindowSurface",
-        MethodHandles.lookup().unreflect(GLFWFuncCreateWindowSurface::invokeNative.javaMethod),
+        GLFWFuncCreateWindowSurface::invokeNative,
         VkResult,
         NativePointer,
         NativePointer,

@@ -4,8 +4,6 @@ import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.handles.VkInstanceHandle
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import kotlin.reflect.jvm.javaMethod
 
 public val glfwGetInstanceProcAddress: GLFWFuncGetInstanceProcAddress =
     GLFWFuncGetInstanceProcAddress.fromNativeData(APIHelper.findSymbol("glfwGetInstanceProcAddress"))
@@ -31,7 +29,7 @@ public fun interface GLFWFuncGetInstanceProcAddress : NativeFunction {
 
     public companion object TypeDescriptor : NativeFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>(
         "glfwGetInstanceProcAddress",
-        MethodHandles.lookup().unreflect(GLFWFuncGetInstanceProcAddress::invokeNative.javaMethod),
+        GLFWFuncGetInstanceProcAddress::invokeNative,
         NativePointer,
         NativePointer,
         NativePointer

@@ -103,12 +103,7 @@ public open class FunctionGenerator(
 
         val superParameters = mutableListOf(
             CodeBlock.Companion.of("%S", nativeName()),
-            CodeBlock.Companion.of(
-                "%T.lookup().unreflect(%T::invokeNative.%M)",
-                CaelumCodegenHelper.methodHandlesCName,
-                thisCName,
-                CaelumCodegenHelper.javaMethodMemberName
-            ),
+            CodeBlock.Companion.of("%T::invokeNative", thisCName),
             typeDescriptorCodeBlock(returnType)
         )
         element.parameters.mapTo(superParameters) {

@@ -14,7 +14,6 @@ val codegenCExtension = extensions.create("codegenC", CodegenCExtension::class.j
 
 dependencies {
     ktgen(project(":codegen-c"))
-    implementation(kotlin("reflect"))
     implementation(project(":caelum-core"))
 }
 

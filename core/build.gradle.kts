@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     ktgen(project("codegen"))
+    implementation(kotlin("reflect"))
 }
 
 kotlin {

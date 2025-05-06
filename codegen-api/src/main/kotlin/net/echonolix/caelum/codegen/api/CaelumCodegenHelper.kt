@@ -51,7 +51,6 @@ public object CaelumCodegenHelper {
 
     public val methodHandleCName: ClassName = MethodHandle::class.asClassName()
     public val methodHandlesCName: ClassName = MethodHandles::class.asClassName()
-    public val javaMethodMemberName: MemberName = MemberName("kotlin.reflect.jvm", "javaMethod")
 
     public val methodTypeCName: ClassName = ClassName("java.lang.invoke", "MethodType")
 
