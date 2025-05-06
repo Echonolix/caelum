@@ -5,95 +5,92 @@ package net.echonolix.caelum.vulkan.handles
 
 import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.enums.VkObjectType
-import java.lang.foreign.ValueLayout.JAVA_LONG
 
-interface VkHandle : NType.Primitive {
-    val handle: Long
-
+interface VkHandle<T : VkHandle<T>> : NEnum<T, Long> {
+    override val nType: NPrimitive<Long, Long> get() = NInt64
+    override val value: Long
     val objectType: VkObjectType
-
-    abstract class TypeDescriptor<T : VkHandle> : NType.Primitive.Impl<T>(JAVA_LONG)
 }
 
-val NValue<out VkHandle>.value: Long
-    get() = reinterpretCast<NativeInt64>(this).value
+val NValue<out VkHandle<*>>.value: Long
+    get() = reinterpretCast<NInt64>(this).value
 
-fun <T : VkHandle> NValue<T>.set(handle: T) {
-    reinterpretCast<NativeInt64>(this).value = handle.handle
+fun <T : VkHandle<*>> NValue<T>.set(handle: T) {
+    reinterpretCast<NInt64>(this).value = handle.value
 }
 
-operator fun NPointer<out VkHandle>.get(index: Long): Long =
-    reinterpretCast<NativeInt64>(this)[index]
+operator fun NPointer<out VkHandle<*>>.get(index: Long): Long =
+    reinterpretCast<NInt64>(this)[index]
 
-operator fun NPointer<out VkHandle>.get(index: Int): Long =
+operator fun NPointer<out VkHandle<*>>.get(index: Int): Long =
     get(index.toLong())
 
-operator fun NPointer<out VkHandle>.get(index: ULong): Long =
+operator fun NPointer<out VkHandle<*>>.get(index: ULong): Long =
     get(index.toLong())
 
-operator fun NPointer<out VkHandle>.get(index: UInt): Long =
+operator fun NPointer<out VkHandle<*>>.get(index: UInt): Long =
     get(index.toLong())
 
-operator fun NArray<out VkHandle>.get(index: Long): Long =
+operator fun NArray<out VkHandle<*>>.get(index: Long): Long =
     ptr().get(index)
 
-operator fun NArray<out VkHandle>.get(index: Int): Long =
+operator fun NArray<out VkHandle<*>>.get(index: Int): Long =
     get(index.toLong())
 
-operator fun NArray<out VkHandle>.get(index: ULong): Long =
+operator fun NArray<out VkHandle<*>>.get(index: ULong): Long =
     get(index.toLong())
 
-operator fun NArray<out VkHandle>.get(index: UInt): Long =
+operator fun NArray<out VkHandle<*>>.get(index: UInt): Long =
     get(index.toLong())
 
 
-operator fun NPointer<out VkHandle>.set(index: Long, value: Long) {
-    reinterpretCast<NativeInt64>(this)[index] = value
+operator fun NPointer<out VkHandle<*>>.set(index: Long, value: Long) {
+    reinterpretCast<NInt64>(this)[index] = value
 }
 
-operator fun NPointer<out VkHandle>.set(index: Int, value: Long): Unit =
+operator fun NPointer<out VkHandle<*>>.set(index: Int, value: Long): Unit =
     set(index.toLong(), value)
 
-operator fun NPointer<out VkHandle>.set(index: ULong, value: Long): Unit =
+operator fun NPointer<out VkHandle<*>>.set(index: ULong, value: Long): Unit =
     set(index.toLong(), value)
 
-operator fun NPointer<out VkHandle>.set(index: UInt, value: Long): Unit =
+operator fun NPointer<out VkHandle<*>>.set(index: UInt, value: Long): Unit =
     set(index.toLong(), value)
 
-operator fun NArray<out VkHandle>.set(index: Long, value: Long): Unit =
+operator fun NArray<out VkHandle<*>>.set(index: Long, value: Long): Unit =
     ptr().set(index, value)
 
-operator fun NArray<out VkHandle>.set(index: Int, value: Long): Unit =
+operator fun NArray<out VkHandle<*>>.set(index: Int, value: Long): Unit =
     set(index.toLong(), value)
 
-operator fun NArray<out VkHandle>.set(index: ULong, value: Long): Unit =
+operator fun NArray<out VkHandle<*>>.set(index: ULong, value: Long): Unit =
     set(index.toLong(), value)
 
-operator fun NArray<out VkHandle>.set(index: UInt, value: Long): Unit =
+operator fun NArray<out VkHandle<*>>.set(index: UInt, value: Long): Unit =
     set(index.toLong(), value)
 
 
-operator fun <T : VkHandle> NPointer<T>.set(index: Long, value: T) {
-    reinterpretCast<NativeInt64>(this)[index] = value.handle
+operator fun <T : VkHandle<*>> NPointer<T>.set(index: Long, value: T) {
+    reinterpretCast<NInt64>(this)[index] = value.value
 }
 
-operator fun <T : VkHandle> NPointer<T>.set(index: Int, value: T): Unit =
+operator fun <T : VkHandle<*>> NPointer<T>.set(index: Int, value: T): Unit =
     set(index.toLong(), value)
 
-operator fun <T : VkHandle> NPointer<T>.set(index: ULong, value: T): Unit =
+operator fun <T : VkHandle<*>> NPointer<T>.set(index: ULong, value: T): Unit =
     set(index.toLong(), value)
 
-operator fun <T : VkHandle> NPointer<T>.set(index: UInt, value: T): Unit =
+operator fun <T : VkHandle<*>> NPointer<T>.set(index: UInt, value: T): Unit =
     set(index.toLong(), value)
 
-operator fun <T : VkHandle> NArray<T>.set(index: Long, value: T): Unit =
+operator fun <T : VkHandle<*>> NArray<T>.set(index: Long, value: T): Unit =
     ptr().set(index, value)
 
-operator fun <T : VkHandle> NArray<T>.set(index: Int, value: T): Unit =
+operator fun <T : VkHandle<*>> NArray<T>.set(index: Int, value: T): Unit =
     set(index.toLong(), value)
 
-operator fun <T : VkHandle> NArray<T>.set(index: ULong, value: T): Unit =
+operator fun <T : VkHandle<*>> NArray<T>.set(index: ULong, value: T): Unit =
     set(index.toLong(), value)
 
-operator fun <T : VkHandle> NArray<T>.set(index: UInt, value: T): Unit =
+operator fun <T : VkHandle<*>> NArray<T>.set(index: UInt, value: T): Unit =
     set(index.toLong(), value)

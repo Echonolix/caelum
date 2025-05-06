@@ -71,7 +71,7 @@ object VulkanCodegen {
     val vkUnionCName = ClassName(unionPackageName, "VkUnion")
     val vkHandleCName = ClassName(handlePackageName, "VkHandle")
     val vkFunctionCName = ClassName(functionPackageName, "VkFunction")
-    val vkFunctionTypeDescriptorImplCName = vkFunctionCName.nestedClass("TypeDescriptorImpl")
+    val vkFunctionTypeDescriptorCName = vkFunctionCName.nestedClass("Descriptor")
 
     val typedefBlackList = setOf(
         "ANativeWindow",

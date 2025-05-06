@@ -37,6 +37,20 @@ public object CaelumCodegenHelper {
         public val descriptorImplCName: ClassName = descriptorCName.nestedClass("Impl")
     }
 
+    public object NEnum {
+        public val cName: ClassName = ClassName(basePkgName, "NEnum")
+        public val descriptorCName: ClassName = cName.nestedClass("Descriptor")
+        public val typeObjectCName: ClassName = cName.nestedClass("TypeObject")
+    }
+
+    public object NFunction {
+        public val cName: ClassName = ClassName(basePkgName, "NFunction")
+        public val implCName: ClassName = cName.nestedClass("Impl")
+        public val typeDescriptorCName: ClassName = cName.nestedClass("Descriptor")
+    }
+
+    public val allocOverloadCName: ClassName = ClassName(basePkgName, "AllocOverload")
+
     public val enumCName: ClassName = ClassName(basePkgName, "NEnum")
     public val structCName: ClassName = ClassName(basePkgName, "NStruct")
     public val unionCName: ClassName = ClassName(basePkgName, "NUnion")
@@ -44,10 +58,6 @@ public object CaelumCodegenHelper {
     public val arrayCName: ClassName = ClassName(basePkgName, "NArray")
     public val valueCName: ClassName = ClassName(basePkgName, "NValue")
     public val pointerCName: ClassName = ClassName(basePkgName, "NPointer")
-
-    public val functionCName: ClassName = ClassName(basePkgName, "NFunction")
-    public val functionImplCName: ClassName = functionCName.nestedClass("Impl")
-    public val functionTypeDescriptorImplCName: ClassName = functionCName.nestedClass("TypeDescriptorImpl")
 
     public val helperCName: ClassName = ClassName(basePkgName, "APIHelper")
     public val omniSegment: MemberName = helperCName.member("_\$OMNI_SEGMENT\$_")

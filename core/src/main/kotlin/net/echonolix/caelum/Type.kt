@@ -30,15 +30,15 @@ public interface NPrimitive<N : Any, K : Any> : NType {
         public val valueVarHandle: VarHandle
         public val arrayVarHandle: VarHandle
 
-        public fun arrayGetElement(array: NArray<T>, index: Long): N
-        public fun arraySetElement(array: NArray<T>, index: Long, value: N)
-        public fun pointerGetElement(pointer: NPointer<T>, index: Long): N
-        public fun pointerSetElement(pointer: NPointer<T>, index: Long, value: N)
+        public fun arrayGetElement(array: NArray<out T>, index: Long): N
+        public fun arraySetElement(array: NArray<out T>, index: Long, value: N)
+        public fun pointerGetElement(pointer: NPointer<out T>, index: Long): N
+        public fun pointerSetElement(pointer: NPointer<out T>, index: Long, value: N)
 
-        public fun valueGetValue(value: NValue<T>): N
-        public fun valueSetValue(value: NValue<T>, newValue: N)
-        public fun pointerGetValue(pointer: NPointer<T>): N
-        public fun pointerSetValue(pointer: NPointer<T>, newValue: N)
+        public fun valueGetValue(value: NValue<out T>): N
+        public fun valueSetValue(value: NValue<out T>, newValue: N)
+        public fun pointerGetValue(pointer: NPointer<out T>): N
+        public fun pointerSetValue(pointer: NPointer<out T>, newValue: N)
 
         public sealed class Impl<T : NPrimitive<N, *>, N : Any>(override val layout: ValueLayout) :
             NType.Descriptor.Impl<T>(layout), NativeData<T, N> {
@@ -95,9 +95,14 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
 }
 
-public interface NEnum<T> : NType {
-    public val value: T
-    public val nType: NType
+public interface NEnum<T : NEnum<T, N>, N : Any> : NPrimitive<N, T> {
+    public val value: N
+    public val nType: NPrimitive<N, N>
+    public override val typeDescriptor: Descriptor<T, N>
+
+    public interface Descriptor<T : NEnum<T, N>, N : Any> : NPrimitive.Descriptor<T, N, T>
+
+    public interface TypeObject<T : NEnum<T, N>, N : Any> : NPrimitive.TypeObject<T, N, T>, Descriptor<T, N>
 }
 
 public abstract class NStruct<T : NComposite> private constructor(override val layout: StructLayout) :
@@ -115,14 +120,14 @@ public abstract class NUnion<T : NComposite> private constructor(override val la
 }
 
 public interface NFunction : NComposite {
-    override val typeDescriptor: DescriptorImpl<*>
+    override val typeDescriptor: Descriptor<*>
     public val funcHandle: MethodHandle get() = typeDescriptor.upcallHandle.bindTo(this)
 
     public abstract class Impl(
         final override val funcHandle: MethodHandle
     ) : NFunction
 
-    public abstract class DescriptorImpl<T : NFunction>(
+    public abstract class Descriptor<T : NFunction>(
         public val name: String,
         public val invokeNativeFunc: KFunction<*>,
         public val returnType: NType.Descriptor<*>?,
@@ -185,6 +190,81 @@ public interface NFunction : NComposite {
         }
     }
 }
+
+public interface AllocOverload<T : NType> {
+    public val layoutDelegate: MemoryLayout
+
+    public fun malloc(allocator: SegmentAllocator): NValue<T> =
+        NValue(allocator.allocate(layoutDelegate))
+
+    context(allocator: MemoryStack.Frame)
+    public fun malloc(): NValue<T> =
+        NValue(allocator.allocate(layoutDelegate))
+
+    public fun calloc(allocator: SegmentAllocator): NValue<T> =
+        NValue(allocator.allocate(layoutDelegate).apply { fill(0) })
+
+    context(allocator: MemoryStack.Frame)
+    public fun calloc(): NValue<T> =
+        NValue(allocator.allocate(layoutDelegate).apply { fill(0) })
+
+    public fun malloc(allocator: SegmentAllocator, count: ULong): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()))
+
+    public fun malloc(allocator: SegmentAllocator, count: UInt): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()))
+
+    public fun malloc(allocator: SegmentAllocator, count: Long): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count))
+
+    public fun malloc(allocator: SegmentAllocator, count: Int): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()))
+
+    context(allocator: MemoryStack.Frame)
+    public fun malloc(count: ULong): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()))
+
+    context(allocator: MemoryStack.Frame)
+    public fun malloc(count: UInt): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()))
+
+    context(allocator: MemoryStack.Frame)
+    public fun malloc(count: Long): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count))
+
+    context(allocator: MemoryStack.Frame)
+    public fun malloc(count: Int): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()))
+
+    public fun calloc(allocator: SegmentAllocator, count: ULong): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()).apply { fill(0) })
+
+    public fun calloc(allocator: SegmentAllocator, count: UInt): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()).apply { fill(0) })
+
+    public fun calloc(allocator: SegmentAllocator, count: Long): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count).apply { fill(0) })
+
+    public fun calloc(allocator: SegmentAllocator, count: Int): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()).apply { fill(0) })
+
+    context(allocator: MemoryStack.Frame)
+    public fun calloc(count: ULong): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()).apply { fill(0) })
+
+    context(allocator: MemoryStack.Frame)
+    public fun calloc(count: UInt): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()).apply { fill(0) })
+
+    context(allocator: MemoryStack.Frame)
+    public fun calloc(count: Long): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count).apply { fill(0) })
+
+    context(allocator: MemoryStack.Frame)
+    public fun calloc(count: Int): NArray<T> =
+        NArray(allocator.allocate(layoutDelegate, count.toLong()).apply { fill(0) })
+}
+
 
 public interface AllocateOverLoad<T : NType> {
     @Deprecated(

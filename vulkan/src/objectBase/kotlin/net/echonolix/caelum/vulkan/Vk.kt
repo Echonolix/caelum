@@ -5,7 +5,10 @@ import net.echonolix.caelum.vulkan.enums.VkResult
 import net.echonolix.caelum.vulkan.functions.*
 import net.echonolix.caelum.vulkan.handles.VkInstance
 import net.echonolix.caelum.vulkan.handles.value
-import net.echonolix.caelum.vulkan.structs.*
+import net.echonolix.caelum.vulkan.structs.VkAllocationCallbacks
+import net.echonolix.caelum.vulkan.structs.VkExtensionProperties
+import net.echonolix.caelum.vulkan.structs.VkInstanceCreateInfo
+import net.echonolix.caelum.vulkan.structs.VkLayerProperties
 
 object Vk {
     init {
@@ -25,7 +28,7 @@ object Vk {
         getGlobalFunc(VkFuncEnumerateInstanceVersion)
 
     private fun <T : VkFunction> getGlobalFunc(
-        funcDescriptor: VkFunction.TypeDescriptorImpl<T>
+        funcDescriptor: VkFunction.Descriptor<T>
     ): T = MemoryStack {
         funcDescriptor.fromNativeData(
             NPointer(
@@ -57,8 +60,8 @@ object Vk {
     }
 
     fun enumerateInstanceExtensionProperties(
-        @CTypeName("char*") pLayerName: NPointer<NativeChar>?,
-        @CTypeName("uint32_t*") pPropertyCount: NPointer<NativeUInt32>,
+        @CTypeName("char*") pLayerName: NPointer<NChar>?,
+        @CTypeName("uint32_t*") pPropertyCount: NPointer<NUInt32>,
         @CTypeName("VkExtensionProperties*") pProperties: NPointer<VkExtensionProperties>?,
     ): Result<Unit> {
         return when (val result = vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties)) {
@@ -72,7 +75,7 @@ object Vk {
     }
 
     fun enumerateInstanceLayerProperties(
-        @CTypeName("uint32_t*") pPropertyCount: NPointer<NativeUInt32>,
+        @CTypeName("uint32_t*") pPropertyCount: NPointer<NUInt32>,
         @CTypeName("VkLayerProperties*") pProperties: NPointer<VkLayerProperties>?
     ): Result<Unit> {
         return when (val result = vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties)) {
@@ -85,7 +88,7 @@ object Vk {
     }
 
     fun enumerateInstanceVersion(
-        @CTypeName("uint32_t*") pApiVersion: NPointer<NativeUInt32>
+        @CTypeName("uint32_t*") pApiVersion: NPointer<NUInt32>
     ): Result<VkResult> {
         return when (val result = vkEnumerateInstanceVersion(pApiVersion)) {
             VkResult.VK_SUCCESS -> Result.success(result)

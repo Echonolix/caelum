@@ -10,7 +10,7 @@ public val glfwGetPhysicalDevicePresentationSupport: GLFWFuncGetPhysicalDevicePr
     GLFWFuncGetPhysicalDevicePresentationSupport.fromNativeData(APIHelper.findSymbol("glfwGetPhysicalDevicePresentationSupport"))
 
 public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NFunction {
-    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>
+    override val typeDescriptor: NFunction.Descriptor<GLFWFuncGetPhysicalDevicePresentationSupport>
         get() = TypeDescriptor
 
     public operator fun invoke(
@@ -30,7 +30,7 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NFunction {
     )
 
     public companion object TypeDescriptor :
-        NFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>(
+        NFunction.Descriptor<GLFWFuncGetPhysicalDevicePresentationSupport>(
             "glfwGetPhysicalDevicePresentationSupport",
             GLFWFuncGetPhysicalDevicePresentationSupport::invokeNative,
             NativeInt,

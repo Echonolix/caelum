@@ -9,7 +9,7 @@ public val glfwGetInstanceProcAddress: GLFWFuncGetInstanceProcAddress =
     GLFWFuncGetInstanceProcAddress.fromNativeData(APIHelper.findSymbol("glfwGetInstanceProcAddress"))
 
 public fun interface GLFWFuncGetInstanceProcAddress : NFunction {
-    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>
+    override val typeDescriptor: NFunction.Descriptor<GLFWFuncGetInstanceProcAddress>
         get() = TypeDescriptor
 
     public operator fun invoke(
@@ -27,7 +27,7 @@ public fun interface GLFWFuncGetInstanceProcAddress : NFunction {
         )
     )
 
-    public companion object TypeDescriptor : NFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>(
+    public companion object TypeDescriptor : NFunction.Descriptor<GLFWFuncGetInstanceProcAddress>(
         "glfwGetInstanceProcAddress",
         GLFWFuncGetInstanceProcAddress::invokeNative,
         NPointer,

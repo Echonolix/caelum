@@ -12,7 +12,7 @@ public val glfwInitVulkanLoader: GLFWFuncInitVulkanLoader =
     GLFWFuncInitVulkanLoader.fromNativeData(APIHelper.findSymbol("glfwInitVulkanLoader"))
 
 public fun interface GLFWFuncInitVulkanLoader : NFunction {
-    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncInitVulkanLoader>
+    override val typeDescriptor: NFunction.Descriptor<GLFWFuncInitVulkanLoader>
         get() = TypeDescriptor
 
     public operator fun invoke(
@@ -23,7 +23,7 @@ public fun interface GLFWFuncInitVulkanLoader : NFunction {
         invoke(NPointer.fromNativeData(loader))
     }
 
-    public companion object TypeDescriptor : NFunction.TypeDescriptorImpl<GLFWFuncInitVulkanLoader>(
+    public companion object TypeDescriptor : NFunction.Descriptor<GLFWFuncInitVulkanLoader>(
         "glfwInitVulkanLoader",
         GLFWFuncInitVulkanLoader::invokeNative,
         NPointer,

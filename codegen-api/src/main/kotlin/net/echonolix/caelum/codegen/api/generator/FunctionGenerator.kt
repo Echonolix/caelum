@@ -23,12 +23,12 @@ public open class FunctionGenerator(
 
     context(ctx: CodegenContext)
     protected open fun functionBaseCName(): ClassName {
-        return CaelumCodegenHelper.functionCName
+        return CaelumCodegenHelper.NFunction.cName
     }
 
     context(ctx: CodegenContext)
     protected open fun functionTypeDescriptorBaseCName(): ClassName {
-        return CaelumCodegenHelper.functionTypeDescriptorImplCName
+        return CaelumCodegenHelper.NFunction.typeDescriptorCName
     }
 
     context(ctx: CodegenContext)
@@ -139,7 +139,7 @@ public open class FunctionGenerator(
         val implType = TypeSpec.Companion.classBuilder("Impl")
         implType.addModifiers(KModifier.PRIVATE)
         implType.addSuperinterface(thisCName)
-        implType.superclass(CaelumCodegenHelper.functionImplCName)
+        implType.superclass(CaelumCodegenHelper.NFunction.implCName)
         implType.addSuperclassConstructorParameter("funcHandle")
         implType.primaryConstructor(
             FunSpec.Companion.constructorBuilder()

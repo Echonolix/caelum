@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeName
 import net.echonolix.caelum.codegen.api.CType
-import net.echonolix.caelum.codegen.api.OriginalNameTag
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
 import net.echonolix.caelum.codegen.api.generator.FunctionGenerator
@@ -45,7 +44,7 @@ class GenerateFunctionTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
             context(ctx: CodegenContext)
             override fun functionTypeDescriptorBaseCName(): ClassName {
-                return VulkanCodegen.vkFunctionTypeDescriptorImplCName
+                return VulkanCodegen.vkFunctionTypeDescriptorCName
             }
         }
         return generator.generate()

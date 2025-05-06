@@ -30,7 +30,7 @@ public fun glfwCreateWindowSurface(
 }
 
 public fun interface GLFWFuncCreateWindowSurface : NFunction {
-    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>
+    override val typeDescriptor: NFunction.Descriptor<GLFWFuncCreateWindowSurface>
         get() = TypeDescriptor
 
     public operator fun invoke(
@@ -54,7 +54,7 @@ public fun interface GLFWFuncCreateWindowSurface : NFunction {
         )
     )
 
-    public companion object TypeDescriptor : NFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>(
+    public companion object TypeDescriptor : NFunction.Descriptor<GLFWFuncCreateWindowSurface>(
         "glfwCreateWindowSurface",
         GLFWFuncCreateWindowSurface::invokeNative,
         VkResult,

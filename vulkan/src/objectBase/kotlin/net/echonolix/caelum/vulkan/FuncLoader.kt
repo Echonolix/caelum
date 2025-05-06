@@ -8,31 +8,31 @@ import net.echonolix.caelum.vulkan.handles.VkDevice
 import net.echonolix.caelum.vulkan.handles.VkInstance
 
 fun <T : VkFunction> VkInstance.getInstanceFunc(
-    funcDescriptor: VkFunction.TypeDescriptorImpl<T>
+    funcDescriptor: VkFunction.Descriptor<T>
 ): T {
     val funcAddress = MemoryStack {
         vkGetInstanceProcAddr.invokeNative(
-            handle,
+            value,
             funcDescriptor.name.c_str()._address
         )
     }
     check(funcAddress != 0L) {
-        "Vulkan function ${funcDescriptor.name} is not available on instance ${handle.toAddressHexString()}"
+        "Vulkan function ${funcDescriptor.name} is not available on instance ${value.toAddressHexString()}"
     }
     return funcDescriptor.fromNativeData(NPointer(funcAddress))
 }
 
 fun <T : VkFunction> VkDevice.getDeviceFunc(
-    funcDescriptor: VkFunction.TypeDescriptorImpl<T>
+    funcDescriptor: VkFunction.Descriptor<T>
 ): T {
     val funcAddress = MemoryStack {
         vkGetDeviceProcAddr.invokeNative(
-            handle,
+            value,
             funcDescriptor.name.c_str()._address
         )
     }
     check(funcAddress != 0L) {
-        "Vulkan function ${funcDescriptor.name} is not available on device ${handle.toAddressHexString()}"
+        "Vulkan function ${funcDescriptor.name} is not available on device ${value.toAddressHexString()}"
     }
     return funcDescriptor.fromNativeData(NPointer(funcAddress))
 }

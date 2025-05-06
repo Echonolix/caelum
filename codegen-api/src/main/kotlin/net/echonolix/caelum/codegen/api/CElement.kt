@@ -169,9 +169,9 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         return memoryLayoutDeep()
     }
 
-    public sealed class ValueType(public val baseType: CBasicType<*>) : CType(baseType.cTypeNameStr)
+    public sealed class ValueType(public val baseType: CBasicType<*>, name: String) : CType(name)
 
-    public class BasicType(baseType: CBasicType<*>) : ValueType(baseType) {
+    public class BasicType(baseType: CBasicType<*>) : ValueType(baseType, baseType.cTypeNameStr) {
         context(ctx: CodegenContext)
         override fun nativeType(): TypeName {
             return baseType.nativeDataTypeName
@@ -220,7 +220,7 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
     public sealed class CompositeType(name: String) : CType(name)
 
-    public class Handle(name: String) : CompositeType(name) {
+    public class Handle(name: String) : ValueType(CBasicType.int64_t, name) {
         context(ctx: CodegenContext)
         override fun nativeType(): TypeName {
             return LONG
@@ -286,8 +286,8 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
     }
 
-    public abstract class EnumBase(override val name: String, public val entryType: BasicType) :
-        ValueType(entryType.baseType) {
+    public abstract class EnumBase(name: String, public val entryType: BasicType) :
+        ValueType(entryType.baseType, name) {
         public val entries: MutableMap<String, Entry> = mutableMapOf()
 
         context(ctx: CodegenContext)

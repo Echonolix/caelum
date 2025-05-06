@@ -23,48 +23,53 @@ public sealed class CBasicType<T : Any>(
     public val literalSuffix: String,
     public val valueLayout: ValueLayout,
     public val valueLayoutName: String,
+    public val nNativeDataType: NativeDataType,
     public val nativeDataType: KClass<*> = kotlinType,
     public val fromBase: String = "",
     public val toBase: String = "",
 ) {
     public object void : CBasicType<Unit>(
         "void",
-        "NativeVoid",
+        "NVoid",
         0,
         Unit::class,
         "",
         ValueLayout.JAVA_BYTE,
-        "JAVA_BYTE"
+        "JAVA_BYTE",
+        NativeDataType.Byte,
     )
 
     public object char : CBasicType<Char>(
         "char",
-        "NativeChar",
+        "NChar",
         1,
         Char::class,
         "",
         ValueLayout.JAVA_BYTE,
-        "JAVA_BYTE"
+        "JAVA_BYTE",
+        NativeDataType.Byte,
     )
 
     public object int8_t : CBasicType<Byte>(
         "int8_t",
-        "NativeInt8",
+        "NInt8",
         2,
         Byte::class,
         "",
         ValueLayout.JAVA_BYTE,
-        "JAVA_BYTE"
+        "JAVA_BYTE",
+        NativeDataType.Byte,
     )
 
     public object uint8_t : CBasicType<UByte>(
         "uint8_t",
-        "NativeUInt8",
+        "NUInt8",
         3,
         UByte::class,
         "U",
         ValueLayout.JAVA_BYTE,
         "JAVA_BYTE",
+        NativeDataType.Byte,
         Byte::class,
         ".toUByte()",
         ".toByte()"
@@ -72,22 +77,24 @@ public sealed class CBasicType<T : Any>(
 
     public object int16_t : CBasicType<Short>(
         "int16_t",
-        "NativeInt16",
+        "NInt16",
         4,
         Short::class,
         "",
         ValueLayout.JAVA_SHORT,
-        "JAVA_SHORT"
+        "JAVA_SHORT",
+        NativeDataType.Short,
     )
 
     public object uint16_t : CBasicType<UShort>(
         "uint16_t",
-        "NativeUInt16",
+        "NUInt16",
         5,
         UShort::class,
         "U",
         ValueLayout.JAVA_SHORT,
         "JAVA_SHORT",
+        NativeDataType.Short,
         Short::class,
         ".toUShort()",
         ".toShort()"
@@ -95,12 +102,13 @@ public sealed class CBasicType<T : Any>(
 
     public object int32_t : CBasicType<Int>(
         "int32_t",
-        "NativeInt32",
+        "NInt32",
         6,
         Int::class,
         "",
         ValueLayout.JAVA_INT,
-        "JAVA_INT"
+        "JAVA_INT",
+        NativeDataType.Int,
     ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return valueStr.toIntOrNull()?.let {
@@ -118,12 +126,13 @@ public sealed class CBasicType<T : Any>(
 
     public object uint32_t : CBasicType<UInt>(
         "uint32_t",
-        "NativeUInt32",
+        "NUInt32",
         7,
         UInt::class,
         "U",
         ValueLayout.JAVA_INT,
         "JAVA_INT",
+        NativeDataType.Int,
         Int::class,
         ".toUInt()",
         ".toInt()"
@@ -144,27 +153,28 @@ public sealed class CBasicType<T : Any>(
 
     public object int : CBasicType<Int>(
         "int",
-        "NativeInt",
+        "NInt",
         8,
         Int::class,
         "",
         ValueLayout.JAVA_INT,
-        "JAVA_INT"
+        "JAVA_INT",
+        NativeDataType.Int,
     ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return int32_t.codeBlock(valueStr)
         }
     }
 
-    public object int64_t :
-        CBasicType<Long>(
+    public object int64_t : CBasicType<Long>(
             "int64_t",
-            "NativeInt64",
+        "NInt64",
             9,
             Long::class,
             "L",
             ValueLayout.JAVA_LONG,
-            "JAVA_LONG"
+        "JAVA_LONG",
+        NativeDataType.Long,
         ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return valueStr.toLongOrNull()?.let {
@@ -183,12 +193,13 @@ public sealed class CBasicType<T : Any>(
 
     public object uint64_t : CBasicType<ULong>(
         "uint64_t",
-        "NativeUInt64",
+        "NUInt64",
         10,
         ULong::class,
         "UL",
         ValueLayout.JAVA_LONG,
         "JAVA_LONG",
+        NativeDataType.Long,
         Long::class,
         ".toULong()",
         ".toLong()"
@@ -210,22 +221,24 @@ public sealed class CBasicType<T : Any>(
 
     public object size_t : CBasicType<Long>(
         "size_t",
-        "NativeSize",
+        "NSize",
         11,
         Long::class,
         "L",
         ValueLayout.JAVA_LONG,
-        "JAVA_LONG"
+        "JAVA_LONG",
+        NativeDataType.Long,
     )
 
     public object float : CBasicType<Float>(
         "float",
-        "NativeFloat",
+        "NFloat",
         12,
         Float::class,
         "F",
         ValueLayout.JAVA_FLOAT,
-        "JAVA_FLOAT"
+        "JAVA_FLOAT",
+        NativeDataType.Float,
     ) {
         override fun codeBlock(valueStr: String): CodeBlock {
             return CodeBlock.of(valueStr)
@@ -234,12 +247,13 @@ public sealed class CBasicType<T : Any>(
 
     public object double : CBasicType<Double>(
         "double",
-        "NativeDouble",
+        "NDouble",
         12,
         Double::class,
         "",
         ValueLayout.JAVA_DOUBLE,
-        "JAVA_DOUBLE"
+        "JAVA_DOUBLE",
+        NativeDataType.Double,
     )
 
     public val nativeDataTypeName: TypeName = nativeDataType.asTypeName()
