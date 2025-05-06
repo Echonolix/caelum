@@ -129,8 +129,8 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             }
 
             context(ctx: CodegenContext)
-            override fun buildTypeObjectType(): TypeSpec.Builder {
-                val type = super.buildTypeObjectType()
+            override fun buildTypeObjectType() {
+                super.buildTypeObjectType()
 
                 if (groupType is CType.Struct) {
                     val initializerCodeBlock = groupType.members
@@ -143,7 +143,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                             )
                         } ?: CodeBlock.of("return null")
 
-                    type.addProperty(
+                    typeObjectType.addProperty(
                         PropertySpec.builder("structType", vkStructureTypeCName.copy(nullable = true))
                             .addModifiers(KModifier.OVERRIDE)
                             .getter(
@@ -154,8 +154,6 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                             .build()
                     )
                 }
-
-                return type
             }
 
             context(ctx: CodegenContext)

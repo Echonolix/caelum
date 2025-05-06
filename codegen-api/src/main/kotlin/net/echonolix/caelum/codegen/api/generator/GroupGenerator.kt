@@ -16,6 +16,7 @@ public open class GroupGenerator(
     protected val pointerCNameP: TypeName = CaelumCodegenHelper.pointerCName.parameterizedBy(thisCName)
     protected val valueCNameP: TypeName = CaelumCodegenHelper.valueCName.parameterizedBy(thisCName)
 
+    protected val typeObjectType: TypeSpec.Builder = TypeSpec.objectBuilder(thisCName)
     protected val file: FileSpec.Builder = FileSpec.builder(thisCName)
 
     context(ctx: CodegenContext)
@@ -60,11 +61,10 @@ public open class GroupGenerator(
     }
 
     context(ctx: CodegenContext)
-    protected open fun buildTypeObjectType(): TypeSpec.Builder {
-        val typeObject = TypeSpec.objectBuilder(thisCName)
-        typeObject.addAnnotation(CaelumCoreAnnotation.cTypeName(element.toSimpleString()))
-        typeObject.superclass(groupBaseCName().parameterizedBy(thisCName))
-        typeObject.addSuperclassConstructorParameter(
+    protected open fun buildTypeObjectType() {
+        typeObjectType.addAnnotation(CaelumCoreAnnotation.cTypeName(element.toSimpleString()))
+        typeObjectType.superclass(groupBaseCName().parameterizedBy(thisCName))
+        typeObjectType.addSuperclassConstructorParameter(
             CodeBlock.builder()
                 .add("\n")
                 .indent()
@@ -76,10 +76,31 @@ public open class GroupGenerator(
         element.members.forEach { member ->
             when (member.type) {
                 is CType.Array, is CType.Group -> {
-                    // do nothing
+                    typeObjectType.addProperty(
+                        PropertySpec.builder("${member.name}_byteSize", Long::class)
+                            .addModifiers(KModifier.INTERNAL)
+                            .addAnnotation(JvmField::class)
+                            .initializer(
+                                "layout.select(%M(%S)).byteSize()",
+                                CaelumCodegenHelper.groupElementMember,
+                                member.name
+                            )
+                            .build()
+                    )
+                    typeObjectType.addProperty(
+                        PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
+                            .addModifiers(KModifier.INTERNAL)
+                            .addAnnotation(JvmField::class)
+                            .initializer(
+                                "layout.byteOffsetHandle(%M(%S))",
+                                CaelumCodegenHelper.groupElementMember,
+                                member.name
+                            )
+                            .build()
+                    )
                 }
                 else -> {
-                    typeObject.addProperty(
+                    typeObjectType.addProperty(
                         PropertySpec.builder("${member.name}_valueVarHandle", VarHandle::class.asClassName())
                             .addModifiers(KModifier.INTERNAL)
                             .addAnnotation(JvmField::class)
@@ -90,7 +111,7 @@ public open class GroupGenerator(
                             )
                             .build()
                     )
-//                typeObject.addProperty(
+//                typeObjectType.addProperty(
 //                    PropertySpec.builder("${member.name}_arrayVarHandle", VarHandle::class.asClassName())
 //                        .addAnnotation(JvmField::class)
 //                        .initializer(
@@ -102,31 +123,12 @@ public open class GroupGenerator(
 //                )
                 }
             }
-            typeObject.addProperty(
-                PropertySpec.builder("${member.name}_offsetHandle", MethodHandle::class)
-                    .addModifiers(KModifier.INTERNAL)
-                    .addAnnotation(JvmField::class)
-                    .initializer("layout.byteOffsetHandle(%M(%S))", CaelumCodegenHelper.groupElementMember, member.name)
-                    .build()
-            )
-            typeObject.addProperty(
-                PropertySpec.builder("${member.name}_byteSize", Long::class)
-                    .addAnnotation(JvmField::class)
-                    .initializer(
-                        "layout.select(%M(%S)).byteSize()",
-                        CaelumCodegenHelper.groupElementMember,
-                        member.name
-                    )
-                    .build()
-            )
         }
-
-        return typeObject
     }
 
     override fun generate(): FileSpec.Builder {
         with(ctx) {
-            val typeObjectType = buildTypeObjectType()
+            buildTypeObjectType()
             file.addType(typeObjectType.build())
             run {
                 file.addFunction(
