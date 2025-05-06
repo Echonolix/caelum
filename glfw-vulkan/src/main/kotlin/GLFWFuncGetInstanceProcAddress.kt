@@ -8,45 +8,45 @@ import java.lang.invoke.MethodHandle
 public val glfwGetInstanceProcAddress: GLFWFuncGetInstanceProcAddress =
     GLFWFuncGetInstanceProcAddress.fromNativeData(APIHelper.findSymbol("glfwGetInstanceProcAddress"))
 
-public fun interface GLFWFuncGetInstanceProcAddress : NativeFunction {
-    override val typeDescriptor: NativeFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>
+public fun interface GLFWFuncGetInstanceProcAddress : NFunction {
+    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>
         get() = TypeDescriptor
 
     public operator fun invoke(
         @CTypeName("VkInstance") instance: VkInstanceHandle,
-        @CTypeName("char*") procname: NativePointer<NativeChar>,
-    ): NativePointer<GLFWFuncPtrVKProc>
+        @CTypeName("char*") procname: NPointer<NativeChar>,
+    ): NPointer<GLFWFuncPtrVKProc>
 
     public fun invokeNative(
         instance: Long,
         procname: Long,
-    ): Long = NativePointer.toNativeData(
+    ): Long = NPointer.toNativeData(
         invoke(
             VkInstanceHandle.fromNativeData(instance),
-            NativePointer.fromNativeData(procname),
+            NPointer.fromNativeData(procname),
         )
     )
 
-    public companion object TypeDescriptor : NativeFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>(
+    public companion object TypeDescriptor : NFunction.TypeDescriptorImpl<GLFWFuncGetInstanceProcAddress>(
         "glfwGetInstanceProcAddress",
         GLFWFuncGetInstanceProcAddress::invokeNative,
-        NativePointer,
-        NativePointer,
-        NativePointer
+        NPointer,
+        NPointer,
+        NPointer
     ) {
         override fun fromNativeData(value: MemorySegment): GLFWFuncGetInstanceProcAddress = Impl(downcallHandle(value))
 
         private class Impl(
             funcHandle: MethodHandle,
-        ) : NativeFunction.Impl(funcHandle),
+        ) : NFunction.Impl(funcHandle),
             GLFWFuncGetInstanceProcAddress {
             override fun invoke(
                 instance: VkInstanceHandle,
-                procname: NativePointer<NativeChar>,
-            ): NativePointer<GLFWFuncPtrVKProc> = NativePointer.fromNativeData(
+                procname: NPointer<NativeChar>,
+            ): NPointer<GLFWFuncPtrVKProc> = NPointer.fromNativeData(
                 invokeNative(
                     VkInstanceHandle.toNativeData(instance),
-                    NativePointer.toNativeData(procname),
+                    NPointer.toNativeData(procname),
                 )
             )
 

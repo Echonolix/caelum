@@ -145,7 +145,7 @@ public open class EnumBaseGenerator(
         addProperty(
             PropertySpec.builder(
                 "typeDescriptor",
-                CaelumCodegenHelper.typeDescriptorCName.parameterizedBy(enumBase.typeName())
+                CaelumCodegenHelper.NType.descriptorCName.parameterizedBy(enumBase.typeName())
             ).addModifiers(KModifier.OVERRIDE)
                 .getter(
                     FunSpec.getterBuilder()
@@ -183,7 +183,7 @@ public open class EnumBaseGenerator(
                 .addParameter("index", LONG)
                 .returns(thisCName)
                 .addStatement(
-                    "return %T.fromNativeData(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
+                    "return %T.fromNativeData(%T.arrayVarHandle.get(segment, 0L, index) as %T)",
                     thisCName,
                     baseType.caelumCoreTypeName,
                     baseType.ktApiTypeTypeName
@@ -197,7 +197,7 @@ public open class EnumBaseGenerator(
                 .addParameter("index", LONG)
                 .addParameter("value", thisCName)
                 .addStatement(
-                    "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNativeData(value))",
+                    "%T.arrayVarHandle.set(segment, 0L, index, %T.toNativeData(value))",
                     baseType.caelumCoreTypeName,
                     thisCName,
                 )
@@ -274,7 +274,7 @@ public open class EnumBaseGenerator(
                 .addParameter("property", nullableAny)
                 .returns(thisCName)
                 .addStatement(
-                    "return %T.fromNativeData(%T.valueVarHandle.get(_segment, 0L) as %T)",
+                    "return %T.fromNativeData(%T.valueVarHandle.get(segment, 0L) as %T)",
                     thisCName,
                     baseType.caelumCoreTypeName,
                     baseType.ktApiTypeTypeName
@@ -290,7 +290,7 @@ public open class EnumBaseGenerator(
                 .addParameter("property", nullableAny)
                 .addParameter("value", thisCName)
                 .addStatement(
-                    "%T.valueVarHandle.set(_segment, 0L, %T.toNativeData(value))",
+                    "%T.valueVarHandle.set(segment, 0L, %T.toNativeData(value))",
                     baseType.caelumCoreTypeName,
                     thisCName
                 )
@@ -308,11 +308,11 @@ public open class EnumBaseGenerator(
         )
         val thisCName = enumBase.className()
         addSuperinterface(
-            CaelumCodegenHelper.typeDescriptorCName.parameterizedBy(thisCName),
+            CaelumCodegenHelper.NType.descriptorCName.parameterizedBy(thisCName),
             CodeBlock.of(
                 "%T.typeDescriptor as %T<%T>",
                 enumBase.baseType.caelumCoreTypeName,
-                CaelumCodegenHelper.typeDescriptorCName,
+                CaelumCodegenHelper.NType.descriptorCName,
                 thisCName
             )
         )

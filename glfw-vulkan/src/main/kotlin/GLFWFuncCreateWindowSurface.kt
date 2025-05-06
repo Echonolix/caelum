@@ -17,8 +17,8 @@ public val glfwCreateWindowSurface: GLFWFuncCreateWindowSurface =
 
 public fun glfwCreateWindowSurface(
     instance: VkInstance,
-    window: NativePointer<GLFWWindow>,
-    allocator: NativePointer<VkAllocationCallbacks>?,
+    window: NPointer<GLFWWindow>,
+    allocator: NPointer<VkAllocationCallbacks>?,
 ): Result<VkSurfaceKHR> = MemoryStack {
     val handle114514 = VkSurfaceKHR.malloc()
     when (val result69420 = glfwCreateWindowSurface(instance, window, allocator ?: nullptr(), handle114514.ptr())) {
@@ -29,15 +29,15 @@ public fun glfwCreateWindowSurface(
     }
 }
 
-public fun interface GLFWFuncCreateWindowSurface : NativeFunction {
-    override val typeDescriptor: NativeFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>
+public fun interface GLFWFuncCreateWindowSurface : NFunction {
+    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>
         get() = TypeDescriptor
 
     public operator fun invoke(
         @CTypeName("VkInstance") instance: VkInstanceHandle,
-        @CTypeName("GLFWwindow*") window: NativePointer<GLFWWindow>,
-        @CTypeName("const VkAllocationCallbacks*") allocator: NativePointer<VkAllocationCallbacks>,
-        @CTypeName("VkSurfaceKHR*") surface: NativePointer<VkSurfaceKHR>,
+        @CTypeName("GLFWwindow*") window: NPointer<GLFWWindow>,
+        @CTypeName("const VkAllocationCallbacks*") allocator: NPointer<VkAllocationCallbacks>,
+        @CTypeName("VkSurfaceKHR*") surface: NPointer<VkSurfaceKHR>,
     ): VkResult
 
     public fun invokeNative(
@@ -48,38 +48,38 @@ public fun interface GLFWFuncCreateWindowSurface : NativeFunction {
     ): Int = VkResult.toNativeData(
         invoke(
             VkInstanceHandle.fromNativeData(instance),
-            NativePointer.fromNativeData(window),
-            NativePointer.fromNativeData(allocator),
-            NativePointer.fromNativeData(surface),
+            NPointer.fromNativeData(window),
+            NPointer.fromNativeData(allocator),
+            NPointer.fromNativeData(surface),
         )
     )
 
-    public companion object TypeDescriptor : NativeFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>(
+    public companion object TypeDescriptor : NFunction.TypeDescriptorImpl<GLFWFuncCreateWindowSurface>(
         "glfwCreateWindowSurface",
         GLFWFuncCreateWindowSurface::invokeNative,
         VkResult,
-        NativePointer,
-        NativePointer,
-        NativePointer,
-        NativePointer
+        NPointer,
+        NPointer,
+        NPointer,
+        NPointer
     ) {
         override fun fromNativeData(value: MemorySegment): GLFWFuncCreateWindowSurface = Impl(downcallHandle(value))
 
         private class Impl(
             funcHandle: MethodHandle,
-        ) : NativeFunction.Impl(funcHandle),
+        ) : NFunction.Impl(funcHandle),
             GLFWFuncCreateWindowSurface {
             override fun invoke(
                 instance: VkInstanceHandle,
-                window: NativePointer<GLFWWindow>,
-                allocator: NativePointer<VkAllocationCallbacks>,
-                surface: NativePointer<VkSurfaceKHR>
+                window: NPointer<GLFWWindow>,
+                allocator: NPointer<VkAllocationCallbacks>,
+                surface: NPointer<VkSurfaceKHR>
             ): VkResult = VkResult.fromNativeData(
                 invokeNative(
                     VkInstanceHandle.toNativeData(instance),
-                    NativePointer.toNativeData(window),
-                    NativePointer.toNativeData(allocator),
-                    NativePointer.toNativeData(surface)
+                    NPointer.toNativeData(window),
+                    NPointer.toNativeData(allocator),
+                    NPointer.toNativeData(surface)
                 )
             )
 

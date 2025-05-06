@@ -137,7 +137,7 @@ public open class GroupGenerator(
                         .addParameter("index", LONG)
                         .returns(LONG)
                         .addStatement(
-                            "return %T.arrayByteOffsetHandle.invokeExact(_segment.address(), index) as Long",
+                            "return %T.arrayByteOffsetHandle.invokeExact(segment.address(), index) as Long",
                             thisCName
                         )
                         .build()
@@ -170,7 +170,7 @@ public open class GroupGenerator(
                         .addParameter("index", LONG)
                         .addParameter("value", pointerCNameP)
                         .addStatement(
-                            "%M(%M, value._address, _segment, elementAddress(index), %T.layout.byteSize())",
+                            "%M(%M, value._address, segment, elementAddress(index), %T.layout.byteSize())",
                             CaelumCodegenHelper.copyMember,
                             CaelumCodegenHelper.omniSegment,
                             thisCName
@@ -288,7 +288,7 @@ public open class GroupGenerator(
     context(ctx: CodegenContext)
     protected fun CType.Group.Member.valueMemberOffset(): CodeBlock {
         return CodeBlock.builder()
-            .addStatement("%T.${this.name}_offsetHandle.invokeExact(_segment.address()) as Long", thisCName)
+            .addStatement("%T.${this.name}_offsetHandle.invokeExact(segment.address()) as Long", thisCName)
             .build()
     }
 

@@ -5,14 +5,14 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.*
 import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.addKdoc
 import net.echonolix.caelum.codegen.api.ctx.filterType
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
+import net.echonolix.caelum.codegen.api.generator.EnumBaseGenerator
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
-import net.echonolix.caelum.codegen.api.ctx.addKdoc
-import net.echonolix.caelum.codegen.api.generator.EnumBaseGenerator
 import kotlin.io.path.Path
 import kotlin.random.Random
 
@@ -64,7 +64,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                     TypeSpec.Companion.interfaceBuilder(VulkanCodegen.vkEnumCName)
                         .addSuperinterface(VulkanCodegen.vkEnumBaseCName.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
-                            PropertySpec.builder("nativeType", NativeType::class)
+                            PropertySpec.builder("nativeType", NType::class)
                                 .addModifiers(KModifier.OVERRIDE)
                                 .getter(
                                     FunSpec.getterBuilder()
@@ -87,7 +87,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                     TypeSpec.Companion.interfaceBuilder(VulkanCodegen.vkFlags32CNAME)
                         .addSuperinterface(VulkanCodegen.vkEnumBaseCName.parameterizedBy(Int::class.asTypeName()))
                         .addProperty(
-                            PropertySpec.builder("nativeType", NativeType::class)
+                            PropertySpec.builder("nativeType", NType::class)
                                 .addModifiers(KModifier.OVERRIDE)
                                 .getter(
                                     FunSpec.getterBuilder()
@@ -107,7 +107,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                     TypeSpec.Companion.interfaceBuilder(VulkanCodegen.vkFlags64CNAME)
                         .addSuperinterface(VulkanCodegen.vkEnumBaseCName.parameterizedBy(Long::class.asTypeName()))
                         .addProperty(
-                            PropertySpec.builder("nativeType", NativeType::class)
+                            PropertySpec.builder("nativeType", NType::class)
                                 .addModifiers(KModifier.OVERRIDE)
                                 .getter(
                                     FunSpec.getterBuilder()
@@ -353,7 +353,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 .addParameter("index", LONG)
                 .returns(thisCName)
                 .addStatement(
-                    "return %T.fromNativeData(%T.arrayVarHandle.get(_segment, 0L, index) as %T)",
+                    "return %T.fromNativeData(%T.arrayVarHandle.get(segment, 0L, index) as %T)",
                     thisCName,
                     baseType.caelumCoreTypeName,
                     baseType.ktApiTypeTypeName
@@ -367,7 +367,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 .addParameter("index", LONG)
                 .addParameter("value", thisCName)
                 .addStatement(
-                    "%T.arrayVarHandle.set(_segment, 0L, index, %T.toNativeData(value))",
+                    "%T.arrayVarHandle.set(segment, 0L, index, %T.toNativeData(value))",
                     baseType.caelumCoreTypeName,
                     thisCName,
                 )
@@ -444,7 +444,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 .addParameter("property", nullableAny)
                 .returns(thisCName)
                 .addStatement(
-                    "return %T.fromNativeData(%T.valueVarHandle.get(_segment, 0L) as %T)",
+                    "return %T.fromNativeData(%T.valueVarHandle.get(segment, 0L) as %T)",
                     thisCName,
                     baseType.caelumCoreTypeName,
                     baseType.ktApiTypeTypeName
@@ -460,7 +460,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 .addParameter("property", nullableAny)
                 .addParameter("value", thisCName)
                 .addStatement(
-                    "%T.valueVarHandle.set(_segment, 0L, %T.toNativeData(value))",
+                    "%T.valueVarHandle.set(segment, 0L, %T.toNativeData(value))",
                     baseType.caelumCoreTypeName,
                     thisCName
                 )

@@ -7,25 +7,45 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.VarHandle
 
 public object CaelumCodegenHelper {
     public const val basePkgName: String = "net.echonolix.caelum"
 
-    public val typeCName: ClassName = ClassName(basePkgName, "NativeType")
-    public val typeImplCName: ClassName = typeCName.nestedClass("Impl")
+    public object NType {
+        public val cName: ClassName = ClassName(basePkgName, "NType")
+        public val descriptorCName: ClassName = cName.nestedClass("Descriptor")
+        public val descriptorImplCName: ClassName = descriptorCName.nestedClass("Impl")
+    }
 
-    public val typeDescriptorCName: ClassName = ClassName(basePkgName, "TypeDescriptor")
-    public val typeDescriptorImplCName: ClassName = typeDescriptorCName.nestedClass("Impl")
+    public object NPrimitive {
+        public val cName: ClassName = ClassName(basePkgName, "NPrimitive")
 
-    public val enumCName: ClassName = ClassName(basePkgName, "NativeEnum")
-    
-    public val structCName: ClassName = ClassName(basePkgName, "NativeStruct")
-    public val unionCName: ClassName = ClassName(basePkgName, "NativeUnion")
-    public val arrayCName: ClassName = ClassName(basePkgName, "NativeArray")
-    public val valueCName: ClassName = ClassName(basePkgName, "NativeValue")
-    public val pointerCName: ClassName = ClassName(basePkgName, "NativePointer")
+        public val nativeDataCName: ClassName = cName.nestedClass("NativeData")
+        public val nativeDataImplCName: ClassName = nativeDataCName.nestedClass("Impl")
 
-    public val functionCName: ClassName = ClassName(basePkgName, "NativeFunction")
+        public val kotlinAPICName: ClassName = cName.nestedClass("KotlinAPI")
+
+        public val descriptorCName: ClassName = cName.nestedClass("Descriptor")
+        public val typeObjectCName: ClassName = cName.nestedClass("TypeObject")
+    }
+
+    public object NComposite {
+        public val cName: ClassName = ClassName(basePkgName, "NComposite")
+        public val implCName: ClassName = cName.nestedClass("Impl")
+        public val descriptorCName: ClassName = cName.nestedClass("Descriptor")
+        public val descriptorImplCName: ClassName = descriptorCName.nestedClass("Impl")
+    }
+
+    public val enumCName: ClassName = ClassName(basePkgName, "NEnum")
+    public val structCName: ClassName = ClassName(basePkgName, "NStruct")
+    public val unionCName: ClassName = ClassName(basePkgName, "NUnion")
+
+    public val arrayCName: ClassName = ClassName(basePkgName, "NArray")
+    public val valueCName: ClassName = ClassName(basePkgName, "NValue")
+    public val pointerCName: ClassName = ClassName(basePkgName, "NPointer")
+
+    public val functionCName: ClassName = ClassName(basePkgName, "NFunction")
     public val functionImplCName: ClassName = functionCName.nestedClass("Impl")
     public val functionTypeDescriptorImplCName: ClassName = functionCName.nestedClass("TypeDescriptorImpl")
 
@@ -48,6 +68,8 @@ public object CaelumCodegenHelper {
 
     public val valueLayoutCName: ClassName = ValueLayout::class.asClassName()
     public val addressLayoutMember: MemberName = valueLayoutCName.member("ADDRESS")
+
+    public val varHandleCName: ClassName = VarHandle::class.asClassName()
 
     public val methodHandleCName: ClassName = MethodHandle::class.asClassName()
     public val methodHandlesCName: ClassName = MethodHandles::class.asClassName()

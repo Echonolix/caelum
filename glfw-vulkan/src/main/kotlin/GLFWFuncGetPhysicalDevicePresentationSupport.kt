@@ -9,8 +9,8 @@ import java.lang.invoke.MethodHandle
 public val glfwGetPhysicalDevicePresentationSupport: GLFWFuncGetPhysicalDevicePresentationSupport =
     GLFWFuncGetPhysicalDevicePresentationSupport.fromNativeData(APIHelper.findSymbol("glfwGetPhysicalDevicePresentationSupport"))
 
-public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NativeFunction {
-    override val typeDescriptor: NativeFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>
+public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NFunction {
+    override val typeDescriptor: NFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>
         get() = TypeDescriptor
 
     public operator fun invoke(
@@ -30,12 +30,12 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NativeFuncti
     )
 
     public companion object TypeDescriptor :
-        NativeFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>(
+        NFunction.TypeDescriptorImpl<GLFWFuncGetPhysicalDevicePresentationSupport>(
             "glfwGetPhysicalDevicePresentationSupport",
             GLFWFuncGetPhysicalDevicePresentationSupport::invokeNative,
             NativeInt,
-            NativePointer,
-            NativePointer,
+            NPointer,
+            NPointer,
             NativeUInt32
         ) {
         override fun fromNativeData(value: MemorySegment): GLFWFuncGetPhysicalDevicePresentationSupport =
@@ -43,7 +43,7 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NativeFuncti
 
         private class Impl(
             funcHandle: MethodHandle,
-        ) : NativeFunction.Impl(funcHandle),
+        ) : NFunction.Impl(funcHandle),
             GLFWFuncGetPhysicalDevicePresentationSupport {
             override fun invoke(
                 instance: VkInstanceHandle,

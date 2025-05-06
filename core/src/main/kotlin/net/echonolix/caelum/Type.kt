@@ -3,26 +3,71 @@ package net.echonolix.caelum
 import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.VarHandle
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.javaMethod
 
-public interface TypeDescriptor<T : NativeType> {
-    public val layout: MemoryLayout
-    public val arrayByteOffsetHandle: MethodHandle
+public sealed interface NType {
+    public val typeDescriptor: Descriptor<*>
 
-    public abstract class Impl<T : NativeType>(override val layout: MemoryLayout) : TypeDescriptor<T> {
-        final override val arrayByteOffsetHandle: MethodHandle by lazy {
-            MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.byteSize(), layout)
-                .byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
+    public sealed interface Descriptor<T : NType> {
+        public val layout: MemoryLayout
+        public val arrayByteOffsetHandle: MethodHandle
+
+        public sealed class Impl<T : NType>(override val layout: MemoryLayout) : Descriptor<T> {
+            final override val arrayByteOffsetHandle: MethodHandle by lazy {
+                MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.byteSize(), layout)
+                    .byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
+            }
         }
     }
 }
 
-public interface NativeType {
-    public val typeDescriptor: TypeDescriptor<*>
+public interface NPrimitive<N : Any, K : Any> : NType {
+    public override val typeDescriptor: Descriptor<*, N, K>
 
-    public abstract class Impl<T : NativeType>(layout: MemoryLayout) : TypeDescriptor.Impl<T>(layout), NativeType {
-        override val typeDescriptor: TypeDescriptor<T> = this
+    public interface NativeData<T : NPrimitive<N, *>, N : Any> : NType.Descriptor<T> {
+        public val valueVarHandle: VarHandle
+        public val arrayVarHandle: VarHandle
+
+        public fun arrayGetElement(array: NArray<T>, index: Long): N
+        public fun arraySetElement(array: NArray<T>, index: Long, value: N)
+        public fun pointerGetElement(pointer: NPointer<T>, index: Long): N
+        public fun pointerSetElement(pointer: NPointer<T>, index: Long, value: N)
+
+        public fun valueGetValue(value: NValue<T>): N
+        public fun valueSetValue(value: NValue<T>, newValue: N)
+        public fun pointerGetValue(pointer: NPointer<T>): N
+        public fun pointerSetValue(pointer: NPointer<T>, newValue: N)
+
+        public sealed class Impl<T : NPrimitive<N, *>, N : Any>(override val layout: ValueLayout) :
+            NType.Descriptor.Impl<T>(layout), NativeData<T, N> {
+            public final override val valueVarHandle: VarHandle = layout.varHandle()
+            public final override val arrayVarHandle: VarHandle = layout.arrayElementVarHandle()
+        }
+    }
+
+    public interface KotlinApi<N : Any, K : Any> {
+        public fun fromNativeData(value: N): K
+        public fun toNativeData(value: K): N
+    }
+
+    public interface Descriptor<T : NPrimitive<N, K>, N : Any, K : Any> : NativeData<T, N>, KotlinApi<N, K>
+
+    public interface TypeObject<T : NPrimitive<N, K>, N : Any, K : Any> : NPrimitive<N, K>, Descriptor<T, N, K> {
+        override val typeDescriptor: TypeObject<T, N, K> get() = this
+    }
+}
+
+public interface NComposite : NType {
+    public override val typeDescriptor: Descriptor<*>
+
+    public abstract class Impl<T : NComposite>(layout: MemoryLayout) : NComposite, Descriptor.Impl<T>(layout) {
+        override val typeDescriptor: Impl<T> = this
+    }
+
+    public interface Descriptor<T : NComposite> : NType.Descriptor<T> {
+        public sealed class Impl<T : NComposite>(layout: MemoryLayout) : NType.Descriptor.Impl<T>(layout), Descriptor<T>
     }
 }
 
@@ -50,41 +95,41 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
 }
 
-public interface NativeEnum<T> : NativeType {
+public interface NEnum<T> : NType {
     public val value: T
-    public val nativeType: NativeType
+    public val nType: NType
 }
 
-public abstract class NativeStruct<T : NativeType> private constructor(override val layout: StructLayout) :
-    NativeType.Impl<T>(layout), TypeDescriptor<T> {
+public abstract class NStruct<T : NComposite> private constructor(override val layout: StructLayout) :
+    NComposite.Impl<T>(layout) {
     public constructor(vararg members: MemoryLayout) : this(
         paddedStructLayout(*members)
     )
 }
 
-public abstract class NativeUnion<T : NativeType> private constructor(override val layout: UnionLayout) :
-    NativeType.Impl<T>(layout), TypeDescriptor<T> {
+public abstract class NUnion<T : NComposite> private constructor(override val layout: UnionLayout) :
+    NComposite.Impl<T>(layout) {
     public constructor(vararg members: MemoryLayout) : this(
         MemoryLayout.unionLayout(*members)
     )
 }
 
-public interface NativeFunction : NativeType {
-    override val typeDescriptor: TypeDescriptorImpl<*>
+public interface NFunction : NComposite {
+    override val typeDescriptor: DescriptorImpl<*>
     public val funcHandle: MethodHandle get() = typeDescriptor.upcallHandle.bindTo(this)
 
     public abstract class Impl(
         final override val funcHandle: MethodHandle
-    ) : NativeFunction
+    ) : NFunction
 
-    public abstract class TypeDescriptorImpl<T : NativeFunction>(
+    public abstract class DescriptorImpl<T : NFunction>(
         public val name: String,
         public val invokeNativeFunc: KFunction<*>,
-        public val returnType: TypeDescriptor<*>?,
-        vararg parameters: TypeDescriptor<*>
-    ) : NativeType.Impl<T>(ValueLayout.JAVA_BYTE), TypeDescriptor<T> {
+        public val returnType: NType.Descriptor<*>?,
+        vararg parameters: NType.Descriptor<*>
+    ) : NComposite.Impl<T>(ValueLayout.JAVA_BYTE), NType.Descriptor<T> {
         public val upcallHandle: MethodHandle = MethodHandles.lookup().unreflect(invokeNativeFunc.javaMethod)
-        public val parameters: List<TypeDescriptor<*>> = parameters.toList()
+        public val parameters: List<NType.Descriptor<*>> = parameters.toList()
 
         public val functionDescriptor: FunctionDescriptor = if (returnType == null) {
             FunctionDescriptor.ofVoid(
@@ -102,11 +147,11 @@ public interface NativeFunction : NativeType {
 
         public abstract fun fromNativeData(value: MemorySegment): T
 
-        public fun toNativeData(value: T): NativePointer<T> {
-            return NativePointer(upcallStub(value).address())
+        public fun toNativeData(value: T): NPointer<T> {
+            return NPointer(upcallStub(value).address())
         }
 
-        public fun fromNativeData(value: NativePointer<T>): T {
+        public fun fromNativeData(value: NPointer<T>): T {
             return fromNativeData(MemorySegment.ofAddress(value._address))
         }
 
@@ -141,21 +186,13 @@ public interface NativeFunction : NativeType {
     }
 }
 
-public interface AllocateOverLoad<T : NativeType> {
+public interface AllocateOverLoad<T : NType> {
     @Deprecated(
         "Use allocate() instead",
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun malloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(allocator, count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+    public fun malloc(allocator: SegmentAllocator, count: Long): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -163,7 +200,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun malloc(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+    public fun malloc(allocator: SegmentAllocator, count: Int): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -171,7 +208,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun malloc(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+    public fun malloc(allocator: SegmentAllocator, count: ULong): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -179,7 +216,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator, count: Long): NativeArray<T> =
+    public fun malloc(allocator: SegmentAllocator, count: UInt): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -187,7 +224,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+    public fun calloc(allocator: SegmentAllocator, count: Long): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -195,7 +232,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+    public fun calloc(allocator: SegmentAllocator, count: Int): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -203,72 +240,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
-        throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(count: ULong): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(count: UInt): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(count: Long): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(count: Int): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(count: ULong): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun calloc(count: UInt): NativeArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
-
-
-    @Deprecated(
-        "Use allocate() instead",
-        ReplaceWith("allocate(allocator, count)"),
-        DeprecationLevel.ERROR
-    )
-    public fun malloc(allocator: SegmentAllocator): NativeValue<T> =
+    public fun calloc(allocator: SegmentAllocator, count: ULong): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -276,7 +248,7 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator): NativeValue<T> =
+    public fun calloc(allocator: SegmentAllocator, count: UInt): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -284,7 +256,72 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(count)"),
         DeprecationLevel.ERROR
     )
-    public fun malloc(): NativeValue<T> =
+    public fun malloc(count: Long): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: Int): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: ULong): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(count: UInt): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: Long): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: Int): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: ULong): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(count: UInt): NArray<T> = throw UnsupportedOperationException("DON'T USE THIS")
+
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun malloc(allocator: SegmentAllocator): NValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
+
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(allocator, count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(allocator: SegmentAllocator): NValue<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -292,39 +329,50 @@ public interface AllocateOverLoad<T : NativeType> {
         ReplaceWith("allocate(count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(): NativeValue<T> =
+    public fun malloc(): NValue<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
-    public fun allocate(allocator: SegmentAllocator, count: Long): NativeArray<T>
+    @Deprecated(
+        "Use allocate() instead",
+        ReplaceWith("allocate(count)"),
+        DeprecationLevel.ERROR
+    )
+    public fun calloc(): NValue<T> =
+        throw UnsupportedOperationException("DON'T USE THIS")
 
-    public fun allocate(allocator: SegmentAllocator): NativeValue<T>
+    public fun allocate(allocator: SegmentAllocator, count: Long): NArray<T>
+
+    public fun allocate(allocator: SegmentAllocator): NValue<T>
 }
 
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: ULong): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(
+    allocator: SegmentAllocator,
+    count: ULong
+): NArray<T> =
     allocate(allocator, count.toLong())
 
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: UInt): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: UInt): NArray<T> =
     allocate(allocator, count.toLong())
 
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: Int): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(allocator: SegmentAllocator, count: Int): NArray<T> =
     allocate(allocator, count.toLong())
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: Long): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(count: Long): NArray<T> =
     allocate(allocator, count)
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: ULong): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(count: ULong): NArray<T> =
     allocate(allocator, count.toLong())
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: UInt): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(count: UInt): NArray<T> =
     allocate(allocator, count.toLong())
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(count: Int): NativeArray<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(count: Int): NArray<T> =
     allocate(allocator, count.toLong())
 
 context(allocator: SegmentAllocator)
-public fun <T : NativeType> AllocateOverLoad<T>.allocate(): NativeValue<T> =
+public fun <T : NType> AllocateOverLoad<T>.allocate(): NValue<T> =
     allocate(allocator)

@@ -1,5 +1,5 @@
 package net.echonolix.caelum.vulkan
 
-import net.echonolix.caelum.NativeEnum
+import net.echonolix.caelum.NEnum
 
-public interface VkEnumBase<T> : NativeEnum<T>
+interface VkEnumBase<T> : NEnum<T>

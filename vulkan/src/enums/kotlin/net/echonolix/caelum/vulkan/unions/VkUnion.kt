@@ -1,8 +1,8 @@
 package net.echonolix.caelum.vulkan.unions
 
-import net.echonolix.caelum.NativeUnion
+import net.echonolix.caelum.NUnion
 import java.lang.foreign.MemoryLayout
 
-public abstract class VkUnion<T : VkUnion<T>>(
+abstract class VkUnion<T : VkUnion<T>>(
     vararg members: MemoryLayout
-) : NativeUnion<T>(*members)
+) : NUnion<T>(*members)

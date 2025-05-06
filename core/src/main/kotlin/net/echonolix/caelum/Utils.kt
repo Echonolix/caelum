@@ -6,18 +6,17 @@ import java.lang.foreign.SegmentAllocator
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-public typealias NativeChar = NativeInt8
-public typealias NativeSize = NativeInt64
-public typealias NativeInt = NativeInt32
+public typealias NSize = NInt64
+public typealias NInt = NInt32
 
-public fun String.c_str(allocator: SegmentAllocator): NativePointer<NativeChar> =
-    NativeArray<NativeChar>(allocator.allocateFrom(this)).ptr()
+public fun String.c_str(allocator: SegmentAllocator): NPointer<NChar> =
+    NArray<NChar>(allocator.allocateFrom(this)).ptr()
 
 context(allocator: SegmentAllocator)
-public fun String.c_str(): NativePointer<NativeChar> = c_str(allocator)
+public fun String.c_str(): NPointer<NChar> = c_str(allocator)
 
-public fun Collection<String>.c_strs(allocator: SegmentAllocator): NativePointer<NativePointer<NativeChar>> {
-    val arr = NativePointer.malloc<NativeChar>(allocator, this.size)
+public fun Collection<String>.c_strs(allocator: SegmentAllocator): NPointer<NPointer<NChar>> {
+    val arr = NPointer.malloc<NChar>(allocator, this.size)
     this.forEachIndexed { index, str ->
         arr[index] = str.c_str(allocator)
     }
@@ -25,7 +24,19 @@ public fun Collection<String>.c_strs(allocator: SegmentAllocator): NativePointer
 }
 
 context(allocator: SegmentAllocator)
-public fun Collection<String>.c_strs(): NativePointer<NativePointer<NativeChar>> = c_strs(allocator)
+public fun Collection<String>.c_strs(): NPointer<NPointer<NChar>> = c_strs(allocator)
+
+public var NArray<NChar>.string: String
+    get() = segment.getString(0L)
+    set(value) {
+        segment.setString(0L, value)
+    }
+
+public var NPointer<NChar>.string: String
+    get() = APIHelper.`_$OMNI_SEGMENT$_`.getString(_address)
+    set(value) {
+        APIHelper.`_$OMNI_SEGMENT$_`.setString(_address, value)
+    }
 
 /**
  * Creates a new [MemoryStack] and pushes it onto the stack, executing the
@@ -55,15 +66,15 @@ public inline fun <R> MemoryStack.Frame.MemoryStack(block: (MemoryStack.Frame).(
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NativeType> reinterpretCast(pointer: NativePointer<*>): NativePointer<T> =
-    pointer as NativePointer<T>
+public fun <T : NType> reinterpretCast(pointer: NPointer<*>): NPointer<T> =
+    pointer as NPointer<T>
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NativeType> reinterpretCast(array: NativeArray<*>): NativeArray<T> =
-    array as NativeArray<T>
+public fun <T : NType> reinterpretCast(array: NArray<*>): NArray<T> =
+    array as NArray<T>
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NativeType> reinterpretCast(value: NativeValue<*>): NativeValue<T> =
-    value as NativeValue<T>
+public fun <T : NType> reinterpretCast(value: NValue<*>): NValue<T> =
+    value as NValue<T>
