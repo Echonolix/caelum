@@ -9,6 +9,8 @@ import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.codegen.api.generator.GroupGenerator
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
+import net.echonolix.caelum.vulkan.CountTag
+import net.echonolix.caelum.vulkan.CountedTag
 import net.echonolix.caelum.vulkan.StructTypeTag
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import java.util.concurrent.ConcurrentHashMap
@@ -170,13 +172,108 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 return super.memberKtApiType(member)
             }
 
+            private fun String.pluralize(): String {
+                return when (this.last()) {
+                    's', 'h', 'o', 'x' -> this + "es"
+                    'y' -> this.dropLast(1) + "ies"
+                    else -> this + "s"
+                }
+            }
+
             context(ctx: CodegenContext)
-            override fun addMemberAccessor(member: CType.Group.Member) {
+            override fun addMemberAccessor(member: CType.Group.Member, unsafe: Boolean) {
                 val memberType = member.type.deepResolve()
                 if (memberType is CType.EnumBase) {
-                    return commonAccess(member, member.name != "sType")
+                    return commonAccess(member, member.name != "sType", unsafe)
                 }
-                super.addMemberAccessor(member)
+                val counted = member.tags.has<CountedTag>()
+                val countTag = member.tags.getOrNull<CountTag>()
+                if (countTag != null) {
+                    check(memberType is CType.BasicType)
+                    var funcName = member.name.removeSuffix("Count")
+                    val firstName = countTag.v.first().name
+                    if (funcName.length == member.name.length) {
+                        check(countTag.v.size == 1)
+                        funcName = firstName
+                    } else {
+                        funcName = funcName.pluralize()
+                    }
+                    val func = FunSpec.builder(funcName)
+                    func.addOptIns(CaelumCodegenHelper.unsafeAPICName)
+                    func.receiver(pointerCNameP)
+                    val code = CodeBlock.builder()
+                    code.addStatement(
+                        "check(this.%N == 0%L) { %S }",
+                        member.name,
+                        memberType.baseType.literalSuffix,
+                        "${member.name} of ${element.name} already changed"
+                    )
+
+
+                    countTag.v.forEachIndexed { i, it ->
+                        val pType = it.type
+                        val elementType = when (pType) {
+                            is CType.Pointer -> pType.elementType
+                            is CType.Array -> pType.elementType
+                            else -> error("Unexpected type: $pType")
+                        }
+                        if (pType is CType.Pointer) {
+                            code.addStatement(
+                                "check(this.%N._address == 0L) { %S }",
+                                it.name,
+                                "${it.name} of ${element.name} already changed"
+                            )
+                        }
+                        var elementTypeInArray = elementType.typeName()
+                        if (elementType is CType.Pointer) {
+                            elementTypeInArray = elementType.ktApiType()
+                        }
+                        func.addParameter(
+                            it.name,
+                            CaelumCodegenHelper.arrayCName.parameterizedBy(elementTypeInArray)
+                        )
+                    }
+                    val countMemberName = MemberName(CaelumCodegenHelper.basePkgName, "count")
+
+                    countTag.v.forEachIndexed { i, it ->
+                        val pType = it.type
+                        val elementType = when (pType) {
+                            is CType.Pointer -> pType.elementType
+                            is CType.Array -> pType.elementType
+                            else -> error("Unexpected type: $pType")
+                        }
+                        var elementTypeName = elementType.typeName()
+                        if (elementTypeName == CaelumCodegenHelper.starWildcard) {
+                            elementTypeName = CBasicType.uint8_t.caelumCoreTypeName
+                        } else if (elementType is CType.Pointer) {
+                            elementTypeName = CaelumCodegenHelper.pointerCName
+                        }
+                        if (i == 0) {
+                            code.addStatement("val count = %N.%M(%T)", it.name, countMemberName, elementTypeName)
+                        } else {
+                            code.addStatement(
+                                "check(count == %N.%M(%T)) { %S }",
+                                it.name,
+                                countMemberName,
+                                elementTypeName,
+                                "${it.name} has a different count"
+                            )
+                        }
+                    }
+                    val format = if (memberType.ktApiType() != LONG) {
+                        "this.%N = count.to${memberType.baseType.kotlinType.simpleName}()"
+                    } else {
+                        "this.%N = count"
+                    }
+                    code.addStatement(format, member.name)
+
+                    countTag.v.forEachIndexed { i, it ->
+                        code.addStatement("this.%N = %N.ptr()", it.name, it.name)
+                    }
+                    func.addCode(code.build())
+                    file.addFunction(func.build())
+                }
+                super.addMemberAccessor(member, unsafe || counted || countTag != null)
             }
         }
         return generator.generate()

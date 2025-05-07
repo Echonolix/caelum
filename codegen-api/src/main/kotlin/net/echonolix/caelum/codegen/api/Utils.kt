@@ -82,3 +82,17 @@ public fun TypeSpec.Builder.addAllocOverload(typeName: TypeName) =
                 )
                 .build()
         )
+
+private val optInCName = ClassName("kotlin", "OptIn")
+
+public fun <T : Annotatable.Builder<*>> T.addOptIns(vararg optIns: TypeName) = apply {
+    addAnnotation(
+        AnnotationSpec.builder(optInCName)
+            .apply {
+                optIns.forEach {
+                    addMember("%T::class", it)
+                }
+            }
+            .build()
+    )
+}

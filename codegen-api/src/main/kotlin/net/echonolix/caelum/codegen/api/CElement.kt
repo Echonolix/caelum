@@ -193,9 +193,15 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
         }
 
         context(ctx: CodegenContext)
-        override fun typeName(): ClassName {
+        override fun typeName(): TypeName {
+            return baseType.caelumCoreTypeName
+        }
+
+        context(ctx: CodegenContext)
+        override fun className(): ClassName {
             return baseType.caelumCoreTypeName as ClassName
         }
+
 
         context(ctx: CodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {

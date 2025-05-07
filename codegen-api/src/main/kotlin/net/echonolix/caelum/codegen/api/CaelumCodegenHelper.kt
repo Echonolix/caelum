@@ -96,4 +96,7 @@ public object CaelumCodegenHelper {
     public val memoryStackMember: MemberName = MemberName("net.echonolix.caelum", "MemoryStack")
 
     public val mallocMember: MemberName = MemberName("net.echonolix.caelum", "malloc")
+
+    public val unsafeAPICName: ClassName = ClassName(basePkgName, "UnsafeAPI")
+    public val unsafeAPIAnnotation: AnnotationSpec = AnnotationSpec.builder(unsafeAPICName).build()
 }

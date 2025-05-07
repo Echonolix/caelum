@@ -6,7 +6,8 @@ import net.echonolix.caelum.codegen.api.Tag
 
 class BitWidthTag(val width: Int) : Tag
 
-class LenTag(val len: String) : Tag
+class CountTag(val v: List<CType.Group.Member>) : Tag
+class CountedTag(val len: String) : Tag
 
 class LineCommentTag(val comment: String) : Tag
 

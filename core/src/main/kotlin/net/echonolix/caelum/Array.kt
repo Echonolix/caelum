@@ -9,6 +9,9 @@ public value class NArray<T : NType>(
     public val segment: MemorySegment,
 ) {
     public inline fun ptr(): NPointer<T> = NPointer(segment.address())
+
+    public fun count(descriptor: NType.Descriptor<out T>): Long = segment.byteSize() / descriptor.layout.byteSize()
+    public fun count(descriptor: NUInt8): Long = segment.byteSize() / descriptor.layout.byteSize()
 }
 
 public operator fun <E : NType, T : NPointer<E>> NArray<T>.get(index: Long): T {

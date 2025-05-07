@@ -33,28 +33,25 @@ public open class GroupGenerator(
     }
 
     context(ctx: CodegenContext)
-    protected open fun addMemberAccessor(member: CType.Group.Member) {
+    protected open fun addMemberAccessor(member: CType.Group.Member, unsafe: Boolean = false) {
         when (val memberType = member.type.deepResolve()) {
             is CType.BasicType -> {
-                basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr)
+                basicTypeAccess(member, memberType.baseType, memberType.baseType.cTypeNameStr, unsafe)
             }
-            is CType.Handle -> {
-                commonAccess(member)
+            is CType.Handle, is CType.EnumBase -> {
+                commonAccess(member, true, unsafe)
             }
             is CType.Pointer -> {
-                commonAccess(member)
+                commonAccess(member, true, unsafe)
                 if (memberType is CType.FunctionPointer) {
-                    funcPointerOverload(member, memberType)
+                    funcPointerOverload(member, memberType, unsafe)
                 }
             }
-            is CType.EnumBase -> {
-                commonAccess(member)
-            }
             is CType.Group -> {
-                groupAccess(member, memberType)
+                groupAccess(member, memberType, unsafe)
             }
             is CType.Array -> {
-                arrayAccess(member, memberType)
+                arrayAccess(member, memberType, unsafe)
             }
             else -> throw IllegalStateException("Unsupported member type: ${memberType.toSimpleString()}")
         }
@@ -131,6 +128,16 @@ public open class GroupGenerator(
             buildTypeObjectType()
             file.addType(typeObjectType.build())
             run {
+                file.addFunction(
+                    FunSpec.builder("count")
+                        .receiver(arrayCNameP)
+                        .returns(LONG)
+                        .addStatement(
+                            "return count(%T)",
+                            thisCName
+                        )
+                        .build()
+                )
                 file.addFunction(
                     FunSpec.builder("elementAddress")
                         .receiver(arrayCNameP)
@@ -232,10 +239,23 @@ public open class GroupGenerator(
         }
     }
 
+    private fun <T : Annotatable.Builder<*>> T.addUnsafe(unsafe: Boolean): T {
+        if (unsafe) {
+            addAnnotation(CaelumCodegenHelper.unsafeAPIAnnotation)
+        }
+        return this
+    }
+
     context(ctx: CodegenContext)
-    protected fun basicTypeAccess(member: CType.Group.Member, cBasicType: CBasicType<*>, cTypeName: String) {
+    protected fun basicTypeAccess(
+        member: CType.Group.Member,
+        cBasicType: CBasicType<*>,
+        cTypeName: String,
+        unsafe: Boolean
+    ) {
         file.addProperty(
             PropertySpec.builder(member.name, cBasicType.ktApiTypeTypeName)
+                .addUnsafe(unsafe)
                 .addAnnotation(CaelumCoreAnnotation.cTypeName(cTypeName))
                 .addKdoc(member)
                 .mutable()
@@ -255,6 +275,7 @@ public open class GroupGenerator(
         )
         file.addProperty(
             PropertySpec.builder(member.name, cBasicType.ktApiTypeTypeName)
+                .addUnsafe(unsafe)
                 .addAnnotation(CaelumCoreAnnotation.cTypeName(cTypeName))
                 .addKdoc(member)
                 .mutable()
@@ -303,12 +324,14 @@ public open class GroupGenerator(
     protected fun nestedAccess(
         member: CType.Group.Member,
         memberPointerCNameP: TypeName,
-        cTypeNameAnnotation: AnnotationSpec
+        cTypeNameAnnotation: AnnotationSpec,
+        unsafe: Boolean
     ) {
         val valueMemberOffset = member.valueMemberOffset()
         val pointerMemberOffset = member.pointerMemberOffset()
         file.addProperty(
             PropertySpec.builder(member.name, memberPointerCNameP)
+                .addUnsafe(unsafe)
                 .addAnnotation(cTypeNameAnnotation)
                 .addKdoc(member)
                 .mutable()
@@ -349,6 +372,7 @@ public open class GroupGenerator(
         )
         file.addProperty(
             PropertySpec.builder(member.name, memberPointerCNameP)
+                .addUnsafe(unsafe)
                 .addAnnotation(cTypeNameAnnotation)
                 .addKdoc(member)
                 .mutable()
@@ -392,6 +416,7 @@ public open class GroupGenerator(
         )
         file.addFunction(
             FunSpec.builder(member.name)
+                .addUnsafe(unsafe)
                 .addModifiers(KModifier.INLINE)
                 .receiver(valueCNameP)
                 .addParameter("block", LambdaTypeName.get(receiver = memberPointerCNameP, returnType = UNIT))
@@ -400,6 +425,7 @@ public open class GroupGenerator(
         )
         file.addFunction(
             FunSpec.builder(member.name)
+                .addUnsafe(unsafe)
                 .addModifiers(KModifier.INLINE)
                 .receiver(pointerCNameP)
                 .addParameter("block", LambdaTypeName.get(receiver = memberPointerCNameP, returnType = UNIT))
@@ -410,7 +436,7 @@ public open class GroupGenerator(
 
     context(ctx: CodegenContext)
     @Suppress("JoinDeclarationAndAssignment")
-    protected fun commonAccess(member: CType.Group.Member, mutable: Boolean = true) {
+    protected fun commonAccess(member: CType.Group.Member, mutable: Boolean, unsafe: Boolean) {
         val memberType = member.type
         val descType = memberType.typeDescriptorTypeName()!!
         val ktApiType = when (memberType) {
@@ -469,6 +495,7 @@ public open class GroupGenerator(
             .build()
 
         val valueProperty = PropertySpec.builder(member.name, returnType)
+        valueProperty.addUnsafe(unsafe)
         valueProperty.addAnnotation(cTypeNameAnnotation)
         valueProperty.addKdoc(member)
         valueProperty.receiver(valueCNameP)
@@ -479,6 +506,7 @@ public open class GroupGenerator(
         }
 
         val pointerProperty = PropertySpec.builder(member.name, returnType)
+        pointerProperty.addUnsafe(unsafe)
         pointerProperty.addAnnotation(cTypeNameAnnotation)
         pointerProperty.addKdoc(member)
         pointerProperty.receiver(pointerCNameP)
@@ -492,19 +520,19 @@ public open class GroupGenerator(
     }
 
     context(ctx: CodegenContext)
-    protected fun groupAccess(member: CType.Group.Member, memberType: CType.Group) {
+    protected fun groupAccess(member: CType.Group.Member, memberType: CType.Group, unsafe: Boolean) {
         val groupCName = memberType.typeName()
         val memberPointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(groupCName)
         val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
-        nestedAccess(member, memberPointerCNameP, cTypeNameAnnotation)
+        nestedAccess(member, memberPointerCNameP, cTypeNameAnnotation, unsafe)
     }
 
     context(ctx: CodegenContext)
-    protected fun arrayAccess(member: CType.Group.Member, memberType: CType.Array) {
+    protected fun arrayAccess(member: CType.Group.Member, memberType: CType.Array, unsafe: Boolean) {
         val eType = memberType.elementType
         val memberPointerCNameP = memberType.ktApiType()
         val cTypeNameAnnotation = CaelumCoreAnnotation.cTypeName(memberType.toSimpleString())
-        nestedAccess(member, memberPointerCNameP, cTypeNameAnnotation)
+        nestedAccess(member, memberPointerCNameP, cTypeNameAnnotation, unsafe)
         if (eType is CType.BasicType && eType.baseType == CBasicType.char) {
             val checkCodeBlock = CodeBlock.builder()
                 .apply {
@@ -521,6 +549,7 @@ public open class GroupGenerator(
                 .build()
             file.addFunction(
                 FunSpec.builder(member.name)
+                    .addUnsafe(unsafe)
                     .receiver(valueCNameP)
                     .addParameter("value", STRING)
                     .addCode("ptr().%N(value)", member.name)
@@ -528,6 +557,7 @@ public open class GroupGenerator(
             )
             file.addFunction(
                 FunSpec.builder(member.name)
+                    .addUnsafe(unsafe)
                     .receiver(pointerCNameP)
                     .addParameter("value", STRING)
                     .addCode(
@@ -544,10 +574,15 @@ public open class GroupGenerator(
     }
 
     context(ctx: CodegenContext)
-    protected fun funcPointerOverload(member: CType.Group.Member, functionPtrType: CType.FunctionPointer) {
+    protected fun funcPointerOverload(
+        member: CType.Group.Member,
+        functionPtrType: CType.FunctionPointer,
+        unsafe: Boolean
+    ) {
         val funcPtrCName = functionPtrType.elementType.className()
         file.addFunction(
             FunSpec.builder(member.name)
+                .addUnsafe(unsafe)
                 .receiver(valueCNameP)
                 .addParameter("func", funcPtrCName)
                 .addStatement("ptr().%N(func)", member.name)
@@ -555,6 +590,7 @@ public open class GroupGenerator(
         )
         file.addFunction(
             FunSpec.builder(member.name)
+                .addUnsafe(unsafe)
                 .receiver(pointerCNameP)
                 .addParameter("func", funcPtrCName)
                 .addStatement("%N = %T.toNativeData(func)", member.name, funcPtrCName)

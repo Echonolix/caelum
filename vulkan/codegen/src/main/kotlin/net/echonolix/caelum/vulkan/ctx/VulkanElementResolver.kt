@@ -183,8 +183,19 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             if (bits != -1) {
                 member.tags.set(BitWidthTag(bits))
             }
-            (xmlMember.altlen ?: xmlMember.len)?.let {
-                member.tags.set(LenTag(it))
+            (xmlMember.len)?.let { len ->
+                val altlen = xmlMember.altlen
+                if (altlen == null && len != "null-terminated") {
+                    val lenFirst = len.substringBefore(",")
+                    val countMember =
+                        members.find { it.name == lenFirst } ?: error("Cannot find count member $lenFirst")
+                    check(countMember.name == lenFirst)
+                    val countTag = CountTag((countMember.tags.getOrNull<CountTag>()?.v ?: emptyList()) + member)
+                    countMember.tags.set(countTag)
+                    check(member.type is CType.Pointer || member.type is CType.Array)
+                    check(countMember.name.endsWith("Count") || countTag.v.size == 1)
+                    member.tags.set(CountedTag(lenFirst))
+                }
             }
             xmlMember.comment?.let {
                 member.tags.set(ElementCommentTag(it))
