@@ -27,39 +27,51 @@ public open class EnumBaseGenerator(
         val type = TypeSpec.enumBuilder(thisCName)
         type.addKdoc(element)
         type.addSuper(element)
+        entries.forEach { entry ->
+            val expression = entry.expression
+            val fixedName = entry.tags.get<EnumEntryFixedName>().name
+            when (expression) {
+                is CExpression.Const -> {
+                    type.addEnumConstant(
+                        fixedName,
+                        TypeSpec.anonymousClassBuilder()
+                            .addKdoc(entry)
+                            .superclass(thisCName)
+                            .addSuperclassConstructorParameter(entry.expression.codeBlock())
+                            .build()
+                    )
+                }
+                is CExpression.Reference -> {
+                    // NOOP
+                }
+                else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+            }
+        }
         return type
     }
 
     context(ctx: CodegenContext)
-    protected open fun buildCompanionType(type: TypeSpec.Builder): TypeSpec.Builder {
+    protected open fun buildCompanionType(): TypeSpec.Builder {
         val companionType = TypeSpec.companionObjectBuilder()
-        entries.asSequence()
-            .forEach { entry ->
-                val expression = entry.expression
-                val fixedName = entry.tags.get<EnumEntryFixedName>().name
-                when (expression) {
-                    is CExpression.Const -> {
-                        type.addEnumConstant(
-                            fixedName,
-                            TypeSpec.anonymousClassBuilder()
-                                .addKdoc(entry)
-                                .superclass(thisCName)
-                                .addSuperclassConstructorParameter(entry.expression.codeBlock())
-                                .build()
-                        )
-                    }
-                    is CExpression.Reference -> {
-                        assert(expression.value in entries)
-                        companionType.addProperty(
-                            PropertySpec.builder(fixedName, thisCName)
-                                .initializer("%N", expression.value.tags.get<EnumEntryFixedName>().name)
-                                .addKdoc(entry)
-                                .build()
-                        )
-                    }
-                    else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+        entries.forEach { entry ->
+            val expression = entry.expression
+            val fixedName = entry.tags.get<EnumEntryFixedName>().name
+            when (expression) {
+                is CExpression.Const -> {
+                    // NOOP
                 }
+                is CExpression.Reference -> {
+                    assert(expression.value in entries)
+                    companionType.addProperty(
+                        PropertySpec.builder(fixedName, thisCName)
+                            .initializer("%N", expression.value.tags.get<EnumEntryFixedName>().name)
+                            .addKdoc(entry)
+                            .build()
+                    )
+                }
+                else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
             }
+        }
 
         companionType.addCompanionSuper(element)
         companionType.addFunction(
@@ -104,7 +116,7 @@ public open class EnumBaseGenerator(
     public final override fun generate(): FileSpec.Builder {
         with(ctx) {
             val type = buildType()
-            val companionType = buildCompanionType(type)
+            val companionType = buildCompanionType()
             type.addType(companionType.build())
             val file = FileSpec.builder(thisCName)
             file.addType(type.build())
@@ -147,11 +159,11 @@ public open class EnumBaseGenerator(
         return this
     }
 
+    private val validChars = ('a'..'z').toList()
+
     context(ctx: CodegenContext)
     private fun FileSpec.Builder.addNativeAccess() {
         val random = Random(0)
-
-        val validChars = ('a'..'z').toList()
 
         fun randomName(base: String): AnnotationSpec {
             val randomChars = (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
@@ -159,6 +171,7 @@ public open class EnumBaseGenerator(
                 .addMember("%S", "${thisCName.simpleName}_${base}_$randomChars")
                 .build()
         }
+
         val overloadTypes = listOf(INT, UInt::class.asTypeName(), ULong::class.asTypeName())
 
         val returnTypeName = thisCName
