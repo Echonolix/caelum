@@ -33,11 +33,10 @@ public open class EnumBaseGenerator(
     context(ctx: CodegenContext)
     protected open fun buildCompanionType(type: TypeSpec.Builder): TypeSpec.Builder {
         val companionType = TypeSpec.companionObjectBuilder()
-        val internalAliases = mutableListOf<PropertySpec>()
         entries.asSequence()
             .forEach { entry ->
                 val expression = entry.expression
-                val fixedName = entry.tags.get<EnumEntryFixedName>()!!.name
+                val fixedName = entry.tags.get<EnumEntryFixedName>().name
                 when (expression) {
                     is CExpression.Const -> {
                         type.addEnumConstant(
@@ -53,25 +52,14 @@ public open class EnumBaseGenerator(
                         assert(expression.value in entries)
                         companionType.addProperty(
                             PropertySpec.builder(fixedName, thisCName)
-                                .initializer("%N", expression.value.name)
+                                .initializer("%N", expression.value.tags.get<EnumEntryFixedName>().name)
                                 .addKdoc(entry)
                                 .build()
                         )
                     }
                     else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
                 }
-                if (entry.name != fixedName) {
-                    internalAliases += PropertySpec.builder(entry.name, thisCName)
-                        .addModifiers(KModifier.INTERNAL)
-                        .getter(
-                            FunSpec.getterBuilder()
-                                .addStatement("return %N", fixedName)
-                                .build()
-                        )
-                        .build()
-                }
             }
-        companionType.addProperties(internalAliases)
 
         companionType.addCompanionSuper(element)
         companionType.addFunction(
@@ -90,10 +78,9 @@ public open class EnumBaseGenerator(
                                 .filter { it.expression is CExpression.Const }
                                 .forEach { entry ->
                                     addStatement(
-                                        "%L -> %T.%N",
+                                        "%L -> %N",
                                         entry.expression.codeBlock(),
-                                        thisCName,
-                                        entry.name
+                                        entry.tags.get<EnumEntryFixedName>().name
                                     )
                                 }
                         }

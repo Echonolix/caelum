@@ -184,7 +184,7 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 }
                 else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
             }
-            val fixedName = it.tags.get<EnumEntryFixedName>()!!.name
+            val fixedName = it.tags.getOrNull<EnumEntryFixedName>()!!.name
             companion.addProperty(
                 PropertySpec.builder(fixedName, thisCName)
                     .initializer(initilizer)

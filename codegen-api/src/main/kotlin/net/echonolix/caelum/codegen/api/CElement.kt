@@ -11,17 +11,22 @@ public class TagStorage {
     private val backingMap = mutableMapOf<Class<out Tag>, Tag>()
 
     @Suppress("UNCHECKED_CAST")
-    public fun <T : Tag> get(clazz: Class<T>): T? {
+    public fun <T : Tag> getOrNull(clazz: Class<T>): T? {
         return backingMap[clazz] as? T
+    }
+
+    public fun <T : Tag> get(clazz: Class<T>): T {
+        return getOrNull(clazz) ?: throw IllegalStateException("Tag $clazz not found")
     }
 
     public fun <T : Tag> set(clazz: Class<T>, value: T) {
         backingMap[clazz] = value
     }
 
-    public inline fun <reified T : Tag> get(): T? = get(T::class.java)
+    public inline fun <reified T : Tag> getOrNull(): T? = getOrNull(T::class.java)
+    public inline fun <reified T : Tag> get(): T = get(T::class.java)
     public inline fun <reified T : Tag> set(value: T): Unit = set(T::class.java, value)
-    public inline fun <reified T : Tag> has(): Boolean = get<T>() != null
+    public inline fun <reified T : Tag> has(): Boolean = getOrNull<T>() != null
 }
 
 public class TypeNameRename(public val name: String): Tag
@@ -67,7 +72,7 @@ public interface CElement : Comparable<CElement> {
 
         context(ctx: CodegenContext)
         public fun typeName(): TypeName {
-            return ClassName(packageName(), tags.get<TypeNameRename>()?.name ?: name)
+            return ClassName(packageName(), tags.getOrNull<TypeNameRename>()?.name ?: name)
         }
 
         context(ctx: CodegenContext)

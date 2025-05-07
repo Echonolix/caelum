@@ -138,12 +138,12 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
                 if (groupType is CType.Struct) {
                     val initializerCodeBlock = groupType.members
-                        .firstNotNullOfOrNull { it.tags.get<StructTypeTag>() }
+                        .firstNotNullOfOrNull { it.tags.getOrNull<StructTypeTag>() }
                         ?.let { tag ->
                             CodeBlock.of(
                                 "return %T.%N",
                                 vkStructureTypeCName,
-                                tag.structType.tags.get<EnumEntryFixedName>()!!.name
+                                tag.structType.tags.getOrNull<EnumEntryFixedName>()!!.name
                             )
                         } ?: CodeBlock.of("return null")
 

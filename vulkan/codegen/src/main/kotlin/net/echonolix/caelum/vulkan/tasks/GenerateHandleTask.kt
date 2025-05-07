@@ -65,7 +65,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     private fun CodegenContext.genObjectHandle(handleType: CType.Handle) {
         val thisCName = handleType.className()
         val thisTypeDescriptor = CaelumCodegenHelper.NEnum.descriptorCName.parameterizedBy(thisCName, LONG)
-        val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
+        val vkHandleTag = handleType.tags.getOrNull<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
 
         val interfaceType = TypeSpec.interfaceBuilder(thisCName)
         interfaceType.addSuperinterface(VulkanCodegen.vkHandleCName.parameterizedBy(thisCName))
@@ -77,7 +77,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                         .addStatement(
                             "return %T.%N",
                             objTypeCName,
-                            vkHandleTag.objectTypeEnum.tags.get<EnumEntryFixedName>()!!.name
+                            vkHandleTag.objectTypeEnum.tags.getOrNull<EnumEntryFixedName>()!!.name
                         )
                         .build()
                 )
@@ -146,7 +146,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     ) {
         val thisObjectHandleCName = handleType.className()
         val thisCName = handleType.objectBaseCName()
-        val vkHandleTag = handleType.tags.get<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
+        val vkHandleTag = handleType.tags.getOrNull<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
         val parent = vkHandleTag.parent
 
         val containerCName = ClassName(VulkanCodegen.handlePackageName, "${handleType.name}Container")
@@ -203,7 +203,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             )
         }
         ContainerType[handleType.name]?.let { containerType ->
-            fun CType.Function.funcName() = tags.get<OriginalNameTag>()!!.name
+            fun CType.Function.funcName() = tags.getOrNull<OriginalNameTag>()!!.name
 
             val filteredFunctions = functions.parallelStream()
                 .filter(containerType::filterFunc)

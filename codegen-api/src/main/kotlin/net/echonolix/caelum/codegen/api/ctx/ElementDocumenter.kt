@@ -11,7 +11,7 @@ public interface ElementDocumenter {
     public open class Base : ElementDocumenter {
         context(ctx: CodegenContext)
         override fun buildKdocStr(sb: StringBuilder, element: CElement) {
-            val elementComment = element.tags.get<ElementCommentTag>()?.comment
+            val elementComment = element.tags.getOrNull<ElementCommentTag>()?.comment
             if (elementComment != null) {
                 sb.appendLine(elementComment.removePrefix("//").trim())
             }

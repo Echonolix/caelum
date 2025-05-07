@@ -33,7 +33,7 @@ public open class FunctionGenerator(
 
     context(ctx: CodegenContext)
     protected open fun nativeName(): String {
-        return element.tags.get<OriginalNameTag>()?.name ?: element.name
+        return element.tags.getOrNull<OriginalNameTag>()?.name ?: element.name
     }
 
     context(ctx: CodegenContext)

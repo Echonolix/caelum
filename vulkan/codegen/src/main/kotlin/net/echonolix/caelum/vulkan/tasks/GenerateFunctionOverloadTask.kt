@@ -8,20 +8,14 @@ import net.echonolix.caelum.codegen.api.OriginalNameTag
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.decap
 import net.echonolix.caelum.codegen.api.task.CodegenTask
-import net.echonolix.caelum.vulkan.VulkanCodegen
-import net.echonolix.caelum.vulkan.ResultCodeTag
-import net.echonolix.caelum.vulkan.VkHandleTag
-import net.echonolix.caelum.vulkan.filterVkFunction
-import net.echonolix.caelum.vulkan.isDeviceBase
-import net.echonolix.caelum.vulkan.objectBaseCName
-import net.echonolix.caelum.vulkan.toKtParamOverloadSpecs
+import net.echonolix.caelum.vulkan.*
 import kotlin.io.path.Path
 
 class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     override fun CodegenContext.compute() {
         val skippedNames = setOf("vkGetInstanceProcAddr", "vkGetDeviceProcAddr")
         ctx.filterVkFunction().asSequence()
-            .filter { it.tags.get<OriginalNameTag>()!!.name !in skippedNames }
+            .filter { it.tags.getOrNull<OriginalNameTag>()!!.name !in skippedNames }
             .groupBy { it.parameters.first().type }
             .map { Task(it.key as CType.Handle, it.value) }
             .onEach(Task::fork)
@@ -54,8 +48,9 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
         private fun CodegenContext.vkFuncOverload(funcType: CType.Function): FunSpec {
             val prefixRemoved = funcType.name.removePrefix("VkFunc")
             val funcName = prefixRemoved.decap()
-            val resultCodeTag = funcType.tags.get<ResultCodeTag>() ?: error("$funcType is missing result code tag")
-            val origName = funcType.tags.get<OriginalNameTag>()?.name
+            val resultCodeTag =
+                funcType.tags.getOrNull<ResultCodeTag>() ?: error("$funcType is missing result code tag")
+            val origName = funcType.tags.getOrNull<OriginalNameTag>()?.name
                 ?: error("$funcType is missing original function name tag")
 
             val dispatcher = if (isDeviceBase(handleType)) "device" else "instance"
@@ -107,7 +102,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 })
                 funcCode.add(" -> %T.success(%T.fromNativeData(", resultCName, returnType1)
 
-                val returnHandleParentType = returnHandleType.tags.get<VkHandleTag>()!!.parent
+                val returnHandleParentType = returnHandleType.tags.getOrNull<VkHandleTag>()!!.parent
                 if (returnHandleParentType != handleType) {
                     val secondParam = params1.first()
                     val secondParamType = secondParam.type
