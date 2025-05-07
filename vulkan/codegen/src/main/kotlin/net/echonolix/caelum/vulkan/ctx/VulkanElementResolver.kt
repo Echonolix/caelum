@@ -203,6 +203,9 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             lineComment?.let {
                 member.tags.set(LineCommentTag(it))
             }
+            if (xmlMember.optional == "true" || xmlMember.optional?.split(",")?.first() == "true") {
+                member.tags.set(OptionalTag)
+            }
             if (xmlMember.name == "sType" && xmlMember.values != null) {
                 val structType = resolveElement(xmlMember.values) as CType.EnumBase.Entry
                 member.tags.set(StructTypeTag(structType))
@@ -285,7 +288,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
                     ?: throw IllegalStateException("Cannot resolve function parameter for: $cmdName")
                 val (typeStr) = matchEntire.destructured
                 CType.Function.Parameter(it.name, resolveTypedElement<CType>(typeStr)).apply {
-                    if (it.optional == "true") {
+                    if (it.optional == "true" || it.optional?.split(",")?.first() == "true") {
                         tags.set(OptionalTag)
                     }
                 }

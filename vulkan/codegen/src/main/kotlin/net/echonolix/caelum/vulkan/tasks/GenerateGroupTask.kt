@@ -9,10 +9,7 @@ import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.codegen.api.generator.GroupGenerator
 import net.echonolix.caelum.codegen.api.task.CodegenTask
 import net.echonolix.caelum.codegen.api.task.GenTypeAliasTask
-import net.echonolix.caelum.vulkan.CountTag
-import net.echonolix.caelum.vulkan.CountedTag
-import net.echonolix.caelum.vulkan.StructTypeTag
-import net.echonolix.caelum.vulkan.VulkanCodegen
+import net.echonolix.caelum.vulkan.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.stream.Collectors
@@ -201,14 +198,15 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     val func = FunSpec.builder(funcName)
                     func.addOptIns(CaelumCodegenHelper.unsafeAPICName)
                     func.receiver(pointerCNameP)
-                    val code = CodeBlock.builder()
-                    code.addStatement(
+                    val initCheckCode = CodeBlock.builder()
+                    initCheckCode.addStatement(
                         "check(this.%N == 0%L) { %S }",
                         member.name,
                         memberType.baseType.literalSuffix,
                         "${member.name} of ${element.name} already changed"
                     )
 
+                    val nullable = member.tags.has<OptionalTag>()
 
                     countTag.v.forEachIndexed { i, it ->
                         val pType = it.type
@@ -218,7 +216,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                             else -> error("Unexpected type: $pType")
                         }
                         if (pType is CType.Pointer) {
-                            code.addStatement(
+                            initCheckCode.addStatement(
                                 "check(this.%N._address == 0L) { %S }",
                                 it.name,
                                 "${it.name} of ${element.name} already changed"
@@ -230,9 +228,33 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                         }
                         func.addParameter(
                             it.name,
-                            CaelumCodegenHelper.arrayCName.parameterizedBy(elementTypeInArray)
+                            CaelumCodegenHelper.arrayCName
+                                .parameterizedBy(elementTypeInArray)
                         )
                     }
+
+                    countTag.v.forEachIndexed { i, it ->
+                        if (it.type is CType.Pointer) {
+                            initCheckCode.addStatement(
+                                "check(this.%N._address == 0L) { %S }",
+                                it.name,
+                                "${it.name} of ${element.name} already changed"
+                            )
+                        }
+                    }
+
+                    val nullOverloadFunc = FunSpec.builder(funcName)
+                    nullOverloadFunc.addOptIns(CaelumCodegenHelper.unsafeAPICName)
+                    nullOverloadFunc.receiver(pointerCNameP)
+                    nullOverloadFunc.addCode(initCheckCode.build())
+                    if (!nullable) {
+                        nullOverloadFunc.addModifiers(KModifier.PRIVATE)
+                        println(element.name)
+                    }
+                    file.addFunction(nullOverloadFunc.build())
+
+                    val code = CodeBlock.builder()
+                    code.addStatement("this.%N()", funcName)
                     val countMemberName = MemberName(CaelumCodegenHelper.basePkgName, "count")
 
                     countTag.v.forEachIndexed { i, it ->

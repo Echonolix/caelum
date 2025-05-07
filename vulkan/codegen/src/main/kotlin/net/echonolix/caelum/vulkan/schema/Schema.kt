@@ -27,7 +27,7 @@ value class XMLType(val value: String)
 @XmlSerialName("member")
 data class XMLMember(
     @XmlElement val name: String,
-    val optional: Boolean = false,
+    val optional: String? = null,
     val noautovalidity: Boolean = false,
     val limittype: String? = null,
     val len: String? = null,
