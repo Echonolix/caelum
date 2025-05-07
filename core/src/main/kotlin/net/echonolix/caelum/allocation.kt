@@ -75,7 +75,7 @@ public fun <T : NType> NType.Descriptor<T>.calloc(count: Int): NArray<T> =
     NArray(allocator.allocate(layout, count.toLong()).apply { fill(0) })
 
 
-public interface AllocOverload<T : NType> {
+public interface AllocateOverload<T : NType> {
     public val layoutDelegate: MemoryLayout
 
     public fun malloc(allocator: SegmentAllocator): NValue<T> =

@@ -49,7 +49,7 @@ public object CaelumCodegenHelper {
         public val typeDescriptorCName: ClassName = cName.nestedClass("Descriptor")
     }
 
-    public val allocOverloadCName: ClassName = ClassName(basePkgName, "AllocOverload")
+    public val allocOverloadCName: ClassName = ClassName(basePkgName, "AllocateOverload")
 
     public val enumCName: ClassName = ClassName(basePkgName, "NEnum")
     public val structCName: ClassName = ClassName(basePkgName, "NStruct")

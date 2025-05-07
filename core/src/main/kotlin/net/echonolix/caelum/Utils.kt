@@ -78,3 +78,15 @@ public fun <T : NType> reinterpretCast(array: NArray<*>): NArray<T> =
 @UnsafeAPI
 public fun <T : NType> reinterpretCast(value: NValue<*>): NValue<T> =
     value as NValue<T>
+
+@Suppress("UNCHECKED_CAST")
+public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> primitiveCast(value: NPointer<A>): NPointer<B> =
+    value as NPointer<B>
+
+@Suppress("UNCHECKED_CAST")
+public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> primitiveCast(value: NArray<A>): NArray<B> =
+    value as NArray<B>
+
+@Suppress("UNCHECKED_CAST")
+public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> primitiveCast(value: NValue<A>): NValue<B> =
+    value as NValue<B>

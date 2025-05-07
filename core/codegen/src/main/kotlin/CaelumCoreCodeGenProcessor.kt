@@ -1,6 +1,9 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.codegen.api.*
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
+import net.echonolix.caelum.codegen.api.CoreNativeTypes
+import net.echonolix.caelum.codegen.api.NativeDataType
+import net.echonolix.caelum.codegen.api.addSuppress
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Path
 import java.util.*
@@ -22,25 +25,21 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
             .addSuppress()
 
         CoreNativeTypes.entries.forEach { basicType ->
+            val thisCName = basicType.cName
             val typeObject = TypeSpec.objectBuilder(basicType.cName)
-            val nPrimitiveType = CaelumCodegenHelper.NPrimitive.cName.parameterizedBy(
-                basicType.nativeDataType.nativeDataType,
-                basicType.ktApiType.cName
-            )
-            val outNPrimitiveType = WildcardTypeName.producerOf(nPrimitiveType)
+            val outNPrimitiveType = WildcardTypeName.producerOf(thisCName)
 
             typeObject.addSuperinterface(
                 CaelumCodegenHelper.NPrimitive.typeObjectCName.parameterizedBy(
-                    nPrimitiveType,
+                    thisCName,
                     basicType.nativeDataType.nativeDataType,
                     basicType.ktApiType.cName,
                 )
             )
             typeObject.addSuperinterface(
-                basicType.nativeDataType.nNativeDataCName.parameterizedBy(nPrimitiveType, basicType.ktApiType.cName),
+                basicType.nativeDataType.nNativeDataCName.parameterizedBy(thisCName, basicType.ktApiType.cName),
                 CodeBlock.of("%T.implOf()", basicType.nativeDataType.nNativeDataCName)
             )
-            typeObject.addAllocOverload(basicType.cName)
             typeObject.addFunction(
                 FunSpec.builder("fromNativeData")
                     .addModifiers(KModifier.OVERRIDE)
@@ -67,7 +66,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
             fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
                 .addMember(
                     "%S",
-                    "${basicType.cName.simpleName}_${base}_${
+                    "${thisCName.simpleName}_${base}_${
                         (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
                     }"
                 )
@@ -119,8 +118,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                             .addAnnotation(randomName("getValue"))
                             .addStatement(
                                 "return %T.fromNativeData(%T.pointerGetValue(this))",
-                                basicType.cName,
-                                basicType.cName
+                                thisCName,
+                                thisCName
                             )
                             .build()
                     )
@@ -130,8 +129,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                             .addParameter("value", returnTypeName)
                             .addStatement(
                                 "(%T.pointerSetValue(this, %T.toNativeData(value)))",
-                                basicType.cName,
-                                basicType.cName
+                                thisCName,
+                                thisCName
                             )
                             .build()
                     )
@@ -147,8 +146,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .returns(returnTypeName)
                     .addStatement(
                         "return %T.fromNativeData(%T.pointerGetElement(this, index))",
-                        basicType.cName,
-                        basicType.cName
+                        thisCName,
+                        thisCName
                     )
                     .build()
             )
@@ -163,8 +162,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", returnTypeName)
                     .addStatement(
                         "%T.pointerSetElement(this, index, %T.toNativeData(value))",
-                        basicType.cName,
-                        basicType.cName
+                        thisCName,
+                        thisCName
                     )
                     .build()
             )
@@ -180,8 +179,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .returns(returnTypeName)
                     .addStatement(
                         "return this.value",
-                        basicType.cName,
-                        basicType.cName
+                        thisCName,
+                        thisCName
                     )
                     .build()
             )
@@ -195,8 +194,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", returnTypeName)
                     .addStatement(
                         "this.value = value",
-                        basicType.cName,
-                        basicType.cName
+                        thisCName,
+                        thisCName
                     )
                     .build()
             )
@@ -210,8 +209,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                             .addAnnotation(randomName("getValue"))
                             .addStatement(
                                 "return %T.fromNativeData(%T.valueGetValue(this))",
-                                basicType.cName,
-                                basicType.cName
+                                thisCName,
+                                thisCName
                             )
                             .build()
                     )
@@ -221,8 +220,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                             .addParameter("value", returnTypeName)
                             .addStatement(
                                 "%T.valueSetValue(this, %T.toNativeData(value))",
-                                basicType.cName,
-                                basicType.cName
+                                thisCName,
+                                thisCName
                             )
                             .build()
                     )
@@ -261,8 +260,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .returns(returnTypeName)
                     .addStatement(
                         "return %T.fromNativeData(%T.arrayGetElement(this, index))",
-                        basicType.cName,
-                        basicType.cName
+                        thisCName,
+                        thisCName
                     )
                     .build()
             )
@@ -276,8 +275,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", returnTypeName)
                     .addStatement(
                         "%T.arraySetElement(this, index, %T.toNativeData(value))",
-                        basicType.cName,
-                        basicType.cName
+                        thisCName,
+                        thisCName
                     )
                     .build()
             )
