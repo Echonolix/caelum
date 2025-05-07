@@ -170,7 +170,6 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
 
         val companion = TypeSpec.companionObjectBuilder()
         val flagBitEntries = flagType.entries.values.sortedBy { registry.enumValueOrders[it.name] }
-        val internalAliases = mutableListOf<PropertySpec>()
         flagBitEntries.forEach {
             val expression = it.expression
             val code = expression.codeBlock()
@@ -180,29 +179,19 @@ class GenerateEnumTask(ctx: CodegenContext, val registry: FilteredRegistry) : Co
                 }
                 is CExpression.Reference -> {
                     check(expression.value.name in flagType.entries)
-                    CodeBlock.of("%N", expression.value.name)
+                    CodeBlock.of("%N", expression.value.tags.get<EnumEntryFixedName>().name)
                 }
                 else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
             }
-            val fixedName = it.tags.getOrNull<EnumEntryFixedName>()!!.name
+            val fixedName = it.tags.get<EnumEntryFixedName>().name
             companion.addProperty(
                 PropertySpec.builder(fixedName, thisCName)
                     .initializer(initilizer)
                     .addKdoc(it)
                     .build()
             )
-            if (it.name != fixedName) {
-                internalAliases += PropertySpec.builder(it.name, thisCName)
-                    .addModifiers(KModifier.INTERNAL)
-                    .getter(
-                        FunSpec.getterBuilder()
-                            .addStatement("return %N", fixedName)
-                            .build()
-                    )
-                    .build()
-            }
         }
-        companion.addProperties(internalAliases)
+
         if (flagBitEntries.none {
                 CSyntax.intLiteralRegex.matchEntire(it.expression.codeBlock().toString())?.groupValues[2] == "0"
             }) {
