@@ -8,20 +8,8 @@ import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.ElementResolver
 import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
-import net.echonolix.caelum.vulkan.AliasedTag
-import net.echonolix.caelum.vulkan.BitWidthTag
-import net.echonolix.caelum.vulkan.LenTag
-import net.echonolix.caelum.vulkan.LineCommentTag
-import net.echonolix.caelum.vulkan.OptionalTag
-import net.echonolix.caelum.vulkan.RequiredByTag
-import net.echonolix.caelum.vulkan.ResultCodeTag
-import net.echonolix.caelum.vulkan.StructTypeTag
-import net.echonolix.caelum.vulkan.VkHandleTag
-import net.echonolix.caelum.vulkan.VulkanCodegen
+import net.echonolix.caelum.vulkan.*
 import net.echonolix.caelum.vulkan.schema.*
-import net.echonolix.caelum.vulkan.toXmlTagFreeString
-import net.echonolix.caelum.vulkan.tryParseXML
-import kotlin.collections.get
 
 class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Base() {
     private fun resolveTypeDef(xmlTypeDefType: Registry.Types.Type): CType.TypeDef {
@@ -325,12 +313,10 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             else -> {
                 throw IllegalStateException("Cannot resolve ext enum: ${xmlEnum.name}")
             }
-        }.also {
-            it.tags.set(RequiredByTag(registry.extEnumRequiredBy[xmlEnum.name]!!))
         }
     }
 
-    override fun resolveElementImpl(cElementStr: String): CElement {
+    private fun resolveElementImpl0(cElementStr: String): CElement {
         registry.registryTypes[cElementStr]?.alias?.let {
             return resolveTypedElement<CType>(it)
         }
@@ -410,5 +396,13 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
         }
 
         throw IllegalStateException("Cannot resolve type: $cElementStr")
+    }
+
+    override fun resolveElementImpl(cElementStr: String): CElement {
+        return resolveElementImpl0(cElementStr).also {
+            registry.stuffRequiredBy[cElementStr]?.let { requiredBy ->
+                it.tags.set(RequiredByTag(requiredBy))
+            }
+        }
     }
 }

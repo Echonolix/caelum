@@ -89,23 +89,53 @@ class FilteredRegistry(registry: Registry) {
         })
         .associateBy { it.name }
 
-    val extEnumRequiredBy = (
-        registryFeatures.asSequence().flatMap { feature ->
+    val typesRequiredBy = (registryFeatures.asSequence().flatMap { feature ->
+        feature.require.asSequence()
+            .flatMap { it.types }
+            .map { it.name to feature.name }
+    } + registryExtensions.flatMap { extension ->
+        extension.require.asSequence()
+            .flatMap { it.types }
+            .map { it.name to extension.name }
+    })
+        .toMap()
+
+    val stuffRequiredBy: Map<String, String>
+
+    init {
+        val featureEnums = registryFeatures.asSequence().flatMap { feature ->
             feature.require.asSequence()
                 .flatMap { it.enums }
                 .map { it to feature.name }
-        } + registryExtensions.flatMap { extension ->
+        }
+        val extensionEnums = registryExtensions.flatMap { extension ->
             extension.require.asSequence()
                 .flatMap { it.enums }
                 .map { it.copy(extnumber = it.extnumber ?: extension.number.toString()) }
                 .map { it to extension.name }
         }
-        )
-        .filter { (it, _) -> it.api == null || it.api == API.vulkan }
-        .sortedWith(compareBy { (it, _) ->
-            it.alias != null || it.value != null
-        })
-        .associate { it.first.name to it.second }
+        val enums = (featureEnums + extensionEnums)
+            .filter { (it, _) -> it.api == null || it.api == API.vulkan }
+            .map { it.first.name to it.second }
+
+        val featureTypesNCommands = registryFeatures.asSequence().flatMap { feature ->
+            feature.require.asSequence()
+                .flatMap { require ->
+                    require.types.asSequence().map { it.name } + require.commands.asSequence().map { it.name }
+                }
+                .map { it to feature.name }
+        }
+
+        val extensionTypesNCommands = registryExtensions.flatMap { extension ->
+            extension.require.asSequence()
+                .flatMap { require ->
+                    require.types.asSequence().map { it.name } + require.commands.asSequence().map { it.name }
+                }
+                .map { it to extension.name }
+        }
+
+        stuffRequiredBy = (enums + featureTypesNCommands + extensionTypesNCommands).toMap()
+    }
 
     val enumValueOrders = (registry.enums.asSequence()
         .flatMap { it.enums }
