@@ -2,8 +2,8 @@
 
 package net.echonolix.caelum.codegen.api
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 public fun FileSpec.Builder.addSuppress() = apply {
     addAnnotation(
@@ -69,3 +69,16 @@ public fun Int.toLiteralHexString() = toHexString(hexFormat)
 public fun UInt.toLiteralHexString() = toHexString(hexFormat)
 public fun ULong.toLiteralHexString() = toHexString(hexFormat)
 public fun Long.toLiteralHexString() = toHexString(hexFormat)
+
+public fun TypeSpec.Builder.addAllocOverload(typeName: TypeName) =
+    addSuperinterface(CaelumCodegenHelper.allocOverloadCName.parameterizedBy(typeName))
+        .addProperty(
+            PropertySpec.builder("layoutDelegate", CaelumCodegenHelper.memoryLayoutCName)
+                .addModifiers(KModifier.OVERRIDE)
+                .getter(
+                    FunSpec.getterBuilder()
+                        .addStatement("return layout")
+                        .build()
+                )
+                .build()
+        )

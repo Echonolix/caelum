@@ -1,9 +1,6 @@
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
-import net.echonolix.caelum.codegen.api.CoreNativeTypes
-import net.echonolix.caelum.codegen.api.NativeDataType
-import net.echonolix.caelum.codegen.api.addSuppress
+import net.echonolix.caelum.codegen.api.*
 import net.echonolix.ktgen.KtgenProcessor
 import java.nio.file.Path
 import java.util.*
@@ -43,17 +40,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                 basicType.nativeDataType.nNativeDataCName.parameterizedBy(nPrimitiveType, basicType.ktApiType.cName),
                 CodeBlock.of("%T.implOf()", basicType.nativeDataType.nNativeDataCName)
             )
-            typeObject.addProperty(
-                PropertySpec.builder("layoutDelegate", CaelumCodegenHelper.memoryLayoutCName)
-                    .addModifiers(KModifier.OVERRIDE)
-                    .getter(
-                        FunSpec.getterBuilder()
-                            .addStatement("return layout")
-                            .build()
-                    )
-                    .build()
-            )
-            typeObject.addSuperinterface(CaelumCodegenHelper.allocOverloadCName.parameterizedBy(basicType.cName))
+            typeObject.addAllocOverload(basicType.cName)
             typeObject.addFunction(
                 FunSpec.builder("fromNativeData")
                     .addModifiers(KModifier.OVERRIDE)

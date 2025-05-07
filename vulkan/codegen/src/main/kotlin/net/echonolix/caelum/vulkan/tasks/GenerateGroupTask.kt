@@ -96,8 +96,12 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 ?: mergedClusters.add(cluster.toMutableSet())
         }
         mergedClusters.sortBy { it.size }
+        while (mergedClusters.size > 8) {
+            val second = mergedClusters.removeAt(1)
+            mergedClusters.first().addAll(second)
+        }
 
-        check(mergedClusters.size == 8)
+        check(mergedClusters.size <= 8)
         mergedClusters.forEach { cluster ->
             println(cluster.size)
         }

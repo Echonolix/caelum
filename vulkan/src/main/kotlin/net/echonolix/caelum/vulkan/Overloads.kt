@@ -7,8 +7,7 @@ import net.echonolix.caelum.vulkan.handles.VkHandle
 fun <B : VkHandle<*>, R : B> enumerate(
     func: (count: NPointer<NUInt32>, properties: NPointer<B>?) -> Result<*>,
     fromNativeData: (pointer: NPointer<B>, index: Int) -> R,
-): List<R> =
-    MemoryStack {
+): List<R> = MemoryStack {
         val count = NUInt32.malloc()
         func(count.ptr(), null).getOrThrow()
         val arr = reinterpretCast<B>(NPointer.malloc<NChar>(count.value))

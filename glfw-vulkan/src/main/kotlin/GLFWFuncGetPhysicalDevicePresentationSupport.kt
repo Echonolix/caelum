@@ -26,17 +26,17 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NFunction {
     ): Int = invoke(
         VkInstanceHandle.fromNativeData(instance),
         VkPhysicalDeviceHandle.fromNativeData(device),
-        NativeUInt32.fromNativeData(queuefamily),
+        NUInt32.fromNativeData(queuefamily),
     )
 
     public companion object TypeDescriptor :
         NFunction.Descriptor<GLFWFuncGetPhysicalDevicePresentationSupport>(
             "glfwGetPhysicalDevicePresentationSupport",
             GLFWFuncGetPhysicalDevicePresentationSupport::invokeNative,
-            NativeInt,
+            NInt,
             NPointer,
             NPointer,
-            NativeUInt32
+            NUInt32
         ) {
         override fun fromNativeData(value: MemorySegment): GLFWFuncGetPhysicalDevicePresentationSupport =
             Impl(downcallHandle(value))
@@ -52,7 +52,7 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NFunction {
             ): Int = invokeNative(
                 VkInstanceHandle.toNativeData(instance),
                 VkPhysicalDeviceHandle.toNativeData(device),
-                NativeUInt32.toNativeData(queuefamily)
+                NUInt32.toNativeData(queuefamily)
             )
 
             override fun invokeNative(

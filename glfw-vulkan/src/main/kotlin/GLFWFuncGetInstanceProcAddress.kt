@@ -14,7 +14,7 @@ public fun interface GLFWFuncGetInstanceProcAddress : NFunction {
 
     public operator fun invoke(
         @CTypeName("VkInstance") instance: VkInstanceHandle,
-        @CTypeName("char*") procname: NPointer<NativeChar>,
+        @CTypeName("char*") procname: NPointer<NChar>,
     ): NPointer<GLFWFuncPtrVKProc>
 
     public fun invokeNative(
@@ -42,7 +42,7 @@ public fun interface GLFWFuncGetInstanceProcAddress : NFunction {
             GLFWFuncGetInstanceProcAddress {
             override fun invoke(
                 instance: VkInstanceHandle,
-                procname: NPointer<NativeChar>,
+                procname: NPointer<NChar>,
             ): NPointer<GLFWFuncPtrVKProc> = NPointer.fromNativeData(
                 invokeNative(
                     VkInstanceHandle.toNativeData(instance),

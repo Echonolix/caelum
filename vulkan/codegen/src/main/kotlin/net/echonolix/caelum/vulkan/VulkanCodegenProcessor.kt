@@ -11,12 +11,7 @@ import net.echonolix.caelum.vulkan.ctx.VulkanElementResolver
 import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.schema.Registry
-import net.echonolix.caelum.vulkan.tasks.GenerateEnumTask
-import net.echonolix.caelum.vulkan.tasks.GenerateFunctionOverloadTask
-import net.echonolix.caelum.vulkan.tasks.GenerateFunctionTask
-import net.echonolix.caelum.vulkan.tasks.GenerateGroupTask
-import net.echonolix.caelum.vulkan.tasks.GenerateHandleTask
-import net.echonolix.caelum.vulkan.tasks.GenerateTypeDefTask
+import net.echonolix.caelum.vulkan.tasks.*
 import net.echonolix.ktgen.KtgenProcessor
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.QName
@@ -27,11 +22,7 @@ import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.structure.XmlDescriptor
 import java.nio.file.Path
 import java.util.concurrent.RecursiveAction
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.Path
-import kotlin.io.path.PathWalkOption
-import kotlin.io.path.deleteRecursively
-import kotlin.io.path.walk
+import kotlin.io.path.*
 
 fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
     return group.members.maxOf {
@@ -97,27 +88,28 @@ class VulkanCodegenProcessor : KtgenProcessor {
                 }
         }
 
-        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+//        filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
+//        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
 
-//        val includedVKVersion = setOf(
-//            "VK_VERSION_1_0",
-//            "VK_VERSION_1_1",
-//            "VK_VERSION_1_2",
-//            "VK_VERSION_1_3"
-//        )
-//        val includedExtension = setOf(
-//            "VK_KHR_surface",
-//            "VK_KHR_swapchain",
-//            "VK_EXT_debug_utils",
-//            "VK_EXT_present_mode_fifo_latest_ready"
-//        )
-//        filteredRegistry.registryFeatures.asSequence()
-//            .filter { it.name in includedVKVersion }
-//            .forEach { processRequire(it.require) }
-//        filteredRegistry.registryExtensions.asSequence()
-//            .filter { it.name in includedExtension }
-//            .forEach { processRequire(it.require) }
+        val includedVKVersion = setOf(
+            "VK_VERSION_1_0",
+            "VK_VERSION_1_1",
+            "VK_VERSION_1_2",
+            "VK_VERSION_1_3"
+        )
+        val includedExtension = setOf(
+            "VK_KHR_surface",
+            "VK_KHR_swapchain",
+            "VK_EXT_debug_utils",
+            "VK_EXT_present_mode_fifo_latest_ready",
+            "VK_LUNARG_direct_driver_loading"
+        )
+        filteredRegistry.registryFeatures.asSequence()
+            .filter { it.name in includedVKVersion }
+            .forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.asSequence()
+            .filter { it.name in includedExtension }
+            .forEach { processRequire(it.require) }
 
         val list = ctx.filterType<CType.Group>()
         val nestedCount = list.groupingBy { countDepth(it.second) }
