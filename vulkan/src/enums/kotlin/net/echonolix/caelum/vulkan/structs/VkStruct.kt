@@ -1,9 +1,6 @@
 package net.echonolix.caelum.vulkan.structs
 
-import net.echonolix.caelum.CustomAllocateOnly
-import net.echonolix.caelum.NArray
-import net.echonolix.caelum.NStruct
-import net.echonolix.caelum.NValue
+import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.enums.VkStructureType
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
@@ -39,3 +36,10 @@ abstract class VkStruct<T : VkStruct<T>>(
     override fun allocate(allocator: SegmentAllocator, count: Long): NArray<T> =
         NArray(allocator.allocate(layout, count).initArray(count))
 }
+
+inline fun <T : VkStruct<T>> T.allocate(allocator: SegmentAllocator, block: NValue<T>.() -> Unit): NValue<T> =
+    allocate(allocator).apply(block)
+
+context(allocator: MemoryStack.Frame)
+inline fun <T : VkStruct<T>> T.allocate(block: NValue<T>.() -> Unit): NValue<T> =
+    allocate(allocator).apply(block)

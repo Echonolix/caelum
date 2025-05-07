@@ -82,6 +82,10 @@ sourceSets.main.configure {
     setup(objectBase)
 }
 
+sourceSets.test.configure {
+    setup(objectBase)
+}
+
 dependencies {
     ktgen(project("codegen"))
     baseSrc.apiConfigurationName(project(":caelum-core"))

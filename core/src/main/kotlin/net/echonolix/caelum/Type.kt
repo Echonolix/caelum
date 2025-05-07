@@ -47,12 +47,10 @@ public interface NPrimitive<N : Any, K : Any> : NType {
         }
     }
 
-    public interface KotlinApi<N : Any, K : Any> {
+    public interface Descriptor<T : NPrimitive<N, K>, N : Any, K : Any> : NativeData<T, N> {
         public fun fromNativeData(value: N): K
         public fun toNativeData(value: K): N
     }
-
-    public interface Descriptor<T : NPrimitive<N, K>, N : Any, K : Any> : NativeData<T, N>, KotlinApi<N, K>
 
     public interface TypeObject<T : NPrimitive<N, K>, N : Any, K : Any> : NPrimitive<N, K>, Descriptor<T, N, K> {
         override val typeDescriptor: TypeObject<T, N, K> get() = this

@@ -13,13 +13,13 @@ public value class NValue<T : NType>(
 }
 
 context(allocator: MemoryStack.Frame)
-public fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(value: K): NValue<T> {
+public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(value: K): NValue<T> {
     val v = malloc()
     valueSetValue(v, toNativeData(value))
     return v
 }
 
-public fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(
+public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(
     allocator: SegmentAllocator,
     value: K
 ): NValue<T> {
