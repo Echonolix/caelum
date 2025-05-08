@@ -17,6 +17,8 @@ import java.nio.file.Paths
 import java.util.concurrent.RecursiveAction
 import kotlin.io.path.*
 
+private var dev = false
+
 class CCodegenProcessor : KtgenProcessor {
     private fun BufferedReader.readNLines(n: Int): List<String> {
         return lineSequence().take(n).toList()
@@ -26,60 +28,62 @@ class CCodegenProcessor : KtgenProcessor {
         val stdinReader = System.`in`.bufferedReader()
         val renameMap = mutableMapOf<String, String>()
         val elementCtx = CAstContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
-        run {
-            val defineRegex = """^\s*#define\s+(${CSyntax.nameRegex.pattern})\s+(.+)$""".toRegex()
-            val defines = inputs.asSequence()
-                .flatMap { path ->
-                    return@flatMap path.useLines { lines ->
-                        lines.mapNotNull { line ->
-                            defineRegex.matchEntire(line)?.let {
-                                val (name, value) = it.destructured
-                                name to value
-                            }
-                        }.toList()
+        if (!dev) {
+            run {
+                val defineRegex = """^\s*#define\s+(${CSyntax.nameRegex.pattern})\s+(.+)$""".toRegex()
+                val defines = inputs.asSequence()
+                    .flatMap { path ->
+                        return@flatMap path.useLines { lines ->
+                            lines.mapNotNull { line ->
+                                defineRegex.matchEntire(line)?.let {
+                                    val (name, value) = it.destructured
+                                    name to value
+                                }
+                            }.toList()
+                        }
                     }
+                    .toList()
+
+                defines.forEach { (name, _) ->
+                    println("${CAstContext.ElementType.CONST} $name")
                 }
-                .toList()
 
-            defines.forEach { (name, _) ->
-                println("${CAstContext.ElementType.CONST} $name")
-            }
+                System.out.flush()
 
-            System.out.flush()
+                val constMapResult = stdinReader.readNLines(defines.size)
 
-            val constMapResult = stdinReader.readNLines(defines.size)
-
-            val defineLines = defines.asSequence()
-                .mapIndexedNotNull { index, (name, value) ->
-                    val newName = constMapResult[index]
-                    if (newName == "null") {
-                        null
-                    } else {
-                        renameMap[name] = newName
-                        "const int $newName = $value;"
+                val defineLines = defines.asSequence()
+                    .mapIndexedNotNull { index, (name, value) ->
+                        val newName = constMapResult[index]
+                        if (newName == "null") {
+                            null
+                        } else {
+                            renameMap[name] = newName
+                            "const int $newName = $value;"
+                        }
                     }
-                }
-                .joinToString("\n")
+                    .joinToString("\n")
 
-            val clangProcess = Runtime.getRuntime().exec(
-                arrayOf(
-                    "clang",
-                    "-E",
-                    "-C",
-                    "--target=x86_64-pc-windows-gnu",
-                    "-std=c23",
-                    "-"
+                val clangProcess = Runtime.getRuntime().exec(
+                    arrayOf(
+                        "clang",
+                        "-E",
+                        "-C",
+                        "--target=x86_64-pc-windows-gnu",
+                        "-std=c23",
+                        "-"
+                    )
                 )
-            )
-            clangProcess.outputWriter().use {
-                it.write(defineLines)
+                clangProcess.outputWriter().use {
+                    it.write(defineLines)
+                }
+                elementCtx.parse(clangProcess.inputReader().readText())
             }
-            elementCtx.parse(clangProcess.inputReader().readText())
         }
 
         run {
             val extraArgs = mutableListOf<String>()
-            System.getProperty("codegenc.preprocessDefines")
+            (System.getProperty("codegenc.preprocessDefines") ?: "")
                 .splitToSequence(",")
                 .filter { it.isNotBlank() }
                 .mapTo(extraArgs) { "-D$it" }
@@ -97,26 +101,28 @@ class CCodegenProcessor : KtgenProcessor {
             elementCtx.parse(clangProcess.inputReader().readText())
         }
 
-        var totalLines = 0
-        elementCtx.allElements.asSequence()
-            .filter { (typeName, _) -> typeName != CAstContext.ElementType.CONST }
-            .forEach { (typeName, elements) ->
-                elements.forEach { (name) ->
-                    println("$typeName $name")
-                    totalLines++
+        if (!dev) {
+            var totalLines = 0
+            elementCtx.allElements.asSequence()
+                .filter { (typeName, _) -> typeName != CAstContext.ElementType.CONST }
+                .forEach { (typeName, elements) ->
+                    elements.forEach { (name) ->
+                        println("$typeName $name")
+                        totalLines++
+                    }
                 }
-            }
-        System.out.flush()
+            System.out.flush()
 
-        val results = stdinReader.readNLines(totalLines)
-        var index = 0
-        elementCtx.renameElements { elementType, name ->
-            if (elementType == CAstContext.ElementType.CONST) {
-                return@renameElements name
+            val results = stdinReader.readNLines(totalLines)
+            var index = 0
+            elementCtx.renameElements { elementType, name ->
+                if (elementType == CAstContext.ElementType.CONST) {
+                    return@renameElements name
+                }
+                val newName = results[index++]
+                renameMap[name] = newName
+                newName
             }
-            val newName = results[index++]
-            renameMap[name] = newName
-            newName
         }
 
         val elementResolver = CElementResolver(elementCtx, renameMap)
@@ -200,6 +206,7 @@ tailrec fun addParentUpTo(curr: Path?, end: Path, output: MutableCollection<Path
 
 @OptIn(ExperimentalPathApi::class)
 fun main() {
+    dev = true
     System.setProperty("codegenc.packageName", "net.echonolix.caelum.glfw")
     fun resourcePath(path: String): Path {
         return Paths.get(CCodegenProcessor::class.java.getResource(path)!!.toURI())
@@ -209,7 +216,7 @@ fun main() {
     val inputs = setOf(
 //        resourcePath("/test1.h")
 //        resourcePath("/test2.h")
-        Path("glfw/glfw3.h")
+        Path("glfw/include/GLFW/glfw3.h")
 //        Path("codegen-c/llvm-c.h")
 //        Path("codegen-c/test.h")
     )
