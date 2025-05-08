@@ -27,7 +27,7 @@ class CCodegenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val stdinReader = System.`in`.bufferedReader()
         val renameMap = mutableMapOf<String, String>()
-        val elementCtx = CAstContext(inputs.mapTo(mutableSetOf()) { it.absolutePathString() })
+        val elementCtx = CAstContext()
         if (!dev) {
             run {
                 val defineRegex = """^\s*#define\s+(${CSyntax.nameRegex.pattern})\s+(.+)$""".toRegex()
@@ -81,13 +81,18 @@ class CCodegenProcessor : KtgenProcessor {
             }
         }
 
+        fun String?.parseList(): Sequence<String> {
+            if (this == null) return emptySequence()
+            return this.splitToSequence(",")
+                .filter { it.isNotBlank() }
+        }
+
         run {
             val extraArgs = mutableListOf<String>()
-            (System.getProperty("codegenc.preprocessDefines") ?: "")
-                .splitToSequence(",")
-                .filter { it.isNotBlank() }
+            System.getProperty("codegenc.preprocessDefines", null)
+                .parseList()
                 .mapTo(extraArgs) { "-D$it" }
-            inputs.mapTo(extraArgs) { it.absolutePathString() }
+
             val clangProcess = Runtime.getRuntime().exec(
                 arrayOf(
                     "clang",
@@ -95,10 +100,28 @@ class CCodegenProcessor : KtgenProcessor {
                     "-C",
                     "--target=x86_64-pc-windows-gnu",
                     "-std=c23",
-                    *extraArgs.toTypedArray()
+                    "-"
                 )
             )
-            elementCtx.parse(clangProcess.inputReader().readText())
+
+            val includeRegex = """\s*#include\s+["<](.+)[">]\s*""".toRegex()
+            val excludedIncludes = System.getProperty("codegenc.excludeIncludes", null)
+                .parseList()
+                .toSet()
+            clangProcess.outputWriter().use { stdinWriter ->
+                inputs.flatMap { it.readLines() }
+                    .filter { line ->
+                        includeRegex.matchEntire(line)?.let {
+                            it.groups[1]?.value !in excludedIncludes
+                        } ?: true
+                    }
+                    .forEach {
+                        stdinWriter.write(it)
+                        stdinWriter.write("\n")
+                    }
+            }
+            val text = clangProcess.inputReader().readText()
+            elementCtx.parse(text)
         }
 
         if (!dev) {

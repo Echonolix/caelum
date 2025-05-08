@@ -37,6 +37,7 @@ tasks.ktgen {
                 }
             }
     )
+    systemProperty("codegenc.excludedIncludes", codegenCExtension.excludedIncludes.get().joinToString(","))
     @Suppress("UNCHECKED_CAST")
     val elementMapper = extra.get("AAA") as (ElementType, String) -> String?
     execWrapper = {

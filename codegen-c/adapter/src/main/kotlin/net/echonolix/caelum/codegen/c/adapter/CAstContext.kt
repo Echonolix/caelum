@@ -2,7 +2,7 @@ package net.echonolix.caelum.codegen.c.adapter
 
 import c.ast.NodeVisitException
 
-class CAstContext(val inputPathStrs: Set<String>) {
+class CAstContext() {
     private val typedefs0 = mutableMapOf<String, CType>()
     private val consts0 = mutableMapOf<String, CConst>()
     private val enums0 = mutableMapOf<String, CEnum>()
