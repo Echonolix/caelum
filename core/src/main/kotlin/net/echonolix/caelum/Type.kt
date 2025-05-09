@@ -4,8 +4,6 @@ import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
-import kotlin.reflect.KFunction
-import kotlin.reflect.jvm.javaMethod
 
 public sealed interface NType {
     public val typeDescriptor: Descriptor<*>
@@ -127,11 +125,13 @@ public interface NFunction : NComposite {
 
     public abstract class Descriptor<T : NFunction>(
         public val name: String,
-        public val invokeNativeFunc: KFunction<*>,
+        public val funInterfaceClass: Class<out NFunction>,
         public val returnType: NType.Descriptor<*>?,
         vararg parameters: NType.Descriptor<*>
     ) : NComposite.Impl<T>(ValueLayout.JAVA_BYTE), NType.Descriptor<T> {
-        public val upcallHandle: MethodHandle = MethodHandles.lookup().unreflect(invokeNativeFunc.javaMethod)
+        public val upcallHandle: MethodHandle = MethodHandles.lookup()
+            .unreflect(funInterfaceClass.methods.find { it.name == "invokeNative" }
+                ?: error("Cannot find invokeNative in ${funInterfaceClass.simpleName}"))
         public val parameters: List<NType.Descriptor<*>> = parameters.toList()
 
         public val functionDescriptor: FunctionDescriptor = if (returnType == null) {

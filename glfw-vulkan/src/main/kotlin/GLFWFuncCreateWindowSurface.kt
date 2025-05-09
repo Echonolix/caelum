@@ -56,7 +56,7 @@ public fun interface GLFWFuncCreateWindowSurface : NFunction {
 
     public companion object TypeDescriptor : NFunction.Descriptor<GLFWFuncCreateWindowSurface>(
         "glfwCreateWindowSurface",
-        GLFWFuncCreateWindowSurface::invokeNative,
+        GLFWFuncCreateWindowSurface::class.java,
         VkResult,
         NPointer,
         NPointer,

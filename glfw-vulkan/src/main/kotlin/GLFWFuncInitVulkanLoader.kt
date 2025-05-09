@@ -25,7 +25,7 @@ public fun interface GLFWFuncInitVulkanLoader : NFunction {
 
     public companion object TypeDescriptor : NFunction.Descriptor<GLFWFuncInitVulkanLoader>(
         "glfwInitVulkanLoader",
-        GLFWFuncInitVulkanLoader::invokeNative,
+        GLFWFuncInitVulkanLoader::class.java,
         NPointer,
     ) {
         override fun fromNativeData(value: MemorySegment): GLFWFuncInitVulkanLoader = Impl(downcallHandle(value))

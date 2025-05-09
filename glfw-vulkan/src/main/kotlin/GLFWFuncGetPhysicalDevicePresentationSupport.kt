@@ -32,7 +32,7 @@ public fun interface GLFWFuncGetPhysicalDevicePresentationSupport : NFunction {
     public companion object TypeDescriptor :
         NFunction.Descriptor<GLFWFuncGetPhysicalDevicePresentationSupport>(
             "glfwGetPhysicalDevicePresentationSupport",
-            GLFWFuncGetPhysicalDevicePresentationSupport::invokeNative,
+            GLFWFuncGetPhysicalDevicePresentationSupport::class.java,
             NInt,
             NPointer,
             NPointer,

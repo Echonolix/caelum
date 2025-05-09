@@ -103,7 +103,7 @@ public open class FunctionGenerator(
 
         val superParameters = mutableListOf(
             CodeBlock.Companion.of("%S", nativeName()),
-            CodeBlock.Companion.of("%T::invokeNative", thisCName),
+            CodeBlock.Companion.of("%T::class.java", thisCName),
             typeDescriptorCodeBlock(returnType)
         )
         element.parameters.mapTo(superParameters) {

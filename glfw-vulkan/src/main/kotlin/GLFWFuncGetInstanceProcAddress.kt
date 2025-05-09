@@ -29,7 +29,7 @@ public fun interface GLFWFuncGetInstanceProcAddress : NFunction {
 
     public companion object TypeDescriptor : NFunction.Descriptor<GLFWFuncGetInstanceProcAddress>(
         "glfwGetInstanceProcAddress",
-        GLFWFuncGetInstanceProcAddress::invokeNative,
+        GLFWFuncGetInstanceProcAddress::class.java,
         NPointer,
         NPointer,
         NPointer
