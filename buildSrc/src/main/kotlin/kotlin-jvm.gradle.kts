@@ -25,7 +25,7 @@ kotlin {
             "-Xno-param-assertions",
             "-Xuse-type-table",
             "-Xuse-fast-jar-file-system",
-            "-Xuse-javac",
+//            "-Xuse-javac",
             "-Xcompile-java",
             "-Xjvm-default=all",
             "-Xir-inliner",
