@@ -1,5 +1,7 @@
 package net.echonolix.caelum;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -13,6 +15,7 @@ public final class MemoryStack {
         frames.push(new Frame(Arena.ofAuto().allocate(size)));
     }
 
+    @NotNull
     public static Frame stackPush() {
         return getInstance().pushFrame();
     }
@@ -23,10 +26,12 @@ public final class MemoryStack {
         }
     }
 
+    @NotNull
     private static MemoryStack getInstance() {
         return INSTANCES.get();
     }
 
+    @NotNull
     @SuppressWarnings("resource")
     private Frame pushFrame() {
         Frame lastFrame = frames.peek();
@@ -46,6 +51,7 @@ public final class MemoryStack {
             this.delegated = SegmentAllocator.slicingAllocator(segment);
         }
 
+        @NotNull
         @Override
         public MemorySegment allocate(long byteSize, long byteAlignment) {
             MemorySegment result = delegated.allocate(byteSize, byteAlignment);
@@ -57,6 +63,7 @@ public final class MemoryStack {
             return allocated;
         }
 
+        @NotNull
         public Frame push() {
             MemorySegment remaining = baseSegment.asSlice(allocated);
             if (remaining.byteSize() == 0) {
