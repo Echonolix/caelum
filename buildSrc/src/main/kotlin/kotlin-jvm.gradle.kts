@@ -9,6 +9,21 @@ plugins {
 kotlin {
     compilerOptions {
         optIn.add("kotlin.contracts.ExperimentalContracts")
-        freeCompilerArgs.addAll("-Xbackend-threads=0", "-Xcontext-parameters")
+        freeCompilerArgs.addAll(
+            "-Xbackend-threads=0",
+            "-Xcontext-parameters",
+            "-Xjvm-default=all",
+            "-Xassertions=jvm",
+            "-Xno-call-assertions",
+            "-Xno-receiver-assertions",
+            "-Xno-param-assertions",
+            "-Xuse-type-table",
+            "-Xuse-fast-jar-file-system",
+            "-Xuse-javac",
+            "-Xcompile-java",
+            "-Xjvm-default=all",
+            "-Xir-inliner",
+            "-Xuse-inline-scopes-numbers"
+        )
     }
 }
