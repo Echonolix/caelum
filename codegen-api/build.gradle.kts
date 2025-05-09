@@ -1,5 +1,5 @@
 plugins {
-    id("buildsrc.convention.kotlin-jvm")
+    id("buildsrc.convention.published-module")
     kotlin("plugin.serialization") version "2.1.0"
 }
 

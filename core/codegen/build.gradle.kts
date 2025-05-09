@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":codegen-api"))
+    implementation(project(":caelum-codegen-api"))
 }
