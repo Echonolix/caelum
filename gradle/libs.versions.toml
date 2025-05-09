@@ -12,6 +12,10 @@ xmlUtil = "0.91.0"
 
 fastutil = "8.5.15"
 
+asm = "9.8"
+
+ktgen = "1.0.0"
+
 [libraries]
 kotlinDSLGradlePlugin = { module = "org.gradle.kotlin.kotlin-dsl:org.gradle.kotlin.kotlin-dsl.gradle.plugin", version.ref = "kotlinDSLGradlePlugin" }
 
@@ -22,6 +26,11 @@ kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serializati
 kotlinxSerializationXml = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "xmlUtil" }
 
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
+
+asmTree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+
+ktgen = { module = "net.echonolix:ktgen", version.ref = "ktgen" }
+ktgenApi = { module = "net.echonolix:ktgen-api", version.ref = "ktgen" }
 
 # Libraries can be bundled together for easier import
 [bundles]

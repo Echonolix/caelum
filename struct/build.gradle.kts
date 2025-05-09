@@ -9,17 +9,18 @@ apply {
 }
 
 dependencies {
-    implementation("net.echonolix:ktgen-api")
-    implementation("org.ow2.asm:asm-tree:9.7")
+    implementation(libs.ktgen)
+    implementation(libs.ktgenApi)
+    implementation(libs.asmTree)
     implementation(kotlin("reflect"))
 }
 
 gradlePlugin {
     plugins {
-        create("caelum-struct-codegen") {
-            id = "net.echonolix.caelum"
+        create("caelum-struct") {
+            id = "net.echonolix.caelum-struct"
             implementationClass = "net.echonolix.caelum.struct.StructCodegenPlugin"
-            displayName = "caelum-struct-codegen"
+            displayName = "caelum-struct"
         }
     }
 }

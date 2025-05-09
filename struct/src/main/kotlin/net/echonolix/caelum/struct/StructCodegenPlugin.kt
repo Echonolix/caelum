@@ -14,16 +14,18 @@ class StructCodegenPlugin : Plugin<Project> {
 
         project.dependencies.add(main.implementationConfigurationName, "net.echonolix:caelum-core:${version}")
 
-        project.dependencies.add("ktgen", "net.echonolix:caelum-struct-codegen:$version")
+        project.dependencies.add("ktgen", "net.echonolix:caelum-struct:$version")
         project.dependencies.add("ktgen", structs.output)
         project.dependencies.add("ktgenInput", structs.output)
 
         project.configurations.getByName(structs.compileClasspathConfigurationName)
             .extendsFrom(project.configurations.getByName(main.compileClasspathConfigurationName))
-        project.configurations.getByName(structs.runtimeClasspathConfigurationName)
+        val structRuntimeClasspath = project.configurations.getByName(structs.runtimeClasspathConfigurationName)
+        structRuntimeClasspath
             .extendsFrom(project.configurations.getByName(main.runtimeClasspathConfigurationName))
 
-        project.dependencies.add("ktgen", structs.runtimeClasspathConfigurationName)
+        val ktgen = project.configurations.getByName("ktgen")
+        ktgen.extendsFrom(structRuntimeClasspath)
 
         project.afterEvaluate {
             project.tasks.findByName("sourceJar")?.dependsOn("ktgen")

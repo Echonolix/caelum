@@ -249,7 +249,6 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     nullOverloadFunc.addCode(initCheckCode.build())
                     if (!nullable) {
                         nullOverloadFunc.addModifiers(KModifier.PRIVATE)
-                        println(element.name)
                     }
                     file.addFunction(nullOverloadFunc.build())
 
