@@ -7,22 +7,21 @@ import net.echonolix.caelum.codegen.api.CSyntax
 import net.echonolix.caelum.codegen.api.CTopLevelConst
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.removeContinuousSpaces
-import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Stream
 
 public interface ElementResolver {
     public val allElements: Map<String, CElement>
-    public fun resolveElement(cElementStr: String): CElement
+    public fun resolveElement(input: String): CElement
 
     public abstract class Base : ElementResolver {
         public override val allElements: Map<String, CElement>
             get() = allElements0
 
-        private val allElements0 = mutableMapOf<String, CElement>()
+        protected val allElements0: MutableMap<String, CElement> = mutableMapOf()
 
-        public override fun resolveElement(cElementStr: String): CElement {
+        public override fun resolveElement(input: String): CElement {
             try {
-                val trimStr = cElementStr
+                val trimStr = input
                     .trim()
                     .removeContinuousSpaces()
                 val cached = allElements0[trimStr]
@@ -59,7 +58,7 @@ public interface ElementResolver {
 
                 return allElements0[trimStr]!!
             } catch (e: RuntimeException) {
-                throw IllegalStateException("Error resolving element: $cElementStr", e)
+                throw IllegalStateException("Error resolving element: $input", e)
             }
         }
 
@@ -89,7 +88,7 @@ public interface ElementResolver {
             }
         }
 
-        protected abstract fun resolveElementImpl(cElementStr: String): CElement
+        protected abstract fun resolveElementImpl(input: String): CElement
     }
 }
 

@@ -171,39 +171,39 @@ class CElementResolver(
         )
     }
 
-    override fun resolveElementImpl(cElementStr: String): CElement {
+    override fun resolveElementImpl(input: String): CElement {
         return run {
-            cAstContext.typedefs[cElementStr]?.let {
-                return@run resolveTypedef(cElementStr, it)
+            cAstContext.typedefs[input]?.let {
+                return@run resolveTypedef(input, it)
             }
 
-            cAstContext.consts[cElementStr]?.let {
-                return@run resolveConst(cElementStr, (resolveCType(it.type) as CType.BasicType).baseType, it.value)
+            cAstContext.consts[input]?.let {
+                return@run resolveConst(input, (resolveCType(it.type) as CType.BasicType).baseType, it.value)
             }
 
-            cAstContext.enums[cElementStr]?.let {
-                return@run resolveEnum(cElementStr, it)
+            cAstContext.enums[input]?.let {
+                return@run resolveEnum(input, it)
             }
 
-            cAstContext.structs[cElementStr]?.let {
-                return@run resolveStruct(cElementStr, it)
+            cAstContext.structs[input]?.let {
+                return@run resolveStruct(input, it)
             }
 
-            cAstContext.unions[cElementStr]?.let {
-                return@run resolveUnion(cElementStr, it)
+            cAstContext.unions[input]?.let {
+                return@run resolveUnion(input, it)
             }
 
-            cAstContext.globalEnums[cElementStr]?.let {
-                return@run resolveConst(cElementStr, CBasicType.int, it.value)
+            cAstContext.globalEnums[input]?.let {
+                return@run resolveConst(input, CBasicType.int, it.value)
             }
 
-            cAstContext.functions[cElementStr]?.let {
-                val function = resolveFunction(cElementStr, it)
+            cAstContext.functions[input]?.let {
+                val function = resolveFunction(input, it)
                 function.tags.set(GlobalFunctionTag)
                 return@run function
             }
 
-            throw IllegalStateException("Cannot resolve type: $cElementStr")
+            throw IllegalStateException("Cannot resolve type: $input")
         }.also {
             val originalName = reverseMap[it.name]
             if (originalName != null && originalName != it.name) {

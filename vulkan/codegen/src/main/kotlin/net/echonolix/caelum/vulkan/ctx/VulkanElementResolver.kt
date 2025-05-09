@@ -412,9 +412,9 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
         throw IllegalStateException("Cannot resolve type: $cElementStr")
     }
 
-    override fun resolveElementImpl(cElementStr: String): CElement {
-        return resolveElementImpl0(cElementStr).also {
-            registry.stuffRequiredBy[cElementStr]?.let { requiredBy ->
+    override fun resolveElementImpl(input: String): CElement {
+        return resolveElementImpl0(input).also {
+            registry.stuffRequiredBy[input]?.let { requiredBy ->
                 it.tags.set(RequiredByTag(requiredBy))
             }
         }
