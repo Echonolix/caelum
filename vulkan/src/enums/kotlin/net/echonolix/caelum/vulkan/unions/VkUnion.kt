@@ -5,4 +5,4 @@ import java.lang.foreign.MemoryLayout
 
 abstract class VkUnion<T : VkUnion<T>>(
     vararg members: MemoryLayout
-) : NUnion<T>(*members)
+) : NUnion.Impl<T>(*members)

@@ -49,11 +49,19 @@ public object CaelumCodegenHelper {
         public val typeDescriptorCName: ClassName = cName.nestedClass("Descriptor")
     }
 
+    public object NStruct {
+        public val cName: ClassName = ClassName(basePkgName, "NStruct")
+        public val implCName: ClassName = cName.nestedClass("Impl")
+    }
+
+    public object NUnion {
+        public val cName: ClassName = ClassName(basePkgName, "NUnion")
+        public val implCName: ClassName = cName.nestedClass("Impl")
+    }
+
     public val allocOverloadCName: ClassName = ClassName(basePkgName, "AllocateOverload")
 
     public val enumCName: ClassName = ClassName(basePkgName, "NEnum")
-    public val structCName: ClassName = ClassName(basePkgName, "NStruct")
-    public val unionCName: ClassName = ClassName(basePkgName, "NUnion")
 
     public val arrayCName: ClassName = ClassName(basePkgName, "NArray")
     public val valueCName: ClassName = ClassName(basePkgName, "NValue")

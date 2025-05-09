@@ -22,8 +22,8 @@ public open class GroupGenerator(
     context(ctx: CodegenContext)
     protected open fun groupBaseCName(): ClassName {
         return when (element) {
-            is CType.Struct -> CaelumCodegenHelper.structCName
-            is CType.Union -> CaelumCodegenHelper.unionCName
+            is CType.Struct -> CaelumCodegenHelper.NStruct.implCName
+            is CType.Union -> CaelumCodegenHelper.NUnion.implCName
         }
     }
 

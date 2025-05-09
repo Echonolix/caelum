@@ -55,7 +55,7 @@ public interface NPrimitive<N : Any, K : Any> : NType {
     }
 }
 
-public interface NComposite : NType {
+public sealed interface NComposite : NType {
     public override val typeDescriptor: Descriptor<*>
 
     public abstract class Impl<T : NComposite>(layout: MemoryLayout) : NComposite, Descriptor.Impl<T>(layout) {
@@ -91,6 +91,7 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
 }
 
+
 public interface NEnum<T : NEnum<T, N>, N : Any> : NPrimitive<N, T> {
     public val value: N
     public val nType: NPrimitive<N, N>
@@ -101,18 +102,24 @@ public interface NEnum<T : NEnum<T, N>, N : Any> : NPrimitive<N, T> {
     public interface TypeObject<T : NEnum<T, N>, N : Any> : NPrimitive.TypeObject<T, N, T>, Descriptor<T, N>
 }
 
-public abstract class NStruct<T : NComposite> private constructor(override val layout: StructLayout) :
-    NComposite.Impl<T>(layout) {
-    public constructor(vararg members: MemoryLayout) : this(
-        paddedStructLayout(*members)
-    )
+public sealed interface NGroup : NComposite
+
+public interface NStruct : NGroup {
+    public abstract class Impl<T : NComposite> private constructor(override val layout: StructLayout) :
+        NComposite.Impl<T>(layout), NStruct {
+        public constructor(vararg members: MemoryLayout) : this(
+            paddedStructLayout(*members)
+        )
+    }
 }
 
-public abstract class NUnion<T : NComposite> private constructor(override val layout: UnionLayout) :
-    NComposite.Impl<T>(layout) {
-    public constructor(vararg members: MemoryLayout) : this(
-        MemoryLayout.unionLayout(*members)
-    )
+public interface NUnion : NGroup {
+    public abstract class Impl<T : NComposite> private constructor(override val layout: UnionLayout) :
+        NComposite.Impl<T>(layout), NUnion {
+        public constructor(vararg members: MemoryLayout) : this(
+            MemoryLayout.unionLayout(*members)
+        )
+    }
 }
 
 public interface NFunction : NComposite {

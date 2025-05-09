@@ -9,7 +9,7 @@ import java.lang.foreign.ValueLayout
 
 abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
-) : NStruct<T>(*members), CustomAllocateOnly<T> {
+) : NStruct.Impl<T>(*members), CustomAllocateOnly<T> {
     abstract val structType: VkStructureType?
 
     private fun MemorySegment.initValue(): MemorySegment {
