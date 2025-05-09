@@ -26,6 +26,8 @@ include(
 
 listOf(
     "codegen-api",
+    "struct-codegen",
+    "struct-plugin",
     "core",
     "vulkan",
     "glfw",
