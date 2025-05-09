@@ -6,6 +6,12 @@ plugins {
     kotlin("jvm")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(23))
+    }
+}
+
 kotlin {
     compilerOptions {
         optIn.add("kotlin.contracts.ExperimentalContracts")
