@@ -1,5 +1,7 @@
 package buildsrc.convention
 
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id("buildsrc.convention.kotlin-jvm")
     `maven-publish`
@@ -17,8 +19,15 @@ publishing {
     }
 }
 
+val extraJarEntries by configurations.registering
+
+dependencies {
+    extraJarEntries(rootProject.files("LICENSE"))
+}
+
 tasks {
     jar {
+        from(extraJarEntries)
         manifest {
             attributes(
                 "Implementation-Title" to project.name,
@@ -26,5 +35,8 @@ tasks {
                 "Implementation-Vendor" to "Echonolix"
             )
         }
+    }
+    named<Jar>("sourcesJar") {
+        from(extraJarEntries)
     }
 }

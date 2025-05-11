@@ -10,3 +10,7 @@ dependencies {
 kotlin {
     explicitApi()
 }
+
+dependencies {
+    extraJarEntries(rootProject.files("README.MD"))
+}
