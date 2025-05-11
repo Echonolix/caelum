@@ -30,10 +30,7 @@ listOf(
     "core",
     "vulkan",
     "glfw",
-    "glfw-vulkan",
-//    "vma",
-//    "jemalloc",
-//    "assimp"
+    "glfw-vulkan"
 ).flatMap {
     sequenceOf(
         "caelum-$it" to file(it),
