@@ -12,19 +12,19 @@ public typealias NInt = NInt32
 public fun String.c_str(allocator: SegmentAllocator): NPointer<NChar> =
     NArray<NChar>(allocator.allocateFrom(this)).ptr()
 
-context(allocator: SegmentAllocator)
+context(allocator: MemoryStack.Frame)
 public fun String.c_str(): NPointer<NChar> = c_str(allocator)
 
-public fun Collection<String>.c_strs(allocator: SegmentAllocator): NPointer<NPointer<NChar>> {
+public fun Collection<String>.c_strs(allocator: SegmentAllocator): NArray<NPointer<NChar>> {
     val arr = NPointer.malloc<NChar>(allocator, this.size)
     this.forEachIndexed { index, str ->
         arr[index] = str.c_str(allocator)
     }
-    return arr.ptr()
+    return arr
 }
 
-context(allocator: SegmentAllocator)
-public fun Collection<String>.c_strs(): NPointer<NPointer<NChar>> = c_strs(allocator)
+context(allocator: MemoryStack.Frame)
+public fun Collection<String>.c_strs(): NArray<NPointer<NChar>> = c_strs(allocator)
 
 public var NArray<NChar>.string: String
     get() = segment.getString(0L)
