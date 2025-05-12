@@ -13,14 +13,14 @@ interface VkHandle<T : VkHandle<T>> : NEnum<T, Long> {
 }
 
 val NValue<out VkHandle<*>>.value: Long
-    get() = reinterpretCast<NInt64>(this).value
+    get() = reinterpret_cast<NInt64>(this).value
 
 fun <T : VkHandle<*>> NValue<T>.set(handle: T) {
-    reinterpretCast<NInt64>(this).value = handle.value
+    reinterpret_cast<NInt64>(this).value = handle.value
 }
 
 operator fun NPointer<out VkHandle<*>>.get(index: Long): Long =
-    reinterpretCast<NInt64>(this)[index]
+    reinterpret_cast<NInt64>(this)[index]
 
 operator fun NPointer<out VkHandle<*>>.get(index: Int): Long =
     get(index.toLong())
@@ -45,7 +45,7 @@ operator fun NArray<out VkHandle<*>>.get(index: UInt): Long =
 
 
 operator fun NPointer<out VkHandle<*>>.set(index: Long, value: Long) {
-    reinterpretCast<NInt64>(this)[index] = value
+    reinterpret_cast<NInt64>(this)[index] = value
 }
 
 operator fun NPointer<out VkHandle<*>>.set(index: Int, value: Long): Unit =
@@ -71,7 +71,7 @@ operator fun NArray<out VkHandle<*>>.set(index: UInt, value: Long): Unit =
 
 
 operator fun <T : VkHandle<*>> NPointer<T>.set(index: Long, value: T) {
-    reinterpretCast<NInt64>(this)[index] = value.value
+    reinterpret_cast<NInt64>(this)[index] = value.value
 }
 
 operator fun <T : VkHandle<*>> NPointer<T>.set(index: Int, value: T): Unit =

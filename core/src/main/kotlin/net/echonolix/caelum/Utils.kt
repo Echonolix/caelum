@@ -66,27 +66,27 @@ public inline fun <R> MemoryStack.Frame.MemoryStack(block: (MemoryStack.Frame).(
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NType> reinterpretCast(pointer: NPointer<*>): NPointer<T> =
+public fun <T : NType> reinterpret_cast(pointer: NPointer<*>): NPointer<T> =
     pointer as NPointer<T>
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NType> reinterpretCast(array: NArray<*>): NArray<T> =
+public fun <T : NType> reinterpret_cast(array: NArray<*>): NArray<T> =
     array as NArray<T>
 
 @Suppress("UNCHECKED_CAST")
 @UnsafeAPI
-public fun <T : NType> reinterpretCast(value: NValue<*>): NValue<T> =
+public fun <T : NType> reinterpret_cast(value: NValue<*>): NValue<T> =
     value as NValue<T>
 
 @Suppress("UNCHECKED_CAST")
-public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> primitiveCast(value: NPointer<A>): NPointer<B> =
+public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> static_cast(value: NPointer<A>): NPointer<B> =
     value as NPointer<B>
 
 @Suppress("UNCHECKED_CAST")
-public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> primitiveCast(value: NArray<A>): NArray<B> =
+public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> static_cast(value: NArray<A>): NArray<B> =
     value as NArray<B>
 
 @Suppress("UNCHECKED_CAST")
-public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> primitiveCast(value: NValue<A>): NValue<B> =
+public fun <N : Any, K : Any, A : NPrimitive<N, K>, B : NPrimitive<N, K>> static_cast(value: NValue<A>): NValue<B> =
     value as NValue<B>
