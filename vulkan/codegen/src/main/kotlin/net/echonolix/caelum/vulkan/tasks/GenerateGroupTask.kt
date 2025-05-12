@@ -251,6 +251,12 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                         nullOverloadFunc.addModifiers(KModifier.PRIVATE)
                     }
                     file.addFunction(nullOverloadFunc.build())
+                    file.addFunction(
+                        FunSpec.builder(funcName)
+                            .receiver(valueCNameP)
+                            .addStatement("ptr().%N()", funcName)
+                            .build()
+                    )
 
                     val code = CodeBlock.builder()
                     code.addStatement("this.%N()", funcName)
@@ -293,6 +299,17 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     }
                     func.addCode(code.build())
                     file.addFunction(func.build())
+                    val valueOverloadCodeBlock = CodeBlock.builder()
+                    valueOverloadCodeBlock.add("ptr().%N(", funcName)
+                    valueOverloadCodeBlock.add(func.parameters.joinToCode { CodeBlock.of("%N", it.name) })
+                    valueOverloadCodeBlock.add(")")
+                    file.addFunction(
+                        FunSpec.builder(funcName)
+                            .receiver(valueCNameP)
+                            .addParameters(func.parameters)
+                            .addCode(valueOverloadCodeBlock.build())
+                            .build()
+                    )
                 }
                 super.addMemberAccessor(member, unsafe || counted || countTag != null)
             }
