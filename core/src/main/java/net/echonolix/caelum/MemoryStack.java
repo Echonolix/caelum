@@ -37,23 +37,13 @@ public final class MemoryStack implements SegmentAllocator, AutoCloseable {
         return (n + alignment - 1) & -alignment;
     }
 
-    MemorySegment trySlice(long byteSize, long byteAlignment) {
+    @Override
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
         long min = baseSegment.address();
         long start = alignUp(min + offset, byteAlignment) - min;
         MemorySegment slice = baseSegment.asSlice(start, byteSize, byteAlignment);
         offset = start + byteSize;
         return slice;
-    }
-
-    @Override
-    public MemorySegment allocate(long byteSize, long byteAlignment) {
-        if (byteSize < 0) {
-            throw new IllegalArgumentException("byteSize must be non negative");
-        }
-        if (byteAlignment <= 0) {
-            throw new IllegalArgumentException("byteAlignment must be positive");
-        }
-        return trySlice(byteSize, byteAlignment);
     }
 
     @NotNull
