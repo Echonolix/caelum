@@ -200,7 +200,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     func.receiver(pointerCNameP)
                     val initCheckCode = CodeBlock.builder()
                     initCheckCode.addStatement(
-                        "check(this.%N == 0%L) { %S }",
+                        "assert(this.%N == 0%L) { %S }",
                         member.name,
                         memberType.baseType.literalSuffix,
                         "${member.name} of ${element.name} already changed"
@@ -217,7 +217,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                         }
                         if (pType is CType.Pointer) {
                             initCheckCode.addStatement(
-                                "check(this.%N._address == 0L) { %S }",
+                                "assert(this.%N._address == 0L) { %S }",
                                 it.name,
                                 "${it.name} of ${element.name} already changed"
                             )
@@ -236,7 +236,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     countTag.v.forEachIndexed { i, it ->
                         if (it.type is CType.Pointer) {
                             initCheckCode.addStatement(
-                                "check(this.%N._address == 0L) { %S }",
+                                "assert(this.%N._address == 0L) { %S }",
                                 it.name,
                                 "${it.name} of ${element.name} already changed"
                             )
@@ -279,7 +279,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                             code.addStatement("val count = %N.%M(%T)", it.name, countMemberName, elementTypeName)
                         } else {
                             code.addStatement(
-                                "check(count == %N.%M(%T)) { %S }",
+                                "assert(count == %N.%M(%T)) { %S }",
                                 it.name,
                                 countMemberName,
                                 elementTypeName,
