@@ -12,7 +12,7 @@ public typealias NInt = NInt32
 public fun String.c_str(allocator: SegmentAllocator): NPointer<NChar> =
     NArray<NChar>(allocator.allocateFrom(this)).ptr()
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public fun String.c_str(): NPointer<NChar> = c_str(allocator)
 
 public fun Collection<String>.c_strs(allocator: SegmentAllocator): NArray<NPointer<NChar>> {
@@ -23,7 +23,7 @@ public fun Collection<String>.c_strs(allocator: SegmentAllocator): NArray<NPoint
     return arr
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public fun Collection<String>.c_strs(): NArray<NPointer<NChar>> = c_strs(allocator)
 
 public var NArray<NChar>.string: String
@@ -40,9 +40,9 @@ public var NPointer<NChar>.string: String
 
 /**
  * Creates a new [MemoryStack] and pushes it onto the stack, executing the
- * given block of code within the [MemoryStack.Frame] context.
+ * given block of code within the [MemoryStack] context.
  */
-public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
+public inline fun <R> MemoryStack(block: MemoryStack.() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
@@ -53,9 +53,9 @@ public inline fun <R> MemoryStack(block: MemoryStack.Frame.() -> R): R {
 
 /**
  * Creates a new [MemoryStack] and pushes it onto the stack, executing
- * the given block of code within the [MemoryStack.Frame] context.
+ * the given block of code within the [MemoryStack] context.
  */
-public inline fun <R> MemoryStack.Frame.MemoryStack(block: (MemoryStack.Frame).() -> R): R {
+public inline fun <R> MemoryStack.MemoryStack(block: (MemoryStack).() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }

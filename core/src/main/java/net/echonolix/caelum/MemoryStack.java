@@ -5,23 +5,74 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
-import java.util.ArrayDeque;
+import java.util.Arrays;
 
-public final class MemoryStack {
+public final class MemoryStack implements SegmentAllocator, AutoCloseable {
     private static final ThreadLocal<MemoryStack> INSTANCES = ThreadLocal.withInitial(() -> new MemoryStack(8 * 1024 * 1024));
-    private final ArrayDeque<Frame> frames = new ArrayDeque<>();
+
+    private final MemorySegment baseSegment;
+    private long offset = 0L;
+    private long[] frame = new long[16];
+    private int frameTop = -1;
 
     MemoryStack(long size) {
-        frames.push(new Frame(Arena.ofAuto().allocate(size)));
+        this.baseSegment = Arena.ofAuto().allocate(size);
+    }
+
+    private void pushFrame(long value) {
+        if (frameTop == frame.length) {
+            frame = Arrays.copyOf(frame, frame.length * 2);
+        }
+        frame[++frameTop] = value;
+    }
+
+    private long popFrame() {
+        if (frameTop == frame.length - 1) {
+            throw new IllegalStateException("No frame");
+        }
+        return frame[frameTop--];
+    }
+
+    private static long alignUp(long n, long alignment) {
+        return (n + alignment - 1) & -alignment;
+    }
+
+    MemorySegment trySlice(long byteSize, long byteAlignment) {
+        long min = baseSegment.address();
+        long start = alignUp(min + offset, byteAlignment) - min;
+        MemorySegment slice = baseSegment.asSlice(start, byteSize, byteAlignment);
+        offset = start + byteSize;
+        return slice;
+    }
+
+    @Override
+    public MemorySegment allocate(long byteSize, long byteAlignment) {
+        if (byteSize < 0) {
+            throw new IllegalArgumentException("byteSize must be non negative");
+        }
+        if (byteAlignment <= 0) {
+            throw new IllegalArgumentException("byteAlignment must be positive");
+        }
+        return trySlice(byteSize, byteAlignment);
     }
 
     @NotNull
-    public static Frame stackPush() {
-        return getInstance().pushFrame();
+    public MemoryStack push() {
+        pushFrame(offset);
+        return this;
+    }
+
+    public void pop() {
+        offset = popFrame();
+    }
+
+    @NotNull
+    public static MemoryStack stackPush() {
+        return getInstance().push();
     }
 
     public static void checkEmpty() {
-        if (getInstance().frames.size() != 1) {
+        if (getInstance().frameTop != -1) {
             throw new IllegalStateException("Frame leak");
         }
     }
@@ -31,60 +82,8 @@ public final class MemoryStack {
         return INSTANCES.get();
     }
 
-    @NotNull
-    @SuppressWarnings("resource")
-    private Frame pushFrame() {
-        Frame lastFrame = frames.peek();
-        if (lastFrame == null) {
-            throw new IllegalStateException("No frame");
-        }
-        return lastFrame.push();
-    }
-
-    public final class Frame implements SegmentAllocator, AutoCloseable {
-        private final MemorySegment baseSegment;
-        private final SegmentAllocator delegated;
-        private long allocated = 0L;
-
-        Frame(MemorySegment segment) {
-            this.baseSegment = segment;
-            this.delegated = SegmentAllocator.slicingAllocator(segment);
-        }
-
-        @NotNull
-        @Override
-        public MemorySegment allocate(long byteSize, long byteAlignment) {
-            MemorySegment result = delegated.allocate(byteSize, byteAlignment);
-            allocated = (result.address() + result.byteSize()) - baseSegment.address();
-            return result;
-        }
-
-        public long getAllocated() {
-            return allocated;
-        }
-
-        @NotNull
-        public Frame push() {
-            MemorySegment remaining = baseSegment.asSlice(allocated);
-            if (remaining.byteSize() == 0) {
-                throw new IllegalStateException("No space");
-            }
-            Frame newFrame = new Frame(remaining);
-            frames.push(newFrame);
-            return newFrame;
-        }
-
-        @SuppressWarnings("resource")
-        public void pop() {
-            if (frames.peek() != this) {
-                throw new IllegalStateException("Frame mismatch");
-            }
-            frames.pop();
-        }
-
-        @Override
-        public void close() {
-            pop();
-        }
+    @Override
+    public void close() throws Exception {
+        pop();
     }
 }

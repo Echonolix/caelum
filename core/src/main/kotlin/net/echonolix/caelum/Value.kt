@@ -21,7 +21,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(value: K): NValue<T> =
     valueOf(allocator, value)
 
@@ -36,7 +36,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(value1: K): NArray<T> =
     arrayOf(allocator, value1)
 
@@ -51,7 +51,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K
@@ -70,7 +70,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K,
@@ -92,7 +92,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K,
@@ -117,7 +117,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K,
@@ -137,7 +137,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     vararg values: K
 ): NArray<T> = arrayOf(allocator, *values)

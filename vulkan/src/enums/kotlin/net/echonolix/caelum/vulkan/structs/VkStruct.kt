@@ -40,6 +40,6 @@ abstract class VkStruct<T : VkStruct<T>>(
 inline fun <T : VkStruct<T>> T.allocate(allocator: SegmentAllocator, block: NValue<T>.() -> Unit): NValue<T> =
     allocate(allocator).apply(block)
 
-context(allocator: MemoryStack.Frame)
+context(allocator: MemoryStack)
 inline fun <T : VkStruct<T>> T.allocate(block: NValue<T>.() -> Unit): NValue<T> =
     allocate(allocator).apply(block)
