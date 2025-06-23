@@ -80,35 +80,6 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
             val pointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(outNPrimitiveType)
             val nullableAny = Any::class.asClassName().copy(nullable = true)
 
-            fun addGetOverloads(receiver: TypeName) {
-                for (pType in overloadTypes) {
-                    coreNativeTypeAccessorsFile.addFunction(
-                        FunSpec.builder("get")
-                            .addAnnotation(randomName("get"))
-                            .receiver(receiver)
-                            .addModifiers(KModifier.OPERATOR)
-                            .addParameter("index", pType)
-                            .returns(returnTypeName)
-                            .addStatement("return get(index.toLong())")
-                            .build()
-                    )
-                }
-            }
-
-            fun addSetOverloads(receiver: TypeName) {
-                for (pType in overloadTypes) {
-                    coreNativeTypeAccessorsFile.addFunction(
-                        FunSpec.builder("set")
-                            .addAnnotation(randomName("set"))
-                            .receiver(receiver)
-                            .addModifiers(KModifier.OPERATOR)
-                            .addParameter("index", pType)
-                            .addParameter("value", returnTypeName)
-                            .addStatement("set(index.toLong(), value)")
-                            .build()
-                    )
-                }
-            }
             coreNativeTypeAccessorsFile.addProperty(
                 PropertySpec.builder("value", returnTypeName)
                     .receiver(pointerCNameP)
@@ -151,7 +122,6 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     )
                     .build()
             )
-            addGetOverloads(pointerCNameP)
 
             coreNativeTypeAccessorsFile.addFunction(
                 FunSpec.builder("set")
@@ -167,7 +137,6 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     )
                     .build()
             )
-            addSetOverloads(pointerCNameP)
 
             coreNativeTypeAccessorsFile.addFunction(
                 FunSpec.builder("getValue")
@@ -265,7 +234,6 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     )
                     .build()
             )
-            addGetOverloads(arrayCNameP)
             coreNativeTypeAccessorsFile.addFunction(
                 FunSpec.builder("set")
                     .addAnnotation(randomName("set"))
@@ -280,7 +248,6 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     )
                     .build()
             )
-            addSetOverloads(arrayCNameP)
         }
 
         return setOf(

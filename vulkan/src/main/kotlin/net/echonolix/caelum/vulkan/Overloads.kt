@@ -10,7 +10,7 @@ fun <B : VkHandle<*>, R : B> enumerate(
 ): List<R> = MemoryStack {
     val count = NUInt32.malloc()
     func(count.ptr(), null).getOrThrow()
-    val arr = reinterpret_cast<B>(NPointer.malloc<NChar>(count.value))
+    val arr = reinterpret_cast<B>(NPointer.malloc<NChar>(count.value.toLong()))
     val ptr = arr.ptr()
     func(count.ptr(), ptr).getOrThrow()
     List(count.value.toInt()) { fromNativeData(ptr, it) }

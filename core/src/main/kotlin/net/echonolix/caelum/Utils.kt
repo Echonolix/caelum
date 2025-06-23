@@ -16,7 +16,7 @@ context(allocator: MemoryStack)
 public fun String.c_str(): NPointer<NChar> = c_str(allocator)
 
 public fun Collection<String>.c_strs(allocator: SegmentAllocator): NArray<NPointer<NChar>> {
-    val arr = NPointer.malloc<NChar>(allocator, this.size)
+    val arr = NPointer.malloc<NChar>(allocator, this.size.toLong())
     this.forEachIndexed { index, str ->
         arr[index] = str.c_str(allocator)
     }

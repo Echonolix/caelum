@@ -181,35 +181,6 @@ public open class EnumBaseGenerator(
         val pointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(thisCName)
         val nullableAny = Any::class.asClassName().copy(nullable = true)
 
-        fun addGetOverloads(receiver: TypeName) {
-            for (pType in overloadTypes) {
-                addFunction(
-                    FunSpec.builder("get")
-                        .addAnnotation(randomName("get"))
-                        .receiver(receiver)
-                        .addModifiers(KModifier.OPERATOR)
-                        .addParameter("index", pType)
-                        .returns(returnTypeName)
-                        .addStatement("return get(index.toLong())")
-                        .build()
-                )
-            }
-        }
-
-        fun addSetOverloads(receiver: TypeName) {
-            for (pType in overloadTypes) {
-                addFunction(
-                    FunSpec.builder("set")
-                        .addAnnotation(randomName("set"))
-                        .receiver(receiver)
-                        .addModifiers(KModifier.OPERATOR)
-                        .addParameter("index", pType)
-                        .addParameter("value", returnTypeName)
-                        .addStatement("set(index.toLong(), value)")
-                        .build()
-                )
-            }
-        }
         addProperty(
             PropertySpec.builder("value", returnTypeName)
                 .receiver(pointerCNameP)
@@ -252,7 +223,6 @@ public open class EnumBaseGenerator(
                 )
                 .build()
         )
-        addGetOverloads(pointerCNameP)
 
         addFunction(
             FunSpec.builder("set")
@@ -268,7 +238,6 @@ public open class EnumBaseGenerator(
                 )
                 .build()
         )
-        addSetOverloads(pointerCNameP)
 
         addFunction(
             FunSpec.builder("getValue")
@@ -366,7 +335,6 @@ public open class EnumBaseGenerator(
                 )
                 .build()
         )
-        addGetOverloads(arrayCNameP)
         addFunction(
             FunSpec.builder("set")
                 .addAnnotation(randomName("set"))
@@ -381,7 +349,6 @@ public open class EnumBaseGenerator(
                 )
                 .build()
         )
-        addSetOverloads(arrayCNameP)
     }
 
 

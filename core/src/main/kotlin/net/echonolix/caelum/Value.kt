@@ -130,7 +130,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     allocator: SegmentAllocator,
     vararg values: K
 ): NArray<T> {
-    val v = malloc(allocator, values.size)
+    val v = malloc(allocator, values.size.toLong())
     for (i in values.indices) {
         arraySetElement(v, i.toLong(), toNativeData(values[i]))
     }
