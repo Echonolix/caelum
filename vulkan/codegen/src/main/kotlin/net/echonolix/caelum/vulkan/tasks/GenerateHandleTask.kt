@@ -30,7 +30,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 genObjectBase(functions, handleType)
             }
 
-        typeAlias.joinAndWriteOutput(Path("handles"), VulkanCodegen.handlePackageName)
+        typeAlias.joinAndWriteOutput(Path("objectHandles"), VulkanCodegen.handlePackageName)
     }
 
     private enum class ContainerType(val getFuncMemberName: MemberName) {
