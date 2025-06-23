@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api("net.echonolix:ktgen-api:1.0.0")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.0")
+    api(libs.ktgenApi)
+    api(libs.kotlinxSerializationCore)
 }
 
 kotlin {

@@ -5,7 +5,7 @@ package net.echonolix.caelum.codegen.api
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
-public fun FileSpec.Builder.addSuppress() = apply {
+public fun FileSpec.Builder.addSuppress(): FileSpec.Builder = apply {
     addAnnotation(
         AnnotationSpec.builder(Suppress::class)
             .addMember("%S", "PropertyName")
@@ -44,7 +44,7 @@ public fun String.removeContinuousSpaces(): String {
     return replace(""" +""".toRegex(), " ")
 }
 
-public fun String.pascalCaseToAllCaps() = buildString {
+public fun String.pascalCaseToAllCaps(): String = buildString {
     append(this@pascalCaseToAllCaps[0])
     for (i in 1..<this@pascalCaseToAllCaps.length) {
         val last = this@pascalCaseToAllCaps[i - 1]
@@ -65,12 +65,12 @@ private val hexFormat = HexFormat {
     number.prefix = "0x"
 }
 
-public fun Int.toLiteralHexString() = toHexString(hexFormat)
-public fun UInt.toLiteralHexString() = toHexString(hexFormat)
-public fun ULong.toLiteralHexString() = toHexString(hexFormat)
-public fun Long.toLiteralHexString() = toHexString(hexFormat)
+public fun Int.toLiteralHexString(): String = toHexString(hexFormat)
+public fun UInt.toLiteralHexString(): String = toHexString(hexFormat)
+public fun ULong.toLiteralHexString(): String = toHexString(hexFormat)
+public fun Long.toLiteralHexString(): String = toHexString(hexFormat)
 
-public fun TypeSpec.Builder.addAllocOverload(typeName: TypeName) =
+public fun TypeSpec.Builder.addAllocOverload(typeName: TypeName): TypeSpec.Builder =
     addSuperinterface(CaelumCodegenHelper.allocOverloadCName.parameterizedBy(typeName))
         .addProperty(
             PropertySpec.builder("layoutDelegate", CaelumCodegenHelper.memoryLayoutCName)
@@ -85,7 +85,7 @@ public fun TypeSpec.Builder.addAllocOverload(typeName: TypeName) =
 
 private val optInCName = ClassName("kotlin", "OptIn")
 
-public fun <T : Annotatable.Builder<*>> T.addOptIns(vararg optIns: TypeName) = apply {
+public fun <T : Annotatable.Builder<*>> T.addOptIns(vararg optIns: TypeName): T = apply {
     addAnnotation(
         AnnotationSpec.builder(optInCName)
             .apply {

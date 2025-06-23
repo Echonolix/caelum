@@ -95,10 +95,10 @@ public value class NPointer<T : NType>(
     }
 }
 
-public fun NArray<*>.count() = segment.byteSize() / NPointer.layout.byteSize()
+public fun NArray<*>.count(): Long = segment.byteSize() / NPointer.layout.byteSize()
 
 @Suppress("unused")
-public fun <T : NPointer<*>> NArray<T>.count(descriptor: NPointer.Companion) =
+public fun <T : NPointer<*>> NArray<T>.count(descriptor: NPointer.Companion): Long =
     segment.byteSize() / NPointer.layout.byteSize()
 
 public fun <T : NType> nullptr(): NPointer<T> = NPointer(0L)

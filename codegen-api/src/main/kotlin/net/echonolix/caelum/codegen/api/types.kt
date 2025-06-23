@@ -123,7 +123,7 @@ context(ctx: CodegenContext)
 public inline fun List<CType.Function.Parameter>.toParamSpecs(
     annotations: Boolean,
     typeMapper: (CType.Function.Parameter) -> TypeName
-) = map {
+): List<ParameterSpec> = map {
     val builder = ParameterSpec.builder(it.name, typeMapper(it))
     if (annotations) {
         builder.addAnnotation(CaelumCoreAnnotation.cTypeName(it.type.toSimpleString()))

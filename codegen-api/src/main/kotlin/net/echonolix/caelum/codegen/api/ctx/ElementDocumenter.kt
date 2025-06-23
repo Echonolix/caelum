@@ -20,7 +20,7 @@ public interface ElementDocumenter {
 }
 
 context(ctx: CodegenContext)
-public fun <T : Documentable.Builder<T>> T.addKdoc(element: CElement) = apply {
+public fun <T : Documentable.Builder<T>> T.addKdoc(element: CElement): T = apply {
     val sb = StringBuilder()
     ctx.buildKdocStr(sb, element)
     if (sb.isNotBlank()) {
