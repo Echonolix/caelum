@@ -2,6 +2,8 @@
 // `buildSrc` is a Gradle-recognized directory and every plugin there will be easily available in the rest of the build.
 package buildsrc.convention
 
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
+
 plugins {
     kotlin("jvm")
 }
@@ -15,10 +17,10 @@ java {
 kotlin {
     compilerOptions {
         optIn.add("kotlin.contracts.ExperimentalContracts")
+        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
         freeCompilerArgs.addAll(
 //            "-Xbackend-threads=0",
             "-Xcontext-parameters",
-            "-Xjvm-default=all",
             "-Xassertions=jvm",
             "-Xno-call-assertions",
             "-Xno-receiver-assertions",
