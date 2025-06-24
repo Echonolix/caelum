@@ -202,22 +202,43 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                     .build()
             )
         }
+
         ContainerType[handleType.name]?.let { containerType ->
+            val functionContainerCname = thisCName.nestedClass("FuncContainer")
+            val funcContainerType = TypeSpec.classBuilder(functionContainerCname)
+
+            val constructor = FunSpec.constructorBuilder()
+
+            if (containerType != ContainerType.Instance) {
+                val vkInstanceType = ctx.resolveTypedElement<CType.Handle>("VkInstance")
+                val vkInstanceCName = vkInstanceType.objectBaseCName()
+                funcContainerType.addProperty(
+                    PropertySpec.builder("instance", vkInstanceCName)
+                        .addModifiers(KModifier.INTERNAL)
+                        .initializer("instance")
+                        .build()
+                )
+                constructor.addParameter("instance", vkInstanceCName)
+            }
+
+            funcContainerType.addProperty(
+                PropertySpec.builder("handle", LONG)
+                    .addModifiers(KModifier.INTERNAL)
+                    .initializer("handle")
+                    .build()
+            )
+            constructor.addParameter("handle", LONG)
+            funcContainerType.primaryConstructor(constructor.build())
+
             fun CType.Function.funcName() = tags.getOrNull<OriginalNameTag>()!!.name
 
             val filteredFunctions = functions.parallelStream()
                 .filter(containerType::filterFunc)
                 .toList()
 
-            interfaceType.addProperties(filteredFunctions.parallelStream().map {
-                PropertySpec.builder(it.funcName(), it.className())
-                    .build()
-            }.toList())
-
-            implType.addProperties(filteredFunctions.parallelStream().map {
+            funcContainerType.addProperties(filteredFunctions.parallelStream().map {
                 val funcName = it.funcName()
                 val property = PropertySpec.builder(funcName, it.className())
-                property.addModifiers(KModifier.OVERRIDE)
                 when (funcName) {
                     "vkGetInstanceProcAddr" -> {
                         property.initializer("%T.$funcName", VulkanCodegen.vkCName)
@@ -237,11 +258,27 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                                 .endControlFlow()
                                 .build()
                         )
+//                        property.initializer("this.%M(%T)", containerType.getFuncMemberName, it.className())
                     }
                 }
-
                 property.build()
             }.toList())
+
+            interfaceType.addType(funcContainerType.build())
+            interfaceType.addProperty("funcContainer", functionContainerCname)
+
+            val initializerCode = if (parent == null) {
+                CodeBlock.of("%T(value)", functionContainerCname)
+            } else {
+                CodeBlock.of("%T(parent.instance, value)", functionContainerCname)
+            }
+
+            implType.addProperty(
+                PropertySpec.builder("funcContainer", functionContainerCname)
+                    .addModifiers(KModifier.OVERRIDE)
+                    .initializer(initializerCode)
+                    .build()
+            )
         }
 
         interfaceType.addType(implType.build())

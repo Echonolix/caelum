@@ -53,7 +53,7 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
             val origName = funcType.tags.getOrNull<OriginalNameTag>()?.name
                 ?: error("$funcType is missing original function name tag")
 
-            val dispatcher = if (isDeviceBase(handleType)) "device" else "instance"
+            val dispatcher = (if (isDeviceBase(handleType)) "device" else "instance") + ".funcContainer"
 
             val firstParam = funcType.parameters.first()
             val firstDropped = funcType.parameters.drop(1)
