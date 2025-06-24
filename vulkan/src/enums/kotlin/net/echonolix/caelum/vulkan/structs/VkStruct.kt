@@ -15,7 +15,7 @@ abstract class VkStruct<T : VkStruct<T>>(
     private fun MemorySegment.initValue(): MemorySegment {
         this.fill(0)
         structType?.let {
-            this.set(ValueLayout.JAVA_INT, 0L, it.value)
+            NInt.valueVarHandle.set(this, 0L, it.value)
         }
         return this
     }
@@ -23,8 +23,8 @@ abstract class VkStruct<T : VkStruct<T>>(
     private fun MemorySegment.initArray(count: Long): MemorySegment {
         this.fill(0)
         structType?.let { structType ->
-            for (i in 0..<count) {
-                this.set(ValueLayout.JAVA_INT, i * layout.byteSize(), structType.value)
+            for (i in 0L..<count) {
+                NInt.valueVarHandle.set(this, arrayByteOffsetHandle.invokeExact(0, i), structType.value)
             }
         }
         return this
