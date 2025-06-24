@@ -24,7 +24,7 @@ abstract class VkStruct<T : VkStruct<T>>(
         this.fill(0)
         structType?.let { structType ->
             for (i in 0L..<count) {
-                NInt.valueVarHandle.set(this, arrayByteOffsetHandle.invokeExact(0, i), structType.value)
+                NInt.valueVarHandle.set(this, arrayByteOffsetHandle.invokeExact(0L, i) as Long, structType.value)
             }
         }
         return this

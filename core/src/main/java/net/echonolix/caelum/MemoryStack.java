@@ -5,10 +5,15 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.ref.Cleaner;
 import java.util.Arrays;
 
 public final class MemoryStack implements SegmentAllocator, AutoCloseable {
-    private static final ThreadLocal<MemoryStack> INSTANCES = ThreadLocal.withInitial(() -> new MemoryStack(8 * 1024 * 1024));
+    private static final long DEFAULT_SIZE = 4 * 1024 * 1024; // 4 MiB
+    private static final long MAX_SIZE = 16 * 1024 * 1024; // 16 MiB
+
+    private static final ThreadLocal<MemoryStack> INSTANCES = ThreadLocal.withInitial(() -> new MemoryStack(DEFAULT_SIZE));
+    private static final Cleaner CLEANER = Cleaner.create();
 
     private final MemorySegment baseSegment;
     private long offset = 0L;
@@ -16,7 +21,13 @@ public final class MemoryStack implements SegmentAllocator, AutoCloseable {
     private int frameTop = -1;
 
     MemoryStack(long size) {
-        this.baseSegment = Arena.ofAuto().allocate(size);
+        if (size > MAX_SIZE) {
+            throw new IllegalArgumentException("Memory stack size must not exceed 16 MiB");
+        }
+        @SuppressWarnings("resource")
+        Arena arena = Arena.ofShared();
+        this.baseSegment = arena.allocate(size);
+        CLEANER.register(this, arena::close);
     }
 
     private void pushFrame(long value) {
@@ -33,16 +44,12 @@ public final class MemoryStack implements SegmentAllocator, AutoCloseable {
         return frame[frameTop--];
     }
 
-    private static long alignUp(long n, long alignment) {
-        return (n + alignment - 1) & -alignment;
-    }
-
     @Override
     public MemorySegment allocate(long byteSize, long byteAlignment) {
-        long min = baseSegment.address();
-        long start = alignUp(min + offset, byteAlignment) - min;
-        MemorySegment slice = baseSegment.asSlice(start, byteSize, byteAlignment);
-        offset = start + byteSize;
+        long baseAddress = baseSegment.address();
+        long sliceOffset = ((baseAddress + offset + byteAlignment - 1) & -byteAlignment) - baseAddress;
+        MemorySegment slice = baseSegment.asSlice(sliceOffset, byteSize, byteAlignment);
+        offset = (sliceOffset) + byteSize;
         return slice;
     }
 
@@ -57,6 +64,11 @@ public final class MemoryStack implements SegmentAllocator, AutoCloseable {
     }
 
     @NotNull
+    private static MemoryStack getInstance() {
+        return INSTANCES.get();
+    }
+
+    @NotNull
     public static MemoryStack stackPush() {
         return getInstance().push();
     }
@@ -65,11 +77,6 @@ public final class MemoryStack implements SegmentAllocator, AutoCloseable {
         if (getInstance().frameTop != -1) {
             throw new IllegalStateException("Frame leak");
         }
-    }
-
-    @NotNull
-    private static MemoryStack getInstance() {
-        return INSTANCES.get();
     }
 
     @Override
