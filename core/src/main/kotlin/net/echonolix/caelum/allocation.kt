@@ -31,39 +31,6 @@ context(allocator: MemoryStack)
 public fun <T : NType> NType.Descriptor<T>.calloc(count: Long): NArray<T> =
     NArray(allocator.allocate(layout, count).apply { fill(0) })
 
-public interface AllocateOverload<T : NType> {
-    public val layoutDelegate: MemoryLayout
-
-    public fun malloc(allocator: SegmentAllocator): NValue<T> =
-        NValue(allocator.allocate(layoutDelegate))
-
-    context(allocator: MemoryStack)
-    public fun malloc(): NValue<T> =
-        NValue(allocator.allocate(layoutDelegate))
-
-    public fun calloc(allocator: SegmentAllocator): NValue<T> =
-        NValue(allocator.allocate(layoutDelegate).apply { fill(0) })
-
-    context(allocator: MemoryStack)
-    public fun calloc(): NValue<T> =
-        NValue(allocator.allocate(layoutDelegate).apply { fill(0) })
-
-    public fun malloc(allocator: SegmentAllocator, count: Long): NArray<T> =
-        NArray(allocator.allocate(layoutDelegate, count))
-
-    context(allocator: MemoryStack)
-    public fun malloc(count: Long): NArray<T> =
-        NArray(allocator.allocate(layoutDelegate, count))
-
-    public fun calloc(allocator: SegmentAllocator, count: Long): NArray<T> =
-        NArray(allocator.allocate(layoutDelegate, count).apply { fill(0) })
-
-    context(allocator: MemoryStack)
-    public fun calloc(count: Long): NArray<T> =
-        NArray(allocator.allocate(layoutDelegate, count).apply { fill(0) })
-}
-
-
 public interface CustomAllocateOnly<T : NType> {
     @Deprecated(
         "Use allocate() instead",

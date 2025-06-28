@@ -59,8 +59,6 @@ public object CaelumCodegenHelper {
         public val implCName: ClassName = cName.nestedClass("Impl")
     }
 
-    public val allocOverloadCName: ClassName = ClassName(basePkgName, "AllocateOverload")
-
     public val enumCName: ClassName = ClassName(basePkgName, "NEnum")
 
     public val arrayCName: ClassName = ClassName(basePkgName, "NArray")

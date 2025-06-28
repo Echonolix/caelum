@@ -70,19 +70,6 @@ public fun UInt.toLiteralHexString(): String = toHexString(hexFormat)
 public fun ULong.toLiteralHexString(): String = toHexString(hexFormat)
 public fun Long.toLiteralHexString(): String = toHexString(hexFormat)
 
-public fun TypeSpec.Builder.addAllocOverload(typeName: TypeName): TypeSpec.Builder =
-    addSuperinterface(CaelumCodegenHelper.allocOverloadCName.parameterizedBy(typeName))
-        .addProperty(
-            PropertySpec.builder("layoutDelegate", CaelumCodegenHelper.memoryLayoutCName)
-                .addModifiers(KModifier.OVERRIDE)
-                .getter(
-                    FunSpec.getterBuilder()
-                        .addStatement("return layout")
-                        .build()
-                )
-                .build()
-        )
-
 private val optInCName = ClassName("kotlin", "OptIn")
 
 public fun <T : Annotatable.Builder<*>> T.addOptIns(vararg optIns: TypeName): T = apply {

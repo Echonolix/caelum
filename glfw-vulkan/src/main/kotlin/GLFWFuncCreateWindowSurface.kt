@@ -7,6 +7,7 @@ import net.echonolix.caelum.vulkan.enums.VkResult
 import net.echonolix.caelum.vulkan.handles.VkInstance
 import net.echonolix.caelum.vulkan.handles.VkInstanceHandle
 import net.echonolix.caelum.vulkan.handles.VkSurfaceKHR
+import net.echonolix.caelum.vulkan.handles.VkSurfaceKHRHandle
 import net.echonolix.caelum.vulkan.handles.value
 import net.echonolix.caelum.vulkan.structs.VkAllocationCallbacks
 import java.lang.foreign.MemorySegment
@@ -20,7 +21,7 @@ public fun glfwCreateWindowSurface(
     window: NPointer<GLFWWindow>,
     allocator: NPointer<VkAllocationCallbacks>?,
 ): Result<VkSurfaceKHR> = MemoryStack {
-    val handle114514 = VkSurfaceKHR.malloc()
+    val handle114514 = VkSurfaceKHRHandle.malloc()
     when (val result69420 = glfwCreateWindowSurface(instance, window, allocator ?: nullptr(), handle114514.ptr())) {
         VkResult.VK_SUCCESS -> Result.success(VkSurfaceKHR.fromNativeData(instance, handle114514.`value`))
         VkResult.VK_ERROR_OUT_OF_HOST_MEMORY,
@@ -37,7 +38,7 @@ public fun interface GLFWFuncCreateWindowSurface : NFunction {
         @CTypeName("VkInstance") instance: VkInstanceHandle,
         @CTypeName("GLFWwindow*") window: NPointer<GLFWWindow>,
         @CTypeName("const VkAllocationCallbacks*") allocator: NPointer<VkAllocationCallbacks>,
-        @CTypeName("VkSurfaceKHR*") surface: NPointer<VkSurfaceKHR>,
+        @CTypeName("VkSurfaceKHR*") surface: NPointer<VkSurfaceKHRHandle>,
     ): VkResult
 
     public fun invokeNative(
@@ -73,7 +74,7 @@ public fun interface GLFWFuncCreateWindowSurface : NFunction {
                 instance: VkInstanceHandle,
                 window: NPointer<GLFWWindow>,
                 allocator: NPointer<VkAllocationCallbacks>,
-                surface: NPointer<VkSurfaceKHR>
+                surface: NPointer<VkSurfaceKHRHandle>
             ): VkResult = VkResult.fromNativeData(
                 invokeNative(
                     VkInstanceHandle.toNativeData(instance),

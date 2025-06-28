@@ -293,8 +293,6 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             thisTypeDescriptor,
             CodeBlock.of("%T.Companion", thisObjectHandleCName)
         )
-        companion.addSuperinterface(CaelumCodegenHelper.allocOverloadCName.parameterizedBy(thisCName))
-        companion.addAllocOverload(thisCName)
         if (parent != null) {
             companion.addFunction(
                 FunSpec.builder("fromNativeData")
