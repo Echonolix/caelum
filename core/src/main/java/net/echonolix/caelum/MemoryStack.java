@@ -30,6 +30,22 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
         CLEANER.register(this, arena::close);
     }
 
+    @NotNull
+    private static MemoryStack getInstance() {
+        return INSTANCES.get();
+    }
+
+    @NotNull
+    public static MemoryStack stackPush() {
+        return getInstance().push();
+    }
+
+    public static void checkEmpty() {
+        if (getInstance().frameTop != -1) {
+            throw new IllegalStateException("Frame leak");
+        }
+    }
+
     @Override
     @NotNull
     public SegmentAllocator getSegmentAllocator() {
@@ -63,13 +79,6 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
         return baseSegment.asSlice(allocateOffset(byteSize, byteAlignment), byteSize, byteAlignment);
     }
 
-    private void rangeFillZeros(long offset, long size) {
-        long loopCount = (size + (Long.BYTES - 1)) / Long.BYTES;
-        for (long i = 0; i < loopCount; i++) {
-            LONG_VAR_HANDLE.set(baseSegment, offset + i * Long.BYTES, 0L);
-        }
-    }
-
     @Override
     public long _malloc(@NotNull MemoryLayout layout) {
         return baseSegment.address() + allocateOffset(layout.byteSize(), layout.byteAlignment());
@@ -77,9 +86,7 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
 
     @Override
     public long _calloc(@NotNull MemoryLayout layout) {
-        long offset = allocateOffset(layout.byteSize(), layout.byteAlignment());
-        rangeFillZeros(offset, layout.byteSize());
-        return baseSegment.address() + offset;
+        return _malloc(layout);
     }
 
     @Override
@@ -92,12 +99,7 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
 
     @Override
     public long _calloc(@NotNull MemoryLayout layout, long count) {
-        if (count <= 0) {
-            return 0L;
-        }
-        long offset = allocateOffset(layout.byteSize() * count, layout.byteAlignment());
-        rangeFillZeros(offset, layout.byteSize() * count);
-        return baseSegment.address() + offset;
+        return _malloc(layout, count);
     }
 
     @NotNull
@@ -107,23 +109,9 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
     }
 
     public void pop() {
+        long prevOffset = offset;
         offset = popFrame();
-    }
-
-    @NotNull
-    private static MemoryStack getInstance() {
-        return INSTANCES.get();
-    }
-
-    @NotNull
-    public static MemoryStack stackPush() {
-        return getInstance().push();
-    }
-
-    public static void checkEmpty() {
-        if (getInstance().frameTop != -1) {
-            throw new IllegalStateException("Frame leak");
-        }
+        baseSegment.asSlice(offset, prevOffset - offset).fill((byte) 0);
     }
 
     @Override
