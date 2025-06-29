@@ -12,7 +12,7 @@ public value class NPointer<T : NType>(
         get() = Companion
 
     @Suppress("UNCHECKED_CAST")
-    public companion object : NType.Descriptor.Impl<NPointer<*>>(APIHelper.pointerLayout) {
+    public companion object : NType.Descriptor.Impl<NPointer<*>>(APIHelper.POINTER_LAYOUT) {
         @JvmField
         public val arrayVarHandle: VarHandle = layout.arrayElementVarHandle()
 

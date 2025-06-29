@@ -1,17 +1,6 @@
 package net.echonolix.caelum
 
-import java.lang.foreign.MemoryLayout
-import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
-
-@Suppress("FunctionName")
-public interface AllocateScope {
-    public fun _malloc(layout: MemoryLayout): Long
-    public fun _calloc(layout: MemoryLayout): Long
-    public fun _malloc(layout: MemoryLayout, count: Long): Long
-    public fun _calloc(layout: MemoryLayout, count: Long): Long
-    public fun _allocateCString(value: String): MemorySegment
-}
 
 public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>): NValue<T> =
     NValue(_malloc(descriptor.layout))
@@ -24,29 +13,6 @@ public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>, cou
 
 public fun <T : NType> AllocateScope.calloc(descriptor: NType.Descriptor<T>, count: Long): NArray<T> =
     NArray(_calloc(descriptor.layout, count), count)
-
-public abstract class WrappedAllocateScope : AllocateScope {
-    protected abstract val segmentAllocator: SegmentAllocator
-
-    override fun _malloc(layout: MemoryLayout): Long =
-        segmentAllocator.allocate(layout).address()
-
-    override fun _calloc(layout: MemoryLayout): Long =
-        segmentAllocator.allocate(layout).fill(0).address()
-
-    override fun _malloc(layout: MemoryLayout, count: Long): Long =
-        segmentAllocator.allocate(layout, count).address()
-
-    override fun _calloc(layout: MemoryLayout, count: Long): Long =
-        segmentAllocator.allocate(layout, count).fill(0).address()
-
-    override fun _allocateCString(value: String): MemorySegment =
-        segmentAllocator.allocateFrom(value)
-
-    public class Impl(
-        override val segmentAllocator: SegmentAllocator
-    ) : WrappedAllocateScope()
-}
 
 public fun SegmentAllocator.asAllocateScope(): AllocateScope =
     WrappedAllocateScope.Impl(this)

@@ -2,16 +2,15 @@ package net.echonolix.caelum;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.*;
+import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.util.Arrays;
 
 public final class MemoryStack extends WrappedAllocateScope implements SegmentAllocator, AutoCloseable {
     private static final long DEFAULT_SIZE = 4 * 1024 * 1024; // 4 MiB
     private static final long MAX_SIZE = 16 * 1024 * 1024; // 16 MiB
+    private static final VarHandle LONG_VAR_HANDLE = ValueLayout.JAVA_LONG.varHandle();
 
     private static final ThreadLocal<MemoryStack> INSTANCES = ThreadLocal.withInitial(() -> new MemoryStack(DEFAULT_SIZE));
     private static final Cleaner CLEANER = Cleaner.create();
@@ -52,6 +51,7 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
     }
 
     private long allocateOffset(long byteSize, long byteAlignment) {
+        byteAlignment = Math.max(byteAlignment, 8);
         long baseAddress = baseSegment.address();
         long sliceOffset = ((baseAddress + offset + byteAlignment - 1) & -byteAlignment) - baseAddress;
         offset = sliceOffset + byteSize;
@@ -63,50 +63,11 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
         return baseSegment.asSlice(allocateOffset(byteSize, byteAlignment), byteSize, byteAlignment);
     }
 
-    private void rangeFillZeros(long offset0, long size0) {
-        if (size0 <= 0) {
-            return;
-        }
-        long offset = offset0;
-        long remaining = size0;
-        if ((offset & 1) != 0) {
-            NInt8.INSTANCE.getArrayVarHandle().set(baseSegment, offset, 0L, (byte) 0);
-            offset += Byte.BYTES;
-            remaining -= Byte.BYTES;
-        }
-        if ((offset & 3) != 0 && remaining >= 2) {
-            NInt16.INSTANCE.getArrayVarHandle().set(baseSegment, offset, 0L, (short) 0);
-            offset += Short.BYTES;
-            remaining -= Short.BYTES;
-        }
-        if ((offset & 7) != 0 && remaining >= 4) {
-            NInt32.INSTANCE.getArrayVarHandle().set(baseSegment, offset, 0L, 0);
-            offset += Integer.BYTES;
-            remaining -= Integer.BYTES;
-        }
-        long loopCount = remaining / Long.BYTES;
+    private void rangeFillZeros(long offset, long size) {
+        long loopCount = (size + (Long.BYTES - 1)) / Long.BYTES;
         for (long i = 0; i < loopCount; i++) {
-            NInt64.INSTANCE.getArrayVarHandle().set(baseSegment, offset, i, 0L);
+            LONG_VAR_HANDLE.set(baseSegment, offset + i * Long.BYTES, 0L);
         }
-        offset += loopCount * Long.BYTES;
-        remaining -= loopCount * Long.BYTES;
-        if (remaining >= Integer.BYTES) {
-            NInt32.INSTANCE.getArrayVarHandle().set(baseSegment, offset, 0L, 0);
-            offset += Integer.BYTES;
-            remaining -= Integer.BYTES;
-        }
-        if (remaining >= Short.BYTES) {
-            NInt16.INSTANCE.getArrayVarHandle().set(baseSegment, offset, 0L, (short) 0);
-            offset += Short.BYTES;
-            remaining -= Short.BYTES;
-        }
-        if (remaining >= Byte.BYTES) {
-            NInt8.INSTANCE.getArrayVarHandle().set(baseSegment, offset, 0L, (byte) 0);
-            offset += Byte.BYTES;
-            remaining -= Byte.BYTES;
-        }
-        assert remaining == 0 : "Remaining bytes after filling with zeros: " + remaining;
-        assert offset == offset0 + size0 : "Offset after filling with zeros: " + offset + ", expected: " + (offset0 + size0);
     }
 
     @Override

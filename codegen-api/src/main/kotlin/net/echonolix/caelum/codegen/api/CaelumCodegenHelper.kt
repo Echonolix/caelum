@@ -67,10 +67,10 @@ public object CaelumCodegenHelper {
 
     public val helperCName: ClassName = ClassName(basePkgName, "APIHelper")
     public val omniSegment: MemberName = helperCName.member("_\$OMNI_SEGMENT\$_")
-    public val linker: MemberName = helperCName.member("linker")
-    public val loaderLookup: MemberName = helperCName.member("loaderLookup")
-    public val pointerLayoutMember: MemberName = helperCName.member("pointerLayout")
-    public val symbolLookup: MemberName = helperCName.member("symbolLookup")
+    public val linker: MemberName = helperCName.member("LINKER")
+    public val loaderLookup: MemberName = helperCName.member("LOADER_LOOKUP")
+    public val pointerLayoutMember: MemberName = helperCName.member("POINTER_LAYOUT")
+    public val symbolLookup: MemberName = helperCName.member("SYMBOL_LOOKUP")
     public val findSymbolMemberName: MemberName = helperCName.member("findSymbol")
 
     public val memoryLayoutCName: ClassName = MemoryLayout::class.asClassName()

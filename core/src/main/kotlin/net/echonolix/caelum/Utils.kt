@@ -10,20 +10,26 @@ import kotlin.contracts.contract
 public typealias NSize = NInt64
 public typealias NInt = NInt32
 
-context(allocator: AllocateScope)
-public fun String.c_str(): NPointer<NChar> {
+public fun String.c_str(allocator: AllocateScope): NPointer<NChar> {
     val segment = allocator._allocateCString(this)
     return NPointer(segment.address())
 }
 
 context(allocator: AllocateScope)
-public fun Collection<String>.c_strs(): NArray<NPointer<NChar>> {
+public fun String.c_str(): NPointer<NChar> =
+    NPointer(allocator._allocateCString(this).address())
+
+public fun Collection<String>.c_strs(allocator: AllocateScope): NArray<NPointer<NChar>> {
     val arr = NPointer.malloc<NChar>(allocator, this.size.toLong())
     this.forEachIndexed { index, str ->
-        arr[index] = str.c_str()
+        arr[index] = str.c_str(allocator)
     }
     return arr
 }
+
+context(allocator: AllocateScope)
+public fun Collection<String>.c_strs(): NArray<NPointer<NChar>> =
+    c_strs(allocator)
 
 public var NArray<NChar>.string: String
     get() = MemorySegment.ofAddress(this._address).reinterpret(this.count).getString(0L)

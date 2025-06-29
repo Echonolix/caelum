@@ -4,6 +4,7 @@ import org.gradle.jvm.tasks.Jar
 
 plugins {
     id("buildsrc.convention.kotlin-jvm")
+    `java-library`
     `maven-publish`
 }
 
@@ -39,4 +40,8 @@ tasks {
     named<Jar>("sourcesJar") {
         from(extraJarEntries)
     }
+}
+
+tasks.compileJava {
+    options.javaModuleVersion = provider { version as String }
 }
