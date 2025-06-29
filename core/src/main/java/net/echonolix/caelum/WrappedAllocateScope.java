@@ -1,35 +1,18 @@
 package net.echonolix.caelum;
 
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 
 public abstract class WrappedAllocateScope implements AllocateScope {
     protected abstract SegmentAllocator getSegmentAllocator();
 
     @Override
-    public long _malloc(MemoryLayout layout) {
-        return getSegmentAllocator().allocate(layout).address();
+    public long _malloc(long byteSize, long byteAlignment) {
+        return getSegmentAllocator().allocate(byteSize, byteAlignment).address();
     }
 
     @Override
-    public long _calloc(MemoryLayout layout) {
-        return getSegmentAllocator().allocate(layout).fill((byte)0).address();
-    }
-
-    @Override
-    public long _malloc(MemoryLayout layout, long count) {
-        return getSegmentAllocator().allocate(layout, count).address();
-    }
-
-    @Override
-    public long _calloc(MemoryLayout layout, long count) {
-        return getSegmentAllocator().allocate(layout, count).fill((byte)0).address();
-    }
-
-    @Override
-    public MemorySegment _allocateCString(String value) {
-        return getSegmentAllocator().allocateFrom(value);
+    public long _calloc(long byteSize, long byteAlignment) {
+        return getSegmentAllocator().allocate(byteSize, byteAlignment).address();
     }
 
     public static class Impl extends WrappedAllocateScope {

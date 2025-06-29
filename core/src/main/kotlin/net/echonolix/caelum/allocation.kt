@@ -3,16 +3,16 @@ package net.echonolix.caelum
 import java.lang.foreign.SegmentAllocator
 
 public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>): NValue<T> =
-    NValue(_malloc(descriptor.layout))
+    NValue(_malloc(descriptor.layout.byteSize(), descriptor.layout.byteAlignment()))
 
 public fun <T : NType> AllocateScope.calloc(descriptor: NType.Descriptor<T>): NValue<T> =
-    NValue(_calloc(descriptor.layout))
+    NValue(_calloc(descriptor.layout.byteSize(), descriptor.layout.byteAlignment()))
 
 public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>, count: Long): NArray<T> =
-    NArray(_malloc(descriptor.layout, count), count)
+    NArray(_malloc(descriptor.layout.byteSize() * count, descriptor.layout.byteAlignment()), count)
 
 public fun <T : NType> AllocateScope.calloc(descriptor: NType.Descriptor<T>, count: Long): NArray<T> =
-    NArray(_calloc(descriptor.layout, count), count)
+    NArray(_calloc(descriptor.layout.byteSize() * count, descriptor.layout.byteAlignment()), count)
 
 public fun SegmentAllocator.asAllocateScope(): AllocateScope =
     WrappedAllocateScope.Impl(this)

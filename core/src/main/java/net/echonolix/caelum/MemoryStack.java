@@ -2,7 +2,12 @@ package net.echonolix.caelum;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.foreign.*;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.util.Arrays;
@@ -28,6 +33,24 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
         Arena arena = Arena.ofShared();
         this.baseSegment = arena.allocate(size, 4096);
         CLEANER.register(this, arena::close);
+    }
+
+    private static void fillZeros(long address, long size) {
+        assert (address & 7) == 0 : "Address must be aligned to 8 bytes";
+        assert (size & 7) == 0 : "Size must be a multiple of 8 bytes";
+
+        try {
+            if (size <= 256) {
+                long loopCount = (size + Long.BYTES - 1) / 8;
+                for (long i = 0; i < loopCount; i++) {
+                    UnsafeUtil.UNSAFE_PUT_LONG_NATIVE.invokeExact(  address + i * Long.BYTES, 0L);
+                }
+            } else {
+                UnsafeUtil.UNSAFE_SET_MEMORY0_NATIVE.invokeExact(  address, size, (byte) 0);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @NotNull
@@ -80,26 +103,13 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
     }
 
     @Override
-    public long _malloc(@NotNull MemoryLayout layout) {
-        return baseSegment.address() + allocateOffset(layout.byteSize(), layout.byteAlignment());
+    public long _malloc(long byteSize, long byteAlignment) {
+        return baseSegment.address() + allocateOffset(byteSize, byteAlignment);
     }
 
     @Override
-    public long _calloc(@NotNull MemoryLayout layout) {
-        return _malloc(layout);
-    }
-
-    @Override
-    public long _malloc(@NotNull MemoryLayout layout, long count) {
-        if (count <= 0) {
-            return 0L;
-        }
-        return baseSegment.address() + allocateOffset(layout.byteSize() * count, layout.byteAlignment());
-    }
-
-    @Override
-    public long _calloc(@NotNull MemoryLayout layout, long count) {
-        return _malloc(layout, count);
+    public long _calloc(long byteSize, long byteAlignment) {
+        return baseSegment.address() + allocateOffset(byteSize, byteAlignment);
     }
 
     @NotNull
@@ -111,7 +121,7 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
     public void pop() {
         long prevOffset = offset;
         offset = popFrame();
-        baseSegment.asSlice(offset, prevOffset - offset).fill((byte) 0);
+        fillZeros(baseSegment.address() + offset, prevOffset - offset);
     }
 
     @Override

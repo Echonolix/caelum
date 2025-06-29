@@ -1,7 +1,6 @@
 package net.echonolix.caelum.vulkan.structs
 
 import net.echonolix.caelum.*
-import net.echonolix.caelum.APIHelper.`_$OMNI_SEGMENT$_`
 import net.echonolix.caelum.vulkan.enums.VkStructureType
 import java.lang.foreign.MemoryLayout
 
@@ -12,17 +11,20 @@ abstract class VkStruct<T : VkStruct<T>>(
 
     override fun allocate(allocator: AllocateScope): NValue<T> {
         val value = allocator.calloc(this)
-        structType?.let {
-            NInt.valueVarHandle.set(`_$OMNI_SEGMENT$_`, value._address, it.value)
+        val sType = structType
+        if (sType != null) {
+            UnsafeUtil.UNSAFE_PUT_INT_NATIVE.invokeExact(value._address, sType.value)
         }
         return value
     }
 
     override fun allocate(allocator: AllocateScope, count: Long): NArray<T> {
         val array = allocator.calloc(this, count)
-        structType?.let { structType ->
+        val sType = structType
+        if (sType != null) {
+            val byteSize = layout.byteSize()
             for (i in 0L..<count) {
-                NInt.valueVarHandle.set(`_$OMNI_SEGMENT$_`, arrayByteOffsetHandle.invokeExact(array._address, i) as Long, structType.value)
+                UnsafeUtil.UNSAFE_PUT_INT_NATIVE.invokeExact(array._address + i * byteSize, sType.value)
             }
         }
         return array

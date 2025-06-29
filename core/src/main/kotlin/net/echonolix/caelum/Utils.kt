@@ -11,13 +11,14 @@ public typealias NSize = NInt64
 public typealias NInt = NInt32
 
 public fun String.c_str(allocator: AllocateScope): NPointer<NChar> {
-    val segment = allocator._allocateCString(this)
-    return NPointer(segment.address())
+    val address = allocator._malloc(LWJGLMemoryUtil.memLengthUTF8(this).toLong(), 8L)
+    LWJGLMemoryUtil.encodeUTF8Unsafe(this, address)
+    return NPointer(address)
 }
 
 context(allocator: AllocateScope)
 public fun String.c_str(): NPointer<NChar> =
-    NPointer(allocator._allocateCString(this).address())
+    c_str(allocator)
 
 public fun Collection<String>.c_strs(allocator: AllocateScope): NArray<NPointer<NChar>> {
     val arr = NPointer.malloc<NChar>(allocator, this.size.toLong())
