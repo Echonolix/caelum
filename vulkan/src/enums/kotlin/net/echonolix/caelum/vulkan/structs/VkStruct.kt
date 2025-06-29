@@ -1,45 +1,37 @@
 package net.echonolix.caelum.vulkan.structs
 
 import net.echonolix.caelum.*
+import net.echonolix.caelum.APIHelper.`_$OMNI_SEGMENT$_`
 import net.echonolix.caelum.vulkan.enums.VkStructureType
 import java.lang.foreign.MemoryLayout
-import java.lang.foreign.MemorySegment
-import java.lang.foreign.SegmentAllocator
-import java.lang.foreign.ValueLayout
 
 abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
 ) : NStruct.Impl<T>(*members), CustomAllocateOnly<T> {
     abstract val structType: VkStructureType?
 
-    private fun MemorySegment.initValue(): MemorySegment {
-        this.fill(0)
+    override fun allocate(allocator: AllocateScope): NValue<T> {
+        val value = allocator.calloc(this)
         structType?.let {
-            NInt.valueVarHandle.set(this, 0L, it.value)
+            NInt.valueVarHandle.set(`_$OMNI_SEGMENT$_`, value._address, it.value)
         }
-        return this
+        return value
     }
 
-    private fun MemorySegment.initArray(count: Long): MemorySegment {
-        this.fill(0)
+    override fun allocate(allocator: AllocateScope, count: Long): NArray<T> {
+        val array = allocator.calloc(this, count)
         structType?.let { structType ->
             for (i in 0L..<count) {
-                NInt.valueVarHandle.set(this, arrayByteOffsetHandle.invokeExact(0L, i) as Long, structType.value)
+                NInt.valueVarHandle.set(`_$OMNI_SEGMENT$_`, arrayByteOffsetHandle.invokeExact(array._address, i) as Long, structType.value)
             }
         }
-        return this
+        return array
     }
-
-    override fun allocate(allocator: SegmentAllocator): NValue<T> =
-        NValue(allocator.allocate(layout).initValue())
-
-    override fun allocate(allocator: SegmentAllocator, count: Long): NArray<T> =
-        NArray(allocator.allocate(layout, count).initArray(count))
 }
 
-inline fun <T : VkStruct<T>> T.allocate(allocator: SegmentAllocator, block: NValue<T>.() -> Unit): NValue<T> =
+inline fun <T : VkStruct<T>> T.allocate(allocator: AllocateScope, block: NValue<T>.() -> Unit): NValue<T> =
     allocate(allocator).apply(block)
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 inline fun <T : VkStruct<T>> T.allocate(block: NValue<T>.() -> Unit): NValue<T> =
     allocate(allocator).apply(block)

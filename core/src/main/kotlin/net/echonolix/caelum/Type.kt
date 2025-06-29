@@ -25,6 +25,8 @@ public interface NPrimitive<N : Any, K : Any> : NType {
     public override val typeDescriptor: Descriptor<*, N, K>
 
     public interface NativeData<T : NPrimitive<N, *>, N : Any> : NType.Descriptor<T> {
+        override val layout: ValueLayout
+
         public val valueVarHandle: VarHandle
         public val arrayVarHandle: VarHandle
 

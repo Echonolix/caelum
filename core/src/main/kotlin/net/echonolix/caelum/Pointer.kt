@@ -2,7 +2,6 @@
 
 package net.echonolix.caelum
 
-import java.lang.foreign.SegmentAllocator
 import java.lang.invoke.VarHandle
 
 @JvmInline
@@ -12,6 +11,7 @@ public value class NPointer<T : NType>(
     override val typeDescriptor: NType.Descriptor<NPointer<*>>
         get() = Companion
 
+    @Suppress("UNCHECKED_CAST")
     public companion object : NType.Descriptor.Impl<NPointer<*>>(APIHelper.pointerLayout) {
         @JvmField
         public val arrayVarHandle: VarHandle = layout.arrayElementVarHandle()
@@ -22,42 +22,44 @@ public value class NPointer<T : NType>(
         @JvmStatic
         public inline fun <T : NType> toNativeData(value: NPointer<T>?): Long = value?._address ?: 0L
 
-        public fun <T : NType> malloc(allocator: SegmentAllocator): NValue<NPointer<T>> =
-            NValue(allocator.allocate(layout))
 
-        context(allocator: MemoryStack)
+        @JvmName("malloc114")
+        public fun <T : NType> malloc(allocator: AllocateScope): NValue<NPointer<T>> =
+            allocator.malloc(this) as NValue<NPointer<T>>
+
+        @JvmName("malloc514")
+        context(allocator: AllocateScope)
         public fun <T : NType> malloc(): NValue<NPointer<T>> =
-            NValue(allocator.allocate(layout))
+            allocator.malloc(this) as NValue<NPointer<T>>
 
-        public fun <T : NType> malloc(allocator: SegmentAllocator, count: Long): NArray<NPointer<T>> =
-            NArray(allocator.allocate(layout, count))
+        @JvmName("malloc1919")
+        public fun <T : NType> malloc(allocator: AllocateScope, count: Long): NArray<NPointer<T>> =
+            allocator.malloc(this, count) as NArray<NPointer<T>>
 
-        context(allocator: MemoryStack)
+        @JvmName("malloc810")
+        context(allocator: AllocateScope)
         public fun <T : NType> malloc(count: Long): NArray<NPointer<T>> =
-            NArray(allocator.allocate(layout, count))
+            allocator.malloc(this, count) as NArray<NPointer<T>>
 
+        @JvmName("calloc114")
+        public fun <T : NType> calloc(allocator: AllocateScope): NValue<NPointer<T>> =
+            allocator.calloc(this) as NValue<NPointer<T>>
 
-        public fun <T : NType> calloc(allocator: SegmentAllocator, count: Long): NArray<NPointer<T>> =
-            NArray(allocator.allocate(layout, count).apply { fill(0) })
-
-        context(allocator: MemoryStack)
-        public fun <T : NType> calloc(count: Long): NArray<NPointer<T>> =
-            NArray(allocator.allocate(layout, count).apply { fill(0) })
-
-        public fun <T : NType> calloc(allocator: SegmentAllocator): NValue<NPointer<T>> =
-            NValue(allocator.allocate(layout).apply { fill(0) })
-
-        context(allocator: MemoryStack)
+        @JvmName("calloc514")
+        context(allocator: AllocateScope)
         public fun <T : NType> calloc(): NValue<NPointer<T>> =
-            NValue(allocator.allocate(layout).apply { fill(0) })
+            allocator.calloc(this) as NValue<NPointer<T>>
+
+        @JvmName("calloc1919")
+        public fun <T : NType> calloc(allocator: AllocateScope, count: Long): NArray<NPointer<T>> =
+            allocator.calloc(this, count) as NArray<NPointer<T>>
+
+        @JvmName("calloc810")
+        context(allocator: AllocateScope)
+        public fun <T : NType> calloc(count: Long): NArray<NPointer<T>> =
+            allocator.calloc(this, count) as NArray<NPointer<T>>
     }
 }
-
-public fun NArray<*>.count(): Long = segment.byteSize() / NPointer.layout.byteSize()
-
-@Suppress("unused")
-public fun <T : NPointer<*>> NArray<T>.count(descriptor: NPointer.Companion): Long =
-    segment.byteSize() / NPointer.layout.byteSize()
 
 public fun <T : NType> nullptr(): NPointer<T> = NPointer(0L)
 

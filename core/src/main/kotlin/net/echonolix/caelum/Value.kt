@@ -2,18 +2,15 @@
 
 package net.echonolix.caelum
 
-import java.lang.foreign.MemorySegment
-import java.lang.foreign.SegmentAllocator
-
 @JvmInline
 public value class NValue<T : NType>(
-    public val segment: MemorySegment,
+    public val _address: Long
 ) {
-    public inline fun ptr(): NPointer<T> = NPointer(segment.address())
+    public inline fun ptr(): NPointer<T> = NPointer(_address)
 }
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     value: K
 ): NValue<T> {
     val v = malloc(allocator)
@@ -21,14 +18,14 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.valueOf(value: K): NValue<T> =
     valueOf(allocator, value)
 
 
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     value1: K
 ): NArray<T> {
     val v = malloc(allocator, 1)
@@ -36,12 +33,12 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(value1: K): NArray<T> =
     arrayOf(allocator, value1)
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     value1: K,
     value2: K
 ): NArray<T> {
@@ -51,14 +48,14 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K
 ): NArray<T> = arrayOf(allocator, value1, value2)
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     value1: K,
     value2: K,
     value3: K
@@ -70,7 +67,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K,
@@ -78,7 +75,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
 ): NArray<T> = arrayOf(allocator, value1, value2, value3)
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     value1: K,
     value2: K,
     value3: K,
@@ -92,7 +89,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K,
@@ -101,7 +98,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
 ): NArray<T> = arrayOf(allocator, value1, value2, value3, value4)
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     value1: K,
     value2: K,
     value3: K,
@@ -117,7 +114,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     value1: K,
     value2: K,
@@ -127,7 +124,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
 ): NArray<T> = arrayOf(allocator, value1, value2, value3, value4, value5)
 
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
-    allocator: SegmentAllocator,
+    allocator: AllocateScope,
     vararg values: K
 ): NArray<T> {
     val v = malloc(allocator, values.size.toLong())
@@ -137,7 +134,7 @@ public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor
     return v
 }
 
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public inline fun <T : NPrimitive<N, K>, N : Any, K : Any> NPrimitive.Descriptor<T, N, K>.arrayOf(
     vararg values: K
 ): NArray<T> = arrayOf(allocator, *values)

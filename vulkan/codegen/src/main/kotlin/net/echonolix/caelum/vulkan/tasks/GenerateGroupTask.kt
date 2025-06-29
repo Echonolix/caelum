@@ -260,7 +260,6 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
                     val code = CodeBlock.builder()
                     code.addStatement("this.%N()", funcName)
-                    val countMemberName = MemberName(CaelumCodegenHelper.basePkgName, "count")
 
                     countTag.v.forEachIndexed { i, it ->
                         val pType = it.type
@@ -276,13 +275,11 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                             elementTypeName = CaelumCodegenHelper.pointerCName
                         }
                         if (i == 0) {
-                            code.addStatement("val count = %N.%M(%T)", it.name, countMemberName, elementTypeName)
+                            code.addStatement("val count = %N.count", it.name)
                         } else {
                             code.addStatement(
-                                "assert(count == %N.%M(%T)) { %S }",
+                                "assert(count == %N.count) { %S }",
                                 it.name,
-                                countMemberName,
-                                elementTypeName,
                                 "${it.name} has a different count"
                             )
                         }

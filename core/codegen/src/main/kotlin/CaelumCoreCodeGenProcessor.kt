@@ -374,7 +374,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .returns(nativeBaseType.nativeDataType)
                     .addStatement(
-                        "return arrayVarHandle.get(array.segment, 0L, index) as %T",
+                        "return arrayVarHandle.get(%M, array._address, index) as %T",
+                        CaelumCodegenHelper.omniSegment,
                         nativeBaseType.nativeDataType
                     )
                     .build()
@@ -386,7 +387,7 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("index", LONG)
                     .addParameter("value", nativeBaseType.nativeDataType)
                     .addStatement(
-                        "arrayVarHandle.set(array.segment, 0L, index, value)",
+                        "arrayVarHandle.set(%M, array._address, index, value)",
                         CaelumCodegenHelper.omniSegment
                     )
                     .build()
@@ -428,7 +429,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", CaelumCodegenHelper.valueCName.parameterizedBy(outImplNPrimitive))
                     .returns(nativeBaseType.nativeDataType)
                     .addStatement(
-                        "return valueVarHandle.get(value.segment, 0L) as %T",
+                        "return valueVarHandle.get(%M, value._address) as %T",
+                        CaelumCodegenHelper.omniSegment,
                         nativeBaseType.nativeDataType
                     )
                     .build()
@@ -439,7 +441,8 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addParameter("value", CaelumCodegenHelper.valueCName.parameterizedBy(outImplNPrimitive))
                     .addParameter("newValue", nativeBaseType.nativeDataType)
                     .addStatement(
-                        "valueVarHandle.set(value.segment, 0L, newValue)"
+                        "valueVarHandle.set(%M, value._address, newValue)",
+                        CaelumCodegenHelper.omniSegment
                     )
                     .build()
             )

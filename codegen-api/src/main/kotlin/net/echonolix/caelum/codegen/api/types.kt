@@ -5,16 +5,17 @@ import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 
 public enum class NativeDataType(
     public val nativeDataType: ClassName,
+    public val nativeDataArrayType: ClassName,
     public val valueLayoutName: String,
 ) {
-    Byte(BYTE, "JAVA_BYTE"),
-    Short(SHORT, "JAVA_SHORT"),
-    Int(INT, "JAVA_INT"),
-    Long(LONG, "JAVA_LONG"),
-    Float(FLOAT, "JAVA_FLOAT"),
-    Double(DOUBLE, "JAVA_DOUBLE"),
-    Char(CHAR, "JAVA_CHAR"),
-    Boolean(BOOLEAN, "JAVA_BOOLEAN");
+    Byte(BYTE, BYTE_ARRAY, "JAVA_BYTE"),
+    Short(SHORT, SHORT_ARRAY, "JAVA_SHORT"),
+    Int(INT, INT_ARRAY, "JAVA_INT"),
+    Long(LONG, LONG_ARRAY, "JAVA_LONG"),
+    Float(FLOAT, FLOAT_ARRAY, "JAVA_FLOAT"),
+    Double(DOUBLE, DOUBLE_ARRAY, "JAVA_DOUBLE"),
+    Char(CHAR, CHAR_ARRAY, "JAVA_CHAR"),
+    Boolean(BOOLEAN, BOOLEAN_ARRAY, "JAVA_BOOLEAN");
 
     public val nNativeDataCName: ClassName = ClassName(CaelumCodegenHelper.basePkgName, "N${name}NativeData")
     public val nNativeDataCNameImplCName: ClassName = nNativeDataCName.nestedClass("Impl")

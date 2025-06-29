@@ -2,40 +2,39 @@
 
 package net.echonolix.caelum
 
-import java.lang.foreign.SegmentAllocator
+import net.echonolix.caelum.APIHelper.`_$OMNI_SEGMENT$_`
+import java.lang.foreign.MemorySegment
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 public typealias NSize = NInt64
 public typealias NInt = NInt32
 
-public fun String.c_str(allocator: SegmentAllocator): NPointer<NChar> =
-    NArray<NChar>(allocator.allocateFrom(this)).ptr()
+context(allocator: AllocateScope)
+public fun String.c_str(): NPointer<NChar> {
+    val segment = allocator._allocateCString(this)
+    return NPointer(segment.address())
+}
 
-context(allocator: MemoryStack)
-public fun String.c_str(): NPointer<NChar> = c_str(allocator)
-
-public fun Collection<String>.c_strs(allocator: SegmentAllocator): NArray<NPointer<NChar>> {
+context(allocator: AllocateScope)
+public fun Collection<String>.c_strs(): NArray<NPointer<NChar>> {
     val arr = NPointer.malloc<NChar>(allocator, this.size.toLong())
     this.forEachIndexed { index, str ->
-        arr[index] = str.c_str(allocator)
+        arr[index] = str.c_str()
     }
     return arr
 }
 
-context(allocator: MemoryStack)
-public fun Collection<String>.c_strs(): NArray<NPointer<NChar>> = c_strs(allocator)
-
 public var NArray<NChar>.string: String
-    get() = segment.getString(0L)
+    get() = MemorySegment.ofAddress(this._address).reinterpret(this.count).getString(0L)
     set(value) {
-        segment.setString(0L, value)
+        `_$OMNI_SEGMENT$_`.setString(this._address, value)
     }
 
 public var NPointer<NChar>.string: String
-    get() = APIHelper.`_$OMNI_SEGMENT$_`.getString(_address)
+    get() = `_$OMNI_SEGMENT$_`.getString(_address)
     set(value) {
-        APIHelper.`_$OMNI_SEGMENT$_`.setString(_address, value)
+        `_$OMNI_SEGMENT$_`.setString(_address, value)
     }
 
 /**

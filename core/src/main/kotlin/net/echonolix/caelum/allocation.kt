@@ -1,35 +1,91 @@
 package net.echonolix.caelum
 
 import java.lang.foreign.MemoryLayout
+import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
 
-public fun <T : NType> NType.Descriptor<T>.malloc(allocator: SegmentAllocator): NValue<T> =
-    NValue(allocator.allocate(layout))
+@Suppress("FunctionName")
+public interface AllocateScope {
+    public fun _malloc(layout: MemoryLayout): Long
+    public fun _calloc(layout: MemoryLayout): Long
+    public fun _malloc(layout: MemoryLayout, count: Long): Long
+    public fun _calloc(layout: MemoryLayout, count: Long): Long
+    public fun _allocateCString(value: String): MemorySegment
+}
 
-context(allocator: MemoryStack)
+public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>): NValue<T> =
+    NValue(_malloc(descriptor.layout))
+
+public fun <T : NType> AllocateScope.calloc(descriptor: NType.Descriptor<T>): NValue<T> =
+    NValue(_calloc(descriptor.layout))
+
+public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>, count: Long): NArray<T> =
+    NArray(_malloc(descriptor.layout, count), count)
+
+public fun <T : NType> AllocateScope.calloc(descriptor: NType.Descriptor<T>, count: Long): NArray<T> =
+    NArray(_calloc(descriptor.layout, count), count)
+
+public abstract class WrappedAllocateScope : AllocateScope {
+    protected abstract val segmentAllocator: SegmentAllocator
+
+    override fun _malloc(layout: MemoryLayout): Long =
+        segmentAllocator.allocate(layout).address()
+
+    override fun _calloc(layout: MemoryLayout): Long =
+        segmentAllocator.allocate(layout).fill(0).address()
+
+    override fun _malloc(layout: MemoryLayout, count: Long): Long =
+        segmentAllocator.allocate(layout, count).address()
+
+    override fun _calloc(layout: MemoryLayout, count: Long): Long =
+        segmentAllocator.allocate(layout, count).fill(0).address()
+
+    override fun _allocateCString(value: String): MemorySegment =
+        segmentAllocator.allocateFrom(value)
+
+    public class Impl(
+        override val segmentAllocator: SegmentAllocator
+    ) : WrappedAllocateScope()
+}
+
+public fun SegmentAllocator.asAllocateScope(): AllocateScope =
+    WrappedAllocateScope.Impl(this)
+
+@JvmName("malloc114")
+public fun <T : NType> NType.Descriptor<T>.malloc(allocator: AllocateScope): NValue<T> =
+    allocator.malloc(this)
+
+@JvmName("malloc514")
+context(allocator: AllocateScope)
 public fun <T : NType> NType.Descriptor<T>.malloc(): NValue<T> =
-    NValue(allocator.allocate(layout))
+    allocator.malloc(this)
 
-public fun <T : NType> NType.Descriptor<T>.calloc(allocator: SegmentAllocator): NValue<T> =
-    NValue(allocator.allocate(layout).apply { fill(0) })
+@JvmName("malloc1919")
+public fun <T : NType> NType.Descriptor<T>.malloc(allocator: AllocateScope, count: Long): NArray<T> =
+    allocator.malloc(this, count)
 
-context(allocator: MemoryStack)
-public fun <T : NType> NType.Descriptor<T>.calloc(): NValue<T> =
-    NValue(allocator.allocate(layout).apply { fill(0) })
-
-public fun <T : NType> NType.Descriptor<T>.malloc(allocator: SegmentAllocator, count: Long): NArray<T> =
-    NArray(allocator.allocate(layout, count))
-
-context(allocator: MemoryStack)
+@JvmName("malloc810")
+context(allocator: AllocateScope)
 public fun <T : NType> NType.Descriptor<T>.malloc(count: Long): NArray<T> =
-    NArray(allocator.allocate(layout, count))
+    allocator.malloc(this, count)
 
-public fun <T : NType> NType.Descriptor<T>.calloc(allocator: SegmentAllocator, count: Long): NArray<T> =
-    NArray(allocator.allocate(layout, count).apply { fill(0) })
+@JvmName("calloc114")
+public fun <T : NType> NType.Descriptor<T>.calloc(allocator: AllocateScope): NValue<T> =
+    allocator.calloc(this)
 
-context(allocator: MemoryStack)
+@JvmName("calloc514")
+context(allocator: AllocateScope)
+public fun <T : NType> NType.Descriptor<T>.calloc(): NValue<T> =
+    allocator.calloc(this)
+
+@JvmName("calloc1919")
+public fun <T : NType> NType.Descriptor<T>.calloc(allocator: AllocateScope, count: Long): NArray<T> =
+    allocator.calloc(this, count)
+
+@JvmName("calloc810")
+context(allocator: AllocateScope)
 public fun <T : NType> NType.Descriptor<T>.calloc(count: Long): NArray<T> =
-    NArray(allocator.allocate(layout, count).apply { fill(0) })
+    allocator.calloc(this, count)
 
 public interface CustomAllocateOnly<T : NType> {
     @Deprecated(
@@ -37,7 +93,7 @@ public interface CustomAllocateOnly<T : NType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun malloc(allocator: SegmentAllocator, count: Long): NArray<T> =
+    public fun malloc(allocator: AllocateScope, count: Long): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -45,7 +101,7 @@ public interface CustomAllocateOnly<T : NType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator, count: Long): NArray<T> =
+    public fun calloc(allocator: AllocateScope, count: Long): NArray<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -68,7 +124,7 @@ public interface CustomAllocateOnly<T : NType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun malloc(allocator: SegmentAllocator): NValue<T> =
+    public fun malloc(allocator: AllocateScope): NValue<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -76,7 +132,7 @@ public interface CustomAllocateOnly<T : NType> {
         ReplaceWith("allocate(allocator, count)"),
         DeprecationLevel.ERROR
     )
-    public fun calloc(allocator: SegmentAllocator): NValue<T> =
+    public fun calloc(allocator: AllocateScope): NValue<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
     @Deprecated(
@@ -95,15 +151,15 @@ public interface CustomAllocateOnly<T : NType> {
     public fun calloc(): NValue<T> =
         throw UnsupportedOperationException("DON'T USE THIS")
 
-    public fun allocate(allocator: SegmentAllocator, count: Long): NArray<T>
+    public fun allocate(allocator: AllocateScope): NValue<T>
 
-    public fun allocate(allocator: SegmentAllocator): NValue<T>
+    public fun allocate(allocator: AllocateScope, count: Long): NArray<T>
 }
 
-context(allocator: MemoryStack)
-public fun <T : NType> CustomAllocateOnly<T>.allocate(count: Long): NArray<T> =
-    allocate(allocator, count)
-
-context(allocator: MemoryStack)
+context(allocator: AllocateScope)
 public fun <T : NType> CustomAllocateOnly<T>.allocate(): NValue<T> =
     allocate(allocator)
+
+context(allocator: AllocateScope)
+public fun <T : NType> CustomAllocateOnly<T>.allocate(count: Long): NArray<T> =
+    allocate(allocator, count)
