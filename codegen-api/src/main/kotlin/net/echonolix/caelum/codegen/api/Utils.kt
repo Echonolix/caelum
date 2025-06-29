@@ -3,7 +3,7 @@
 package net.echonolix.caelum.codegen.api
 
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 
 public fun FileSpec.Builder.addSuppress(): FileSpec.Builder = apply {
     addAnnotation(
@@ -82,4 +82,36 @@ public fun <T : Annotatable.Builder<*>> T.addOptIns(vararg optIns: TypeName): T 
             }
             .build()
     )
+}
+
+public fun CType.Function.funcName(): String {
+    return tags.getOrNull<OriginalNameTag>()?.name ?: name
+}
+
+public fun CType.Function.funcDescPropertyName(): String {
+    return "_${funcName()}_fd"
+}
+
+public fun CType.Function.funcMethodHandlePropertyName(): String {
+    return "_${funcName()}_mh"
+}
+
+context(ctx: CodegenContext)
+public fun List<CType.Function.Parameter>.toParameterCode(dst: MutableList<CodeBlock>): MutableList<CodeBlock> {
+    return this.mapTo(dst) {
+        CodeBlock.of("%T.toNativeData(%N)", it.type.typeDescriptorTypeName()!!, it.name)
+    }
+}
+
+context(ctx: CodegenContext)
+public fun fromNativeDataCodeBlock(type: CType): CodeBlock {
+    return if (type is CType.Pointer && type.elementType.typeDescriptorTypeName() == null) {
+        CodeBlock.of(
+            "%T.fromNativeData<%T>(",
+            type.typeDescriptorTypeName()!!,
+            CBasicType.char.caelumCoreTypeName
+        )
+    } else {
+        CodeBlock.of("%T.fromNativeData(", type.typeDescriptorTypeName()!!)
+    }
 }

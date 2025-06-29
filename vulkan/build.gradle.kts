@@ -54,22 +54,12 @@ val groups by sourceSets.creating {
     setup(groupsBase)
 }
 
-val functionsBase = (0..7).map {
-    sourceSets.create("functions$it") {
-        setup(groups)
-    }
-}
-
-val functions by sourceSets.creating {
-    setup(functionsBase)
-}
-
 val objectBase by sourceSets.creating {
-    setup(functions)
+    setup(groups)
 }
 
 val allGenSourceSets = listOf(baseSrc) + enumsBase + enums +
-    groupsBase + groups + functionsBase + functions + objectHandles +
+    groupsBase + groups + objectHandles +
     objectBase
 
 allGenSourceSets.forEach {

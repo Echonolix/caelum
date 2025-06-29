@@ -2,6 +2,7 @@ package net.echonolix.caelum.codegen.api
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
+import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
@@ -72,6 +73,8 @@ public object CaelumCodegenHelper {
     public val pointerLayoutMember: MemberName = helperCName.member("POINTER_LAYOUT")
     public val symbolLookup: MemberName = helperCName.member("SYMBOL_LOOKUP")
     public val findSymbolMemberName: MemberName = helperCName.member("findSymbol")
+    public val functionDescriptorOfMemberName: MemberName = helperCName.member("functionDescriptorOf")
+    public val downcallHandleOfMemberName: MemberName = helperCName.member("downcallHandleOf")
 
     public val memoryLayoutCName: ClassName = MemoryLayout::class.asClassName()
     public val structLayoutMember: MemberName = memoryLayoutCName.member("structLayout")
@@ -89,6 +92,7 @@ public object CaelumCodegenHelper {
 
     public val methodHandleCName: ClassName = MethodHandle::class.asClassName()
     public val methodHandlesCName: ClassName = MethodHandles::class.asClassName()
+    public val functionDescriptorCName: ClassName = FunctionDescriptor::class.asClassName()
 
     public val methodTypeCName: ClassName = ClassName("java.lang.invoke", "MethodType")
 
@@ -105,4 +109,5 @@ public object CaelumCodegenHelper {
 
     public val unsafeAPICName: ClassName = ClassName(basePkgName, "UnsafeAPI")
     public val unsafeAPIAnnotation: AnnotationSpec = AnnotationSpec.builder(unsafeAPICName).build()
+
 }

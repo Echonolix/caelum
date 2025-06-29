@@ -4,8 +4,9 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.funcName
 
-public open class FunctionGenerator(
+public open class FuncPtrGenerator(
     ctx: CodegenContext,
     element: CType.Function
 ) : Generator<CType.Function>(ctx, element) {
@@ -32,38 +33,33 @@ public open class FunctionGenerator(
     }
 
     context(ctx: CodegenContext)
-    protected open fun nativeName(): String {
-        return element.tags.getOrNull<OriginalNameTag>()?.name ?: element.name
-    }
-
-    context(ctx: CodegenContext)
     protected open fun buildFunInterfaceType(): TypeSpec.Builder {
-        val funInterfaceType = TypeSpec.Companion.funInterfaceBuilder(thisCName)
+        val funInterfaceType = TypeSpec.funInterfaceBuilder(thisCName)
         funInterfaceType.addSuperinterface(functionBaseCName())
         funInterfaceType.addProperty(
-            PropertySpec.Companion.builder(
+            PropertySpec.builder(
                 "typeDescriptor",
                 functionTypeDescriptorBaseCName().parameterizedBy(thisCName)
             )
                 .addModifiers(KModifier.OVERRIDE)
                 .getter(
-                    FunSpec.Companion.getterBuilder()
+                    FunSpec.getterBuilder()
                         .addCode("return TypeDescriptor")
                         .build()
                 )
                 .build()
         )
 
-        val invokeFunc = FunSpec.Companion.builder("invoke")
+        val invokeFunc = FunSpec.builder("invoke")
         invokeFunc.addModifiers(KModifier.OPERATOR, KModifier.ABSTRACT)
         invokeFunc.returns(returnType.ktApiType())
         invokeFunc.addParameters(element.parameters.toParamSpecs(true) { toKtType(it) })
         funInterfaceType.addFunction(invokeFunc.build())
 
-        val invokeNativeFunc = FunSpec.Companion.builder("invokeNative")
+        val invokeNativeFunc = FunSpec.builder("invokeNative")
         invokeNativeFunc.returns(returnType.nativeType())
         invokeNativeFunc.addParameters(element.parameters.toParamSpecs(false) { toNativeType(it) })
-        val invokeNativeCode = CodeBlock.Companion.builder()
+        val invokeNativeCode = CodeBlock.builder()
         val rTypeDesc = returnType.typeDescriptorTypeName()
         invokeNativeCode.add("return ")
         if (rTypeDesc != null) {
@@ -73,7 +69,7 @@ public open class FunctionGenerator(
         invokeNativeCode.add("invoke(\n")
         invokeNativeCode.indent()
         invokeNativeCode.add(element.parameters.map {
-            CodeBlock.Companion.builder()
+            CodeBlock.builder()
                 .add(fromNativeDataCodeBlock(it.type))
                 .add("%N)", it.name)
                 .build()
@@ -92,25 +88,25 @@ public open class FunctionGenerator(
 
     context(ctx: CodegenContext)
     protected open fun buildTypeDescriptorCompanionType(): TypeSpec.Builder {
-        val companionType = TypeSpec.Companion.companionObjectBuilder("TypeDescriptor")
+        val companionType = TypeSpec.companionObjectBuilder("TypeDescriptor")
         companionType.superclass(functionTypeDescriptorBaseCName().parameterizedBy(thisCName))
-        val nullCodeBlock = CodeBlock.Companion.of("null")
+        val nullCodeBlock = CodeBlock.of("null")
         fun typeDescriptorCodeBlock(type: CType): CodeBlock {
             return type.typeDescriptorTypeName()?.let {
-                CodeBlock.Companion.of("%T", it)
+                CodeBlock.of("%T", it)
             } ?: nullCodeBlock
         }
 
         val superParameters = mutableListOf(
-            CodeBlock.Companion.of("%S", nativeName()),
-            CodeBlock.Companion.of("%T::class.java", thisCName),
+            CodeBlock.of("%S", element.funcName()),
+            CodeBlock.of("%T::class.java", thisCName),
             typeDescriptorCodeBlock(returnType)
         )
         element.parameters.mapTo(superParameters) {
             typeDescriptorCodeBlock(it.type)
         }
         companionType.addSuperclassConstructorParameter(
-            CodeBlock.Companion.builder()
+            CodeBlock.builder()
                 .add("\n")
                 .indent()
                 .add(superParameters.joinToCode(",\n"))
@@ -119,7 +115,7 @@ public open class FunctionGenerator(
                 .build()
         )
         companionType.addFunction(
-            FunSpec.Companion.builder("fromNativeData")
+            FunSpec.builder("fromNativeData")
                 .addModifiers(KModifier.OVERRIDE)
                 .addParameter(
                     "value",
@@ -136,22 +132,22 @@ public open class FunctionGenerator(
     protected open fun buildImplType(): TypeSpec.Builder {
         val rTypeDesc = returnType.typeDescriptorTypeName()
 
-        val implType = TypeSpec.Companion.classBuilder("Impl")
+        val implType = TypeSpec.classBuilder("Impl")
         implType.addModifiers(KModifier.PRIVATE)
         implType.addSuperinterface(thisCName)
         implType.superclass(CaelumCodegenHelper.NFunction.implCName)
         implType.addSuperclassConstructorParameter("funcHandle")
         implType.primaryConstructor(
-            FunSpec.Companion.constructorBuilder()
+            FunSpec.constructorBuilder()
                 .addParameter("funcHandle", CaelumCodegenHelper.methodHandleCName)
                 .build()
         )
 
-        val implInvokeFunc = FunSpec.Companion.builder("invoke")
+        val implInvokeFunc = FunSpec.builder("invoke")
         implInvokeFunc.addModifiers(KModifier.OVERRIDE)
         implInvokeFunc.returns(returnType.ktApiType())
         implInvokeFunc.addParameters(element.parameters.toParamSpecs(false) { toKtType(it) })
-        val implInvokeCode = CodeBlock.Companion.builder()
+        val implInvokeCode = CodeBlock.builder()
         implInvokeCode.add("return ")
         if (rTypeDesc != null) {
             implInvokeCode.add(fromNativeDataCodeBlock(returnType))
@@ -161,7 +157,7 @@ public open class FunctionGenerator(
         implInvokeCode.add("invokeNative(\n")
         implInvokeCode.indent()
         implInvokeCode.add(element.parameters.map {
-            CodeBlock.Companion.of("%T.toNativeData(%N)", it.type.typeDescriptorTypeName()!!, it.name)
+            CodeBlock.of("%T.toNativeData(%N)", it.type.typeDescriptorTypeName()!!, it.name)
         }.joinToCode(",\n"))
         implInvokeCode.unindent()
         implInvokeCode.add("\n)")
@@ -173,15 +169,15 @@ public open class FunctionGenerator(
         implType.addFunction(implInvokeFunc.build())
 
 
-        val implInvokeNativeFunc = FunSpec.Companion.builder("invokeNative")
+        val implInvokeNativeFunc = FunSpec.builder("invokeNative")
         implInvokeNativeFunc.addModifiers(KModifier.OVERRIDE)
         implInvokeNativeFunc.returns(returnType.nativeType())
         implInvokeNativeFunc.addParameters(element.parameters.toParamSpecs(false) { toNativeType(it) })
-        val implInvokeNativeCode = CodeBlock.Companion.builder()
+        val implInvokeNativeCode = CodeBlock.builder()
         implInvokeNativeCode.add("return funcHandle.invokeExact(\n")
         implInvokeNativeCode.indent()
         implInvokeNativeCode.add(element.parameters.map {
-            CodeBlock.Companion.of("%N", it.name)
+            CodeBlock.of("%N", it.name)
         }.joinToCode(",\n"))
         implInvokeNativeCode.unindent()
         implInvokeNativeCode.add("\n) as %T", returnType.nativeType())
@@ -198,35 +194,9 @@ public open class FunctionGenerator(
             val implType = buildImplType()
             typeDescriptorCompanionType.addType(implType.build())
             funInterfaceType.addType(typeDescriptorCompanionType.build())
-            val file = FileSpec.Companion.builder(thisCName)
-            if (element.tags.has<GlobalFunctionTag>()) {
-                file.addProperty(
-                    PropertySpec.builder(nativeName(), thisCName)
-                        .addModifiers(KModifier.PUBLIC)
-                        .initializer(
-                            "%T.fromNativeData(%T.findSymbol(%S))",
-                            thisCName,
-                            CaelumCodegenHelper.helperCName,
-                            nativeName()
-                        )
-                        .build()
-                )
-            }
+            val file = FileSpec.builder(thisCName)
             file.addType(funInterfaceType.build())
             return file
-        }
-    }
-
-    context(ctx: CodegenContext)
-    private fun fromNativeDataCodeBlock(type: CType): CodeBlock {
-        return if (type is CType.Pointer && type.elementType.typeDescriptorTypeName() == null) {
-            CodeBlock.Companion.of(
-                "%T.fromNativeData<%T>(",
-                type.typeDescriptorTypeName()!!,
-                CBasicType.char.caelumCoreTypeName
-            )
-        } else {
-            CodeBlock.Companion.of("%T.fromNativeData(", type.typeDescriptorTypeName()!!)
         }
     }
 }

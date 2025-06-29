@@ -6,8 +6,10 @@ import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
 import net.echonolix.caelum.codegen.api.OriginalNameTag
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
+import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.codegen.api.decap
 import net.echonolix.caelum.codegen.api.task.CodegenTask
+import net.echonolix.caelum.codegen.api.toParameterCode
 import net.echonolix.caelum.vulkan.*
 import kotlin.io.path.Path
 
@@ -26,7 +28,8 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
         private val handleType: CType.Handle,
         private val functions: List<CType.Function>
     ) : CodegenTask<Unit>(ctx) {
-        private val vkResultCName = with(ctx) { (ctx.resolveElement("VkResult") as CType.Enum).className() }
+        private val vkResultElement = ctx.resolveTypedElement<CType.Enum>("VkResult")
+        private val vkResultCName = with(ctx) { vkResultElement.className() }
         private val resultCName = Result::class.asClassName()
 
         override fun CodegenContext.compute() {
@@ -86,13 +89,22 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                     lastParamElementType.typeName(),
                     CaelumCodegenHelper.mallocMember
                 )
-                funcCode.add("when (val result69420 = $dispatcher.$origName(")
+                funcCode.add(
+                    "when (val result69420 = %T.fromNativeData($dispatcher.$origName.invokeExact(\n",
+                    vkResultCName
+                )
                 val thisAtFunc = CodeBlock.of("this@%N", funcName)
-                val callParams = mutableListOf(thisAtFunc)
-                params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
-                callParams.add(CodeBlock.of("handle114514.ptr()"))
-                funcCode.add(callParams.joinToCode())
-                funcCode.beginControlFlow("))")
+                val callParams = mutableListOf(
+                    CodeBlock.of("%T.toNativeData(this@%N)", handleType.objectBaseCName(), funcName)
+                )
+                params1.toParameterCode(callParams)
+                callParams.add(
+                    CodeBlock.of("%T.toNativeData(handle114514.ptr())", CaelumCodegenHelper.pointerCName)
+                )
+                funcCode.indent()
+                funcCode.add(callParams.joinToCode(",\n"))
+                funcCode.unindent()
+                funcCode.beginControlFlow("\n) as %T))", vkResultElement.nativeType())
                 funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
                     CodeBlock.of(
                         "%T.%N",
@@ -133,11 +145,13 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 func1.returns(returnType1)
                 func1.addParameters(params1.toKtParamOverloadSpecs(true))
                 val funcCode = CodeBlock.builder()
-                funcCode.add("return when (val result69420 = $dispatcher.$origName(")
-                val callParams = mutableListOf(CodeBlock.of("this"))
-                params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
-                funcCode.add(callParams.joinToCode())
-                funcCode.beginControlFlow("))")
+                funcCode.add("return when (val result69420 = %T.fromNativeData($dispatcher.$origName.invokeExact(\n", vkResultCName)
+                val callParams = mutableListOf(CodeBlock.of("%T.toNativeData(this)", handleType.objectBaseCName()))
+                params1.toParameterCode(callParams)
+                funcCode.indent()
+                funcCode.add(callParams.joinToCode(",\n"))
+                funcCode.unindent()
+                funcCode.beginControlFlow("\n) as %T))", vkResultElement.nativeType())
                 funcCode.add(resultCodeTag.successCodes.joinToCode(",\n") {
                     CodeBlock.of(
                         "%T.%N",
@@ -166,11 +180,22 @@ class GenerateFunctionOverloadTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx)
                 func1.returns(returnType1)
                 func1.addParameters(params1.toKtParamOverloadSpecs(true))
                 val funcCode = CodeBlock.builder()
-                funcCode.add("return $dispatcher.$origName(")
-                val callParams = mutableListOf(CodeBlock.of("this"))
-                params1.mapTo(callParams) { CodeBlock.of("%N", it.name) }
-                funcCode.add(callParams.joinToCode())
-                funcCode.add(")")
+                val typeDescriptorTypeName = funcType.returnType.typeDescriptorTypeName()
+                 if (typeDescriptorTypeName != null) {
+                     funcCode.add("return %T.fromNativeData($dispatcher.$origName.invokeExact(\n", typeDescriptorTypeName)
+                 } else {
+                     funcCode.add("return $dispatcher.$origName.invokeExact(\n")
+                 }
+
+                val callParams = mutableListOf(CodeBlock.of("%T.toNativeData(this)", handleType.objectBaseCName()))
+                params1.toParameterCode(callParams)
+                funcCode.indent()
+                funcCode.add(callParams.joinToCode(",\n"))
+                funcCode.unindent()
+                funcCode.add("\n) as %T", funcType.returnType.nativeType())
+                if (typeDescriptorTypeName != null) {
+                    funcCode.add(")")
+                }
                 func1.addCode(funcCode.build())
             }
 

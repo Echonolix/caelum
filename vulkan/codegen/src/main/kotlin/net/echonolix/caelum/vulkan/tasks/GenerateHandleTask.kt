@@ -144,6 +144,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         functions: List<CType.Function>,
         handleType: CType.Handle
     ) {
+        val objectBasePath = Path("objectBase")
         val thisObjectHandleCName = handleType.className()
         val thisCName = handleType.objectBaseCName()
         val vkHandleTag = handleType.tags.getOrNull<VkHandleTag>() ?: error("$handleType is missing VkHandleTag")
@@ -204,7 +205,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         }
 
         ContainerType[handleType.name]?.let { containerType ->
-            val functionContainerCname = thisCName.nestedClass("FuncContainer")
+            val functionContainerCname = ClassName(VulkanCodegen.handlePackageName, "${handleType.name}FuncContainer")
             val funcContainerType = TypeSpec.classBuilder(functionContainerCname)
 
             val constructor = FunSpec.constructorBuilder()
@@ -238,23 +239,30 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
             funcContainerType.addProperties(filteredFunctions.parallelStream().map {
                 val funcName = it.funcName()
-                val property = PropertySpec.builder(funcName, it.className())
+                val property = PropertySpec.builder(funcName, CaelumCodegenHelper.methodHandleCName)
+                val fdMName = MemberName("${basePackageName}.functions", it.funcDescPropertyName())
                 when (funcName) {
                     "vkGetInstanceProcAddr" -> {
                         property.initializer("%T.$funcName", VulkanCodegen.vkCName)
                     }
                     "vkGetDeviceProcAddr" -> {
                         property.initializer(
-                            "instance.%M(%T)",
+                            "instance.%M(%S, %M)",
                             ContainerType.Instance.getFuncMemberName,
-                            it.className()
+                            it.funcName(),
+                            fdMName
                         )
                     }
                     else -> {
                         property.delegate(
                             CodeBlock.builder()
                                 .beginControlFlow("lazy")
-                                .addStatement("this.%M(%T)", containerType.getFuncMemberName, it.className())
+                                .addStatement(
+                                    "this.%M(%S, %M)",
+                                    containerType.getFuncMemberName,
+                                    it.funcName(),
+                                    fdMName
+                                )
                                 .endControlFlow()
                                 .build()
                         )
@@ -264,7 +272,10 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 property.build()
             }.toList())
 
-            interfaceType.addType(funcContainerType.build())
+            val funcContainerFile = FileSpec.builder(functionContainerCname)
+            funcContainerFile.addType(funcContainerType.build())
+            writeOutput(objectBasePath, funcContainerFile)
+
             interfaceType.addProperty("funcContainer", functionContainerCname)
 
             val initializerCode = if (parent == null) {
@@ -330,6 +341,6 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         file.addType(interfaceType.build())
         file.addType(containerType.build())
 
-        ctx.writeOutput(Path("objectBase"), file)
+        ctx.writeOutput(objectBasePath, file)
     }
 }
