@@ -1,5 +1,7 @@
 package net.echonolix.caelum
 
+import net.echonolix.caelum.APIHelper.`_$OMNI_SEGMENT$_`
+import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
 
 public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>): NValue<T> =
@@ -129,3 +131,55 @@ public fun <T : NType> CustomAllocateOnly<T>.allocate(): NValue<T> =
 context(allocator: AllocateScope)
 public fun <T : NType> CustomAllocateOnly<T>.allocate(count: Long): NArray<T> =
     allocate(allocator, count)
+
+@OptIn(UnsafeAPI::class)
+public fun <T: NGroup> T.copyOf(allocator: AllocateScope, value: NValue<T>): NValue<T> {
+    val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
+    MemorySegment.copy(
+        `_$OMNI_SEGMENT$_`,
+        value._address,
+        `_$OMNI_SEGMENT$_`,
+        newValue._address,
+        typeDescriptor.layout.byteSize()
+    )
+    return newValue
+}
+
+@OptIn(UnsafeAPI::class)
+public fun <T: NGroup> T.copyOf(allocator: AllocateScope, array: NArray<T>): NValue<T> {
+    val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
+    MemorySegment.copy(
+        `_$OMNI_SEGMENT$_`,
+        array._address,
+        `_$OMNI_SEGMENT$_`,
+        newValue._address,
+        array.count * typeDescriptor.layout.byteSize()
+    )
+    return newValue
+}
+
+@OptIn(UnsafeAPI::class)
+public fun <T: NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>): NValue<T> {
+    val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
+    MemorySegment.copy(
+        `_$OMNI_SEGMENT$_`,
+        ptr._address,
+        `_$OMNI_SEGMENT$_`,
+        newValue._address,
+        typeDescriptor.layout.byteSize()
+    )
+    return newValue
+}
+
+@OptIn(UnsafeAPI::class)
+public fun <T: NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>, count: Long): NValue<T> {
+    val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
+    MemorySegment.copy(
+        `_$OMNI_SEGMENT$_`,
+        ptr._address,
+        `_$OMNI_SEGMENT$_`,
+        newValue._address,
+        count * typeDescriptor.layout.byteSize()
+    )
+    return newValue
+}
