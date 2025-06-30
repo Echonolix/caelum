@@ -10,254 +10,24 @@ import java.util.*
 
 class CaelumCoreCodeGenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
-        val coreNativeDataTypeFile = FileSpec.builder(CaelumCodegenHelper.basePkgName, "CoreNativeDataTypes")
-            .indent("    ")
-            .addSuppress()
-
-        buildNativeData(coreNativeDataTypeFile)
-
-        val coreNativeTypesFile = FileSpec.builder(CaelumCodegenHelper.basePkgName, "CoreNativeTypes")
-            .indent("    ")
-            .addSuppress()
-
-        val coreNativeTypeAccessorsFile = FileSpec.builder(CaelumCodegenHelper.basePkgName, "CoreNativeTypeAccessors")
-            .indent("    ")
-            .addSuppress()
-
-        CoreNativeTypes.entries.forEach { basicType ->
-            val thisCName = basicType.cName
-            val typeObject = TypeSpec.objectBuilder(basicType.cName)
-            val outNPrimitiveType = WildcardTypeName.producerOf(thisCName)
-
-            typeObject.addSuperinterface(
-                CaelumCodegenHelper.NPrimitive.typeObjectCName.parameterizedBy(
-                    thisCName,
-                    basicType.nativeDataType.nativeDataType,
-                    basicType.ktApiType.cName,
-                )
-            )
-            typeObject.addSuperinterface(
-                basicType.nativeDataType.nNativeDataCName.parameterizedBy(thisCName, basicType.ktApiType.cName),
-                CodeBlock.of("%T.implOf()", basicType.nativeDataType.nNativeDataCName)
-            )
-            typeObject.addFunction(
-                FunSpec.builder("fromNativeData")
-                    .addModifiers(KModifier.OVERRIDE)
-                    .addParameter("value", basicType.nativeDataType.nativeDataType)
-                    .returns(basicType.ktApiType.cName)
-                    .addStatement("return value${basicType.fromNativeData}")
-                    .build()
-            )
-            typeObject.addFunction(
-                FunSpec.builder("toNativeData")
-                    .addModifiers(KModifier.OVERRIDE)
-                    .addParameter("value", basicType.ktApiType.cName)
-                    .returns(basicType.nativeDataType.nativeDataType)
-                    .addStatement("return value${basicType.toNativeData}")
-                    .build()
-            )
-
-
-            coreNativeTypesFile.addType(typeObject.build())
-
-            val validChars = ('0'..'9').toList()
-            val random = Random(0)
-
-            fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
-                .addMember(
-                    "%S",
-                    "${thisCName.simpleName}_${base}_${
-                        (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
-                    }"
-                )
-                .build()
-
-            val overloadTypes = listOf(INT, UInt::class.asTypeName(), ULong::class.asTypeName())
-            val returnTypeName = basicType.ktApiType.cName
-
-            val arrayCNameP = CaelumCodegenHelper.arrayCName.parameterizedBy(outNPrimitiveType)
-            val valueCNameP = CaelumCodegenHelper.valueCName.parameterizedBy(outNPrimitiveType)
-            val pointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(outNPrimitiveType)
-            val nullableAny = Any::class.asClassName().copy(nullable = true)
-
-            coreNativeTypeAccessorsFile.addProperty(
-                PropertySpec.builder("value", returnTypeName)
-                    .receiver(pointerCNameP)
-                    .mutable(true)
-                    .getter(
-                        FunSpec.getterBuilder()
-                            .addAnnotation(randomName("getValue"))
-                            .addStatement(
-                                "return %T.fromNativeData(%T.pointerGetValue(this))",
-                                thisCName,
-                                thisCName
-                            )
-                            .build()
-                    )
-                    .setter(
-                        FunSpec.setterBuilder()
-                            .addAnnotation(randomName("setValue"))
-                            .addParameter("value", returnTypeName)
-                            .addStatement(
-                                "(%T.pointerSetValue(this, %T.toNativeData(value)))",
-                                thisCName,
-                                thisCName
-                            )
-                            .build()
-                    )
-                    .build()
-            )
-
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("index", LONG)
-                    .returns(returnTypeName)
-                    .addStatement(
-                        "return %T.fromNativeData(%T.pointerGetElement(this, index))",
-                        thisCName,
-                        thisCName
-                    )
-                    .build()
-            )
-
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("index", LONG)
-                    .addParameter("value", returnTypeName)
-                    .addStatement(
-                        "%T.pointerSetElement(this, index, %T.toNativeData(value))",
-                        thisCName,
-                        thisCName
-                    )
-                    .build()
-            )
-
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("getValue")
-                    .addAnnotation(randomName("getValue"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("thisRef", nullableAny)
-                    .addParameter("property", nullableAny)
-                    .returns(returnTypeName)
-                    .addStatement(
-                        "return this.value",
-                        thisCName,
-                        thisCName
-                    )
-                    .build()
-            )
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("setValue")
-                    .addAnnotation(randomName("setValue"))
-                    .receiver(pointerCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("thisRef", nullableAny)
-                    .addParameter("property", nullableAny)
-                    .addParameter("value", returnTypeName)
-                    .addStatement(
-                        "this.value = value",
-                        thisCName,
-                        thisCName
-                    )
-                    .build()
-            )
-
-            coreNativeTypeAccessorsFile.addProperty(
-                PropertySpec.builder("value", basicType.ktApiType.cName)
-                    .receiver(valueCNameP)
-                    .mutable(true)
-                    .getter(
-                        FunSpec.getterBuilder()
-                            .addAnnotation(randomName("getValue"))
-                            .addStatement(
-                                "return %T.fromNativeData(%T.valueGetValue(this))",
-                                thisCName,
-                                thisCName
-                            )
-                            .build()
-                    )
-                    .setter(
-                        FunSpec.setterBuilder()
-                            .addAnnotation(randomName("setValue"))
-                            .addParameter("value", returnTypeName)
-                            .addStatement(
-                                "%T.valueSetValue(this, %T.toNativeData(value))",
-                                thisCName,
-                                thisCName
-                            )
-                            .build()
-                    )
-                    .build()
-            )
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("getValue")
-                    .addAnnotation(randomName("getValue"))
-                    .receiver(valueCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("thisRef", nullableAny)
-                    .addParameter("property", nullableAny)
-                    .returns(returnTypeName)
-                    .addStatement("return this.value")
-                    .build()
-            )
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("setValue")
-                    .addAnnotation(randomName("setValue"))
-                    .receiver(valueCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("thisRef", nullableAny)
-                    .addParameter("property", nullableAny)
-                    .addParameter("value", returnTypeName)
-                    .addStatement("this.value = value")
-                    .build()
-            )
-
-
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("get")
-                    .addAnnotation(randomName("get"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("index", LONG)
-                    .returns(returnTypeName)
-                    .addStatement(
-                        "return %T.fromNativeData(%T.arrayGetElement(this, index))",
-                        thisCName,
-                        thisCName
-                    )
-                    .build()
-            )
-            coreNativeTypeAccessorsFile.addFunction(
-                FunSpec.builder("set")
-                    .addAnnotation(randomName("set"))
-                    .receiver(arrayCNameP)
-                    .addModifiers(KModifier.OPERATOR)
-                    .addParameter("index", LONG)
-                    .addParameter("value", returnTypeName)
-                    .addStatement(
-                        "%T.arraySetElement(this, index, %T.toNativeData(value))",
-                        thisCName,
-                        thisCName
-                    )
-                    .build()
-            )
-        }
+        fun FileSpec.Builder.buildAndWrite() = this.build().writeTo(outputDir)
 
         return setOf(
-            coreNativeDataTypeFile.build().writeTo(outputDir),
-            coreNativeTypesFile.build().writeTo(outputDir),
-            coreNativeTypeAccessorsFile.build().writeTo(outputDir)
+            buildNativeData().buildAndWrite(),
+            buildNativeTypes().buildAndWrite(),
+            buildNativeTypeAccessors().buildAndWrite(),
+            buildNativeDataPointerAccessorsFile().buildAndWrite(),
         )
     }
 
-    private fun buildNativeData(file: FileSpec.Builder) {
+    private fun makeFile(name: String): FileSpec.Builder {
+        return FileSpec.builder(CaelumCodegenHelper.basePkgName, name)
+            .indent("    ")
+            .addSuppress()
+    }
+
+    private fun buildNativeData(): FileSpec.Builder {
+        val file = makeFile("CoreNativeDataTypes")
         NativeDataType.entries.forEach { nativeBaseType ->
             val typeK = TypeVariableName("K", ANY)
             val typeT = TypeVariableName(
@@ -493,5 +263,380 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
             interfaceType.addType(implCompanionObject.build())
             file.addType(interfaceType.build()).build()
         }
+        return file
+    }
+
+    private fun buildNativeTypes(): FileSpec.Builder {
+        val file = makeFile("CoreNativeTypes")
+        CoreNativeTypes.entries.forEach { basicType ->
+            val thisCName = basicType.cName
+            val typeObject = TypeSpec.objectBuilder(basicType.cName)
+
+            typeObject.addSuperinterface(
+                CaelumCodegenHelper.NPrimitive.typeObjectCName.parameterizedBy(
+                    thisCName,
+                    basicType.nativeDataType.nativeDataType,
+                    basicType.ktApiType.cName,
+                )
+            )
+            typeObject.addSuperinterface(
+                basicType.nativeDataType.nNativeDataCName.parameterizedBy(thisCName, basicType.ktApiType.cName),
+                CodeBlock.of("%T.implOf()", basicType.nativeDataType.nNativeDataCName)
+            )
+            typeObject.addFunction(
+                FunSpec.builder("fromNativeData")
+                    .addModifiers(KModifier.OVERRIDE)
+                    .addParameter("value", basicType.nativeDataType.nativeDataType)
+                    .returns(basicType.ktApiType.cName)
+                    .addStatement("return value${basicType.fromNativeData}")
+                    .build()
+            )
+            typeObject.addFunction(
+                FunSpec.builder("toNativeData")
+                    .addModifiers(KModifier.OVERRIDE)
+                    .addParameter("value", basicType.ktApiType.cName)
+                    .returns(basicType.nativeDataType.nativeDataType)
+                    .addStatement("return value${basicType.toNativeData}")
+                    .build()
+            )
+
+            file.addType(typeObject.build())
+        }
+        return file
+    }
+
+    private fun buildNativeTypeAccessors(): FileSpec.Builder {
+        val file = makeFile("CoreNativeTypeAccessors")
+        CoreNativeTypes.entries.forEach { basicType ->
+            val thisCName = basicType.cName
+            val outNPrimitiveType = WildcardTypeName.producerOf(thisCName)
+
+            val validChars = ('0'..'9').toList()
+            val random = Random(0)
+
+            fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
+                .addMember(
+                    "%S",
+                    "${thisCName.simpleName}_${base}_${
+                        (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
+                    }"
+                )
+                .build()
+
+            val returnTypeName = basicType.ktApiType.cName
+
+            val arrayCNameP = CaelumCodegenHelper.arrayCName.parameterizedBy(outNPrimitiveType)
+            val valueCNameP = CaelumCodegenHelper.valueCName.parameterizedBy(outNPrimitiveType)
+            val pointerCNameP = CaelumCodegenHelper.pointerCName.parameterizedBy(outNPrimitiveType)
+            val nullableAny = Any::class.asClassName().copy(nullable = true)
+
+            file.addProperty(
+                PropertySpec.builder("value", returnTypeName)
+                    .receiver(pointerCNameP)
+                    .mutable(true)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addAnnotation(randomName("getValue"))
+                            .addStatement(
+                                "return %T.fromNativeData(%T.pointerGetValue(this))",
+                                thisCName,
+                                thisCName
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addAnnotation(randomName("setValue"))
+                            .addParameter("value", returnTypeName)
+                            .addStatement(
+                                "(%T.pointerSetValue(this, %T.toNativeData(value)))",
+                                thisCName,
+                                thisCName
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+
+            file.addFunction(
+                FunSpec.builder("get")
+                    .addAnnotation(randomName("get"))
+                    .receiver(pointerCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("index", LONG)
+                    .returns(returnTypeName)
+                    .addStatement(
+                        "return %T.fromNativeData(%T.pointerGetElement(this, index))",
+                        thisCName,
+                        thisCName
+                    )
+                    .build()
+            )
+
+            file.addFunction(
+                FunSpec.builder("set")
+                    .addAnnotation(randomName("set"))
+                    .receiver(pointerCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("index", LONG)
+                    .addParameter("value", returnTypeName)
+                    .addStatement(
+                        "%T.pointerSetElement(this, index, %T.toNativeData(value))",
+                        thisCName,
+                        thisCName
+                    )
+                    .build()
+            )
+
+            file.addFunction(
+                FunSpec.builder("getValue")
+                    .addAnnotation(randomName("getValue"))
+                    .receiver(pointerCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("thisRef", nullableAny)
+                    .addParameter("property", nullableAny)
+                    .returns(returnTypeName)
+                    .addStatement(
+                        "return this.value",
+                        thisCName,
+                        thisCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("setValue")
+                    .addAnnotation(randomName("setValue"))
+                    .receiver(pointerCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("thisRef", nullableAny)
+                    .addParameter("property", nullableAny)
+                    .addParameter("value", returnTypeName)
+                    .addStatement(
+                        "this.value = value",
+                        thisCName,
+                        thisCName
+                    )
+                    .build()
+            )
+
+            file.addProperty(
+                PropertySpec.builder("value", basicType.ktApiType.cName)
+                    .receiver(valueCNameP)
+                    .mutable(true)
+                    .getter(
+                        FunSpec.getterBuilder()
+                            .addAnnotation(randomName("getValue"))
+                            .addStatement(
+                                "return %T.fromNativeData(%T.valueGetValue(this))",
+                                thisCName,
+                                thisCName
+                            )
+                            .build()
+                    )
+                    .setter(
+                        FunSpec.setterBuilder()
+                            .addAnnotation(randomName("setValue"))
+                            .addParameter("value", returnTypeName)
+                            .addStatement(
+                                "%T.valueSetValue(this, %T.toNativeData(value))",
+                                thisCName,
+                                thisCName
+                            )
+                            .build()
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("getValue")
+                    .addAnnotation(randomName("getValue"))
+                    .receiver(valueCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("thisRef", nullableAny)
+                    .addParameter("property", nullableAny)
+                    .returns(returnTypeName)
+                    .addStatement("return this.value")
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("setValue")
+                    .addAnnotation(randomName("setValue"))
+                    .receiver(valueCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("thisRef", nullableAny)
+                    .addParameter("property", nullableAny)
+                    .addParameter("value", returnTypeName)
+                    .addStatement("this.value = value")
+                    .build()
+            )
+
+
+            file.addFunction(
+                FunSpec.builder("get")
+                    .addAnnotation(randomName("get"))
+                    .receiver(arrayCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("index", LONG)
+                    .returns(returnTypeName)
+                    .addStatement(
+                        "return %T.fromNativeData(%T.arrayGetElement(this, index))",
+                        thisCName,
+                        thisCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("set")
+                    .addAnnotation(randomName("set"))
+                    .receiver(arrayCNameP)
+                    .addModifiers(KModifier.OPERATOR)
+                    .addParameter("index", LONG)
+                    .addParameter("value", returnTypeName)
+                    .addStatement(
+                        "%T.arraySetElement(this, index, %T.toNativeData(value))",
+                        thisCName,
+                        thisCName
+                    )
+                    .build()
+            )
+        }
+        return file
+    }
+
+    private fun buildNativeDataPointerAccessorsFile(): FileSpec.Builder {
+        val file = makeFile("CoreNativeDataPointerAccessors")
+
+        val validChars = ('0'..'9').toList()
+        val random = Random(0)
+
+        fun randomName(base: String) = AnnotationSpec.builder(JvmName::class)
+            .addMember(
+                "%S",
+                "${base}_${
+                    (0..4).map { validChars[random.nextInt(validChars.size)] }.joinToString("")
+                }"
+            )
+            .build()
+
+        NativeDataType.entries.forEach { nativeDataType ->
+            val typeK = TypeVariableName("K", ANY)
+            val typeT = TypeVariableName(
+                "T",
+                CaelumCodegenHelper.NPrimitive.cName.parameterizedBy(nativeDataType.nativeDataType, typeK)
+            )
+            val pointerT = CaelumCodegenHelper.pointerCName.parameterizedBy(typeT)
+            file.addFunction(
+                FunSpec.builder("plus")
+                    .addAnnotation(randomName("plus"))
+                    .addTypeVariable(typeK)
+                    .addTypeVariable(typeT)
+                    .addModifiers(KModifier.OPERATOR, KModifier.PUBLIC)
+                    .receiver(pointerT)
+                    .addParameter("indexDelta", LONG)
+                    .returns(pointerT)
+                    .addStatement(
+                        "return %T(_address + indexDelta * %T.layout.byteSize())",
+                        CaelumCodegenHelper.pointerCName,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("minus")
+                    .addAnnotation(randomName("minus"))
+                    .addTypeVariable(typeK)
+                    .addTypeVariable(typeT)
+                    .addModifiers(KModifier.OPERATOR, KModifier.PUBLIC)
+                    .receiver(pointerT)
+                    .addParameter("indexDelta", LONG)
+                    .returns(pointerT)
+                    .addStatement(
+                        "return %T(_address - indexDelta * %T.layout.byteSize())",
+                        CaelumCodegenHelper.pointerCName,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("inc")
+                    .addAnnotation(randomName("inc"))
+                    .addTypeVariable(typeK)
+                    .addTypeVariable(typeT)
+                    .addModifiers(KModifier.OPERATOR, KModifier.PUBLIC)
+                    .receiver(pointerT)
+                    .returns(pointerT)
+                    .addStatement(
+                        "return %T(_address + %T.layout.byteSize())",
+                        CaelumCodegenHelper.pointerCName,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("dec")
+                    .addAnnotation(randomName("dec"))
+                    .addTypeVariable(typeK)
+                    .addTypeVariable(typeT)
+                    .addModifiers(KModifier.OPERATOR, KModifier.PUBLIC)
+                    .receiver(pointerT)
+                    .returns(pointerT)
+                    .addStatement(
+                        "return %T(_address - %T.layout.byteSize())",
+                        CaelumCodegenHelper.pointerCName,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+            val nPointerStar = CaelumCodegenHelper.pointerCName.parameterizedBy(
+                CaelumCodegenHelper.NPrimitive.cName.parameterizedBy(nativeDataType.nativeDataType, STAR)
+            )
+            file.addFunction(
+                FunSpec.builder("copyTo")
+                    .addAnnotation(randomName("copyTo"))
+                    .receiver(nPointerStar)
+                    .addParameter("dst", nPointerStar)
+                    .addParameter("count", LONG)
+                    .addStatement(
+                        "%T.copy(%M, %T.layout, _address, %M, %T.layout, dst._address, count)",
+                        CaelumCodegenHelper.memorySegmentCName,
+                        CaelumCodegenHelper.omniSegment,
+                        nativeDataType.nNativeDataCName,
+                        CaelumCodegenHelper.omniSegment,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("copyTo")
+                    .addAnnotation(randomName("copyTo"))
+                    .receiver(nPointerStar)
+                    .addParameter("dst", nativeDataType.nativeDataArrayType)
+                    .addParameter("dstIndex", INT)
+                    .addParameter("count", INT)
+                    .addStatement(
+                        "%T.copy(%M, %T.layout, _address, dst, dstIndex, count)",
+                        CaelumCodegenHelper.memorySegmentCName,
+                        CaelumCodegenHelper.omniSegment,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+            file.addFunction(
+                FunSpec.builder("copyTo")
+                    .addAnnotation(randomName("copyTo"))
+                    .receiver(nativeDataType.nativeDataArrayType)
+                    .addParameter("srcIndex", INT)
+                    .addParameter("dst", nPointerStar)
+                    .addParameter("count", INT)
+                    .addStatement(
+                        "%T.copy(this, srcIndex, %M, %T.layout, dst._address, count)",
+                        CaelumCodegenHelper.memorySegmentCName,
+                        CaelumCodegenHelper.omniSegment,
+                        nativeDataType.nNativeDataCName
+                    )
+                    .build()
+            )
+        }
+
+        return file
     }
 }
