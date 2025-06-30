@@ -2,6 +2,7 @@ package net.echonolix.caelum.vulkan.ctx
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.STAR
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.WildcardTypeName
 import net.echonolix.caelum.codegen.api.*
@@ -222,7 +223,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             object : CType.Struct(xmlStructType.name, members) {
                 context(ctx: CodegenContext)
                 override fun ktApiType(): TypeName {
-                    return WildcardTypeName.producerOf(VulkanCodegen.vkStructCName.parameterizedBy(CaelumCodegenHelper.starWildcard))
+                    return WildcardTypeName.producerOf(VulkanCodegen.vkStructCName.parameterizedBy(STAR))
                 }
             }
         } else {

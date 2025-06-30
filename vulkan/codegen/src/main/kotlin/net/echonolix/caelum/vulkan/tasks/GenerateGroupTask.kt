@@ -2,6 +2,7 @@ package net.echonolix.caelum.vulkan.tasks
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.STAR
 import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterTypeStream
@@ -162,7 +163,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
             context(ctx: CodegenContext)
             override fun memberKtApiType(member: CType.Group.Member): TypeName {
                 if (member.name == "pNext") {
-                    val vkStructStar = VulkanCodegen.vkStructCName.parameterizedBy(CaelumCodegenHelper.starWildcard)
+                    val vkStructStar = VulkanCodegen.vkStructCName.parameterizedBy(STAR)
                     val outVkStruct = WildcardTypeName.producerOf(vkStructStar)
                     return CaelumCodegenHelper.pointerCName.parameterizedBy(outVkStruct)
                 }
@@ -269,7 +270,7 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                             else -> error("Unexpected type: $pType")
                         }
                         var elementTypeName = elementType.typeName()
-                        if (elementTypeName == CaelumCodegenHelper.starWildcard) {
+                        if (elementTypeName == STAR) {
                             elementTypeName = CBasicType.uint8_t.caelumCoreTypeName
                         } else if (elementType is CType.Pointer) {
                             elementTypeName = CaelumCodegenHelper.pointerCName

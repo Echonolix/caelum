@@ -2,6 +2,7 @@ package net.echonolix.caelum.codegen.api.generator
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.STAR
 import net.echonolix.caelum.codegen.api.*
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.addKdoc
@@ -477,7 +478,7 @@ public open class GroupGenerator(
 
         if (returnType is ParameterizedTypeName
             && returnType.rawType == CaelumCodegenHelper.pointerCName
-            && returnType.typeArguments.first() == CaelumCodegenHelper.starWildcard
+            && returnType.typeArguments.first() == STAR
         ) {
             fromIntTypeParamBlock = CodeBlock.of("<%T>", CBasicType.char.caelumCoreTypeName)
         }

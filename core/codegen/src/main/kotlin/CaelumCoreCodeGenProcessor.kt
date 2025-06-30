@@ -587,7 +587,9 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .build()
             )
             val nPointerStar = CaelumCodegenHelper.pointerCName.parameterizedBy(
-                CaelumCodegenHelper.NPrimitive.cName.parameterizedBy(nativeDataType.nativeDataType, STAR)
+                WildcardTypeName.producerOf(
+                    CaelumCodegenHelper.NPrimitive.cName.parameterizedBy(nativeDataType.nativeDataType, STAR)
+                )
             )
             file.addFunction(
                 FunSpec.builder("copyTo")

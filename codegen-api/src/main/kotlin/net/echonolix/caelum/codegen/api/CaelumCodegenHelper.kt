@@ -101,8 +101,6 @@ public object CaelumCodegenHelper {
 
     public val cstrMember: MemberName = MemberName("net.echonolix.caelum", "c_str")
 
-    public val starWildcard: WildcardTypeName = WildcardTypeName.producerOf(ANY.copy(nullable = true))
-
     public val memoryStackMember: MemberName = MemberName("net.echonolix.caelum", "MemoryStack")
 
     public val mallocMember: MemberName = MemberName("net.echonolix.caelum", "malloc")
