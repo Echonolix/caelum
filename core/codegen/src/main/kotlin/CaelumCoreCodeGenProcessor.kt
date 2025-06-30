@@ -610,8 +610,16 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                     .addAnnotation(randomName("copyTo"))
                     .receiver(nPointerStar)
                     .addParameter("dst", nativeDataType.nativeDataArrayType)
-                    .addParameter("dstIndex", INT)
-                    .addParameter("count", INT)
+                    .addParameter(
+                        ParameterSpec.builder("dstIndex", INT)
+                            .defaultValue("0")
+                            .build()
+                    )
+                    .addParameter(
+                        ParameterSpec.builder("count", INT)
+                            .defaultValue("dst.size - dstIndex")
+                            .build()
+                    )
                     .addStatement(
                         "%T.copy(%M, %T.layout, _address, dst, dstIndex, count)",
                         CaelumCodegenHelper.memorySegmentCName,
@@ -624,9 +632,17 @@ class CaelumCoreCodeGenProcessor : KtgenProcessor {
                 FunSpec.builder("copyTo")
                     .addAnnotation(randomName("copyTo"))
                     .receiver(nativeDataType.nativeDataArrayType)
-                    .addParameter("srcIndex", INT)
                     .addParameter("dst", nPointerStar)
-                    .addParameter("count", INT)
+                    .addParameter(
+                        ParameterSpec.builder("srcIndex", INT)
+                            .defaultValue("0")
+                            .build()
+                    )
+                    .addParameter(
+                        ParameterSpec.builder("count", INT)
+                            .defaultValue("this.size - srcIndex")
+                            .build()
+                    )
                     .addStatement(
                         "%T.copy(this, srcIndex, %M, %T.layout, dst._address, count)",
                         CaelumCodegenHelper.memorySegmentCName,
