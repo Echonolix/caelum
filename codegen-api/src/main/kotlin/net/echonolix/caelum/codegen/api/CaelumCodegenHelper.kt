@@ -108,4 +108,6 @@ public object CaelumCodegenHelper {
     public val unsafeAPICName: ClassName = ClassName(basePkgName, "UnsafeAPI")
     public val unsafeAPIAnnotation: AnnotationSpec = AnnotationSpec.builder(unsafeAPICName).build()
 
+    public val structAccessorCName: ClassName = ClassName(basePkgName, "StructAccessor")
+    public val structAccessorAnnotation: AnnotationSpec = AnnotationSpec.builder(structAccessorCName).build()
 }

@@ -15,3 +15,8 @@ public annotation class CPointerType(val lengthVariable: String = "")
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 public annotation class UnsafeAPI
+
+@DslMarker
+@Retention(AnnotationRetention.SOURCE)
+@Target( AnnotationTarget.TYPE, AnnotationTarget.FUNCTION)
+public annotation class StructAccessor

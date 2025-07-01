@@ -31,9 +31,11 @@ abstract class VkStruct<T : VkStruct<T>>(
     }
 }
 
-inline fun <T : VkStruct<T>> T.allocate(allocator: AllocateScope, block: NValue<T>.() -> Unit): NValue<T> =
+@StructAccessor
+inline fun <T : VkStruct<T>> T.allocate(allocator: AllocateScope, block: @StructAccessor NValue<T>.() -> Unit): NValue<T> =
     allocate(allocator).apply(block)
 
+@StructAccessor
 context(allocator: AllocateScope)
-inline fun <T : VkStruct<T>> T.allocate(block: NValue<T>.() -> Unit): NValue<T> =
+inline fun <T : VkStruct<T>> T.allocate(block: @StructAccessor NValue<T>.() -> Unit): NValue<T> =
     allocate(allocator).apply(block)
