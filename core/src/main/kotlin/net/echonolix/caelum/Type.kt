@@ -4,6 +4,7 @@ import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
+import java.util.concurrent.atomic.AtomicReference
 
 public sealed interface NType {
     public val typeDescriptor: Descriptor<*>
@@ -184,11 +185,11 @@ public interface NFunction : NComposite {
         public val stubAllocator: Arena
 
         public abstract class Impl : Manager {
-            public final override var stubAllocator: Arena = Arena.ofShared(); private set
+            private val _stubAllocator = AtomicReference(Arena.ofShared())
+            public final override val stubAllocator: Arena get() = _stubAllocator.get()
 
             public fun freeFunctionStubs() {
-                stubAllocator.close()
-                stubAllocator = Arena.ofShared()
+                _stubAllocator.getAndSet(Arena.ofShared()).close()
             }
         }
 
