@@ -81,8 +81,45 @@ public open class FuncGenerator(
                     funcCode.add(")")
                 }
                 func1.addCode(funcCode.build())
-
                 outputList += func1.build()
+
+                if (element.parameters.any { it.type is CType.FunctionPointer }) {
+                    val funcPtrOverride = FunSpec.builder(element.funcName())
+                    funcPtrOverride.addModifiers(KModifier.PUBLIC)
+                    funcPtrOverride.returns(element.returnType.ktApiType())
+                    funcPtrOverride.addParameters(element.parameters.toParamSpecs(true) {
+                        if (it.type is CType.FunctionPointer) {
+                            it.type.elementType.ktApiType()
+                        } else {
+                            it.type.ktApiType()
+                        }
+                    })
+                    val funcCode = CodeBlock.builder()
+                    val typeDescriptorTypeName = element.returnType.typeDescriptorTypeName()
+                    funcCode.add("return ")
+                    if (typeDescriptorTypeName != null) {
+                        funcCode.add(fromNativeDataCodeBlock(element.returnType))
+                    }
+                    funcCode.add("%N.invokeExact(\n", element.funcMethodHandlePropertyName())
+
+                    val callParams = element.parameters.toParameterCode(mutableListOf()) {
+                        if (it.type is CType.FunctionPointer) {
+                            it.type.elementType.typeDescriptorTypeName()!!
+                        } else {
+                            it.type.typeDescriptorTypeName()!!
+                        }
+                    }
+                    funcCode.indent()
+                    funcCode.add(callParams.joinToCode(",\n"))
+                    funcCode.unindent()
+                    funcCode.add("\n) as %T", element.returnType.nativeType())
+                    if (typeDescriptorTypeName != null) {
+                        funcCode.add(")")
+                    }
+                    funcPtrOverride.addCode(funcCode.build())
+                    outputList += funcPtrOverride.build()
+                }
+
                 outputList
             }
         }

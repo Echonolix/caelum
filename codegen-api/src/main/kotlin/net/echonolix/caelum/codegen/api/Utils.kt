@@ -98,8 +98,13 @@ public fun CType.Function.funcMethodHandlePropertyName(): String {
 
 context(ctx: CodegenContext)
 public fun List<CType.Function.Parameter>.toParameterCode(dst: MutableList<CodeBlock>): MutableList<CodeBlock> {
+    return toParameterCode(dst) { it.type.typeDescriptorTypeName()!! }
+}
+
+context(ctx: CodegenContext)
+public inline fun List<CType.Function.Parameter>.toParameterCode(dst: MutableList<CodeBlock>, mapper: (CType.Function.Parameter) -> TypeName): MutableList<CodeBlock> {
     return this.mapTo(dst) {
-        CodeBlock.of("%T.toNativeData(%N)", it.type.typeDescriptorTypeName()!!, it.name)
+        CodeBlock.of("%T.toNativeData(%N)", mapper(it), it.name)
     }
 }
 
