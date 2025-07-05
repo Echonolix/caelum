@@ -6,6 +6,7 @@ plugins {
 
 codegenC {
     packageName.set("net.echonolix.caelum.glfw")
+    functionBaseTypeName.set("net.echonolix.caelum.glfw.functions.GLFWFunction")
     preprocessDefines.put("GLFW_INCLUDE_ES1", "")
     excludedIncludes.add("GLES/gl.h")
     val excludedConsts = setOf(

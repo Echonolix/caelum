@@ -25,6 +25,7 @@ tasks.ktgen {
     extra.set("AAA", codegenCExtension.elementMapper)
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("codegenc.packageName", codegenCExtension.packageName.get())
+    systemProperty("codegenc.functionBaseTypeName", codegenCExtension.functionBaseTypeName.get())
     systemProperty(
         "codegenc.preprocessDefines",
         codegenCExtension.preprocessDefines.get().entries
