@@ -24,19 +24,22 @@ include(
     ":codegen-c:adapter"
 )
 
-listOf(
-    "codegen-api",
-    "struct",
+(listOf(
     "core",
     "vulkan",
-    "glfw",
-    "glfw-vulkan"
 ).flatMap {
     sequenceOf(
         "caelum-$it" to file(it),
         "caelum-$it:codegen" to file("$it/codegen")
     )
-}.forEach { (name, dir) ->
+} + listOf(
+    "codegen-api",
+    "struct",
+    "glfw",
+    "glfw-vulkan"
+).map {
+    "caelum-$it" to file(it)
+}).forEach { (name, dir) ->
     include(name)
     project(":$name").projectDir = dir
 }

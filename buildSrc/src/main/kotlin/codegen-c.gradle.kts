@@ -22,7 +22,6 @@ kotlin {
 }
 
 tasks.ktgen {
-    extra.set("AAA", codegenCExtension.elementMapper)
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("codegenc.packageName", codegenCExtension.packageName.get())
     systemProperty("codegenc.functionBaseTypeName", codegenCExtension.functionBaseTypeName.get())
@@ -40,7 +39,7 @@ tasks.ktgen {
     )
     systemProperty("codegenc.excludedIncludes", codegenCExtension.excludedIncludes.get().joinToString(","))
     @Suppress("UNCHECKED_CAST")
-    val elementMapper = extra.get("AAA") as (ElementType, String) -> String?
+    val elementMapper = codegenCExtension.elementMapper
     execWrapper = {
         val outputToInputPipe = PipedInputStream()
         val outputPipe = PipedOutputStream(outputToInputPipe)
@@ -51,24 +50,14 @@ tasks.ktgen {
         setStandardOutput(outputPipe)
         setStandardInput(inputPipe)
 
-        val incomingLines = ArrayBlockingQueue<String>(100)
-        var alive = AtomicBoolean(true)
-        Thread {
-            outputToInputPipe.bufferedReader().forEachLine {
-                incomingLines.put(it)
-            }
-            incomingLines.put("---EOF---")
-        }.start()
         Thread {
             inputToOutputPipe.writer().use { stdinWriter ->
-                var line = incomingLines.take()
-                while (line != "---EOF---") {
+                outputToInputPipe.bufferedReader().forEachLine { line ->
                     val (typeStr, name) = line.split(" ")
                     val type = ElementType.valueOf(typeStr)
                     val newName = elementMapper(type, name) ?: "null"
                     stdinWriter.write("$newName\n")
                     stdinWriter.flush()
-                    line = incomingLines.take()
                 }
             }
         }.start()
