@@ -623,7 +623,7 @@ public open class GroupGenerator(
                 .addUnsafe(unsafe)
                 .receiver(pointerCNameP)
                 .addParameter("func", funcPtrCName)
-                .addStatement("%N = %T.toNativeData(func)", member.name, funcPtrCName)
+                .addStatement("%N = %T.toPointer(func)", member.name, funcPtrCName)
                 .build()
         )
     }

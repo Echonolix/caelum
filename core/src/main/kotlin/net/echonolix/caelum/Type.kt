@@ -160,12 +160,16 @@ public interface NFunction : NComposite {
 
         public abstract fun fromNativeData(value: MemorySegment): T
 
-        public fun toNativeData(value: T): NPointer<T> {
-            return NPointer(upcallStub(value).address())
+        public fun toPointer(value: T): NPointer<T> {
+            return NPointer(toNativeData(value))
         }
 
-        public fun fromNativeData(value: NPointer<T>): T {
-            return fromNativeData(MemorySegment.ofAddress(value._address))
+        public fun toNativeData(value: T): Long {
+            return upcallStub(value).address()
+        }
+
+        public fun fromNativeData(value: Long): T {
+            return fromNativeData(MemorySegment.ofAddress(value))
         }
 
         protected fun downcallHandle(functionAddress: MemorySegment): MethodHandle {
