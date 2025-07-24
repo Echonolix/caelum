@@ -95,6 +95,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         )
 
         val implType = TypeSpec.classBuilder("Impl")
+        implType.superclass(VulkanCodegen.vkHandleImplCName.parameterizedBy(thisCName))
         implType.addModifiers(KModifier.PRIVATE)
         implType.addSuperinterface(thisCName)
         implType.addProperty(
@@ -158,7 +159,6 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
         containerType.addProperty(handleType.variableName(), thisCName)
 
         val interfaceType = TypeSpec.interfaceBuilder(thisCName)
-//        interfaceType.addSuperinterface(VulkanCodegen.vkHandleCName.parameterizedBy(thisCName))
         interfaceType.addSuperinterface(thisObjectHandleCName)
         interfaceType.addSuperinterface(containerCName)
         interfaceType.addProperty(
@@ -174,6 +174,7 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
 
 
         val implType = TypeSpec.classBuilder("Impl")
+        implType.superclass(VulkanCodegen.vkHandleImplCName.parameterizedBy(thisObjectHandleCName))
         implType.addModifiers(KModifier.PRIVATE)
         implType.addSuperinterface(thisCName)
         implType.addProperty(
@@ -194,9 +195,6 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 CodeBlock.of("parent")
             )
         } else {
-            implType.addSuperclassConstructorParameter(
-                CodeBlock.of("%M", CBasicType.int64_t.valueLayoutMember)
-            )
             implType.primaryConstructor(
                 FunSpec.constructorBuilder()
                     .addParameter("value", CBasicType.int64_t.ktApiTypeTypeName)

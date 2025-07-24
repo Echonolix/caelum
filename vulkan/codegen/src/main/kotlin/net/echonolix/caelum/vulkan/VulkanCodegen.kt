@@ -70,6 +70,7 @@ object VulkanCodegen {
     val vkStructCName = ClassName(structPackageName, "VkStruct")
     val vkUnionCName = ClassName(unionPackageName, "VkUnion")
     val vkHandleCName = ClassName(handlePackageName, "VkHandle")
+    val vkHandleImplCName = vkHandleCName.nestedClass("Impl")
     val vkFunctionCName = ClassName(functionPackageName, "VkFunction")
     val vkFunctionTypeDescriptorCName = vkFunctionCName.nestedClass("Descriptor")
 
