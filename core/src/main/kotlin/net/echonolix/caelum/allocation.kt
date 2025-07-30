@@ -1,8 +1,10 @@
 package net.echonolix.caelum
 
 import net.echonolix.caelum.APIHelper.`_$OMNI_SEGMENT$_`
+import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SegmentAllocator
+import kotlin.contracts.contract
 
 public fun <T : NType> AllocateScope.malloc(descriptor: NType.Descriptor<T>): NValue<T> =
     NValue(_malloc(descriptor.layout.byteSize(), descriptor.layout.byteAlignment()))
@@ -18,6 +20,16 @@ public fun <T : NType> AllocateScope.calloc(descriptor: NType.Descriptor<T>, cou
 
 public fun SegmentAllocator.asAllocateScope(): AllocateScope =
     WrappedAllocateScope.Impl(this)
+
+public inline fun <R> Arena.useAllocateScope(block: AllocateScope.() -> R): R {
+    contract {
+        callsInPlace(block, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+    }
+
+    return use {
+        WrappedAllocateScope.Impl(this).block()
+    }
+}
 
 @JvmName("malloc114")
 public fun <T : NType> NType.Descriptor<T>.malloc(allocator: AllocateScope): NValue<T> =
@@ -133,7 +145,7 @@ public fun <T : NType> CustomAllocateOnly<T>.allocate(count: Long): NArray<T> =
     allocate(allocator, count)
 
 @OptIn(UnsafeAPI::class)
-public fun <T: NGroup> T.copyOf(allocator: AllocateScope, value: NValue<T>): NValue<T> {
+public fun <T : NGroup> T.copyOf(allocator: AllocateScope, value: NValue<T>): NValue<T> {
     val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
     MemorySegment.copy(
         `_$OMNI_SEGMENT$_`,
@@ -146,7 +158,7 @@ public fun <T: NGroup> T.copyOf(allocator: AllocateScope, value: NValue<T>): NVa
 }
 
 @OptIn(UnsafeAPI::class)
-public fun <T: NGroup> T.copyOf(allocator: AllocateScope, array: NArray<T>): NValue<T> {
+public fun <T : NGroup> T.copyOf(allocator: AllocateScope, array: NArray<T>): NValue<T> {
     val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
     MemorySegment.copy(
         `_$OMNI_SEGMENT$_`,
@@ -159,7 +171,7 @@ public fun <T: NGroup> T.copyOf(allocator: AllocateScope, array: NArray<T>): NVa
 }
 
 @OptIn(UnsafeAPI::class)
-public fun <T: NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>): NValue<T> {
+public fun <T : NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>): NValue<T> {
     val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
     MemorySegment.copy(
         `_$OMNI_SEGMENT$_`,
@@ -172,7 +184,7 @@ public fun <T: NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>): NVa
 }
 
 @OptIn(UnsafeAPI::class)
-public fun <T: NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>, count: Long): NValue<T> {
+public fun <T : NGroup> T.copyOf(allocator: AllocateScope, ptr: NPointer<T>, count: Long): NValue<T> {
     val newValue = reinterpret_cast<T>(allocator.malloc(this.typeDescriptor))
     MemorySegment.copy(
         `_$OMNI_SEGMENT$_`,

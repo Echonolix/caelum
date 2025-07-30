@@ -3,6 +3,8 @@ package net.echonolix.caelum.vulkan.structs
 import net.echonolix.caelum.*
 import net.echonolix.caelum.vulkan.enums.VkStructureType
 import java.lang.foreign.MemoryLayout
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
@@ -32,10 +34,18 @@ abstract class VkStruct<T : VkStruct<T>>(
 }
 
 @StructAccessor
-inline fun <T : VkStruct<T>> T.allocate(allocator: AllocateScope, block: @StructAccessor NValue<T>.() -> Unit): NValue<T> =
-    allocate(allocator).apply(block)
+inline fun <T : VkStruct<T>> T.allocate(allocator: AllocateScope, block: @StructAccessor NValue<T>.() -> Unit): NValue<T> {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return allocate(allocator).apply(block)
+}
 
 @StructAccessor
 context(allocator: AllocateScope)
-inline fun <T : VkStruct<T>> T.allocate(block: @StructAccessor NValue<T>.() -> Unit): NValue<T> =
-    allocate(allocator).apply(block)
+inline fun <T : VkStruct<T>> T.allocate(block: @StructAccessor NValue<T>.() -> Unit): NValue<T> {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return allocate(allocator).apply(block)
+}
