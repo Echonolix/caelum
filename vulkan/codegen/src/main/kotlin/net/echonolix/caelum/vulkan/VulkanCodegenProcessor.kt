@@ -89,7 +89,12 @@ class VulkanCodegenProcessor : KtgenProcessor {
         }
 
         filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
+        filteredRegistry.registryExtensions.forEach {
+            if (it.name == "VK_EXT_descriptor_buffer") {
+                println("Found descriptor buffer extension!")
+            }
+            processRequire(it.require)
+        }
 
 //        val includedVKVersion = setOf(
 //            "VK_VERSION_1_0",

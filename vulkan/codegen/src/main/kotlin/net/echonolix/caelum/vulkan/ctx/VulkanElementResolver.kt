@@ -344,14 +344,19 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             return resolveFuncPointerType(it)
         }
 
+        val bitsRemoved = cElementStr.replace("Bits", "s")
         registry.bitmaskTypes[cElementStr.replace("Bits", "s")]?.let { bitmaskType ->
-            val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Bitmask(
-                bitmaskType.name!!,
-                CBasicType.int32_t.cType
-            )
-            val bitEnumXml = registry.enums[bitEnumTypeName]
-                ?: throw IllegalStateException("Cannot find bit enum type: $bitEnumTypeName")
-            return resolveEnum(bitEnumXml, bitmaskType.name!!)
+            if (bitsRemoved.length < cElementStr.length) {
+                return resolveTypedElement<CType>(bitsRemoved)
+            } else {
+                val bitEnumTypeName = bitmaskType.bitvalues ?: bitmaskType.requires ?: return CType.Bitmask(
+                    bitmaskType.name!!,
+                    CBasicType.int32_t.cType
+                )
+                val bitEnumXml = registry.enums[bitEnumTypeName]
+                    ?: throw IllegalStateException("Cannot find bit enum type: $bitEnumTypeName")
+                return resolveEnum(bitEnumXml, bitmaskType.name!!)
+            }
         }
 
         registry.enumTypes[cElementStr]?.let {

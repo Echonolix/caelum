@@ -16,6 +16,18 @@ public open class EnumBaseGenerator(
 ) : Generator<CType.EnumBase>(ctx, element) {
     context(ctx: CodegenContext)
     protected val entries: Collection<CType.EnumBase.Entry> get() = element.entries.values
+    context(ctx: CodegenContext)
+    protected val constEntries: Sequence<CType.EnumBase.Entry> get() = entries.asSequence()
+        .filter { it.expression is CExpression.Const }
+    context(ctx: CodegenContext)
+    protected val aliasEntries: Sequence<CType.EnumBase.Entry> get() {
+        val usedNames =  constEntries.asSequence()
+            .map { it.tags.get<EnumEntryFixedName>().name }
+            .toSet()
+        return entries.asSequence()
+            .filter { it.expression is CExpression.Reference }
+            .filter { it.tags.get<EnumEntryFixedName>().name !in usedNames }
+    }
 
     context(ctx: CodegenContext)
     protected open fun enumBaseCName(): ClassName {
@@ -27,25 +39,18 @@ public open class EnumBaseGenerator(
         val type = TypeSpec.enumBuilder(thisCName)
         type.addKdoc(element)
         type.addSuper(element)
-        entries.forEach { entry ->
-            val expression = entry.expression
+        constEntries.forEach { entry ->
+            val expression = entry.expression as CExpression.Const
             val fixedName = entry.tags.get<EnumEntryFixedName>().name
-            when (expression) {
-                is CExpression.Const -> {
-                    type.addEnumConstant(
-                        fixedName,
-                        TypeSpec.anonymousClassBuilder()
-                            .addKdoc(entry)
-                            .superclass(thisCName)
-                            .addSuperclassConstructorParameter(entry.expression.codeBlock())
-                            .build()
-                    )
-                }
-                is CExpression.Reference -> {
-                    // NOOP
-                }
-                else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
-            }
+
+            type.addEnumConstant(
+                fixedName,
+                TypeSpec.anonymousClassBuilder()
+                    .addKdoc(entry)
+                    .superclass(thisCName)
+                    .addSuperclassConstructorParameter(expression.codeBlock())
+                    .build()
+            )
         }
         return type
     }
@@ -53,24 +58,25 @@ public open class EnumBaseGenerator(
     context(ctx: CodegenContext)
     protected open fun buildCompanionType(): TypeSpec.Builder {
         val companionType = TypeSpec.companionObjectBuilder()
-        entries.forEach { entry ->
-            val expression = entry.expression
+        val constNames = entries.asSequence()
+            .filter { it.expression is CExpression.Const }
+            .map { it.tags.get<EnumEntryFixedName>().name }
+            .toSet()
+
+        aliasEntries.forEach { entry ->
+            val expression = entry.expression as CExpression.Reference
             val fixedName = entry.tags.get<EnumEntryFixedName>().name
-            when (expression) {
-                is CExpression.Const -> {
-                    // NOOP
-                }
-                is CExpression.Reference -> {
-                    assert(expression.value in entries)
-                    companionType.addProperty(
-                        PropertySpec.builder(fixedName, thisCName)
-                            .initializer("%N", expression.value.tags.get<EnumEntryFixedName>().name)
-                            .addKdoc(entry)
-                            .build()
-                    )
-                }
-                else -> throw IllegalArgumentException("Unsupported expression type: ${expression::class}")
+            if (fixedName in constNames) {
+                // Skip constants that are already defined as enum constants
+                return@forEach
             }
+            assert(expression.value in entries)
+            companionType.addProperty(
+                PropertySpec.builder(fixedName, thisCName)
+                    .initializer("%N", expression.value.tags.get<EnumEntryFixedName>().name)
+                    .addKdoc(entry)
+                    .build()
+            )
         }
 
         companionType.addCompanionSuper(element)
