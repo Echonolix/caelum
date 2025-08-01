@@ -51,6 +51,9 @@ fun List<CType.Function.Parameter>.toKtParamOverloadSpecs(annotations: Boolean) 
         }
         if (paramType is CType.Handle) {
             pType = paramType.objectBaseCName()
+            if (it.tags.has<OptionalTag>()) {
+                pType = pType.copy(nullable = true)
+            }
         }
         pType
     }

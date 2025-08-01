@@ -133,6 +133,13 @@ class GenerateHandleTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                 .addStatement("return value.value")
                 .build()
         )
+        companion.addFunction(
+            FunSpec.builder("toNativeData")
+                .addParameter("value", thisCName.copy(nullable = true))
+                .returns(CBasicType.int64_t.ktApiTypeTypeName)
+                .addStatement("return value?.value ?: 0L")
+                .build()
+        )
         interfaceType.addType(companion.build())
 
         val file = FileSpec.builder(thisCName)
