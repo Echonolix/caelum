@@ -35,24 +35,6 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
         CLEANER.register(this, arena::close);
     }
 
-    private static void fillZeros(long address, long size) {
-        assert (address & 7) == 0 : "Address must be aligned to 8 bytes";
-        assert (size & 7) == 0 : "Size must be a multiple of 8 bytes";
-
-        try {
-            if (size <= 256) {
-                long loopCount = (size + Long.BYTES - 1) / 8;
-                for (long i = 0; i < loopCount; i++) {
-                    UnsafeUtil.UNSAFE_PUT_LONG_NATIVE.invokeExact(  address + i * Long.BYTES, 0L);
-                }
-            } else {
-                UnsafeUtil.UNSAFE_SET_MEMORY0_NATIVE.invokeExact(  address, size, (byte) 0);
-            }
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @NotNull
     private static MemoryStack getInstance() {
         return INSTANCES.get();
@@ -121,7 +103,7 @@ public final class MemoryStack extends WrappedAllocateScope implements SegmentAl
     public void pop() {
         long prevOffset = offset;
         offset = popFrame();
-        fillZeros(baseSegment.address() + offset, prevOffset - offset);
+        UnsafeUtil.fillZeros(baseSegment.address() + offset, prevOffset - offset);
     }
 
     @Override

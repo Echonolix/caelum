@@ -6,8 +6,6 @@ import net.echonolix.caelum.APIHelper.`_$OMNI_SEGMENT$_`
 import net.echonolix.caelum.vulkan.enums.VkStructureType
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemoryLayout.PathElement.groupElement
-import java.lang.foreign.MemorySegment
-import java.lang.foreign.MemorySegment.copy
 import java.lang.invoke.VarHandle
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -16,6 +14,25 @@ abstract class VkStruct<T : VkStruct<T>>(
     vararg members: MemoryLayout,
 ) : NStruct.Impl<T>(*members), CustomAllocateOnly<T> {
     abstract val structType: VkStructureType?
+
+    override fun init(ptr: NPointer<T>) {
+        UnsafeUtil.fillZeros(ptr._address, layout.byteSize())
+        val sType = structType
+        if (sType != null) {
+            UnsafeUtil.UNSAFE_PUT_INT_NATIVE.invokeExact(ptr._address, sType.value)
+        }
+    }
+
+    override fun init(ptr: NPointer<T>, count: Long) {
+        UnsafeUtil.fillZeros(ptr._address, layout.byteSize() * count)
+        val sType = structType
+        if (sType != null) {
+            val byteSize = layout.byteSize()
+            for (i in 0L..<count) {
+                UnsafeUtil.UNSAFE_PUT_INT_NATIVE.invokeExact(ptr._address + i * byteSize, sType.value)
+            }
+        }
+    }
 
     override fun allocate(allocator: AllocateScope): NValue<T> {
         val value = allocator.calloc(this)

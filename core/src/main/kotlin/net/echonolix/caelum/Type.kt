@@ -13,11 +13,17 @@ public sealed interface NType {
         public val layout: MemoryLayout
         public val arrayByteOffsetHandle: MethodHandle
 
+        public fun init(ptr: NPointer<T>)
+        public fun init(ptr: NPointer<T>, count: Long)
+
         public sealed class Impl<T : NType>(override val layout: MemoryLayout) : Descriptor<T> {
             final override val arrayByteOffsetHandle: MethodHandle by lazy {
                 MemoryLayout.sequenceLayout(Long.MAX_VALUE / layout.byteSize(), layout)
                     .byteOffsetHandle(MemoryLayout.PathElement.sequenceElement())
             }
+
+            override fun init(ptr: NPointer<T>) {}
+            override fun init(ptr: NPointer<T>, count: Long) {}
         }
     }
 }
