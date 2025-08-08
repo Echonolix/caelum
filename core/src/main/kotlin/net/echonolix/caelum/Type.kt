@@ -78,11 +78,11 @@ public sealed interface NComposite : NType {
 
 private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
     val newMembers = mutableListOf<MemoryLayout>()
-    var maxMemberSize = 1L
+    var maxMemberAlignment = 1L
     var currSize = 0L
     for (member in members) {
         val memberSize = member.byteSize()
-        maxMemberSize = maxOf(maxMemberSize, memberSize)
+        maxMemberAlignment = maxOf(maxMemberAlignment, member.byteAlignment())
         val mod = currSize % member.byteAlignment()
         if (mod != 0L) {
             val padding = member.byteAlignment() - mod
@@ -92,9 +92,9 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
         currSize += memberSize
         newMembers.add(member)
     }
-    val mod = currSize % maxMemberSize
+    val mod = currSize % maxMemberAlignment
     if (mod != 0L) {
-        val padding = maxMemberSize - mod
+        val padding = maxMemberAlignment - mod
         newMembers.add(MemoryLayout.paddingLayout(padding))
     }
     return MemoryLayout.structLayout(*newMembers.toTypedArray())
