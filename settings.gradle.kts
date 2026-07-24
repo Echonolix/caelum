@@ -26,6 +26,7 @@ include(
 
 (listOf(
     "core",
+    "opengl",
     "vulkan",
 ).flatMap {
     sequenceOf(
