@@ -58,24 +58,24 @@ public fun main() {
             MemoryStack { glfwGetProcAddress(name.c_str())._address }
         }
 
-        val versionAddress = GL33.glGetString(GL33.GL_VERSION)
+        val versionAddress = glGetString(GL_VERSION)
         check(versionAddress != 0L) { "glGetString(GL_VERSION) returned null" }
         val version = NPointer<NChar>(versionAddress).string
         check(version.isNotBlank()) { "OpenGL version is blank" }
 
         Arena.ofConfined().use { arena ->
             val vao = arena.allocate(ValueLayout.JAVA_INT)
-            GL33.glGenVertexArrays(1, vao.address())
-            GL33.glBindVertexArray(vao.get(ValueLayout.JAVA_INT, 0L))
-            GL33.glClearColor(0.125f, 0.25f, 0.5f, 1.0f)
-            GL33.glClear(GL33.GL_COLOR_BUFFER_BIT)
-            GL33.glDeleteVertexArrays(1, vao.address())
+            glGenVertexArrays(1, vao.address())
+            glBindVertexArray(vao.get(ValueLayout.JAVA_INT, 0L))
+            glClearColor(0.125f, 0.25f, 0.5f, 1.0f)
+            glClear(GL_COLOR_BUFFER_BIT)
+            glDeleteVertexArrays(1, vao.address())
         }
 
-        val error = GL33.glGetError()
+        val error = glGetError()
         println("OPENGL_VERSION=$version")
         println("GL_ERROR=$error")
-        check(error == GL33.GL_NO_ERROR) { "OpenGL error: $error" }
+        check(error == GL_NO_ERROR) { "OpenGL error: $error" }
         println("OPENGL33_SMOKE_OK")
     } finally {
         GL.setCapabilities(null)

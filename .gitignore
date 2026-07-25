@@ -50,3 +50,4 @@ bin/
 hs_err*.log
 
 testoutput/
+.omo
