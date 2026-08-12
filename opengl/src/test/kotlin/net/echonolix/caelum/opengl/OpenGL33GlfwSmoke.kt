@@ -26,7 +26,11 @@ import net.echonolix.caelum.nullptr
 import net.echonolix.caelum.string
 
 public fun main() {
-    val glfwDll = Path.of(requireNotNull(System.getProperty("glfwDll")))
+    val glfwDll = Path.of(
+        requireNotNull(System.getProperty("glfwDll").takeUnless(String::isBlank)) {
+            "Pass -PglfwDll=<absolute path to glfw3.dll>"
+        },
+    )
         .toAbsolutePath()
         .normalize()
     require(glfwDll.toFile().isFile) { "GLFW DLL does not exist: $glfwDll" }

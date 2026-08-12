@@ -1,5 +1,6 @@
 .gradle
 build/
+target/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -51,3 +52,4 @@ hs_err*.log
 
 testoutput/
 .omo
+/samples

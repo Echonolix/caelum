@@ -35,6 +35,7 @@ include(
     )
 } + listOf(
     "codegen-api",
+    "bom",
     "struct",
     "glfw",
     "glfw-vulkan"

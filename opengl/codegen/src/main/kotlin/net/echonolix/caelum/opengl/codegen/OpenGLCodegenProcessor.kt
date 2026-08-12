@@ -8,7 +8,7 @@ import java.util.HexFormat
 
 public class OpenGLCodegenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
-        val xml = resource("/gl.xml").use { it.readAllBytes() }
+        val xml = resource("/gl.xml").use { it.readAllBytes() }.canonicalLineEndings()
         val expectedHash = resource("/gl.xml.sha256").bufferedReader().use { it.readText().trim() }
         val actualHash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(xml))
         require(actualHash == expectedHash) {
@@ -21,3 +21,6 @@ public class OpenGLCodegenProcessor : KtgenProcessor {
     private fun resource(name: String) =
         requireNotNull(javaClass.getResourceAsStream(name)) { "Missing OpenGL codegen resource $name" }
 }
+
+internal fun ByteArray.canonicalLineEndings(): ByteArray =
+    decodeToString().replace("\r\n", "\n").encodeToByteArray()

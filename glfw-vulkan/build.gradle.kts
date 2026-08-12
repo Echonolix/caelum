@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":caelum-core"))
-    implementation(project(":caelum-vulkan"))
+    api(project(":caelum-core"))
+    api(project(":caelum-vulkan"))
     api(project(":caelum-glfw"))
 }
 

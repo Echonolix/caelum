@@ -17,7 +17,7 @@ class OpenGLRegistryTest {
     @Test
     fun `pinned registry has expected digest`() {
         // Given
-        val registryBytes = resource("/gl.xml")
+        val registryBytes = resource("/gl.xml").canonicalLineEndings()
         val recordedDigest = resource("/gl.xml.sha256").decodeToString().trim()
 
         // When
