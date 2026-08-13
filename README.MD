@@ -13,6 +13,7 @@ It also has a custom-built toolchain that generates caelum bindings from C heade
 | caelum-vulkan      | Vulkan API with OOP structure                         |
 | caelum-glfw        | Cross platform window library                         |
 | caelum-glfw-vulkan | An extension for glfw that provides Vulkan support    |
+| [caelum-sdl3](sdl3/README.md) | Generated SDL 3 native bindings and runtime loader |
 
 ## License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

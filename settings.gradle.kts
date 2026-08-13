@@ -27,6 +27,7 @@ include(
 (listOf(
     "core",
     "opengl",
+    "sdl3",
     "vulkan",
 ).flatMap {
     sequenceOf(
@@ -37,7 +38,7 @@ include(
     "codegen-api",
     "struct",
     "glfw",
-    "glfw-vulkan"
+    "glfw-vulkan",
 ).map {
     "caelum-$it" to file(it)
 }).forEach { (name, dir) ->

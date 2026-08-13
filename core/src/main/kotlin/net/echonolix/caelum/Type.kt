@@ -4,7 +4,7 @@ import java.lang.foreign.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
-import java.util.concurrent.atomic.AtomicReference
+import java.util.IdentityHashMap
 
 public sealed interface NType {
     public val typeDescriptor: Descriptor<*>
@@ -166,6 +166,7 @@ public interface NFunction : NComposite {
 
         public abstract fun fromNativeData(value: MemorySegment): T
 
+        /** Returns a stable native stub for [value] within the current manager lifetime. */
         public fun toPointer(value: T): NPointer<T> {
             return NPointer(toNativeData(value))
         }
@@ -183,11 +184,13 @@ public interface NFunction : NComposite {
         }
 
         protected fun upcallStub(function: T): MemorySegment {
-            return Linker.nativeLinker().upcallStub(
-                function.funcHandle,
-                functionDescriptor,
-                manager.stubAllocator
-            )
+            return FunctionStubCache.getOrCreate(manager, this, function) { allocator ->
+                Linker.nativeLinker().upcallStub(
+                    function.funcHandle,
+                    functionDescriptor,
+                    allocator
+                )
+            }
         }
     }
 
@@ -195,16 +198,65 @@ public interface NFunction : NComposite {
         public val stubAllocator: Arena
 
         public abstract class Impl : Manager {
-            private val _stubAllocator = AtomicReference(Arena.ofShared())
-            public final override val stubAllocator: Arena get() = _stubAllocator.get()
+            @Volatile
+            private var _stubAllocator: Arena = Arena.ofShared()
+            public final override val stubAllocator: Arena get() = _stubAllocator
 
+            /**
+             * Invalidates every upcall stub owned by this manager.
+             *
+             * Native code must unregister all of these callbacks before this is called. A
+             * later conversion creates a stub in a new lifetime; its numeric address may be
+             * the same as an address from the closed lifetime.
+             */
             public fun freeFunctionStubs() {
-                _stubAllocator.getAndSet(Arena.ofShared()).close()
+                FunctionStubCache.reset(this, { _stubAllocator }) {
+                    _stubAllocator = it
+                }
             }
         }
 
         public object Global : Manager {
             public override val stubAllocator: Arena = Arena.ofShared()
+        }
+    }
+}
+
+private object FunctionStubCache {
+    private val stubs = IdentityHashMap<
+        NFunction.Manager,
+        IdentityHashMap<NFunction.Descriptor<*>, IdentityHashMap<NFunction, MemorySegment>>
+        >()
+    fun <T : NFunction> getOrCreate(
+        manager: NFunction.Manager,
+        descriptor: NFunction.Descriptor<T>,
+        function: T,
+        create: (Arena) -> MemorySegment,
+    ): MemorySegment = synchronized(this) {
+        val descriptors = stubs.getOrPut(manager) { IdentityHashMap() }
+        val functions = descriptors.getOrPut(descriptor) { IdentityHashMap() }
+        functions[function]?.let { return@synchronized it }
+
+        val created = create(manager.stubAllocator)
+        functions[function] = created
+        created
+    }
+
+    fun reset(
+        manager: NFunction.Manager,
+        currentAllocator: () -> Arena,
+        replaceAllocator: (Arena) -> Unit,
+    ) {
+        synchronized(this) {
+            val replacement = Arena.ofShared()
+            try {
+                currentAllocator().close()
+            } catch (failure: Throwable) {
+                runCatching { replacement.close() }.exceptionOrNull()?.let(failure::addSuppressed)
+                throw failure
+            }
+            replaceAllocator(replacement)
+            stubs.remove(manager)
         }
     }
 }
