@@ -43,6 +43,8 @@ include(
     "directx",
     "assimp",
     "openal",
+    "vma",
+    "codegen-cpp"
 ).map {
     "caelum-$it" to file(it)
 }).forEach { (name, dir) ->

@@ -22,7 +22,9 @@ val moduleDescriptions = mapOf(
     "caelum-directx" to "Generated Direct3D 9-12 bindings for Caelum.",
     "caelum-assimp" to "Generated Assimp asset-import and export bindings for Caelum.",
     "caelum-openal" to "Generated OpenAL audio and device-context bindings for Caelum.",
+    "caelum-vma" to "Vulkan Memory Allocator bindings and a compiled VMA implementation for Caelum.",
     "caelum-codegen-api" to "Public API used by Caelum binding code generators.",
+    "caelum-codegen-cpp" to "Clang-based C++ API to stable C ABI shim and Caelum FFM binding generator.",
     "caelum-struct" to "Gradle plugin for generating Caelum native struct implementations.",
 )
 

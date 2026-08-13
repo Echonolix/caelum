@@ -21,6 +21,17 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 | caelum-directx     | Direct3D 9 through current Direct3D 12 bindings        |
 | caelum-assimp      | Assimp asset import/export C API bindings              |
 | caelum-openal      | OpenAL 1.1 audio and device-context API bindings       |
+| caelum-vma         | VMA core/virtual bindings and compiled native implementation |
+| caelum-codegen-cpp | Clang-based C++ API to stable C ABI/FFM code generator |
+
+## C++ and header-only bindings
+
+`codegen-cpp` uses Clang's semantic AST to lower the supported C++ surface into
+a deterministic `extern "C"` shim and a Kotlin FFM binding. The companion
+`buildsrc.convention.native-library` build convention generates a single
+implementation translation unit and compiles it to a host `.dll`, `.so`, or
+`.dylib`. See [`codegen-cpp/README.md`](codegen-cpp/README.md) for the supported
+surface and [`vma/README.md`](vma/README.md) for the first concrete integration.
 
 ## Maven
 
@@ -71,11 +82,15 @@ Maven projects can import the BOM and then select only the bindings they use:
 </dependencies>
 ```
 
-The artifacts contain the Caelum bindings, not platform native libraries such
+Most artifacts contain the Caelum bindings, not platform native libraries such
 as GLFW, Assimp, or OpenAL; applications still load the matching native library
-before the first binding call. See each binding module's README for its ABI and
-loading requirements, and [`samples/maven-consumer`](samples/maven-consumer) for
-a minimal Maven consumer.
+before the first binding call. `caelum-vma` is an explicit exception: its build compiles and
+packages the current host's VMA implementation under
+`META-INF/caelum/native/<os>-<arch>/`. A host build is a local artifact; a
+multi-platform Maven release still needs distinct platform variants/classifiers
+and CI builds, which this change does not configure. See each binding module's
+README for its ABI and loading requirements, and
+[`samples/maven-consumer`](samples/maven-consumer) for a minimal Maven consumer.
 
 The group and version can be overridden with `-PcaelumGroup` and
 `-PcaelumVersion`. To publish to an authenticated Maven repository, provide
