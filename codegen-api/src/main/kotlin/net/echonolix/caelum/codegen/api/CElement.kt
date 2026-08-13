@@ -265,16 +265,12 @@ public sealed class CType(name: String) : CElement.Impl(name), CElement.TopLevel
 
         context(ctx: CodegenContext)
         public override fun typeDescriptorTypeName(): TypeName? {
-            return if (dstType is FunctionPointer) {
-                CaelumCodegenHelper.pointerCName
-            } else {
-                typeName()
-            }
+            return dstType.typeDescriptorTypeName()
         }
 
         context(ctx: CodegenContext)
         override fun memoryLayoutDeep(): CodeBlock {
-            return CodeBlock.of("%T.layout", typeName())
+            return dstType.memoryLayout()
         }
 
         override fun toString(): String {

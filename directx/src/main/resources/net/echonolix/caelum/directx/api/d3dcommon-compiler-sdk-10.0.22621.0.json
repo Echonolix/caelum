@@ -1,0 +1,4870 @@
+{
+  "schemaVersion": 1,
+  "api": "d3dcommon-compiler",
+  "namespace": "net.echonolix.caelum.directx.api",
+  "target": {
+    "triple": "x86_64-pc-windows-msvc",
+    "pointerBits": 64,
+    "abi": "Windows x64 / LLP64"
+  },
+  "sourceSet": {
+    "headers": [
+      {
+        "name": "d3dcommon.h",
+        "pathRole": "windows-sdk-um",
+        "sha256": "62f7bf1a5f17a02834b2ce0ca892ea204edd037aea970b4961b04c74e426b4bc",
+        "origin": "Microsoft Windows SDK 10.0.22621.0"
+      },
+      {
+        "name": "d3dcompiler.h",
+        "pathRole": "windows-sdk-um",
+        "sha256": "76e944c8dfabb05cfab099fa316b464786a46e60718039290e6f6ed4e3d3937f",
+        "origin": "Microsoft Windows SDK 10.0.22621.0"
+      }
+    ],
+    "defines": [
+      "CINTERFACE=1",
+      "COBJMACROS=1",
+      "INITGUID=1"
+    ],
+    "includeRoles": [
+      "windows-sdk-um",
+      "windows-sdk-shared",
+      "windows-sdk-ucrt",
+      "directx-headers"
+    ],
+    "clang": {
+      "version": "20.1.4",
+      "target": "x86_64-pc-windows-msvc"
+    },
+    "directXHeaders": null
+  },
+  "reviewedExclusions": [
+    {
+      "pattern": "transitive Win32/OLE declarations outside the listed target headers",
+      "reason": "The catalog is the DirectX/DXGI public header surface, not a replacement for the Windows SDK.",
+      "impact": "Referenced external ABI types remain present in signature strings and require the platform layer."
+    },
+    {
+      "pattern": "function-like preprocessor macros",
+      "reason": "They are source helpers rather than addressable ABI declarations; object-like public macros are retained.",
+      "impact": "No exported function, COM slot, enum entry, record, typedef, or object-like constant is removed."
+    },
+    {
+      "pattern": "C++ convenience helpers and inline methods",
+      "reason": "CINTERFACE is the stable binary ABI used by the FFM binding.",
+      "impact": "The complete flattened C vtable remains represented."
+    },
+    {
+      "pattern": "interfaces without an IID initializer in the selected public C headers",
+      "reason": "Some helper/forward declarations do not publish an IID in this source set.",
+      "impact": "Interface vtables are retained; QueryInterface-by-IID is unavailable until an authoritative IID source is added.",
+      "symbols": [
+        "ID3DInclude"
+      ]
+    }
+  ],
+  "coverageAudit": {
+    "headerVtableInterfaces": [
+      "ID3D10Blob",
+      "ID3DDestructionNotifier",
+      "ID3DInclude"
+    ],
+    "schemaInterfaces": [
+      "ID3D10Blob",
+      "ID3DDestructionNotifier",
+      "ID3DInclude"
+    ],
+    "missingVtables": [],
+    "unexpectedVtables": [],
+    "unionCoverage": {
+      "components": [
+        "d3dcommon-compiler"
+      ],
+      "note": "This profile is self-audited against every C vtable defined by its selected headers."
+    }
+  },
+  "declarations": {
+    "interfaces": [
+      {
+        "name": "ID3D10Blob",
+        "header": "d3dcommon.h",
+        "sourceLine": 427,
+        "iid": "8ba5fb08-5195-40e2-ac58-0d989c3a0102",
+        "parent": "IUnknown",
+        "methods": [
+          {
+            "slot": 0,
+            "name": "QueryInterface",
+            "returnType": "HRESULT",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3D10Blob *"
+              },
+              {
+                "name": "arg1",
+                "type": "const IID *const"
+              },
+              {
+                "name": "arg2",
+                "type": "void **"
+              }
+            ],
+            "type": "HRESULT (*)(ID3D10Blob *, const IID *const, void **) __attribute__((stdcall))"
+          },
+          {
+            "slot": 1,
+            "name": "AddRef",
+            "returnType": "ULONG",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3D10Blob *"
+              }
+            ],
+            "type": "ULONG (*)(ID3D10Blob *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 2,
+            "name": "Release",
+            "returnType": "ULONG",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3D10Blob *"
+              }
+            ],
+            "type": "ULONG (*)(ID3D10Blob *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 3,
+            "name": "GetBufferPointer",
+            "returnType": "LPVOID",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3D10Blob *"
+              }
+            ],
+            "type": "LPVOID (*)(ID3D10Blob *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 4,
+            "name": "GetBufferSize",
+            "returnType": "SIZE_T",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3D10Blob *"
+              }
+            ],
+            "type": "SIZE_T (*)(ID3D10Blob *) __attribute__((stdcall))"
+          }
+        ]
+      },
+      {
+        "name": "ID3DDestructionNotifier",
+        "header": "d3dcommon.h",
+        "sourceLine": 542,
+        "iid": "a06eb39a-50da-425b-8c31-4eecd6c270f3",
+        "parent": "IUnknown",
+        "methods": [
+          {
+            "slot": 0,
+            "name": "QueryInterface",
+            "returnType": "HRESULT",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DDestructionNotifier *"
+              },
+              {
+                "name": "arg1",
+                "type": "const IID *const"
+              },
+              {
+                "name": "arg2",
+                "type": "void **"
+              }
+            ],
+            "type": "HRESULT (*)(ID3DDestructionNotifier *, const IID *const, void **) __attribute__((stdcall))"
+          },
+          {
+            "slot": 1,
+            "name": "AddRef",
+            "returnType": "ULONG",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DDestructionNotifier *"
+              }
+            ],
+            "type": "ULONG (*)(ID3DDestructionNotifier *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 2,
+            "name": "Release",
+            "returnType": "ULONG",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DDestructionNotifier *"
+              }
+            ],
+            "type": "ULONG (*)(ID3DDestructionNotifier *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 3,
+            "name": "RegisterDestructionCallback",
+            "returnType": "HRESULT",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DDestructionNotifier *"
+              },
+              {
+                "name": "arg1",
+                "type": "PFN_DESTRUCTION_CALLBACK"
+              },
+              {
+                "name": "arg2",
+                "type": "void *"
+              },
+              {
+                "name": "arg3",
+                "type": "UINT *"
+              }
+            ],
+            "type": "HRESULT (*)(ID3DDestructionNotifier *, PFN_DESTRUCTION_CALLBACK, void *, UINT *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 4,
+            "name": "UnregisterDestructionCallback",
+            "returnType": "HRESULT",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DDestructionNotifier *"
+              },
+              {
+                "name": "arg1",
+                "type": "UINT"
+              }
+            ],
+            "type": "HRESULT (*)(ID3DDestructionNotifier *, UINT) __attribute__((stdcall))"
+          }
+        ]
+      },
+      {
+        "name": "ID3DInclude",
+        "header": "d3dcommon.h",
+        "sourceLine": 633,
+        "iid": null,
+        "parent": null,
+        "methods": [
+          {
+            "slot": 0,
+            "name": "Open",
+            "returnType": "HRESULT",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DInclude *"
+              },
+              {
+                "name": "arg1",
+                "type": "D3D_INCLUDE_TYPE"
+              },
+              {
+                "name": "arg2",
+                "type": "LPCSTR"
+              },
+              {
+                "name": "arg3",
+                "type": "LPCVOID"
+              },
+              {
+                "name": "arg4",
+                "type": "LPCVOID *"
+              },
+              {
+                "name": "arg5",
+                "type": "UINT *"
+              }
+            ],
+            "type": "HRESULT (*)(ID3DInclude *, D3D_INCLUDE_TYPE, LPCSTR, LPCVOID, LPCVOID *, UINT *) __attribute__((stdcall))"
+          },
+          {
+            "slot": 1,
+            "name": "Close",
+            "returnType": "HRESULT",
+            "params": [
+              {
+                "name": "arg0",
+                "type": "ID3DInclude *"
+              },
+              {
+                "name": "arg1",
+                "type": "LPCVOID"
+              }
+            ],
+            "type": "HRESULT (*)(ID3DInclude *, LPCVOID) __attribute__((stdcall))"
+          }
+        ]
+      }
+    ],
+    "enums": [
+      {
+        "name": "D3DCOMPILER_STRIP_FLAGS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 441,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3DCOMPILER_STRIP_REFLECTION_DATA",
+            "value": "1"
+          },
+          {
+            "name": "D3DCOMPILER_STRIP_DEBUG_INFO",
+            "value": "2"
+          },
+          {
+            "name": "D3DCOMPILER_STRIP_TEST_BLOBS",
+            "value": "4"
+          },
+          {
+            "name": "D3DCOMPILER_STRIP_PRIVATE_DATA",
+            "value": "8"
+          },
+          {
+            "name": "D3DCOMPILER_STRIP_ROOT_SIGNATURE",
+            "value": "16"
+          },
+          {
+            "name": "D3DCOMPILER_STRIP_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "D3D_BLOB_PART",
+        "header": "d3dcompiler.h",
+        "sourceLine": 463,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_BLOB_INPUT_SIGNATURE_BLOB",
+            "value": "0"
+          },
+          {
+            "name": "D3D_BLOB_OUTPUT_SIGNATURE_BLOB",
+            "value": "1"
+          },
+          {
+            "name": "D3D_BLOB_INPUT_AND_OUTPUT_SIGNATURE_BLOB",
+            "value": "2"
+          },
+          {
+            "name": "D3D_BLOB_PATCH_CONSTANT_SIGNATURE_BLOB",
+            "value": "3"
+          },
+          {
+            "name": "D3D_BLOB_ALL_SIGNATURE_BLOB",
+            "value": "4"
+          },
+          {
+            "name": "D3D_BLOB_DEBUG_INFO",
+            "value": "5"
+          },
+          {
+            "name": "D3D_BLOB_LEGACY_SHADER",
+            "value": "6"
+          },
+          {
+            "name": "D3D_BLOB_XNA_PREPASS_SHADER",
+            "value": "7"
+          },
+          {
+            "name": "D3D_BLOB_XNA_SHADER",
+            "value": "8"
+          },
+          {
+            "name": "D3D_BLOB_PDB",
+            "value": "9"
+          },
+          {
+            "name": "D3D_BLOB_PRIVATE_DATA",
+            "value": "10"
+          },
+          {
+            "name": "D3D_BLOB_ROOT_SIGNATURE",
+            "value": "11"
+          },
+          {
+            "name": "D3D_BLOB_DEBUG_NAME",
+            "value": "12"
+          },
+          {
+            "name": "D3D_BLOB_TEST_ALTERNATE_SHADER",
+            "value": "32768"
+          },
+          {
+            "name": "D3D_BLOB_TEST_COMPILE_DETAILS",
+            "value": "32769"
+          },
+          {
+            "name": "D3D_BLOB_TEST_COMPILE_PERF",
+            "value": "32770"
+          },
+          {
+            "name": "D3D_BLOB_TEST_COMPILE_REPORT",
+            "value": "32771"
+          }
+        ]
+      },
+      {
+        "name": "D3D_DRIVER_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 83,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_DRIVER_TYPE_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D_DRIVER_TYPE_HARDWARE",
+            "value": "1"
+          },
+          {
+            "name": "D3D_DRIVER_TYPE_REFERENCE",
+            "value": "2"
+          },
+          {
+            "name": "D3D_DRIVER_TYPE_NULL",
+            "value": "3"
+          },
+          {
+            "name": "D3D_DRIVER_TYPE_SOFTWARE",
+            "value": "4"
+          },
+          {
+            "name": "D3D_DRIVER_TYPE_WARP",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "name": "D3D_FEATURE_LEVEL",
+        "header": "d3dcommon.h",
+        "sourceLine": 94,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_FEATURE_LEVEL_1_0_CORE",
+            "value": "4096"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_9_1",
+            "value": "37120"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_9_2",
+            "value": "37376"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_9_3",
+            "value": "37632"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_10_0",
+            "value": "40960"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_10_1",
+            "value": "41216"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_11_0",
+            "value": "45056"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_11_1",
+            "value": "45312"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_12_0",
+            "value": "49152"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_12_1",
+            "value": "49408"
+          },
+          {
+            "name": "D3D_FEATURE_LEVEL_12_2",
+            "value": "49664"
+          }
+        ]
+      },
+      {
+        "name": "D3D_INTERPOLATION_MODE",
+        "header": "d3dcommon.h",
+        "sourceLine": 1023,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_INTERPOLATION_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_INTERPOLATION_CONSTANT",
+            "value": "1"
+          },
+          {
+            "name": "D3D_INTERPOLATION_LINEAR",
+            "value": "2"
+          },
+          {
+            "name": "D3D_INTERPOLATION_LINEAR_CENTROID",
+            "value": "3"
+          },
+          {
+            "name": "D3D_INTERPOLATION_LINEAR_NOPERSPECTIVE",
+            "value": "4"
+          },
+          {
+            "name": "D3D_INTERPOLATION_LINEAR_NOPERSPECTIVE_CENTROID",
+            "value": "5"
+          },
+          {
+            "name": "D3D_INTERPOLATION_LINEAR_SAMPLE",
+            "value": "6"
+          },
+          {
+            "name": "D3D_INTERPOLATION_LINEAR_NOPERSPECTIVE_SAMPLE",
+            "value": "7"
+          }
+        ]
+      },
+      {
+        "name": "D3D_MIN_PRECISION",
+        "header": "d3dcommon.h",
+        "sourceLine": 1010,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_MIN_PRECISION_DEFAULT",
+            "value": "0"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_FLOAT_16",
+            "value": "1"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_FLOAT_2_8",
+            "value": "2"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_RESERVED",
+            "value": "3"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_SINT_16",
+            "value": "4"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_UINT_16",
+            "value": "5"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_ANY_16",
+            "value": "240"
+          },
+          {
+            "name": "D3D_MIN_PRECISION_ANY_10",
+            "value": "241"
+          }
+        ]
+      },
+      {
+        "name": "D3D_NAME",
+        "header": "d3dcommon.h",
+        "sourceLine": 868,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_NAME_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_NAME_POSITION",
+            "value": "1"
+          },
+          {
+            "name": "D3D_NAME_CLIP_DISTANCE",
+            "value": "2"
+          },
+          {
+            "name": "D3D_NAME_CULL_DISTANCE",
+            "value": "3"
+          },
+          {
+            "name": "D3D_NAME_RENDER_TARGET_ARRAY_INDEX",
+            "value": "4"
+          },
+          {
+            "name": "D3D_NAME_VIEWPORT_ARRAY_INDEX",
+            "value": "5"
+          },
+          {
+            "name": "D3D_NAME_VERTEX_ID",
+            "value": "6"
+          },
+          {
+            "name": "D3D_NAME_PRIMITIVE_ID",
+            "value": "7"
+          },
+          {
+            "name": "D3D_NAME_INSTANCE_ID",
+            "value": "8"
+          },
+          {
+            "name": "D3D_NAME_IS_FRONT_FACE",
+            "value": "9"
+          },
+          {
+            "name": "D3D_NAME_SAMPLE_INDEX",
+            "value": "10"
+          },
+          {
+            "name": "D3D_NAME_FINAL_QUAD_EDGE_TESSFACTOR",
+            "value": "11"
+          },
+          {
+            "name": "D3D_NAME_FINAL_QUAD_INSIDE_TESSFACTOR",
+            "value": "12"
+          },
+          {
+            "name": "D3D_NAME_FINAL_TRI_EDGE_TESSFACTOR",
+            "value": "13"
+          },
+          {
+            "name": "D3D_NAME_FINAL_TRI_INSIDE_TESSFACTOR",
+            "value": "14"
+          },
+          {
+            "name": "D3D_NAME_FINAL_LINE_DETAIL_TESSFACTOR",
+            "value": "15"
+          },
+          {
+            "name": "D3D_NAME_FINAL_LINE_DENSITY_TESSFACTOR",
+            "value": "16"
+          },
+          {
+            "name": "D3D_NAME_BARYCENTRICS",
+            "value": "23"
+          },
+          {
+            "name": "D3D_NAME_SHADINGRATE",
+            "value": "24"
+          },
+          {
+            "name": "D3D_NAME_CULLPRIMITIVE",
+            "value": "25"
+          },
+          {
+            "name": "D3D_NAME_TARGET",
+            "value": "64"
+          },
+          {
+            "name": "D3D_NAME_DEPTH",
+            "value": "65"
+          },
+          {
+            "name": "D3D_NAME_COVERAGE",
+            "value": "66"
+          },
+          {
+            "name": "D3D_NAME_DEPTH_GREATER_EQUAL",
+            "value": "67"
+          },
+          {
+            "name": "D3D_NAME_DEPTH_LESS_EQUAL",
+            "value": "68"
+          },
+          {
+            "name": "D3D_NAME_STENCIL_REF",
+            "value": "69"
+          },
+          {
+            "name": "D3D_NAME_INNER_COVERAGE",
+            "value": "70"
+          },
+          {
+            "name": "D3D10_NAME_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_NAME_POSITION",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_NAME_CLIP_DISTANCE",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_NAME_CULL_DISTANCE",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_NAME_RENDER_TARGET_ARRAY_INDEX",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_NAME_VIEWPORT_ARRAY_INDEX",
+            "value": "5"
+          },
+          {
+            "name": "D3D10_NAME_VERTEX_ID",
+            "value": "6"
+          },
+          {
+            "name": "D3D10_NAME_PRIMITIVE_ID",
+            "value": "7"
+          },
+          {
+            "name": "D3D10_NAME_INSTANCE_ID",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_NAME_IS_FRONT_FACE",
+            "value": "9"
+          },
+          {
+            "name": "D3D10_NAME_SAMPLE_INDEX",
+            "value": "10"
+          },
+          {
+            "name": "D3D10_NAME_TARGET",
+            "value": "64"
+          },
+          {
+            "name": "D3D10_NAME_DEPTH",
+            "value": "65"
+          },
+          {
+            "name": "D3D10_NAME_COVERAGE",
+            "value": "66"
+          },
+          {
+            "name": "D3D11_NAME_FINAL_QUAD_EDGE_TESSFACTOR",
+            "value": "11"
+          },
+          {
+            "name": "D3D11_NAME_FINAL_QUAD_INSIDE_TESSFACTOR",
+            "value": "12"
+          },
+          {
+            "name": "D3D11_NAME_FINAL_TRI_EDGE_TESSFACTOR",
+            "value": "13"
+          },
+          {
+            "name": "D3D11_NAME_FINAL_TRI_INSIDE_TESSFACTOR",
+            "value": "14"
+          },
+          {
+            "name": "D3D11_NAME_FINAL_LINE_DETAIL_TESSFACTOR",
+            "value": "15"
+          },
+          {
+            "name": "D3D11_NAME_FINAL_LINE_DENSITY_TESSFACTOR",
+            "value": "16"
+          },
+          {
+            "name": "D3D11_NAME_DEPTH_GREATER_EQUAL",
+            "value": "67"
+          },
+          {
+            "name": "D3D11_NAME_DEPTH_LESS_EQUAL",
+            "value": "68"
+          },
+          {
+            "name": "D3D11_NAME_STENCIL_REF",
+            "value": "69"
+          },
+          {
+            "name": "D3D11_NAME_INNER_COVERAGE",
+            "value": "70"
+          },
+          {
+            "name": "D3D12_NAME_BARYCENTRICS",
+            "value": "23"
+          },
+          {
+            "name": "D3D12_NAME_SHADINGRATE",
+            "value": "24"
+          },
+          {
+            "name": "D3D12_NAME_CULLPRIMITIVE",
+            "value": "25"
+          }
+        ]
+      },
+      {
+        "name": "D3D_PRIMITIVE",
+        "header": "d3dcommon.h",
+        "sourceLine": 224,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_PRIMITIVE_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_PRIMITIVE_POINT",
+            "value": "1"
+          },
+          {
+            "name": "D3D_PRIMITIVE_LINE",
+            "value": "2"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TRIANGLE",
+            "value": "3"
+          },
+          {
+            "name": "D3D_PRIMITIVE_LINE_ADJ",
+            "value": "6"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TRIANGLE_ADJ",
+            "value": "7"
+          },
+          {
+            "name": "D3D_PRIMITIVE_1_CONTROL_POINT_PATCH",
+            "value": "8"
+          },
+          {
+            "name": "D3D_PRIMITIVE_2_CONTROL_POINT_PATCH",
+            "value": "9"
+          },
+          {
+            "name": "D3D_PRIMITIVE_3_CONTROL_POINT_PATCH",
+            "value": "10"
+          },
+          {
+            "name": "D3D_PRIMITIVE_4_CONTROL_POINT_PATCH",
+            "value": "11"
+          },
+          {
+            "name": "D3D_PRIMITIVE_5_CONTROL_POINT_PATCH",
+            "value": "12"
+          },
+          {
+            "name": "D3D_PRIMITIVE_6_CONTROL_POINT_PATCH",
+            "value": "13"
+          },
+          {
+            "name": "D3D_PRIMITIVE_7_CONTROL_POINT_PATCH",
+            "value": "14"
+          },
+          {
+            "name": "D3D_PRIMITIVE_8_CONTROL_POINT_PATCH",
+            "value": "15"
+          },
+          {
+            "name": "D3D_PRIMITIVE_9_CONTROL_POINT_PATCH",
+            "value": "16"
+          },
+          {
+            "name": "D3D_PRIMITIVE_10_CONTROL_POINT_PATCH",
+            "value": "17"
+          },
+          {
+            "name": "D3D_PRIMITIVE_11_CONTROL_POINT_PATCH",
+            "value": "18"
+          },
+          {
+            "name": "D3D_PRIMITIVE_12_CONTROL_POINT_PATCH",
+            "value": "19"
+          },
+          {
+            "name": "D3D_PRIMITIVE_13_CONTROL_POINT_PATCH",
+            "value": "20"
+          },
+          {
+            "name": "D3D_PRIMITIVE_14_CONTROL_POINT_PATCH",
+            "value": "21"
+          },
+          {
+            "name": "D3D_PRIMITIVE_15_CONTROL_POINT_PATCH",
+            "value": "22"
+          },
+          {
+            "name": "D3D_PRIMITIVE_16_CONTROL_POINT_PATCH",
+            "value": "23"
+          },
+          {
+            "name": "D3D_PRIMITIVE_17_CONTROL_POINT_PATCH",
+            "value": "24"
+          },
+          {
+            "name": "D3D_PRIMITIVE_18_CONTROL_POINT_PATCH",
+            "value": "25"
+          },
+          {
+            "name": "D3D_PRIMITIVE_19_CONTROL_POINT_PATCH",
+            "value": "26"
+          },
+          {
+            "name": "D3D_PRIMITIVE_20_CONTROL_POINT_PATCH",
+            "value": "27"
+          },
+          {
+            "name": "D3D_PRIMITIVE_21_CONTROL_POINT_PATCH",
+            "value": "28"
+          },
+          {
+            "name": "D3D_PRIMITIVE_22_CONTROL_POINT_PATCH",
+            "value": "29"
+          },
+          {
+            "name": "D3D_PRIMITIVE_23_CONTROL_POINT_PATCH",
+            "value": "30"
+          },
+          {
+            "name": "D3D_PRIMITIVE_24_CONTROL_POINT_PATCH",
+            "value": "31"
+          },
+          {
+            "name": "D3D_PRIMITIVE_25_CONTROL_POINT_PATCH",
+            "value": "32"
+          },
+          {
+            "name": "D3D_PRIMITIVE_26_CONTROL_POINT_PATCH",
+            "value": "33"
+          },
+          {
+            "name": "D3D_PRIMITIVE_27_CONTROL_POINT_PATCH",
+            "value": "34"
+          },
+          {
+            "name": "D3D_PRIMITIVE_28_CONTROL_POINT_PATCH",
+            "value": "35"
+          },
+          {
+            "name": "D3D_PRIMITIVE_29_CONTROL_POINT_PATCH",
+            "value": "36"
+          },
+          {
+            "name": "D3D_PRIMITIVE_30_CONTROL_POINT_PATCH",
+            "value": "37"
+          },
+          {
+            "name": "D3D_PRIMITIVE_31_CONTROL_POINT_PATCH",
+            "value": "38"
+          },
+          {
+            "name": "D3D_PRIMITIVE_32_CONTROL_POINT_PATCH",
+            "value": "39"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_POINT",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_LINE",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TRIANGLE",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_LINE_ADJ",
+            "value": "6"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TRIANGLE_ADJ",
+            "value": "7"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_POINT",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_LINE",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TRIANGLE",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_LINE_ADJ",
+            "value": "6"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TRIANGLE_ADJ",
+            "value": "7"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_1_CONTROL_POINT_PATCH",
+            "value": "8"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_2_CONTROL_POINT_PATCH",
+            "value": "9"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_3_CONTROL_POINT_PATCH",
+            "value": "10"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_4_CONTROL_POINT_PATCH",
+            "value": "11"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_5_CONTROL_POINT_PATCH",
+            "value": "12"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_6_CONTROL_POINT_PATCH",
+            "value": "13"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_7_CONTROL_POINT_PATCH",
+            "value": "14"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_8_CONTROL_POINT_PATCH",
+            "value": "15"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_9_CONTROL_POINT_PATCH",
+            "value": "16"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_10_CONTROL_POINT_PATCH",
+            "value": "17"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_11_CONTROL_POINT_PATCH",
+            "value": "18"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_12_CONTROL_POINT_PATCH",
+            "value": "19"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_13_CONTROL_POINT_PATCH",
+            "value": "20"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_14_CONTROL_POINT_PATCH",
+            "value": "21"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_15_CONTROL_POINT_PATCH",
+            "value": "22"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_16_CONTROL_POINT_PATCH",
+            "value": "23"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_17_CONTROL_POINT_PATCH",
+            "value": "24"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_18_CONTROL_POINT_PATCH",
+            "value": "25"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_19_CONTROL_POINT_PATCH",
+            "value": "26"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_20_CONTROL_POINT_PATCH",
+            "value": "27"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_21_CONTROL_POINT_PATCH",
+            "value": "28"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_22_CONTROL_POINT_PATCH",
+            "value": "29"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_23_CONTROL_POINT_PATCH",
+            "value": "30"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_24_CONTROL_POINT_PATCH",
+            "value": "31"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_25_CONTROL_POINT_PATCH",
+            "value": "32"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_26_CONTROL_POINT_PATCH",
+            "value": "33"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_27_CONTROL_POINT_PATCH",
+            "value": "34"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_28_CONTROL_POINT_PATCH",
+            "value": "35"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_29_CONTROL_POINT_PATCH",
+            "value": "36"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_30_CONTROL_POINT_PATCH",
+            "value": "37"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_31_CONTROL_POINT_PATCH",
+            "value": "38"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_32_CONTROL_POINT_PATCH",
+            "value": "39"
+          }
+        ]
+      },
+      {
+        "name": "D3D_PRIMITIVE_TOPOLOGY",
+        "header": "d3dcommon.h",
+        "sourceLine": 125,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_POINTLIST",
+            "value": "1"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_LINELIST",
+            "value": "2"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_LINESTRIP",
+            "value": "3"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST",
+            "value": "4"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP",
+            "value": "5"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ",
+            "value": "10"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ",
+            "value": "11"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ",
+            "value": "12"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ",
+            "value": "13"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST",
+            "value": "33"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST",
+            "value": "34"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST",
+            "value": "35"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST",
+            "value": "36"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST",
+            "value": "37"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST",
+            "value": "38"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST",
+            "value": "39"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST",
+            "value": "40"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST",
+            "value": "41"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST",
+            "value": "42"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST",
+            "value": "43"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST",
+            "value": "44"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST",
+            "value": "45"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST",
+            "value": "46"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST",
+            "value": "47"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST",
+            "value": "48"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST",
+            "value": "49"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST",
+            "value": "50"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST",
+            "value": "51"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST",
+            "value": "52"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST",
+            "value": "53"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST",
+            "value": "54"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST",
+            "value": "55"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST",
+            "value": "56"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST",
+            "value": "57"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST",
+            "value": "58"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST",
+            "value": "59"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST",
+            "value": "60"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST",
+            "value": "61"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST",
+            "value": "62"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST",
+            "value": "63"
+          },
+          {
+            "name": "D3D_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST",
+            "value": "64"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_POINTLIST",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_LINELIST",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP",
+            "value": "5"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_LINELIST_ADJ",
+            "value": "10"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ",
+            "value": "11"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ",
+            "value": "12"
+          },
+          {
+            "name": "D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ",
+            "value": "13"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_POINTLIST",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_LINELIST",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP",
+            "value": "5"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_LINELIST_ADJ",
+            "value": "10"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ",
+            "value": "11"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ",
+            "value": "12"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ",
+            "value": "13"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST",
+            "value": "33"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_2_CONTROL_POINT_PATCHLIST",
+            "value": "34"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST",
+            "value": "35"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST",
+            "value": "36"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_5_CONTROL_POINT_PATCHLIST",
+            "value": "37"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST",
+            "value": "38"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_7_CONTROL_POINT_PATCHLIST",
+            "value": "39"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_8_CONTROL_POINT_PATCHLIST",
+            "value": "40"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_9_CONTROL_POINT_PATCHLIST",
+            "value": "41"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST",
+            "value": "42"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_11_CONTROL_POINT_PATCHLIST",
+            "value": "43"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_12_CONTROL_POINT_PATCHLIST",
+            "value": "44"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_13_CONTROL_POINT_PATCHLIST",
+            "value": "45"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_14_CONTROL_POINT_PATCHLIST",
+            "value": "46"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_15_CONTROL_POINT_PATCHLIST",
+            "value": "47"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST",
+            "value": "48"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_17_CONTROL_POINT_PATCHLIST",
+            "value": "49"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_18_CONTROL_POINT_PATCHLIST",
+            "value": "50"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_19_CONTROL_POINT_PATCHLIST",
+            "value": "51"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_20_CONTROL_POINT_PATCHLIST",
+            "value": "52"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_21_CONTROL_POINT_PATCHLIST",
+            "value": "53"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_22_CONTROL_POINT_PATCHLIST",
+            "value": "54"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_23_CONTROL_POINT_PATCHLIST",
+            "value": "55"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_24_CONTROL_POINT_PATCHLIST",
+            "value": "56"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_25_CONTROL_POINT_PATCHLIST",
+            "value": "57"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_26_CONTROL_POINT_PATCHLIST",
+            "value": "58"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_27_CONTROL_POINT_PATCHLIST",
+            "value": "59"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_28_CONTROL_POINT_PATCHLIST",
+            "value": "60"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_29_CONTROL_POINT_PATCHLIST",
+            "value": "61"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_30_CONTROL_POINT_PATCHLIST",
+            "value": "62"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_31_CONTROL_POINT_PATCHLIST",
+            "value": "63"
+          },
+          {
+            "name": "D3D11_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST",
+            "value": "64"
+          }
+        ]
+      },
+      {
+        "name": "D3D_REGISTER_COMPONENT_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 954,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_REGISTER_COMPONENT_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D_REGISTER_COMPONENT_UINT32",
+            "value": "1"
+          },
+          {
+            "name": "D3D_REGISTER_COMPONENT_SINT32",
+            "value": "2"
+          },
+          {
+            "name": "D3D_REGISTER_COMPONENT_FLOAT32",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_REGISTER_COMPONENT_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_REGISTER_COMPONENT_UINT32",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_REGISTER_COMPONENT_SINT32",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_REGISTER_COMPONENT_FLOAT32",
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "name": "D3D_RESOURCE_RETURN_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 927,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_RETURN_TYPE_UNORM",
+            "value": "1"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_SNORM",
+            "value": "2"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_SINT",
+            "value": "3"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_UINT",
+            "value": "4"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_FLOAT",
+            "value": "5"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_MIXED",
+            "value": "6"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_DOUBLE",
+            "value": "7"
+          },
+          {
+            "name": "D3D_RETURN_TYPE_CONTINUED",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_RETURN_TYPE_UNORM",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_RETURN_TYPE_SNORM",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_RETURN_TYPE_SINT",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_RETURN_TYPE_UINT",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_RETURN_TYPE_FLOAT",
+            "value": "5"
+          },
+          {
+            "name": "D3D10_RETURN_TYPE_MIXED",
+            "value": "6"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_UNORM",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_SNORM",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_SINT",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_UINT",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_FLOAT",
+            "value": "5"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_MIXED",
+            "value": "6"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_DOUBLE",
+            "value": "7"
+          },
+          {
+            "name": "D3D11_RETURN_TYPE_CONTINUED",
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "name": "D3D_SRV_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 311,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_SRV_DIMENSION_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_BUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE1D",
+            "value": "2"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE1DARRAY",
+            "value": "3"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE2D",
+            "value": "4"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE2DARRAY",
+            "value": "5"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE2DMS",
+            "value": "6"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE2DMSARRAY",
+            "value": "7"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURE3D",
+            "value": "8"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURECUBE",
+            "value": "9"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_TEXTURECUBEARRAY",
+            "value": "10"
+          },
+          {
+            "name": "D3D_SRV_DIMENSION_BUFFEREX",
+            "value": "11"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_BUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE1D",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE1DARRAY",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE2D",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE2DARRAY",
+            "value": "5"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE2DMS",
+            "value": "6"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE2DMSARRAY",
+            "value": "7"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURE3D",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_SRV_DIMENSION_TEXTURECUBE",
+            "value": "9"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_BUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE1D",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE1DARRAY",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE2D",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE2DARRAY",
+            "value": "5"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE2DMS",
+            "value": "6"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE2DMSARRAY",
+            "value": "7"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURE3D",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURECUBE",
+            "value": "9"
+          },
+          {
+            "name": "D3D10_1_SRV_DIMENSION_TEXTURECUBEARRAY",
+            "value": "10"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_UNKNOWN",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_BUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE1D",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE1DARRAY",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE2D",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE2DARRAY",
+            "value": "5"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE2DMS",
+            "value": "6"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY",
+            "value": "7"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURE3D",
+            "value": "8"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURECUBE",
+            "value": "9"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_TEXTURECUBEARRAY",
+            "value": "10"
+          },
+          {
+            "name": "D3D11_SRV_DIMENSION_BUFFEREX",
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "name": "D3D_TESSELLATOR_DOMAIN",
+        "header": "d3dcommon.h",
+        "sourceLine": 967,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_TESSELLATOR_DOMAIN_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_TESSELLATOR_DOMAIN_ISOLINE",
+            "value": "1"
+          },
+          {
+            "name": "D3D_TESSELLATOR_DOMAIN_TRI",
+            "value": "2"
+          },
+          {
+            "name": "D3D_TESSELLATOR_DOMAIN_QUAD",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_DOMAIN_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_DOMAIN_ISOLINE",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_DOMAIN_TRI",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_DOMAIN_QUAD",
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "name": "D3D_TESSELLATOR_OUTPUT_PRIMITIVE",
+        "header": "d3dcommon.h",
+        "sourceLine": 995,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_TESSELLATOR_OUTPUT_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_TESSELLATOR_OUTPUT_POINT",
+            "value": "1"
+          },
+          {
+            "name": "D3D_TESSELLATOR_OUTPUT_LINE",
+            "value": "2"
+          },
+          {
+            "name": "D3D_TESSELLATOR_OUTPUT_TRIANGLE_CW",
+            "value": "3"
+          },
+          {
+            "name": "D3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_OUTPUT_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_OUTPUT_POINT",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_OUTPUT_LINE",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_OUTPUT_TRIANGLE_CW",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_OUTPUT_TRIANGLE_CCW",
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "name": "D3D_TESSELLATOR_PARTITIONING",
+        "header": "d3dcommon.h",
+        "sourceLine": 980,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_TESSELLATOR_PARTITIONING_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D_TESSELLATOR_PARTITIONING_INTEGER",
+            "value": "1"
+          },
+          {
+            "name": "D3D_TESSELLATOR_PARTITIONING_POW2",
+            "value": "2"
+          },
+          {
+            "name": "D3D_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD",
+            "value": "3"
+          },
+          {
+            "name": "D3D_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_PARTITIONING_UNDEFINED",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_PARTITIONING_INTEGER",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_PARTITIONING_POW2",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN",
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_CBUFFER_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 853,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_CT_CBUFFER",
+            "value": "0"
+          },
+          {
+            "name": "D3D_CT_TBUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D_CT_INTERFACE_POINTERS",
+            "value": "2"
+          },
+          {
+            "name": "D3D_CT_RESOURCE_BIND_INFO",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_CT_CBUFFER",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_CT_TBUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_CT_CBUFFER",
+            "value": "0"
+          },
+          {
+            "name": "D3D11_CT_TBUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D11_CT_INTERFACE_POINTERS",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_CT_RESOURCE_BIND_INFO",
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_INCLUDE_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 621,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_INCLUDE_LOCAL",
+            "value": "0"
+          },
+          {
+            "name": "D3D_INCLUDE_SYSTEM",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_INCLUDE_LOCAL",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_INCLUDE_SYSTEM",
+            "value": "1"
+          },
+          {
+            "name": "D3D_INCLUDE_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_PARAMETER_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 1036,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_PF_NONE",
+            "value": "0"
+          },
+          {
+            "name": "D3D_PF_IN",
+            "value": "1"
+          },
+          {
+            "name": "D3D_PF_OUT",
+            "value": "2"
+          },
+          {
+            "name": "D3D_PF_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_SHADER_CBUFFER_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 845,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_CBF_USERPACKED",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_CBF_USERPACKED",
+            "value": "1"
+          },
+          {
+            "name": "D3D_CBF_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_SHADER_INPUT_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 797,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_SIF_USERPACKED",
+            "value": "1"
+          },
+          {
+            "name": "D3D_SIF_COMPARISON_SAMPLER",
+            "value": "2"
+          },
+          {
+            "name": "D3D_SIF_TEXTURE_COMPONENT_0",
+            "value": "4"
+          },
+          {
+            "name": "D3D_SIF_TEXTURE_COMPONENT_1",
+            "value": "8"
+          },
+          {
+            "name": "D3D_SIF_TEXTURE_COMPONENTS",
+            "value": "12"
+          },
+          {
+            "name": "D3D_SIF_UNUSED",
+            "value": "16"
+          },
+          {
+            "name": "D3D10_SIF_USERPACKED",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_SIF_COMPARISON_SAMPLER",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_SIF_TEXTURE_COMPONENT_0",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_SIF_TEXTURE_COMPONENT_1",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_SIF_TEXTURE_COMPONENTS",
+            "value": "12"
+          },
+          {
+            "name": "D3D_SIF_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_SHADER_INPUT_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 814,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_SIT_CBUFFER",
+            "value": "0"
+          },
+          {
+            "name": "D3D_SIT_TBUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D_SIT_TEXTURE",
+            "value": "2"
+          },
+          {
+            "name": "D3D_SIT_SAMPLER",
+            "value": "3"
+          },
+          {
+            "name": "D3D_SIT_UAV_RWTYPED",
+            "value": "4"
+          },
+          {
+            "name": "D3D_SIT_STRUCTURED",
+            "value": "5"
+          },
+          {
+            "name": "D3D_SIT_UAV_RWSTRUCTURED",
+            "value": "6"
+          },
+          {
+            "name": "D3D_SIT_BYTEADDRESS",
+            "value": "7"
+          },
+          {
+            "name": "D3D_SIT_UAV_RWBYTEADDRESS",
+            "value": "8"
+          },
+          {
+            "name": "D3D_SIT_UAV_APPEND_STRUCTURED",
+            "value": "9"
+          },
+          {
+            "name": "D3D_SIT_UAV_CONSUME_STRUCTURED",
+            "value": "10"
+          },
+          {
+            "name": "D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER",
+            "value": "11"
+          },
+          {
+            "name": "D3D_SIT_RTACCELERATIONSTRUCTURE",
+            "value": "12"
+          },
+          {
+            "name": "D3D_SIT_UAV_FEEDBACKTEXTURE",
+            "value": "13"
+          },
+          {
+            "name": "D3D10_SIT_CBUFFER",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_SIT_TBUFFER",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_SIT_TEXTURE",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_SIT_SAMPLER",
+            "value": "3"
+          },
+          {
+            "name": "D3D11_SIT_UAV_RWTYPED",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_SIT_STRUCTURED",
+            "value": "5"
+          },
+          {
+            "name": "D3D11_SIT_UAV_RWSTRUCTURED",
+            "value": "6"
+          },
+          {
+            "name": "D3D11_SIT_BYTEADDRESS",
+            "value": "7"
+          },
+          {
+            "name": "D3D11_SIT_UAV_RWBYTEADDRESS",
+            "value": "8"
+          },
+          {
+            "name": "D3D11_SIT_UAV_APPEND_STRUCTURED",
+            "value": "9"
+          },
+          {
+            "name": "D3D11_SIT_UAV_CONSUME_STRUCTURED",
+            "value": "10"
+          },
+          {
+            "name": "D3D11_SIT_UAV_RWSTRUCTURED_WITH_COUNTER",
+            "value": "11"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_SHADER_VARIABLE_CLASS",
+        "header": "d3dcommon.h",
+        "sourceLine": 640,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_SVC_SCALAR",
+            "value": "0"
+          },
+          {
+            "name": "D3D_SVC_VECTOR",
+            "value": "1"
+          },
+          {
+            "name": "D3D_SVC_MATRIX_ROWS",
+            "value": "2"
+          },
+          {
+            "name": "D3D_SVC_MATRIX_COLUMNS",
+            "value": "3"
+          },
+          {
+            "name": "D3D_SVC_OBJECT",
+            "value": "4"
+          },
+          {
+            "name": "D3D_SVC_STRUCT",
+            "value": "5"
+          },
+          {
+            "name": "D3D_SVC_INTERFACE_CLASS",
+            "value": "6"
+          },
+          {
+            "name": "D3D_SVC_INTERFACE_POINTER",
+            "value": "7"
+          },
+          {
+            "name": "D3D10_SVC_SCALAR",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_SVC_VECTOR",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_SVC_MATRIX_ROWS",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_SVC_MATRIX_COLUMNS",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_SVC_OBJECT",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_SVC_STRUCT",
+            "value": "5"
+          },
+          {
+            "name": "D3D11_SVC_INTERFACE_CLASS",
+            "value": "6"
+          },
+          {
+            "name": "D3D11_SVC_INTERFACE_POINTER",
+            "value": "7"
+          },
+          {
+            "name": "D3D_SVC_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_SHADER_VARIABLE_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 662,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_SVF_USERPACKED",
+            "value": "1"
+          },
+          {
+            "name": "D3D_SVF_USED",
+            "value": "2"
+          },
+          {
+            "name": "D3D_SVF_INTERFACE_POINTER",
+            "value": "4"
+          },
+          {
+            "name": "D3D_SVF_INTERFACE_PARAMETER",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_SVF_USERPACKED",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_SVF_USED",
+            "value": "2"
+          },
+          {
+            "name": "D3D11_SVF_INTERFACE_POINTER",
+            "value": "4"
+          },
+          {
+            "name": "D3D11_SVF_INTERFACE_PARAMETER",
+            "value": "8"
+          },
+          {
+            "name": "D3D_SVF_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      },
+      {
+        "name": "_D3D_SHADER_VARIABLE_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 676,
+        "underlyingType": "int",
+        "entries": [
+          {
+            "name": "D3D_SVT_VOID",
+            "value": "0"
+          },
+          {
+            "name": "D3D_SVT_BOOL",
+            "value": "1"
+          },
+          {
+            "name": "D3D_SVT_INT",
+            "value": "2"
+          },
+          {
+            "name": "D3D_SVT_FLOAT",
+            "value": "3"
+          },
+          {
+            "name": "D3D_SVT_STRING",
+            "value": "4"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE",
+            "value": "5"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE1D",
+            "value": "6"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE2D",
+            "value": "7"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE3D",
+            "value": "8"
+          },
+          {
+            "name": "D3D_SVT_TEXTURECUBE",
+            "value": "9"
+          },
+          {
+            "name": "D3D_SVT_SAMPLER",
+            "value": "10"
+          },
+          {
+            "name": "D3D_SVT_SAMPLER1D",
+            "value": "11"
+          },
+          {
+            "name": "D3D_SVT_SAMPLER2D",
+            "value": "12"
+          },
+          {
+            "name": "D3D_SVT_SAMPLER3D",
+            "value": "13"
+          },
+          {
+            "name": "D3D_SVT_SAMPLERCUBE",
+            "value": "14"
+          },
+          {
+            "name": "D3D_SVT_PIXELSHADER",
+            "value": "15"
+          },
+          {
+            "name": "D3D_SVT_VERTEXSHADER",
+            "value": "16"
+          },
+          {
+            "name": "D3D_SVT_PIXELFRAGMENT",
+            "value": "17"
+          },
+          {
+            "name": "D3D_SVT_VERTEXFRAGMENT",
+            "value": "18"
+          },
+          {
+            "name": "D3D_SVT_UINT",
+            "value": "19"
+          },
+          {
+            "name": "D3D_SVT_UINT8",
+            "value": "20"
+          },
+          {
+            "name": "D3D_SVT_GEOMETRYSHADER",
+            "value": "21"
+          },
+          {
+            "name": "D3D_SVT_RASTERIZER",
+            "value": "22"
+          },
+          {
+            "name": "D3D_SVT_DEPTHSTENCIL",
+            "value": "23"
+          },
+          {
+            "name": "D3D_SVT_BLEND",
+            "value": "24"
+          },
+          {
+            "name": "D3D_SVT_BUFFER",
+            "value": "25"
+          },
+          {
+            "name": "D3D_SVT_CBUFFER",
+            "value": "26"
+          },
+          {
+            "name": "D3D_SVT_TBUFFER",
+            "value": "27"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE1DARRAY",
+            "value": "28"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE2DARRAY",
+            "value": "29"
+          },
+          {
+            "name": "D3D_SVT_RENDERTARGETVIEW",
+            "value": "30"
+          },
+          {
+            "name": "D3D_SVT_DEPTHSTENCILVIEW",
+            "value": "31"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE2DMS",
+            "value": "32"
+          },
+          {
+            "name": "D3D_SVT_TEXTURE2DMSARRAY",
+            "value": "33"
+          },
+          {
+            "name": "D3D_SVT_TEXTURECUBEARRAY",
+            "value": "34"
+          },
+          {
+            "name": "D3D_SVT_HULLSHADER",
+            "value": "35"
+          },
+          {
+            "name": "D3D_SVT_DOMAINSHADER",
+            "value": "36"
+          },
+          {
+            "name": "D3D_SVT_INTERFACE_POINTER",
+            "value": "37"
+          },
+          {
+            "name": "D3D_SVT_COMPUTESHADER",
+            "value": "38"
+          },
+          {
+            "name": "D3D_SVT_DOUBLE",
+            "value": "39"
+          },
+          {
+            "name": "D3D_SVT_RWTEXTURE1D",
+            "value": "40"
+          },
+          {
+            "name": "D3D_SVT_RWTEXTURE1DARRAY",
+            "value": "41"
+          },
+          {
+            "name": "D3D_SVT_RWTEXTURE2D",
+            "value": "42"
+          },
+          {
+            "name": "D3D_SVT_RWTEXTURE2DARRAY",
+            "value": "43"
+          },
+          {
+            "name": "D3D_SVT_RWTEXTURE3D",
+            "value": "44"
+          },
+          {
+            "name": "D3D_SVT_RWBUFFER",
+            "value": "45"
+          },
+          {
+            "name": "D3D_SVT_BYTEADDRESS_BUFFER",
+            "value": "46"
+          },
+          {
+            "name": "D3D_SVT_RWBYTEADDRESS_BUFFER",
+            "value": "47"
+          },
+          {
+            "name": "D3D_SVT_STRUCTURED_BUFFER",
+            "value": "48"
+          },
+          {
+            "name": "D3D_SVT_RWSTRUCTURED_BUFFER",
+            "value": "49"
+          },
+          {
+            "name": "D3D_SVT_APPEND_STRUCTURED_BUFFER",
+            "value": "50"
+          },
+          {
+            "name": "D3D_SVT_CONSUME_STRUCTURED_BUFFER",
+            "value": "51"
+          },
+          {
+            "name": "D3D_SVT_MIN8FLOAT",
+            "value": "52"
+          },
+          {
+            "name": "D3D_SVT_MIN10FLOAT",
+            "value": "53"
+          },
+          {
+            "name": "D3D_SVT_MIN16FLOAT",
+            "value": "54"
+          },
+          {
+            "name": "D3D_SVT_MIN12INT",
+            "value": "55"
+          },
+          {
+            "name": "D3D_SVT_MIN16INT",
+            "value": "56"
+          },
+          {
+            "name": "D3D_SVT_MIN16UINT",
+            "value": "57"
+          },
+          {
+            "name": "D3D_SVT_INT16",
+            "value": "58"
+          },
+          {
+            "name": "D3D_SVT_UINT16",
+            "value": "59"
+          },
+          {
+            "name": "D3D_SVT_FLOAT16",
+            "value": "60"
+          },
+          {
+            "name": "D3D_SVT_INT64",
+            "value": "61"
+          },
+          {
+            "name": "D3D_SVT_UINT64",
+            "value": "62"
+          },
+          {
+            "name": "D3D10_SVT_VOID",
+            "value": "0"
+          },
+          {
+            "name": "D3D10_SVT_BOOL",
+            "value": "1"
+          },
+          {
+            "name": "D3D10_SVT_INT",
+            "value": "2"
+          },
+          {
+            "name": "D3D10_SVT_FLOAT",
+            "value": "3"
+          },
+          {
+            "name": "D3D10_SVT_STRING",
+            "value": "4"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE",
+            "value": "5"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE1D",
+            "value": "6"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE2D",
+            "value": "7"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE3D",
+            "value": "8"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURECUBE",
+            "value": "9"
+          },
+          {
+            "name": "D3D10_SVT_SAMPLER",
+            "value": "10"
+          },
+          {
+            "name": "D3D10_SVT_SAMPLER1D",
+            "value": "11"
+          },
+          {
+            "name": "D3D10_SVT_SAMPLER2D",
+            "value": "12"
+          },
+          {
+            "name": "D3D10_SVT_SAMPLER3D",
+            "value": "13"
+          },
+          {
+            "name": "D3D10_SVT_SAMPLERCUBE",
+            "value": "14"
+          },
+          {
+            "name": "D3D10_SVT_PIXELSHADER",
+            "value": "15"
+          },
+          {
+            "name": "D3D10_SVT_VERTEXSHADER",
+            "value": "16"
+          },
+          {
+            "name": "D3D10_SVT_PIXELFRAGMENT",
+            "value": "17"
+          },
+          {
+            "name": "D3D10_SVT_VERTEXFRAGMENT",
+            "value": "18"
+          },
+          {
+            "name": "D3D10_SVT_UINT",
+            "value": "19"
+          },
+          {
+            "name": "D3D10_SVT_UINT8",
+            "value": "20"
+          },
+          {
+            "name": "D3D10_SVT_GEOMETRYSHADER",
+            "value": "21"
+          },
+          {
+            "name": "D3D10_SVT_RASTERIZER",
+            "value": "22"
+          },
+          {
+            "name": "D3D10_SVT_DEPTHSTENCIL",
+            "value": "23"
+          },
+          {
+            "name": "D3D10_SVT_BLEND",
+            "value": "24"
+          },
+          {
+            "name": "D3D10_SVT_BUFFER",
+            "value": "25"
+          },
+          {
+            "name": "D3D10_SVT_CBUFFER",
+            "value": "26"
+          },
+          {
+            "name": "D3D10_SVT_TBUFFER",
+            "value": "27"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE1DARRAY",
+            "value": "28"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE2DARRAY",
+            "value": "29"
+          },
+          {
+            "name": "D3D10_SVT_RENDERTARGETVIEW",
+            "value": "30"
+          },
+          {
+            "name": "D3D10_SVT_DEPTHSTENCILVIEW",
+            "value": "31"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE2DMS",
+            "value": "32"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURE2DMSARRAY",
+            "value": "33"
+          },
+          {
+            "name": "D3D10_SVT_TEXTURECUBEARRAY",
+            "value": "34"
+          },
+          {
+            "name": "D3D11_SVT_HULLSHADER",
+            "value": "35"
+          },
+          {
+            "name": "D3D11_SVT_DOMAINSHADER",
+            "value": "36"
+          },
+          {
+            "name": "D3D11_SVT_INTERFACE_POINTER",
+            "value": "37"
+          },
+          {
+            "name": "D3D11_SVT_COMPUTESHADER",
+            "value": "38"
+          },
+          {
+            "name": "D3D11_SVT_DOUBLE",
+            "value": "39"
+          },
+          {
+            "name": "D3D11_SVT_RWTEXTURE1D",
+            "value": "40"
+          },
+          {
+            "name": "D3D11_SVT_RWTEXTURE1DARRAY",
+            "value": "41"
+          },
+          {
+            "name": "D3D11_SVT_RWTEXTURE2D",
+            "value": "42"
+          },
+          {
+            "name": "D3D11_SVT_RWTEXTURE2DARRAY",
+            "value": "43"
+          },
+          {
+            "name": "D3D11_SVT_RWTEXTURE3D",
+            "value": "44"
+          },
+          {
+            "name": "D3D11_SVT_RWBUFFER",
+            "value": "45"
+          },
+          {
+            "name": "D3D11_SVT_BYTEADDRESS_BUFFER",
+            "value": "46"
+          },
+          {
+            "name": "D3D11_SVT_RWBYTEADDRESS_BUFFER",
+            "value": "47"
+          },
+          {
+            "name": "D3D11_SVT_STRUCTURED_BUFFER",
+            "value": "48"
+          },
+          {
+            "name": "D3D11_SVT_RWSTRUCTURED_BUFFER",
+            "value": "49"
+          },
+          {
+            "name": "D3D11_SVT_APPEND_STRUCTURED_BUFFER",
+            "value": "50"
+          },
+          {
+            "name": "D3D11_SVT_CONSUME_STRUCTURED_BUFFER",
+            "value": "51"
+          },
+          {
+            "name": "D3D_SVT_FORCE_DWORD",
+            "value": "2147483647"
+          }
+        ]
+      }
+    ],
+    "records": [
+      {
+        "name": "ID3D10Blob",
+        "header": "d3dcommon.h",
+        "sourceLine": 457,
+        "kind": "struct",
+        "size": 8,
+        "align": 8,
+        "fields": [
+          {
+            "name": "lpVtbl",
+            "type": "struct ID3D10BlobVtbl *",
+            "canonicalType": null,
+            "offsetBits": 0,
+            "bitWidth": null
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "ID3DDestructionNotifier",
+        "header": "d3dcommon.h",
+        "sourceLine": 580,
+        "kind": "struct",
+        "size": 8,
+        "align": 8,
+        "fields": [
+          {
+            "name": "lpVtbl",
+            "type": "struct ID3DDestructionNotifierVtbl *",
+            "canonicalType": null,
+            "offsetBits": 0,
+            "bitWidth": null
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "ID3DInclude",
+        "header": "d3dcommon.h",
+        "sourceLine": 633,
+        "kind": "struct",
+        "size": 8,
+        "align": 8,
+        "fields": [
+          {
+            "name": "lpVtbl",
+            "type": "struct ID3DIncludeVtbl *",
+            "canonicalType": null,
+            "offsetBits": 0,
+            "bitWidth": null
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "_D3D_SHADER_DATA",
+        "header": "d3dcompiler.h",
+        "sourceLine": 525,
+        "kind": "struct",
+        "size": 16,
+        "align": 8,
+        "fields": [
+          {
+            "name": "pBytecode",
+            "type": "LPCVOID",
+            "canonicalType": "const void *",
+            "offsetBits": 0,
+            "bitWidth": null
+          },
+          {
+            "name": "BytecodeLength",
+            "type": "SIZE_T",
+            "canonicalType": "unsigned long long",
+            "offsetBits": 64,
+            "bitWidth": null
+          }
+        ],
+        "anonymous": false
+      },
+      {
+        "name": "_D3D_SHADER_MACRO",
+        "header": "d3dcommon.h",
+        "sourceLine": 389,
+        "kind": "struct",
+        "size": 16,
+        "align": 8,
+        "fields": [
+          {
+            "name": "Name",
+            "type": "LPCSTR",
+            "canonicalType": "const CHAR *",
+            "offsetBits": 0,
+            "bitWidth": null
+          },
+          {
+            "name": "Definition",
+            "type": "LPCSTR",
+            "canonicalType": "const CHAR *",
+            "offsetBits": 64,
+            "bitWidth": null
+          }
+        ],
+        "anonymous": false
+      }
+    ],
+    "typedefs": [
+      {
+        "name": "D3DCOMPILER_STRIP_FLAGS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 449,
+        "type": "enum D3DCOMPILER_STRIP_FLAGS",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_BLOB_PART",
+        "header": "d3dcompiler.h",
+        "sourceLine": 485,
+        "type": "enum D3D_BLOB_PART",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_CBUFFER_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 865,
+        "type": "enum _D3D_CBUFFER_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_DRIVER_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 91,
+        "type": "enum D3D_DRIVER_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_FEATURE_LEVEL",
+        "header": "d3dcommon.h",
+        "sourceLine": 107,
+        "type": "enum D3D_FEATURE_LEVEL",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_INCLUDE_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 628,
+        "type": "enum _D3D_INCLUDE_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_INTERPOLATION_MODE",
+        "header": "d3dcommon.h",
+        "sourceLine": 1033,
+        "type": "enum D3D_INTERPOLATION_MODE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_MIN_PRECISION",
+        "header": "d3dcommon.h",
+        "sourceLine": 1020,
+        "type": "enum D3D_MIN_PRECISION",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_NAME",
+        "header": "d3dcommon.h",
+        "sourceLine": 924,
+        "type": "enum D3D_NAME",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_PARAMETER_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 1042,
+        "type": "enum _D3D_PARAMETER_FLAGS",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_PRIMITIVE",
+        "header": "d3dcommon.h",
+        "sourceLine": 308,
+        "type": "enum D3D_PRIMITIVE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_PRIMITIVE_TOPOLOGY",
+        "header": "d3dcommon.h",
+        "sourceLine": 221,
+        "type": "enum D3D_PRIMITIVE_TOPOLOGY",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_REGISTER_COMPONENT_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 964,
+        "type": "enum D3D_REGISTER_COMPONENT_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_RESOURCE_RETURN_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 951,
+        "type": "enum D3D_RESOURCE_RETURN_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_CBUFFER_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 850,
+        "type": "enum _D3D_SHADER_CBUFFER_FLAGS",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_DATA",
+        "header": "d3dcompiler.h",
+        "sourceLine": 529,
+        "type": "struct _D3D_SHADER_DATA",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_INPUT_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 811,
+        "type": "enum _D3D_SHADER_INPUT_FLAGS",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_INPUT_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 842,
+        "type": "enum _D3D_SHADER_INPUT_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_MACRO",
+        "header": "d3dcommon.h",
+        "sourceLine": 393,
+        "type": "struct _D3D_SHADER_MACRO",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_VARIABLE_CLASS",
+        "header": "d3dcommon.h",
+        "sourceLine": 659,
+        "type": "enum _D3D_SHADER_VARIABLE_CLASS",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_VARIABLE_FLAGS",
+        "header": "d3dcommon.h",
+        "sourceLine": 673,
+        "type": "enum _D3D_SHADER_VARIABLE_FLAGS",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SHADER_VARIABLE_TYPE",
+        "header": "d3dcommon.h",
+        "sourceLine": 794,
+        "type": "enum _D3D_SHADER_VARIABLE_TYPE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_SRV_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 358,
+        "type": "enum D3D_SRV_DIMENSION",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_TESSELLATOR_DOMAIN",
+        "header": "d3dcommon.h",
+        "sourceLine": 977,
+        "type": "enum D3D_TESSELLATOR_DOMAIN",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_TESSELLATOR_OUTPUT_PRIMITIVE",
+        "header": "d3dcommon.h",
+        "sourceLine": 1007,
+        "type": "enum D3D_TESSELLATOR_OUTPUT_PRIMITIVE",
+        "canonicalType": null
+      },
+      {
+        "name": "D3D_TESSELLATOR_PARTITIONING",
+        "header": "d3dcommon.h",
+        "sourceLine": 992,
+        "type": "enum D3D_TESSELLATOR_PARTITIONING",
+        "canonicalType": null
+      },
+      {
+        "name": "ID3D10Blob",
+        "header": "d3dcommon.h",
+        "sourceLine": 58,
+        "type": "struct ID3D10Blob",
+        "canonicalType": null
+      },
+      {
+        "name": "ID3D10BlobVtbl",
+        "header": "d3dcommon.h",
+        "sourceLine": 455,
+        "type": "struct ID3D10BlobVtbl",
+        "canonicalType": null
+      },
+      {
+        "name": "ID3DBlob",
+        "header": "d3dcommon.h",
+        "sourceLine": 498,
+        "type": "ID3D10Blob",
+        "canonicalType": "struct ID3D10Blob"
+      },
+      {
+        "name": "ID3DDestructionNotifier",
+        "header": "d3dcommon.h",
+        "sourceLine": 65,
+        "type": "struct ID3DDestructionNotifier",
+        "canonicalType": null
+      },
+      {
+        "name": "ID3DDestructionNotifierVtbl",
+        "header": "d3dcommon.h",
+        "sourceLine": 578,
+        "type": "struct ID3DDestructionNotifierVtbl",
+        "canonicalType": null
+      },
+      {
+        "name": "ID3DInclude",
+        "header": "d3dcommon.h",
+        "sourceLine": 630,
+        "type": "struct ID3DInclude",
+        "canonicalType": null
+      }
+    ],
+    "functions": [
+      {
+        "name": "D3DCompile",
+        "header": "d3dcompiler.h",
+        "sourceLine": 210,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "pSourceName",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "pDefines",
+            "type": "const D3D_SHADER_MACRO *"
+          },
+          {
+            "name": "pInclude",
+            "type": "ID3DInclude *"
+          },
+          {
+            "name": "pEntrypoint",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "pTarget",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "Flags1",
+            "type": "UINT"
+          },
+          {
+            "name": "Flags2",
+            "type": "UINT"
+          },
+          {
+            "name": "ppCode",
+            "type": "ID3DBlob **"
+          },
+          {
+            "name": "ppErrorMsgs",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, LPCSTR, const D3D_SHADER_MACRO *, ID3DInclude *, LPCSTR, LPCSTR, UINT, UINT, ID3DBlob **, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DCompile2",
+        "header": "d3dcompiler.h",
+        "sourceLine": 240,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "pSourceName",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "pDefines",
+            "type": "const D3D_SHADER_MACRO *"
+          },
+          {
+            "name": "pInclude",
+            "type": "ID3DInclude *"
+          },
+          {
+            "name": "pEntrypoint",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "pTarget",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "Flags1",
+            "type": "UINT"
+          },
+          {
+            "name": "Flags2",
+            "type": "UINT"
+          },
+          {
+            "name": "SecondaryDataFlags",
+            "type": "UINT"
+          },
+          {
+            "name": "pSecondaryData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SecondaryDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppCode",
+            "type": "ID3DBlob **"
+          },
+          {
+            "name": "ppErrorMsgs",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, LPCSTR, const D3D_SHADER_MACRO *, ID3DInclude *, LPCSTR, LPCSTR, UINT, UINT, UINT, LPCVOID, SIZE_T, ID3DBlob **, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DCompileFromFile",
+        "header": "d3dcompiler.h",
+        "sourceLine": 256,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pFileName",
+            "type": "LPCWSTR"
+          },
+          {
+            "name": "pDefines",
+            "type": "const D3D_SHADER_MACRO *"
+          },
+          {
+            "name": "pInclude",
+            "type": "ID3DInclude *"
+          },
+          {
+            "name": "pEntrypoint",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "pTarget",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "Flags1",
+            "type": "UINT"
+          },
+          {
+            "name": "Flags2",
+            "type": "UINT"
+          },
+          {
+            "name": "ppCode",
+            "type": "ID3DBlob **"
+          },
+          {
+            "name": "ppErrorMsgs",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCWSTR, const D3D_SHADER_MACRO *, ID3DInclude *, LPCSTR, LPCSTR, UINT, UINT, ID3DBlob **, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DCompressShaders",
+        "header": "d3dcompiler.h",
+        "sourceLine": 534,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "uNumShaders",
+            "type": "UINT"
+          },
+          {
+            "name": "pShaderData",
+            "type": "D3D_SHADER_DATA *"
+          },
+          {
+            "name": "uFlags",
+            "type": "UINT"
+          },
+          {
+            "name": "ppCompressedData",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (UINT, D3D_SHADER_DATA *, UINT, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DCreateBlob",
+        "header": "d3dcompiler.h",
+        "sourceLine": 516,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "Size",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppBlob",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (SIZE_T, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DCreateFunctionLinkingGraph",
+        "header": "d3dcompiler.h",
+        "sourceLine": 380,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "uFlags",
+            "type": "UINT"
+          },
+          {
+            "name": "ppFunctionLinkingGraph",
+            "type": "struct ID3D11FunctionLinkingGraph **"
+          }
+        ],
+        "type": "HRESULT (UINT, struct ID3D11FunctionLinkingGraph **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DCreateLinker",
+        "header": "d3dcompiler.h",
+        "sourceLine": 372,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "ppLinker",
+            "type": "struct ID3D11Linker **"
+          }
+        ],
+        "type": "HRESULT (struct ID3D11Linker **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DDecompressShaders",
+        "header": "d3dcompiler.h",
+        "sourceLine": 546,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "uNumShaders",
+            "type": "UINT"
+          },
+          {
+            "name": "uStartIndex",
+            "type": "UINT"
+          },
+          {
+            "name": "pIndices",
+            "type": "UINT *"
+          },
+          {
+            "name": "uFlags",
+            "type": "UINT"
+          },
+          {
+            "name": "ppShaders",
+            "type": "ID3DBlob **"
+          },
+          {
+            "name": "pTotalShaders",
+            "type": "UINT *"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, UINT, UINT, UINT *, UINT, ID3DBlob **, UINT *) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DDisassemble",
+        "header": "d3dcompiler.h",
+        "sourceLine": 345,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "Flags",
+            "type": "UINT"
+          },
+          {
+            "name": "szComments",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "ppDisassembly",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, UINT, LPCSTR, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DDisassemble10Effect",
+        "header": "d3dcompiler.h",
+        "sourceLine": 570,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pEffect",
+            "type": "struct ID3D10Effect *"
+          },
+          {
+            "name": "Flags",
+            "type": "UINT"
+          },
+          {
+            "name": "ppDisassembly",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (struct ID3D10Effect *, UINT, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DDisassembleRegion",
+        "header": "d3dcompiler.h",
+        "sourceLine": 359,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "Flags",
+            "type": "UINT"
+          },
+          {
+            "name": "szComments",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "StartByteOffset",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "NumInsts",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "pFinishByteOffset",
+            "type": "SIZE_T *"
+          },
+          {
+            "name": "ppDisassembly",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, UINT, LPCSTR, SIZE_T, SIZE_T, SIZE_T *, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DGetBlobPart",
+        "header": "d3dcompiler.h",
+        "sourceLine": 488,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "Part",
+            "type": "D3D_BLOB_PART"
+          },
+          {
+            "name": "Flags",
+            "type": "UINT"
+          },
+          {
+            "name": "ppPart",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, D3D_BLOB_PART, UINT, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DGetDebugInfo",
+        "header": "d3dcompiler.h",
+        "sourceLine": 299,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppDebugInfo",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DGetInputAndOutputSignatureBlob",
+        "header": "d3dcompiler.h",
+        "sourceLine": 431,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppSignatureBlob",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DGetInputSignatureBlob",
+        "header": "d3dcompiler.h",
+        "sourceLine": 409,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppSignatureBlob",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DGetOutputSignatureBlob",
+        "header": "d3dcompiler.h",
+        "sourceLine": 420,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppSignatureBlob",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DGetTraceInstructionOffsets",
+        "header": "d3dcompiler.h",
+        "sourceLine": 394,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "Flags",
+            "type": "UINT"
+          },
+          {
+            "name": "StartInstIndex",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "NumInsts",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "pOffsets",
+            "type": "SIZE_T *"
+          },
+          {
+            "name": "pTotalInsts",
+            "type": "SIZE_T *"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, UINT, SIZE_T, SIZE_T, SIZE_T *, SIZE_T *) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DLoadModule",
+        "header": "d3dcompiler.h",
+        "sourceLine": 375,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "cbSrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppModule",
+            "type": "struct ID3D11Module **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, struct ID3D11Module **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DPreprocess",
+        "header": "d3dcompiler.h",
+        "sourceLine": 274,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "pSourceName",
+            "type": "LPCSTR"
+          },
+          {
+            "name": "pDefines",
+            "type": "const D3D_SHADER_MACRO *"
+          },
+          {
+            "name": "pInclude",
+            "type": "ID3DInclude *"
+          },
+          {
+            "name": "ppCodeText",
+            "type": "ID3DBlob **"
+          },
+          {
+            "name": "ppErrorMsgs",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, LPCSTR, const D3D_SHADER_MACRO *, ID3DInclude *, ID3DBlob **, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DReadFileToBlob",
+        "header": "d3dcompiler.h",
+        "sourceLine": 51,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pFileName",
+            "type": "LPCWSTR"
+          },
+          {
+            "name": "ppContents",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCWSTR, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DReflect",
+        "header": "d3dcompiler.h",
+        "sourceLine": 311,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "pInterface",
+            "type": "const IID *const"
+          },
+          {
+            "name": "ppReflector",
+            "type": "void **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, const IID *const, void **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DReflectLibrary",
+        "header": "d3dcompiler.h",
+        "sourceLine": 324,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "riid",
+            "type": "const IID *const"
+          },
+          {
+            "name": "ppReflector",
+            "type": "LPVOID *"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, const IID *const, LPVOID *) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DSetBlobPart",
+        "header": "d3dcompiler.h",
+        "sourceLine": 501,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pSrcData",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "SrcDataSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "Part",
+            "type": "D3D_BLOB_PART"
+          },
+          {
+            "name": "Flags",
+            "type": "UINT"
+          },
+          {
+            "name": "pPart",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "PartSize",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "ppNewShader",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, D3D_BLOB_PART, UINT, LPCVOID, SIZE_T, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DStripShader",
+        "header": "d3dcompiler.h",
+        "sourceLine": 452,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pShaderBytecode",
+            "type": "LPCVOID"
+          },
+          {
+            "name": "BytecodeLength",
+            "type": "SIZE_T"
+          },
+          {
+            "name": "uStripFlags",
+            "type": "UINT"
+          },
+          {
+            "name": "ppStrippedBlob",
+            "type": "ID3DBlob **"
+          }
+        ],
+        "type": "HRESULT (LPCVOID, SIZE_T, UINT, ID3DBlob **) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      },
+      {
+        "name": "D3DWriteBlobToFile",
+        "header": "d3dcompiler.h",
+        "sourceLine": 61,
+        "returnType": "HRESULT",
+        "params": [
+          {
+            "name": "pBlob",
+            "type": "ID3DBlob *"
+          },
+          {
+            "name": "pFileName",
+            "type": "LPCWSTR"
+          },
+          {
+            "name": "bOverwrite",
+            "type": "BOOL"
+          }
+        ],
+        "type": "HRESULT (ID3DBlob *, LPCWSTR, BOOL) __attribute__((stdcall))",
+        "dll": "d3dcompiler_47.dll"
+      }
+    ],
+    "constants": [
+      {
+        "name": "D3DCOMPILER_DLL",
+        "header": "d3dcompiler.h",
+        "sourceLine": 23,
+        "type": "macro",
+        "value": "D3DCOMPILER_DLL_A",
+        "valueText": "D3DCOMPILER_DLL_A"
+      },
+      {
+        "name": "D3DCOMPILER_DLL_A",
+        "header": "d3dcompiler.h",
+        "sourceLine": 17,
+        "type": "macro",
+        "value": "\"d3dcompiler_47.dll\"",
+        "valueText": "\"d3dcompiler_47.dll\""
+      },
+      {
+        "name": "D3DCOMPILER_DLL_W",
+        "header": "d3dcompiler.h",
+        "sourceLine": 16,
+        "type": "macro",
+        "value": "L\"d3dcompiler_47.dll\"",
+        "valueText": "L\"d3dcompiler_47.dll\""
+      },
+      {
+        "name": "D3DCOMPILE_ALL_RESOURCES_BOUND",
+        "header": "d3dcompiler.h",
+        "sourceLine": 160,
+        "type": "macro",
+        "value": "(1 << 21)",
+        "valueText": "(1 << 21)"
+      },
+      {
+        "name": "D3DCOMPILE_AVOID_FLOW_CONTROL",
+        "header": "d3dcompiler.h",
+        "sourceLine": 146,
+        "type": "macro",
+        "value": "(1 << 9)",
+        "valueText": "(1 << 9)"
+      },
+      {
+        "name": "D3DCOMPILE_DEBUG",
+        "header": "d3dcompiler.h",
+        "sourceLine": 137,
+        "type": "macro",
+        "value": "(1 << 0)",
+        "valueText": "(1 << 0)"
+      },
+      {
+        "name": "D3DCOMPILE_DEBUG_NAME_FOR_BINARY",
+        "header": "d3dcompiler.h",
+        "sourceLine": 162,
+        "type": "macro",
+        "value": "(1 << 23)",
+        "valueText": "(1 << 23)"
+      },
+      {
+        "name": "D3DCOMPILE_DEBUG_NAME_FOR_SOURCE",
+        "header": "d3dcompiler.h",
+        "sourceLine": 161,
+        "type": "macro",
+        "value": "(1 << 22)",
+        "valueText": "(1 << 22)"
+      },
+      {
+        "name": "D3DCOMPILE_EFFECT_ALLOW_SLOW_OPS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 185,
+        "type": "macro",
+        "value": "(1 << 1)",
+        "valueText": "(1 << 1)"
+      },
+      {
+        "name": "D3DCOMPILE_EFFECT_CHILD_EFFECT",
+        "header": "d3dcompiler.h",
+        "sourceLine": 184,
+        "type": "macro",
+        "value": "(1 << 0)",
+        "valueText": "(1 << 0)"
+      },
+      {
+        "name": "D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY",
+        "header": "d3dcompiler.h",
+        "sourceLine": 149,
+        "type": "macro",
+        "value": "(1 << 12)",
+        "valueText": "(1 << 12)"
+      },
+      {
+        "name": "D3DCOMPILE_ENABLE_STRICTNESS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 148,
+        "type": "macro",
+        "value": "(1 << 11)",
+        "valueText": "(1 << 11)"
+      },
+      {
+        "name": "D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES",
+        "header": "d3dcompiler.h",
+        "sourceLine": 159,
+        "type": "macro",
+        "value": "(1 << 20)",
+        "valueText": "(1 << 20)"
+      },
+      {
+        "name": "D3DCOMPILE_FLAGS2_FORCE_ROOT_SIGNATURE_1_0",
+        "header": "d3dcompiler.h",
+        "sourceLine": 192,
+        "type": "macro",
+        "value": "(1 << 4)",
+        "valueText": "(1 << 4)"
+      },
+      {
+        "name": "D3DCOMPILE_FLAGS2_FORCE_ROOT_SIGNATURE_1_1",
+        "header": "d3dcompiler.h",
+        "sourceLine": 193,
+        "type": "macro",
+        "value": "(1 << 5)",
+        "valueText": "(1 << 5)"
+      },
+      {
+        "name": "D3DCOMPILE_FLAGS2_FORCE_ROOT_SIGNATURE_LATEST",
+        "header": "d3dcompiler.h",
+        "sourceLine": 191,
+        "type": "macro",
+        "value": "0",
+        "valueText": "0"
+      },
+      {
+        "name": "D3DCOMPILE_FORCE_PS_SOFTWARE_NO_OPT",
+        "header": "d3dcompiler.h",
+        "sourceLine": 144,
+        "type": "macro",
+        "value": "(1 << 7)",
+        "valueText": "(1 << 7)"
+      },
+      {
+        "name": "D3DCOMPILE_FORCE_VS_SOFTWARE_NO_OPT",
+        "header": "d3dcompiler.h",
+        "sourceLine": 143,
+        "type": "macro",
+        "value": "(1 << 6)",
+        "valueText": "(1 << 6)"
+      },
+      {
+        "name": "D3DCOMPILE_IEEE_STRICTNESS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 150,
+        "type": "macro",
+        "value": "(1 << 13)",
+        "valueText": "(1 << 13)"
+      },
+      {
+        "name": "D3DCOMPILE_NO_PRESHADER",
+        "header": "d3dcompiler.h",
+        "sourceLine": 145,
+        "type": "macro",
+        "value": "(1 << 8)",
+        "valueText": "(1 << 8)"
+      },
+      {
+        "name": "D3DCOMPILE_OPTIMIZATION_LEVEL0",
+        "header": "d3dcompiler.h",
+        "sourceLine": 151,
+        "type": "macro",
+        "value": "(1 << 14)",
+        "valueText": "(1 << 14)"
+      },
+      {
+        "name": "D3DCOMPILE_OPTIMIZATION_LEVEL1",
+        "header": "d3dcompiler.h",
+        "sourceLine": 152,
+        "type": "macro",
+        "value": "0",
+        "valueText": "0"
+      },
+      {
+        "name": "D3DCOMPILE_OPTIMIZATION_LEVEL2",
+        "header": "d3dcompiler.h",
+        "sourceLine": 153,
+        "type": "macro",
+        "value": "((1 << 14) | (1 << 15))",
+        "valueText": "((1 << 14) | (1 << 15))"
+      },
+      {
+        "name": "D3DCOMPILE_OPTIMIZATION_LEVEL3",
+        "header": "d3dcompiler.h",
+        "sourceLine": 154,
+        "type": "macro",
+        "value": "(1 << 15)",
+        "valueText": "(1 << 15)"
+      },
+      {
+        "name": "D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR",
+        "header": "d3dcompiler.h",
+        "sourceLine": 141,
+        "type": "macro",
+        "value": "(1 << 4)",
+        "valueText": "(1 << 4)"
+      },
+      {
+        "name": "D3DCOMPILE_PACK_MATRIX_ROW_MAJOR",
+        "header": "d3dcompiler.h",
+        "sourceLine": 140,
+        "type": "macro",
+        "value": "(1 << 3)",
+        "valueText": "(1 << 3)"
+      },
+      {
+        "name": "D3DCOMPILE_PARTIAL_PRECISION",
+        "header": "d3dcompiler.h",
+        "sourceLine": 142,
+        "type": "macro",
+        "value": "(1 << 5)",
+        "valueText": "(1 << 5)"
+      },
+      {
+        "name": "D3DCOMPILE_PREFER_FLOW_CONTROL",
+        "header": "d3dcompiler.h",
+        "sourceLine": 147,
+        "type": "macro",
+        "value": "(1 << 10)",
+        "valueText": "(1 << 10)"
+      },
+      {
+        "name": "D3DCOMPILE_RESERVED16",
+        "header": "d3dcompiler.h",
+        "sourceLine": 155,
+        "type": "macro",
+        "value": "(1 << 16)",
+        "valueText": "(1 << 16)"
+      },
+      {
+        "name": "D3DCOMPILE_RESERVED17",
+        "header": "d3dcompiler.h",
+        "sourceLine": 156,
+        "type": "macro",
+        "value": "(1 << 17)",
+        "valueText": "(1 << 17)"
+      },
+      {
+        "name": "D3DCOMPILE_RESOURCES_MAY_ALIAS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 158,
+        "type": "macro",
+        "value": "(1 << 19)",
+        "valueText": "(1 << 19)"
+      },
+      {
+        "name": "D3DCOMPILE_SECDATA_MERGE_UAV_SLOTS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 235,
+        "type": "macro",
+        "value": "0x00000001",
+        "valueText": "0x00000001"
+      },
+      {
+        "name": "D3DCOMPILE_SECDATA_PRESERVE_TEMPLATE_SLOTS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 236,
+        "type": "macro",
+        "value": "0x00000002",
+        "valueText": "0x00000002"
+      },
+      {
+        "name": "D3DCOMPILE_SECDATA_REQUIRE_TEMPLATE_MATCH",
+        "header": "d3dcompiler.h",
+        "sourceLine": 237,
+        "type": "macro",
+        "value": "0x00000004",
+        "valueText": "0x00000004"
+      },
+      {
+        "name": "D3DCOMPILE_SKIP_OPTIMIZATION",
+        "header": "d3dcompiler.h",
+        "sourceLine": 139,
+        "type": "macro",
+        "value": "(1 << 2)",
+        "valueText": "(1 << 2)"
+      },
+      {
+        "name": "D3DCOMPILE_SKIP_VALIDATION",
+        "header": "d3dcompiler.h",
+        "sourceLine": 138,
+        "type": "macro",
+        "value": "(1 << 1)",
+        "valueText": "(1 << 1)"
+      },
+      {
+        "name": "D3DCOMPILE_WARNINGS_ARE_ERRORS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 157,
+        "type": "macro",
+        "value": "(1 << 18)",
+        "valueText": "(1 << 18)"
+      },
+      {
+        "name": "D3D_COMPILER_VERSION",
+        "header": "d3dcompiler.h",
+        "sourceLine": 20,
+        "type": "macro",
+        "value": "47",
+        "valueText": "47"
+      },
+      {
+        "name": "D3D_COMPILE_STANDARD_FILE_INCLUDE",
+        "header": "d3dcompiler.h",
+        "sourceLine": 207,
+        "type": "macro",
+        "value": "((ID3DInclude*)(UINT_PTR)1)",
+        "valueText": "((ID3DInclude*)(UINT_PTR)1)"
+      },
+      {
+        "name": "D3D_COMPONENT_MASK_W",
+        "header": "d3dcommon.h",
+        "sourceLine": 1055,
+        "type": "macro",
+        "value": "8",
+        "valueText": "8"
+      },
+      {
+        "name": "D3D_COMPONENT_MASK_X",
+        "header": "d3dcommon.h",
+        "sourceLine": 1052,
+        "type": "macro",
+        "value": "1",
+        "valueText": "1"
+      },
+      {
+        "name": "D3D_COMPONENT_MASK_Y",
+        "header": "d3dcommon.h",
+        "sourceLine": 1053,
+        "type": "macro",
+        "value": "2",
+        "valueText": "2"
+      },
+      {
+        "name": "D3D_COMPONENT_MASK_Z",
+        "header": "d3dcommon.h",
+        "sourceLine": 1054,
+        "type": "macro",
+        "value": "4",
+        "valueText": "4"
+      },
+      {
+        "name": "D3D_COMPRESS_SHADER_KEEP_ALL_PARTS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 531,
+        "type": "macro",
+        "value": "0x00000001",
+        "valueText": "0x00000001"
+      },
+      {
+        "name": "D3D_DISASM_DISABLE_DEBUG_INFO",
+        "header": "d3dcompiler.h",
+        "sourceLine": 339,
+        "type": "macro",
+        "value": "0x00000010",
+        "valueText": "0x00000010"
+      },
+      {
+        "name": "D3D_DISASM_ENABLE_COLOR_CODE",
+        "header": "d3dcompiler.h",
+        "sourceLine": 335,
+        "type": "macro",
+        "value": "0x00000001",
+        "valueText": "0x00000001"
+      },
+      {
+        "name": "D3D_DISASM_ENABLE_DEFAULT_VALUE_PRINTS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 336,
+        "type": "macro",
+        "value": "0x00000002",
+        "valueText": "0x00000002"
+      },
+      {
+        "name": "D3D_DISASM_ENABLE_INSTRUCTION_CYCLE",
+        "header": "d3dcompiler.h",
+        "sourceLine": 338,
+        "type": "macro",
+        "value": "0x00000008",
+        "valueText": "0x00000008"
+      },
+      {
+        "name": "D3D_DISASM_ENABLE_INSTRUCTION_NUMBERING",
+        "header": "d3dcompiler.h",
+        "sourceLine": 337,
+        "type": "macro",
+        "value": "0x00000004",
+        "valueText": "0x00000004"
+      },
+      {
+        "name": "D3D_DISASM_ENABLE_INSTRUCTION_OFFSET",
+        "header": "d3dcompiler.h",
+        "sourceLine": 340,
+        "type": "macro",
+        "value": "0x00000020",
+        "valueText": "0x00000020"
+      },
+      {
+        "name": "D3D_DISASM_INSTRUCTION_ONLY",
+        "header": "d3dcompiler.h",
+        "sourceLine": 341,
+        "type": "macro",
+        "value": "0x00000040",
+        "valueText": "0x00000040"
+      },
+      {
+        "name": "D3D_DISASM_PRINT_HEX_LITERALS",
+        "header": "d3dcompiler.h",
+        "sourceLine": 342,
+        "type": "macro",
+        "value": "0x00000080",
+        "valueText": "0x00000080"
+      },
+      {
+        "name": "D3D_FL9_1_DEFAULT_MAX_ANISOTROPY",
+        "header": "d3dcommon.h",
+        "sourceLine": 116,
+        "type": "macro",
+        "value": "2",
+        "valueText": "2"
+      },
+      {
+        "name": "D3D_FL9_1_IA_PRIMITIVE_MAX_COUNT",
+        "header": "d3dcommon.h",
+        "sourceLine": 117,
+        "type": "macro",
+        "value": "65535",
+        "valueText": "65535"
+      },
+      {
+        "name": "D3D_FL9_1_MAX_TEXTURE_REPEAT",
+        "header": "d3dcommon.h",
+        "sourceLine": 121,
+        "type": "macro",
+        "value": "128",
+        "valueText": "128"
+      },
+      {
+        "name": "D3D_FL9_1_REQ_TEXTURE1D_U_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 109,
+        "type": "macro",
+        "value": "2048",
+        "valueText": "2048"
+      },
+      {
+        "name": "D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 111,
+        "type": "macro",
+        "value": "2048",
+        "valueText": "2048"
+      },
+      {
+        "name": "D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 115,
+        "type": "macro",
+        "value": "256",
+        "valueText": "256"
+      },
+      {
+        "name": "D3D_FL9_1_REQ_TEXTURECUBE_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 113,
+        "type": "macro",
+        "value": "512",
+        "valueText": "512"
+      },
+      {
+        "name": "D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT",
+        "header": "d3dcommon.h",
+        "sourceLine": 119,
+        "type": "macro",
+        "value": "1",
+        "valueText": "1"
+      },
+      {
+        "name": "D3D_FL9_2_IA_PRIMITIVE_MAX_COUNT",
+        "header": "d3dcommon.h",
+        "sourceLine": 118,
+        "type": "macro",
+        "value": "1048575",
+        "valueText": "1048575"
+      },
+      {
+        "name": "D3D_FL9_2_MAX_TEXTURE_REPEAT",
+        "header": "d3dcommon.h",
+        "sourceLine": 122,
+        "type": "macro",
+        "value": "2048",
+        "valueText": "2048"
+      },
+      {
+        "name": "D3D_FL9_3_MAX_TEXTURE_REPEAT",
+        "header": "d3dcommon.h",
+        "sourceLine": 123,
+        "type": "macro",
+        "value": "8192",
+        "valueText": "8192"
+      },
+      {
+        "name": "D3D_FL9_3_REQ_TEXTURE1D_U_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 110,
+        "type": "macro",
+        "value": "4096",
+        "valueText": "4096"
+      },
+      {
+        "name": "D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 112,
+        "type": "macro",
+        "value": "4096",
+        "valueText": "4096"
+      },
+      {
+        "name": "D3D_FL9_3_REQ_TEXTURECUBE_DIMENSION",
+        "header": "d3dcommon.h",
+        "sourceLine": 114,
+        "type": "macro",
+        "value": "4096",
+        "valueText": "4096"
+      },
+      {
+        "name": "D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT",
+        "header": "d3dcommon.h",
+        "sourceLine": 120,
+        "type": "macro",
+        "value": "4",
+        "valueText": "4"
+      },
+      {
+        "name": "D3D_GET_INST_OFFSETS_INCLUDE_NON_EXECUTABLE",
+        "header": "d3dcompiler.h",
+        "sourceLine": 391,
+        "type": "macro",
+        "value": "0x00000001",
+        "valueText": "0x00000001"
+      },
+      {
+        "name": "D3D_SET_OBJECT_NAME_A",
+        "header": "d3dcommon.h",
+        "sourceLine": 1049,
+        "type": "macro",
+        "value": "(pObject,pName) D3D_SET_OBJECT_NAME_N_A(pObject, lstrlenA(pName), pName)",
+        "valueText": "(pObject,pName) D3D_SET_OBJECT_NAME_N_A(pObject, lstrlenA(pName), pName)"
+      },
+      {
+        "name": "D3D_SET_OBJECT_NAME_N_A",
+        "header": "d3dcommon.h",
+        "sourceLine": 1048,
+        "type": "macro",
+        "value": "(pObject,Chars,pName) (pObject)->SetPrivateData(WKPDID_D3DDebugObjectName, Chars, pName)",
+        "valueText": "(pObject,Chars,pName) (pObject)->SetPrivateData(WKPDID_D3DDebugObjectName, Chars, pName)"
+      },
+      {
+        "name": "D3D_SET_OBJECT_NAME_N_W",
+        "header": "d3dcommon.h",
+        "sourceLine": 1050,
+        "type": "macro",
+        "value": "(pObject,Chars,pName) (pObject)->SetPrivateData(WKPDID_D3DDebugObjectNameW, Chars*2, pName)",
+        "valueText": "(pObject,Chars,pName) (pObject)->SetPrivateData(WKPDID_D3DDebugObjectNameW, Chars*2, pName)"
+      },
+      {
+        "name": "D3D_SET_OBJECT_NAME_W",
+        "header": "d3dcommon.h",
+        "sourceLine": 1051,
+        "type": "macro",
+        "value": "(pObject,pName) D3D_SET_OBJECT_NAME_N_W(pObject, wcslen(pName), pName)",
+        "valueText": "(pObject,pName) D3D_SET_OBJECT_NAME_N_W(pObject, wcslen(pName), pName)"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_11_1_DOUBLE_EXTENSIONS",
+        "header": "d3dcommon.h",
+        "sourceLine": 365,
+        "type": "macro",
+        "value": "0x00020",
+        "valueText": "0x00020"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_11_1_SHADER_EXTENSIONS",
+        "header": "d3dcommon.h",
+        "sourceLine": 366,
+        "type": "macro",
+        "value": "0x00040",
+        "valueText": "0x00040"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_64_UAVS",
+        "header": "d3dcommon.h",
+        "sourceLine": 363,
+        "type": "macro",
+        "value": "0x00008",
+        "valueText": "0x00008"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE",
+        "header": "d3dcommon.h",
+        "sourceLine": 388,
+        "type": "macro",
+        "value": "0x10000000",
+        "valueText": "0x10000000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_ATOMIC_INT64_ON_GROUP_SHARED",
+        "header": "d3dcommon.h",
+        "sourceLine": 383,
+        "type": "macro",
+        "value": "0x800000",
+        "valueText": "0x800000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_ATOMIC_INT64_ON_TYPED_RESOURCE",
+        "header": "d3dcommon.h",
+        "sourceLine": 382,
+        "type": "macro",
+        "value": "0x400000",
+        "valueText": "0x400000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_BARYCENTRICS",
+        "header": "d3dcommon.h",
+        "sourceLine": 377,
+        "type": "macro",
+        "value": "0x20000",
+        "valueText": "0x20000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_COMPUTE_SHADERS_PLUS_RAW_AND_STRUCTURED_BUFFERS_VIA_SHADER_4_X",
+        "header": "d3dcommon.h",
+        "sourceLine": 361,
+        "type": "macro",
+        "value": "0x00002",
+        "valueText": "0x00002"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_DERIVATIVES_IN_MESH_AND_AMPLIFICATION_SHADERS",
+        "header": "d3dcommon.h",
+        "sourceLine": 384,
+        "type": "macro",
+        "value": "0x1000000",
+        "valueText": "0x1000000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_DOUBLES",
+        "header": "d3dcommon.h",
+        "sourceLine": 360,
+        "type": "macro",
+        "value": "0x00001",
+        "valueText": "0x00001"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_INNER_COVERAGE",
+        "header": "d3dcommon.h",
+        "sourceLine": 370,
+        "type": "macro",
+        "value": "0x00400",
+        "valueText": "0x00400"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_INT64_OPS",
+        "header": "d3dcommon.h",
+        "sourceLine": 375,
+        "type": "macro",
+        "value": "0x08000",
+        "valueText": "0x08000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_LEVEL_9_COMPARISON_FILTERING",
+        "header": "d3dcommon.h",
+        "sourceLine": 367,
+        "type": "macro",
+        "value": "0x00080",
+        "valueText": "0x00080"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_MINIMUM_PRECISION",
+        "header": "d3dcommon.h",
+        "sourceLine": 364,
+        "type": "macro",
+        "value": "0x00010",
+        "valueText": "0x00010"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_NATIVE_16BIT_OPS",
+        "header": "d3dcommon.h",
+        "sourceLine": 378,
+        "type": "macro",
+        "value": "0x40000",
+        "valueText": "0x40000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_RAYTRACING_TIER_1_1",
+        "header": "d3dcommon.h",
+        "sourceLine": 380,
+        "type": "macro",
+        "value": "0x100000",
+        "valueText": "0x100000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_RESOURCE_DESCRIPTOR_HEAP_INDEXING",
+        "header": "d3dcommon.h",
+        "sourceLine": 385,
+        "type": "macro",
+        "value": "0x2000000",
+        "valueText": "0x2000000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_ROVS",
+        "header": "d3dcommon.h",
+        "sourceLine": 372,
+        "type": "macro",
+        "value": "0x01000",
+        "valueText": "0x01000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_SAMPLER_DESCRIPTOR_HEAP_INDEXING",
+        "header": "d3dcommon.h",
+        "sourceLine": 386,
+        "type": "macro",
+        "value": "0x4000000",
+        "valueText": "0x4000000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_SAMPLER_FEEDBACK",
+        "header": "d3dcommon.h",
+        "sourceLine": 381,
+        "type": "macro",
+        "value": "0x200000",
+        "valueText": "0x200000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_SHADING_RATE",
+        "header": "d3dcommon.h",
+        "sourceLine": 379,
+        "type": "macro",
+        "value": "0x80000",
+        "valueText": "0x80000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_STENCIL_REF",
+        "header": "d3dcommon.h",
+        "sourceLine": 369,
+        "type": "macro",
+        "value": "0x00200",
+        "valueText": "0x00200"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_TILED_RESOURCES",
+        "header": "d3dcommon.h",
+        "sourceLine": 368,
+        "type": "macro",
+        "value": "0x00100",
+        "valueText": "0x00100"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_TYPED_UAV_LOAD_ADDITIONAL_FORMATS",
+        "header": "d3dcommon.h",
+        "sourceLine": 371,
+        "type": "macro",
+        "value": "0x00800",
+        "valueText": "0x00800"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_UAVS_AT_EVERY_STAGE",
+        "header": "d3dcommon.h",
+        "sourceLine": 362,
+        "type": "macro",
+        "value": "0x00004",
+        "valueText": "0x00004"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_VIEWPORT_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER_FEEDING_RASTERIZER",
+        "header": "d3dcommon.h",
+        "sourceLine": 373,
+        "type": "macro",
+        "value": "0x02000",
+        "valueText": "0x02000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_VIEW_ID",
+        "header": "d3dcommon.h",
+        "sourceLine": 376,
+        "type": "macro",
+        "value": "0x10000",
+        "valueText": "0x10000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_WAVE_MMA",
+        "header": "d3dcommon.h",
+        "sourceLine": 387,
+        "type": "macro",
+        "value": "0x8000000",
+        "valueText": "0x8000000"
+      },
+      {
+        "name": "D3D_SHADER_FEATURE_WAVE_OPS",
+        "header": "d3dcommon.h",
+        "sourceLine": 374,
+        "type": "macro",
+        "value": "0x04000",
+        "valueText": "0x04000"
+      },
+      {
+        "name": "ID3D10Blob_AddRef",
+        "header": "d3dcommon.h",
+        "sourceLine": 470,
+        "type": "macro",
+        "value": "(This) ( (This)->lpVtbl -> AddRef(This) )",
+        "valueText": "(This) ( (This)->lpVtbl -> AddRef(This) )"
+      },
+      {
+        "name": "ID3D10Blob_GetBufferPointer",
+        "header": "d3dcommon.h",
+        "sourceLine": 477,
+        "type": "macro",
+        "value": "(This) ( (This)->lpVtbl -> GetBufferPointer(This) )",
+        "valueText": "(This) ( (This)->lpVtbl -> GetBufferPointer(This) )"
+      },
+      {
+        "name": "ID3D10Blob_GetBufferSize",
+        "header": "d3dcommon.h",
+        "sourceLine": 480,
+        "type": "macro",
+        "value": "(This) ( (This)->lpVtbl -> GetBufferSize(This) )",
+        "valueText": "(This) ( (This)->lpVtbl -> GetBufferSize(This) )"
+      },
+      {
+        "name": "ID3D10Blob_QueryInterface",
+        "header": "d3dcommon.h",
+        "sourceLine": 467,
+        "type": "macro",
+        "value": "(This,riid,ppvObject) ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )",
+        "valueText": "(This,riid,ppvObject) ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )"
+      },
+      {
+        "name": "ID3D10Blob_Release",
+        "header": "d3dcommon.h",
+        "sourceLine": 473,
+        "type": "macro",
+        "value": "(This) ( (This)->lpVtbl -> Release(This) )",
+        "valueText": "(This) ( (This)->lpVtbl -> Release(This) )"
+      },
+      {
+        "name": "ID3DDestructionNotifier_AddRef",
+        "header": "d3dcommon.h",
+        "sourceLine": 593,
+        "type": "macro",
+        "value": "(This) ( (This)->lpVtbl -> AddRef(This) )",
+        "valueText": "(This) ( (This)->lpVtbl -> AddRef(This) )"
+      },
+      {
+        "name": "ID3DDestructionNotifier_QueryInterface",
+        "header": "d3dcommon.h",
+        "sourceLine": 590,
+        "type": "macro",
+        "value": "(This,riid,ppvObject) ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )",
+        "valueText": "(This,riid,ppvObject) ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) )"
+      },
+      {
+        "name": "ID3DDestructionNotifier_RegisterDestructionCallback",
+        "header": "d3dcommon.h",
+        "sourceLine": 600,
+        "type": "macro",
+        "value": "(This,callbackFn,pData,pCallbackID) ( (This)->lpVtbl -> RegisterDestructionCallback(This,callbackFn,pData,pCallbackID) )",
+        "valueText": "(This,callbackFn,pData,pCallbackID) ( (This)->lpVtbl -> RegisterDestructionCallback(This,callbackFn,pData,pCallbackID) )"
+      },
+      {
+        "name": "ID3DDestructionNotifier_Release",
+        "header": "d3dcommon.h",
+        "sourceLine": 596,
+        "type": "macro",
+        "value": "(This) ( (This)->lpVtbl -> Release(This) )",
+        "valueText": "(This) ( (This)->lpVtbl -> Release(This) )"
+      },
+      {
+        "name": "ID3DDestructionNotifier_UnregisterDestructionCallback",
+        "header": "d3dcommon.h",
+        "sourceLine": 603,
+        "type": "macro",
+        "value": "(This,callbackID) ( (This)->lpVtbl -> UnregisterDestructionCallback(This,callbackID) )",
+        "valueText": "(This,callbackID) ( (This)->lpVtbl -> UnregisterDestructionCallback(This,callbackID) )"
+      }
+    ]
+  },
+  "statistics": {
+    "interfaces": 3,
+    "enums": 24,
+    "records": 5,
+    "typedefs": 32,
+    "functions": 25,
+    "constants": 111,
+    "interfaceMethods": 12,
+    "enumEntries": 591,
+    "recordFields": 7,
+    "bitfields": 0,
+    "recordLayoutsResolved": 5,
+    "fieldOffsetsResolved": 7,
+    "recordLayoutsUnresolved": 0,
+    "fieldOffsetsUnresolved": 0,
+    "missingInterfaceIids": 1,
+    "headerVtables": 3,
+    "missingVtables": 0,
+    "unexpectedVtables": 0
+  }
+}

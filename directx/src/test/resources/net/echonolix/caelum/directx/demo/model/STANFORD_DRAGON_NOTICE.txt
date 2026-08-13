@@ -1,0 +1,26 @@
+Stanford Dragon demo asset
+==========================
+
+File: stanford_dragon_res3.ply
+Source: Stanford University Computer Graphics Laboratory
+Repository: https://graphics.stanford.edu/data/3Dscanrep/
+Archive: https://graphics.stanford.edu/pub/3Dscanrep/dragon/dragon_recon.tar.gz
+Archive SHA-256: 74AC1D90989C9B1732EDEE82D57E9CE71452144CF4355F108D8C9C616D28D02
+Archive member: dragon_recon/dragon_vrip_res3.ply
+Member SHA-256: F32B87762894BDE78CD45DC05AA9FDE0F5AD390C944168A96E97191FF1FC6D45
+Member geometry: 22,998 vertices; 47,794 triangular faces; ASCII PLY 1.0
+
+The archive README describes the _res* files as Stanford-provided decimated
+versions suitable for interactive rendering. The decimation is crude and may
+introduce small holes or fail to preserve topology.
+
+Stanford's repository terms require source acknowledgement. They welcome use
+for research purposes and free mirroring/redistribution, but prohibit commercial
+use or inclusion in a product for sale without permission. Credit:
+
+    Stanford University Computer Graphics Laboratory
+
+The repository also notes that the dragon is a symbol of Chinese culture and
+asks that renderings and other uses remain in good taste. This sample keeps the
+model static apart from a conventional turntable view and does not deform,
+damage, break, melt, or otherwise mistreat the cultural artifact.

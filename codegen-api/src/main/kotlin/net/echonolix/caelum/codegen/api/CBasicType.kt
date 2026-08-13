@@ -39,11 +39,11 @@ public sealed class CBasicType<T : Any>(
         NativeDataType.Byte,
     )
 
-    public object char : CBasicType<Char>(
+    public object char : CBasicType<Byte>(
         "char",
         "NChar",
         1,
-        Char::class,
+        Byte::class,
         "",
         ValueLayout.JAVA_BYTE,
         "JAVA_BYTE",
@@ -267,16 +267,24 @@ public sealed class CBasicType<T : Any>(
 
     public fun toSigned(): CBasicType<*> {
         return when (this) {
+            char -> int8_t
             int8_t -> int8_t
             int16_t -> int16_t
             int32_t -> int32_t
             int64_t -> int64_t
+            int -> int32_t
             else -> this
         }
     }
 
     public fun toUnsigned(): CBasicType<*> {
         return when (this) {
+            char -> uint8_t
+            int8_t -> uint8_t
+            int16_t -> uint16_t
+            int32_t -> uint32_t
+            int64_t -> uint64_t
+            int -> uint32_t
             uint8_t -> uint8_t
             uint16_t -> uint16_t
             uint32_t -> uint32_t

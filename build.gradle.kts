@@ -18,6 +18,10 @@ val moduleDescriptions = mapOf(
     "caelum-vulkan" to "Generated Vulkan bindings and object model for Caelum.",
     "caelum-glfw" to "Generated GLFW windowing and input bindings for Caelum.",
     "caelum-glfw-vulkan" to "GLFW Vulkan integration bindings for Caelum.",
+    "caelum-dxgi" to "Generated DXGI 1.0-1.6 bindings and Windows COM runtime for Caelum.",
+    "caelum-directx" to "Generated Direct3D 9-12 bindings for Caelum.",
+    "caelum-assimp" to "Generated Assimp asset-import and export bindings for Caelum.",
+    "caelum-openal" to "Generated OpenAL audio and device-context bindings for Caelum.",
     "caelum-codegen-api" to "Public API used by Caelum binding code generators.",
     "caelum-struct" to "Gradle plugin for generating Caelum native struct implementations.",
 )

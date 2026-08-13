@@ -38,7 +38,11 @@ include(
     "bom",
     "struct",
     "glfw",
-    "glfw-vulkan"
+    "glfw-vulkan",
+    "dxgi",
+    "directx",
+    "assimp",
+    "openal",
 ).map {
     "caelum-$it" to file(it)
 }).forEach { (name, dir) ->

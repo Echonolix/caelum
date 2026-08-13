@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "schemas": {
+    "dxgi": "dxgi-sdk-10.0.22621.0.json"
+  },
+  "hashes": {
+    "dxgi": "e5599b4be4edd52d15775d992fd57b0ff1bbcf40d3999049a6dd740a63751439"
+  },
+  "statistics": {
+    "dxgi": {
+      "interfaces": 46,
+      "enums": 32,
+      "records": 85,
+      "typedefs": 168,
+      "functions": 7,
+      "constants": 914,
+      "interfaceMethods": 867,
+      "enumEntries": 265,
+      "recordFields": 243,
+      "bitfields": 0,
+      "recordLayoutsResolved": 85,
+      "fieldOffsetsResolved": 243,
+      "recordLayoutsUnresolved": 0,
+      "fieldOffsetsUnresolved": 0,
+      "missingInterfaceIids": 0,
+      "headerVtables": 46,
+      "missingVtables": 0,
+      "unexpectedVtables": 0
+    }
+  }
+}
