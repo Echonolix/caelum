@@ -105,7 +105,7 @@ class CCodegenProcessor : KtgenProcessor {
             )
 
             val includeRegex = """\s*#include\s+["<](.+)[">]\s*""".toRegex()
-            val excludedIncludes = System.getProperty("codegenc.excludeIncludes", null)
+            val excludedIncludes = System.getProperty("codegenc.excludedIncludes", null)
                 .parseList()
                 .toSet()
             clangProcess.outputWriter().use { stdinWriter ->
