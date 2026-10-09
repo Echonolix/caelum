@@ -44,7 +44,9 @@ include(
     "assimp",
     "openal",
     "vma",
-    "codegen-cpp"
+    "codegen-cpp",
+    "zstd",
+    "bc7e"
 ).map {
     "caelum-$it" to file(it)
 }).forEach { (name, dir) ->

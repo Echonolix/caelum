@@ -23,6 +23,18 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 | caelum-openal      | OpenAL 1.1 audio and device-context API bindings       |
 | caelum-vma         | VMA core/virtual bindings and compiled native implementation |
 | caelum-codegen-cpp | Clang-based C++ API to stable C ABI/FFM code generator |
+| caelum-zstd        | Zstandard bindings with bundled cross-compiled libraries |
+| caelum-bc7e        | bc7e.ispc BC7 encoder bindings with bundled cross-compiled libraries |
+
+## Cross-compiled native libraries
+
+`buildsrc.convention.cross-native` builds one shared library per supported target
+(Windows x86_64 and Linux x86_64) from any host, using a zig and ISPC toolchain that
+Gradle downloads at pinned versions and verifies by SHA-256. The binaries are packaged
+as `META-INF/caelum/native/<os>-<arch>/`, and `NativeLibraries.load` in
+caelum-core extracts and loads the one for the running platform before codegen-c
+bindings resolve their symbols. See [`zstd/README.md`](zstd/README.md) and
+[`bc7e/README.md`](bc7e/README.md).
 
 ## C++ and header-only bindings
 
@@ -84,7 +96,9 @@ Maven projects can import the BOM and then select only the bindings they use:
 
 Most artifacts contain the Caelum bindings, not platform native libraries such
 as GLFW, Assimp, or OpenAL; applications still load the matching native library
-before the first binding call. `caelum-vma` is an explicit exception: its build compiles and
+before the first binding call. `caelum-zstd` and `caelum-bc7e` bundle every
+supported target and load it through their `load()` entry points. `caelum-vma` is
+another exception: its build compiles and
 packages the current host's VMA implementation under
 `META-INF/caelum/native/<os>-<arch>/`. A host build is a local artifact; a
 multi-platform Maven release still needs distinct platform variants/classifiers
