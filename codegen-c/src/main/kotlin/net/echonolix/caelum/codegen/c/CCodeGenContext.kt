@@ -155,10 +155,13 @@ class CElementResolver(
 
         cEnum.enumerators.forEach {
             val entryName = it.id.name
-            cTypeEnum.entries[entryName] = cTypeEnum.Entry(
+            val entry = cTypeEnum.Entry(
                 entryName,
                 CExpression.Const(CBasicType.int32_t, it.value.asKotlinCode())
             )
+            // The enum generators name Kotlin entries from this tag; C entries keep their C name.
+            entry.tags.set(EnumEntryFixedName(entryName))
+            cTypeEnum.entries[entryName] = entry
         }
 
         return cTypeEnum

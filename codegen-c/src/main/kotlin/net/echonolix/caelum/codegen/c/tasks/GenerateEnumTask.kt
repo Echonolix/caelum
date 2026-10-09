@@ -1,6 +1,8 @@
 package net.echonolix.caelum.codegen.c.tasks
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import net.echonolix.caelum.codegen.api.CaelumCodegenHelper
 import net.echonolix.caelum.codegen.api.CType
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.filterType
@@ -22,7 +24,12 @@ class GenerateEnumTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
     }
 
     private fun genEnumType(enumType: CType.Enum): FileSpec.Builder {
-        val generator = EnumBaseGenerator(ctx, enumType)
+        // C enums are int-backed; NIntEnum supplies the representation that the
+        // two-parameter NEnum needs.
+        val generator = object : EnumBaseGenerator(ctx, enumType) {
+            context(ctx: CodegenContext)
+            override fun enumBaseCName(): ClassName = ClassName(CaelumCodegenHelper.basePkgName, "NIntEnum")
+        }
         return generator.generate()
     }
 }
