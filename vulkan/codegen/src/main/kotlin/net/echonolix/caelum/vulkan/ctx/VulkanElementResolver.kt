@@ -11,6 +11,7 @@ import net.echonolix.caelum.codegen.api.ctx.ElementResolver
 import net.echonolix.caelum.codegen.api.ctx.resolveTypedElement
 import net.echonolix.caelum.vulkan.*
 import net.echonolix.caelum.vulkan.schema.*
+import nl.adaptivity.xmlutil.util.CompactFragment
 
 class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Base() {
     private fun resolveTypeDef(xmlTypeDefType: Registry.Types.Type): CType.TypeDef {
@@ -28,26 +29,20 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
     private fun resolveFuncPointerType(xmlTypeDefType: Registry.Types.Type): CType.TypeDef {
         assert(xmlTypeDefType.category == Registry.Types.Type.Category.funcpointer)
         xmlTypeDefType.name!!
-        val funcStrLines = xmlTypeDefType.inner.toXmlTagFreeString().lines()
-        val headerMatchResult =
-            CSyntax.funcPointerHeaderRegex.matchEntire(funcStrLines.first()) ?: throw IllegalStateException(
-                "Cannot resolve func pointer header for: ${xmlTypeDefType.name}"
-            )
-        assert(xmlTypeDefType.name == headerMatchResult.groupValues[2])
-        val returnTypeStr = headerMatchResult.groupValues[1]
-        val returnType = resolveTypedElement<CType>(returnTypeStr)
-        val parameters = funcStrLines.asSequence()
-            .drop(1)
-            .flatMap { it.split(CSyntax.funcPointerParamSplitRegex) }
-            .filter { it.isNotBlank() }
-            .map {
-                CSyntax.funcPointerParameterRegex.matchEntire(it)
-                    ?: throw IllegalStateException("Cannot resolve func pointer parameter for: ${xmlTypeDefType.name}")
-            }
-            .map { it.groupValues }
-            .map {
-                CType.Function.Parameter(it[2], resolveTypedElement<CType>(it[1]))
-            }.toList()
+        val proto = xmlTypeDefType.proto
+            ?: throw IllegalStateException("Func pointer without <proto>: ${xmlTypeDefType.name}")
+        check(proto.name == xmlTypeDefType.name)
+        fun typeOf(inner: List<CompactFragment>): CType {
+            val str = inner.toXmlTagFreeString().trim()
+            val match = CSyntax.typeRegex.matchEntire(str)
+                ?: throw IllegalStateException("Cannot resolve func pointer type '$str' for: ${xmlTypeDefType.name}")
+            return resolveTypedElement<CType>(match.groupValues[1])
+        }
+        val returnType = typeOf(proto.inner)
+        val parameters = xmlTypeDefType.params.asSequence()
+            .filter { it.api.isVulkanApi() }
+            .map { CType.Function.Parameter(it.name!!, typeOf(it.inner)) }
+            .toList()
         val func = CType.Function("VkFuncPtr${xmlTypeDefType.name.removePrefix("PFN_vk")}", returnType, parameters)
         func.tags.set(OriginalNameTag(xmlTypeDefType.name))
         addToCache(func.name, func)
@@ -93,6 +88,15 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
     }
 
     private fun CType.EnumBase.addEntry(xmlEnum: Registry.Enums.Enum): CType.EnumBase.Entry {
+        // Newer registries keep pre-_BIT spellings as deprecated aliases (VK_HOST_IMAGE_COPY_MEMCPY_EXT next to
+        // VK_HOST_IMAGE_COPY_MEMCPY_BIT_EXT). Both fix to the same Kotlin name; reuse the existing entry.
+        val fixedName = fixEntryName(xmlEnum.name)
+        val sameName = entries.values.firstOrNull { it.tags.getOrNull<EnumEntryFixedName>()?.name == fixedName }
+        if (sameName != null) {
+            check(xmlEnum.alias != null) { "Enum entry name clash in ${name}: ${xmlEnum.name} vs ${sameName.name}" }
+            addToCache(xmlEnum.name, sameName)
+            return sameName
+        }
         val type = entryType.baseType
         val entry = if (xmlEnum.alias != null) {
             val dstEntry = entries[xmlEnum.alias] ?: resolveElement(xmlEnum.alias) as CType.EnumBase.Entry
@@ -159,6 +163,8 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
     private fun resolveGroupMembers(xmlGroupType: Registry.Types.Type): List<CType.Group.Member> {
         var lineComment: String? = null
         val members = mutableListOf<CType.Group.Member>()
+        // The count member may follow the counted member (VkHostAddressRangeEXT), so bind after parsing.
+        val counted = mutableListOf<Pair<CType.Group.Member, String>>()
         xmlGroupType.inner.forEach { xmlMember ->
             val xmlComment = xmlMember.tryParseXML<XMLComment>()
             if (xmlComment != null) {
@@ -167,7 +173,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
                 return@forEach
             }
             val xmlMember = xmlMember.tryParseXML<XMLMember>()!!
-            if (xmlMember.api != null && !xmlMember.api.split(",").contains("vulkan")) return@forEach
+            if (!xmlMember.api.isVulkanApi()) return@forEach
 
             var bits = -1
             var typeStr = xmlMember.inner.toXmlTagFreeString()
@@ -187,15 +193,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             (xmlMember.len)?.let { len ->
                 val altlen = xmlMember.altlen
                 if (altlen == null && len != "null-terminated") {
-                    val lenFirst = len.substringBefore(",")
-                    val countMember =
-                        members.find { it.name == lenFirst } ?: error("Cannot find count member $lenFirst")
-                    check(countMember.name == lenFirst)
-                    val countTag = CountTag((countMember.tags.getOrNull<CountTag>()?.v ?: emptyList()) + member)
-                    countMember.tags.set(countTag)
-                    check(member.type is CType.Pointer || member.type is CType.Array)
-                    check(countMember.name.endsWith("Count") || countTag.v.size == 1)
-                    member.tags.set(CountedTag(lenFirst))
+                    counted += member to len.substringBefore(",")
                 }
             }
             xmlMember.comment?.let {
@@ -213,6 +211,15 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
             }
             lineComment = null
             members.add(member)
+        }
+        counted.forEach { (member, lenFirst) ->
+            val countMember =
+                members.find { it.name == lenFirst } ?: error("Cannot find count member $lenFirst")
+            val countTag = CountTag((countMember.tags.getOrNull<CountTag>()?.v ?: emptyList()) + member)
+            countMember.tags.set(countTag)
+            check(member.type is CType.Pointer || member.type is CType.Array)
+            check(countMember.name.endsWith("Count") || countTag.v.size == 1)
+            member.tags.set(CountedTag(lenFirst))
         }
         return members
     }
@@ -281,7 +288,7 @@ class VulkanElementResolver(val registry: FilteredRegistry) : ElementResolver.Ba
         val returnType = resolveTypedElement<CType>(returnTypeStr)
         val parameters = xmlCommand.params.asSequence()
             .filter { it.name != null }
-            .filter { it.api == null || it.api == API.vulkan }
+            .filter { it.api.isVulkanApi() }
             .map {
                 it.name!!
                 val innerStr = it.inner.toXmlTagFreeString()

@@ -26,7 +26,7 @@ value class XMLType(val value: String)
 @Serializable
 @XmlSerialName("member")
 data class XMLMember(
-    @XmlElement val name: String,
+    @XmlElement @XmlSerialName("name") val nameElement: XMLMemberName,
     val optional: String? = null,
     val noautovalidity: Boolean = false,
     val limittype: String? = null,
@@ -35,6 +35,8 @@ data class XMLMember(
     val deprecated: String? = null,
     val altlen: String? = null,
     val api: String? = null,
+    val flagsextend: String? = null,
+    val flagsextendmember: String? = null,
     val objecttype: String? = null,
     val featurelink: String? = null,
     val selector: String? = null,
@@ -42,6 +44,16 @@ data class XMLMember(
     val externsync: Boolean = false,
     @XmlElement val comment: String? = null,
     @XmlValue val inner: List<CompactFragment> = emptyList()
+) {
+    val name: String get() = nameElement.value
+}
+
+/** Member `<name>`; `alias` points at the equivalent member of a promoted struct. */
+@Serializable
+@XmlSerialName("name")
+data class XMLMemberName(
+    @XmlValue val value: String,
+    val alias: String? = null,
 )
 
 @Serializable
@@ -96,7 +108,7 @@ data class Registry(
         @XmlSerialName("type")
         data class Type(
             val name: String?,
-            @XmlElement(false) val api: API? = null,
+            val api: String? = null,
             val requires: String? = null,
             @XmlElement(false) val category: Category? = null,
             val deprecated: Boolean = false,
@@ -108,12 +120,24 @@ data class Registry(
             val returnedonly: Boolean? = null,
             val structextends: String? = null,
             val allowduplicate: Boolean? = null,
+            val requiredlimittype: Boolean? = null,
+            /** Function pointer prototype (`category="funcpointer"`). */
+            val proto: FuncPointerProto? = null,
+            /** Function pointer parameters (`category="funcpointer"`). */
+            val params: List<Commands.Command.Param> = emptyList(),
             @XmlValue
             val inner: List<CompactFragment> = emptyList()
 
         ) {
+            @Serializable
+            @XmlSerialName("proto")
+            data class FuncPointerProto(
+                @XmlElement val name: String,
+                @XmlValue val inner: List<CompactFragment> = emptyList(),
+            )
+
             fun fix(): Type {
-                val name = name ?: inner.asSequence()
+                val name = name ?: proto?.name ?: inner.asSequence()
                     .mapNotNull { runCatching { XML.decodeFromString<XMLName>(it.contentString) }.getOrNull() }
                     .first().value
                 val comment = inner.asSequence()
@@ -151,7 +175,7 @@ data class Registry(
         @XmlSerialName("enum")
         data class Enum(
             val name: String,
-            @XmlElement(false) val api: API?,
+            val api: String?,
             @XmlElement(false) val type: CBasicType<*>?,
             val value: String?,
             val protect: String?,
@@ -184,7 +208,7 @@ data class Registry(
         data class Command(
             val name: String?,
             val alias: String?,
-            @XmlElement(false) val api: API? = null,
+            val api: String? = null,
             val successcodes: String?,
             val errorcodes: String?,
             val proto: Proto?,
@@ -195,6 +219,9 @@ data class Registry(
             @XmlElement(false) val cmdbufferlevel: String?,
             @XmlElement(false) val tasks: String?,
             @XmlElement(false) val videocoding: VideoCoding? = null,
+            val export: String? = null,
+            val allownoqueues: Boolean? = null,
+            val conditionalrendering: String? = null,
             val comment: String?,
         ) {
             @Serializable
@@ -214,7 +241,7 @@ data class Registry(
             @Serializable
             @XmlSerialName("param")
             data class Param(
-                @XmlElement(false) val api: API? = null,
+                val api: String? = null,
                 @XmlElement val name: String?,
                 val optional: String? = null,
                 val externsync: Boolean = false,
@@ -234,6 +261,7 @@ data class Registry(
     @XmlSerialName("feature")
     data class Feature(
         val api: String,
+        val apitype: String? = null,
         val name: String,
         val number: String,
         val comment: String,
@@ -244,7 +272,7 @@ data class Registry(
         @Serializable
         @XmlSerialName("require")
         data class Require(
-            @XmlElement(false) val api: API?,
+            val api: String?,
             val depends: String?,
             val comment: String?,
             val types: List<Type>,
@@ -338,7 +366,9 @@ data class Registry(
                 metal,
                 directfb,
                 sci,
-                screen
+                screen,
+                ohos,
+                ubm,
             }
         }
     }
@@ -381,7 +411,8 @@ data class Registry(
                     SRGB,
                     SFLOAT,
                     UFLOAT,
-                    SFIXED5
+                    SFIXED5,
+                    BOOL,
                 }
             }
 
@@ -403,10 +434,11 @@ data class Registry(
     }
 }
 
-enum class API {
-    vulkan,
-    vulkansc,
-}
+/**
+ * `api` attributes are comma-separated lists such as `vulkan,vulkanbase`.
+ * Elements without the attribute apply to every API.
+ */
+fun String?.isVulkanApi(): Boolean = this == null || split(',').contains("vulkan")
 
 enum class RenderPass {
     both,

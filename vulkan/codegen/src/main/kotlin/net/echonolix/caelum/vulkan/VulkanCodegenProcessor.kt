@@ -8,9 +8,9 @@ import net.echonolix.caelum.codegen.api.deepReferenceResolve
 import net.echonolix.caelum.vulkan.ctx.VulkanCodegenOutput
 import net.echonolix.caelum.vulkan.ctx.VulkanElementDocumenter
 import net.echonolix.caelum.vulkan.ctx.VulkanElementResolver
-import net.echonolix.caelum.vulkan.schema.API
 import net.echonolix.caelum.vulkan.schema.FilteredRegistry
 import net.echonolix.caelum.vulkan.schema.Registry
+import net.echonolix.caelum.vulkan.schema.isVulkanApi
 import net.echonolix.caelum.vulkan.tasks.*
 import net.echonolix.ktgen.KtgenProcessor
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
@@ -38,7 +38,8 @@ fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
 class VulkanCodegenProcessor : KtgenProcessor {
     override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> { 
         val registryText = javaClass.getResource("/vk.xml")!!.readText()
-        val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs")
+        // Metadata the bindings do not use. `deprecate` blocks only annotate features and extensions.
+        val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs", "dynamicstates", "deprecate")
         val xml = XML {
             indentString = "    "
             defaultToGenericParser = true
@@ -81,7 +82,7 @@ class VulkanCodegenProcessor : KtgenProcessor {
                         ctx.resolveElement(it.name)
                     }
                     require.enums.asSequence()
-                        .filter { it.api == null || it.api == API.vulkan }
+                        .filter { it.api.isVulkanApi() }
                         .forEach {
                             ctx.resolveElement(it.name)
                         }
@@ -89,12 +90,7 @@ class VulkanCodegenProcessor : KtgenProcessor {
         }
 
         filteredRegistry.registryFeatures.forEach { processRequire(it.require) }
-        filteredRegistry.registryExtensions.forEach {
-            if (it.name == "VK_EXT_descriptor_buffer") {
-                println("Found descriptor buffer extension!")
-            }
-            processRequire(it.require)
-        }
+        filteredRegistry.registryExtensions.forEach { processRequire(it.require) }
 
 //        val includedVKVersion = setOf(
 //            "VK_VERSION_1_0",

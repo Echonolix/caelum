@@ -234,16 +234,6 @@ class GenerateGroupTask(ctx: CodegenContext) : CodegenTask<Unit>(ctx) {
                         )
                     }
 
-                    countTag.v.forEachIndexed { i, it ->
-                        if (it.type is CType.Pointer) {
-                            initCheckCode.addStatement(
-                                "assert(this.%N._address == 0L) { %S }",
-                                it.name,
-                                "${it.name} of ${element.name} already changed"
-                            )
-                        }
-                    }
-
                     val nullOverloadFunc = FunSpec.builder(funcName)
                     nullOverloadFunc.addOptIns(CaelumCodegenHelper.unsafeAPICName)
                     nullOverloadFunc.receiver(pointerCNameP)

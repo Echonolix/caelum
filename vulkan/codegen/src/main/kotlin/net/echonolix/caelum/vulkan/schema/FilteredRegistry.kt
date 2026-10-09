@@ -3,6 +3,8 @@ package net.echonolix.caelum.vulkan.schema
 import net.echonolix.caelum.vulkan.VulkanCodegen
 import net.echonolix.caelum.vulkan.tryParseXML
 
+private val internalVersionRegex = Regex("^VK_(BASE|COMPUTE|GRAPHICS)_VERSION_")
+
 class FilteredRegistry(registry: Registry) {
     val raw = registry
     val registryFeatures = registry.features.asSequence()
@@ -13,12 +15,15 @@ class FilteredRegistry(registry: Registry) {
         .filter { it.supported != "disabled" }
         .filter { extension -> VulkanCodegen.skippedExtensionPrefix.none { extension.name.startsWith(it) } }
         .toList()
-    val registryTypes = registry.types.types.associate { type ->
-        val name = type.name ?: type.inner.firstNotNullOf {
-            it.tryParseXML<XMLName>()?.value
+    val registryTypes = registry.types.types.asSequence()
+        // Same-named variants exist per API (vulkan vs vulkansc); keep only the Vulkan one.
+        .filter { it.api.isVulkanApi() }
+        .associate { type ->
+            val name = type.name ?: type.proto?.name ?: type.inner.firstNotNullOf {
+                it.tryParseXML<XMLName>()?.value
+            }
+            name to type.copy(name = name)
         }
-        name to type.copy(name = name)
-    }
     val typeDefTypes = registryTypes.values.asSequence()
         .filter { it.category != Registry.Types.Type.Category.funcpointer }
         .filter { it.category != Registry.Types.Type.Category.bitmask }
@@ -70,7 +75,7 @@ class FilteredRegistry(registry: Registry) {
 
     val commands = registry.commands.asSequence()
         .flatMap { it.commands }
-        .filter { it.api == null || it.api == API.vulkan }
+        .filter { it.api.isVulkanApi() }
         .associateBy { it.proto?.name ?: it.name }
 
     val extEnums = (
@@ -83,7 +88,7 @@ class FilteredRegistry(registry: Registry) {
                     .map { it.copy(extnumber = it.extnumber ?: extension.number.toString()) }
             }
         )
-        .filter { it.api == null || it.api == API.vulkan }
+        .filter { it.api.isVulkanApi() }
         .sortedWith(compareBy {
             it.alias != null || it.value != null
         })
@@ -103,10 +108,14 @@ class FilteredRegistry(registry: Registry) {
     val stuffRequiredBy: Map<String, String>
 
     init {
+        // Vulkan 1.4.3xx moved core items into internal features (VK_BASE_VERSION_1_1, ...); document the public version.
+        fun Registry.Feature.docName(): String =
+            if (apitype == "internal") name.replace(internalVersionRegex, "VK_VERSION_") else name
+
         val featureEnums = registryFeatures.asSequence().flatMap { feature ->
             feature.require.asSequence()
                 .flatMap { it.enums }
-                .map { it to feature.name }
+                .map { it to feature.docName() }
         }
         val extensionEnums = registryExtensions.flatMap { extension ->
             extension.require.asSequence()
@@ -115,7 +124,7 @@ class FilteredRegistry(registry: Registry) {
                 .map { it to extension.name }
         }
         val enums = (featureEnums + extensionEnums)
-            .filter { (it, _) -> it.api == null || it.api == API.vulkan }
+            .filter { (it, _) -> it.api.isVulkanApi() }
             .map { it.first.name to it.second }
 
         val featureTypesNCommands = registryFeatures.asSequence().flatMap { feature ->
@@ -123,7 +132,7 @@ class FilteredRegistry(registry: Registry) {
                 .flatMap { require ->
                     require.types.asSequence().map { it.name } + require.commands.asSequence().map { it.name }
                 }
-                .map { it to feature.name }
+                .map { it to feature.docName() }
         }
 
         val extensionTypesNCommands = registryExtensions.flatMap { extension ->
