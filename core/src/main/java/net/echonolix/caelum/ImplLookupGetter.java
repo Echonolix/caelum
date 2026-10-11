@@ -21,7 +21,7 @@ class ImplLookupGetter {
 
     public static MethodHandles.Lookup getLookup() {
         try (Arena arena = Arena.ofConfined()) {
-            final SymbolLookup lookup = SymbolLookup.libraryLookup("jvm", arena);
+            final SymbolLookup lookup = SymbolLookup.libraryLookup(System.mapLibraryName("jvm"), arena);
             final MemorySegment vm = getJavaVm(arena, lookup);
             final MemorySegment env = getJniEnv(arena, vm);
             final MemorySegment lookupClass = getJniClass(arena, env, MethodHandles.Lookup.class);
