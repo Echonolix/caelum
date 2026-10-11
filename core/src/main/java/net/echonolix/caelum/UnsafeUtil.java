@@ -64,14 +64,25 @@ public class UnsafeUtil {
     }
 
     public static void fillZeros(long address, long size) {
-        assert (address & 7) == 0 : "Address must be aligned to 8 bytes";
-        assert (size & 7) == 0 : "Size must be a multiple of 8 bytes";
+        assert size >= 0 : "Size must not be negative";
 
         try {
             if (size <= 256) {
-                long loopCount = (size + Long.BYTES - 1) / 8;
-                for (long i = 0; i < loopCount; i++) {
-                    UnsafeUtil.UNSAFE_PUT_LONG_NATIVE.invokeExact(  address + i * Long.BYTES, 0L);
+                // Only write complete words inside the requested interval.
+                while (size > 0 && (address & (Long.BYTES - 1)) != 0) {
+                    UnsafeUtil.UNSAFE_PUT_BYTE_NATIVE.invokeExact(address, (byte) 0);
+                    address++;
+                    size--;
+                }
+                while (size >= Long.BYTES) {
+                    UnsafeUtil.UNSAFE_PUT_LONG_NATIVE.invokeExact(address, 0L);
+                    address += Long.BYTES;
+                    size -= Long.BYTES;
+                }
+                while (size > 0) {
+                    UnsafeUtil.UNSAFE_PUT_BYTE_NATIVE.invokeExact(address, (byte) 0);
+                    address++;
+                    size--;
                 }
             } else {
                 UnsafeUtil.UNSAFE_SET_MEMORY0_NATIVE.invokeExact(  address, size, (byte) 0);
