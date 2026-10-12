@@ -16,6 +16,7 @@ dependencies {
         api(project(":caelum-openal"))
         api(project(":caelum-vma"))
         api(project(":caelum-zstd"))
+        api(project(":caelum-mdbx"))
         api(project(":caelum-bc7e"))
         api(project(":caelum-codegen-api"))
         api(project(":caelum-codegen-cpp"))

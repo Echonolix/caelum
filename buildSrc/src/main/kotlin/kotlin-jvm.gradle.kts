@@ -10,7 +10,7 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(24))
+        languageVersion.set(JavaLanguageVersion.of(providers.gradleProperty("caelumJavaVersion").getOrElse("24").toInt()))
     }
 }
 
@@ -38,4 +38,10 @@ kotlin {
 
 dependencies {
     implementation("org.jetbrains:annotations:26.0.2")
+}
+
+// Generators must use the same JDK as their processor classes, even when the
+// Gradle daemon runs on an older JDK.
+tasks.withType<JavaExec>().configureEach {
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
 }

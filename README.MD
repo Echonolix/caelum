@@ -23,6 +23,7 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 | caelum-openal      | OpenAL 1.1 audio and device-context API bindings       |
 | caelum-vma         | VMA core/virtual bindings and compiled native implementation |
 | caelum-codegen-cpp | Clang-based C++ API to stable C ABI/FFM code generator |
+| caelum-mdbx        | libmdbx bindings and transaction ownership with bundled native libraries |
 | caelum-zstd        | Zstandard bindings with bundled cross-compiled libraries |
 | caelum-bc7e        | bc7e.ispc BC7 encoder bindings with bundled cross-compiled libraries |
 
@@ -34,7 +35,7 @@ Gradle downloads at pinned versions and verifies by SHA-256. The binaries are pa
 as `META-INF/caelum/native/<os>-<arch>/`, and `NativeLibraries.load` in
 caelum-core extracts and loads the one for the running platform before codegen-c
 bindings resolve their symbols. See [`zstd/README.md`](zstd/README.md) and
-[`bc7e/README.md`](bc7e/README.md).
+[`bc7e/README.md`](bc7e/README.md), and [`mdbx/README.md`](mdbx/README.md).
 
 ## C++ and header-only bindings
 
@@ -47,7 +48,7 @@ surface and [`vma/README.md`](vma/README.md) for the first concrete integration.
 
 ## Maven
 
-Caelum requires JDK 24. Publish the current checkout to Maven Local with:
+Caelum defaults to JDK 24. Use `-PcaelumJavaVersion=25` to build and run generators/tests with GraalVM 25. Publish the current checkout to Maven Local with:
 
 ```powershell
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-24"

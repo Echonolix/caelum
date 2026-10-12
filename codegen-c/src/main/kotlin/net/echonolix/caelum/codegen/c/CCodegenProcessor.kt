@@ -1,5 +1,6 @@
 package net.echonolix.caelum.codegen.c
 
+import net.echonolix.caelum.NativeLibraries
 import net.echonolix.caelum.codegen.api.CSyntax
 import net.echonolix.caelum.codegen.api.ctx.CodegenContext
 import net.echonolix.caelum.codegen.api.ctx.CodegenOutput
@@ -15,6 +16,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.RecursiveAction
+import java.util.concurrent.CompletableFuture
 import kotlin.io.path.*
 
 private var dev = false
@@ -64,20 +66,7 @@ class CCodegenProcessor : KtgenProcessor {
                     }
                     .joinToString("\n")
 
-                val clangProcess = Runtime.getRuntime().exec(
-                    arrayOf(
-                        "clang",
-                        "-E",
-                        "-C",
-                        "--target=x86_64-pc-windows-gnu",
-                        "-std=c23",
-                        "-"
-                    )
-                )
-                clangProcess.outputWriter().use {
-                    it.write(defineLines)
-                }
-                elementCtx.parse(clangProcess.inputReader().readText())
+                elementCtx.parse(preprocess(defineLines))
             }
         }
 
@@ -93,35 +82,17 @@ class CCodegenProcessor : KtgenProcessor {
                 .parseList()
                 .mapTo(extraArgs) { "-D$it" }
 
-            val clangProcess = Runtime.getRuntime().exec(
-                arrayOf(
-                    "clang",
-                    "-E",
-                    "-C",
-                    "--target=x86_64-pc-windows-gnu",
-                    "-std=c23",
-                    "-"
-                )
-            )
-
             val includeRegex = """\s*#include\s+["<](.+)[">]\s*""".toRegex()
             val excludedIncludes = System.getProperty("codegenc.excludedIncludes", null)
                 .parseList()
                 .toSet()
-            clangProcess.outputWriter().use { stdinWriter ->
-                inputs.flatMap { it.readLines() }
-                    .filter { line ->
-                        includeRegex.matchEntire(line)?.let {
-                            it.groups[1]?.value !in excludedIncludes
-                        } ?: true
-                    }
-                    .forEach {
-                        stdinWriter.write(it)
-                        stdinWriter.write("\n")
-                    }
-            }
-            val text = clangProcess.inputReader().readText()
-            elementCtx.parse(text)
+            val declarations = inputs.flatMap { it.readLines() }
+                .filter { line ->
+                    includeRegex.matchEntire(line)?.let {
+                        it.groups[1]?.value !in excludedIncludes
+                    } ?: true
+                }.joinToString("\n")
+            elementCtx.parse(preprocess(declarations, extraArgs))
         }
 
         if (!dev) {
@@ -180,15 +151,40 @@ class CCodegenProcessor : KtgenProcessor {
         return ctx.outputFiles
     }
 
+    private fun preprocess(source: String, extraArgs: List<String> = emptyList()): String {
+        val command = listOf(
+            System.getProperty("codegenc.clang", "clang"), "-E", "-C",
+            "--target=x86_64-pc-windows-gnu", "-std=c23",
+        ) + extraArgs + "-"
+        val process = ProcessBuilder(command).start()
+        // Drain both pipes while writing stdin, including for large headers.
+        val output = CompletableFuture.supplyAsync { process.inputReader().use { it.readText() } }
+        val errors = CompletableFuture.supplyAsync { process.errorReader().use { it.readText() } }
+        try {
+            process.outputWriter().use { it.write(source) }
+            val code = process.waitFor()
+            val text = output.get()
+            val diagnostics = errors.get()
+            check(code == 0) { "C preprocessing failed ($code): ${command.joinToString(" ")}\n$diagnostics" }
+            return text
+        } finally {
+            if (process.isAlive) process.destroyForcibly()
+        }
+    }
+
     companion object {
         private val tempLibDir = Path(System.getProperty("java.io.tmpdir"), "net.echonolix.caelum")
 
         init {
             tempLibDir.createDirectories()
-            loadLibrary("libzstd")
-            loadLibrary("wasmtime")
-            loadLibrary("libtree-sitter-0.25")
-            loadLibrary("c")
+            if (System.getProperty("os.name").startsWith("Linux", ignoreCase = true)) {
+                NativeLibraries.load(CCodegenProcessor::class.java, "caelum_codegen_c")
+            } else {
+                loadLibrary("libzstd")
+                loadLibrary("wasmtime")
+                loadLibrary("libtree-sitter-0.25")
+                loadLibrary("c")
+            }
         }
 
         @JvmStatic

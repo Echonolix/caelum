@@ -34,7 +34,7 @@ val compileTasks = NativeTarget.values().map { target ->
         cFlags.set(crossNative.cFlags)
         cppFlags.set(crossNative.cppFlags)
         ispcFlags.set(crossNative.ispcFlags)
-        linkFlags.set(crossNative.linkFlags)
+        linkFlags.set(crossNative.linkFlags.zip(crossNative.targetLinkFlags(target)) { common, specific -> common + specific })
         cStandard.set(crossNative.cStandard)
         cppStandard.set(crossNative.cppStandard)
         optimization.set(crossNative.optimization)

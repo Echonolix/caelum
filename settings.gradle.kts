@@ -46,6 +46,7 @@ include(
     "vma",
     "codegen-cpp",
     "zstd",
+    "mdbx",
     "bc7e"
 ).map {
     "caelum-$it" to file(it)

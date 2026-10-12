@@ -44,6 +44,13 @@ abstract class CrossNativeExtension @Inject constructor(objects: ObjectFactory) 
     abstract val ispcFlags: ListProperty<String>
     abstract val linkFlags: ListProperty<String>
 
+    private val perTargetLinkFlags = NativeTarget.values().associateWith {
+        objects.listProperty(String::class.java)
+    }
+
+    /** Extra linker arguments specific to one platform (for example Windows system libraries). */
+    fun targetLinkFlags(target: NativeTarget): ListProperty<String> = perTargetLinkFlags.getValue(target)
+
     abstract val cStandard: Property<String>
     abstract val cppStandard: Property<String>
 

@@ -23,6 +23,7 @@ kotlin {
 
 tasks.ktgen {
     jvmArgs("--enable-native-access=ALL-UNNAMED")
+    providers.gradleProperty("codegenc.clang").orNull?.let { systemProperty("codegenc.clang", it) }
     systemProperty("codegenc.packageName", codegenCExtension.packageName.get())
     systemProperty("codegenc.functionBaseTypeName", codegenCExtension.functionBaseTypeName.get())
     systemProperty(
