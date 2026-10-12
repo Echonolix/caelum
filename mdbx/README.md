@@ -85,7 +85,7 @@ function descriptor cannot describe both signatures. C enums/flags use 32-bit ca
 carriers on the supported x86_64 targets. C bool is normalized to a one-byte
 unsigned carrier. `MDBX_val` retains upstream pointer/length field order.
 Environment/transaction/latency structs are opaque and must never be allocated
-or dereferenced. No by-value aggregate returns, cursor APIs, recovery tools,
+or dereferenced. No by-value aggregate returns, public cursor handles, recovery tools,
 callbacks, or inline-only helpers are claimed as bound.
 
 `src/main/c/mdbx_abi.c` includes the unmodified upstream header, checks carriers
@@ -112,3 +112,33 @@ Run `:caelum-mdbx:test :caelum-mdbx:jar :caelum-mdbx:sourcesJar` for CPU integra
 and publication artifacts. Windows runtime behavior (including file growth and
 shrink) needs native Windows acceptance; cross-compilation and export inspection
 alone do not establish it.
+
+## Bounded prefix scans
+
+`MdbxTable.scanPrefix(prefix, limit = 256, after = null)` scans an ordinary binary
+lexicographic table with a cursor. `limit` is 1..4096; `after` is an exclusive key
+from the same prefix. An empty prefix scans the table from its first key. Resume
+with the last returned key, even when application filtering discards all results.
+A short result denotes the end of that prefix; an exactly full result may require
+one further scan to establish the end. A missing continuation key seeks the next
+key, so deleting the continuation does not restart enumeration.
+
+`MdbxEntry` owns copied key/value byte arrays; nothing borrows mmap storage or
+escapes with a live native cursor. The cursor opens/closes within one synchronous
+transaction call, including on error. Transaction/thread/lifecycle checks are the
+same as point reads. No cursor handle, DUPSORT API, or used-page statistics API is
+exposed. An application requiring a stable multi-page snapshot should perform all
+scans in one read transaction; separate transactions can observe intervening writes.
+
+The normalized binding adds only `mdbx_cursor_open`, `mdbx_cursor_get`, and
+`mdbx_cursor_close`. `MDBX_FIRST=0`, `MDBX_NEXT=8`, `MDBX_SET_RANGE=17`, enum width,
+and signatures were checked against the existing pinned 0.14.4 header; native
+compile-time assertions check the constants/carrier on both targets.
+
+Copy bounds for untrusted stored blobs are opt-in, preserving the original
+`get(key)` and three-argument `scanPrefix` signatures. `get(key, maxValueBytes)`
+checks the native value length before copying. The bounded scan overload requires
+`maxKeyBytes`, `maxValueBytes`, and `maxTotalBytes`; all lengths and the remaining
+batch byte budget are checked before copying. Count alone does not bound byte
+allocation. On a byte-limit failure the scan throws and closes its cursor; it
+does not return a misleading short batch. The transaction remains usable.

@@ -59,8 +59,9 @@ public class MdbxTransaction internal constructor(
         checkMdbx(operation, code)
     }
 
-    internal fun get(dbi: UInt, key: ByteArray): ByteArray? {
+    internal fun get(dbi: UInt, key: ByteArray, maxValueBytes: Int): ByteArray? {
         ensureActive()
+        require(maxValueBytes >= 0)
         return Arena.ofConfined().use { arena ->
             val nativeKey = value(arena, key)
             val data = arena.allocate(MDBX_val.layout)
@@ -69,7 +70,7 @@ public class MdbxTransaction internal constructor(
             checkMdbx("mdbx_get", result)
             val pointer = NPointer<MDBX_val>(data.address())
             val size = pointer.iov_len
-            check(size in 0..Int.MAX_VALUE.toLong()) { "Value too large for ByteArray: $size" }
+            check(size in 0..maxValueBytes.toLong()) { "Value exceeds copy limit $maxValueBytes: $size" }
             // Copy before any update or txn termination can invalidate mmap data.
             if (size == 0L) ByteArray(0) else MemorySegment.ofAddress(pointer.iov_base._address)
                 .reinterpret(size).toArray(ValueLayout.JAVA_BYTE)
@@ -94,6 +95,53 @@ public class MdbxTransaction internal constructor(
         }
     }
 
+    internal fun scanPrefix(dbi: UInt, prefix: ByteArray, limit: Int, after: ByteArray?,
+                            maxKeyBytes: Int, maxValueBytes: Int, maxTotalBytes: Long): List<MdbxEntry> {
+        ensureActive()
+        require(maxKeyBytes >= 0 && maxValueBytes >= 0 && maxTotalBytes >= 0)
+        require(prefix.size <= maxKeyBytes && (after == null || after.size <= maxKeyBytes))
+        require(limit in 1..4096) { "Scan limit must be in 1..4096" }
+        require(after == null || after.size >= prefix.size && prefix.indices.all { after[it] == prefix[it] }) {
+            "Continuation must belong to the requested prefix"
+        }
+        return Arena.ofConfined().use { arena ->
+            val output = arena.allocate(ValueLayout.ADDRESS)
+            checkMdbx("mdbx_cursor_open", mdbx_cursor_open(handle, dbi, NPointer(output.address())))
+            val cursor = NPointer<MDBX_cursor>(output.get(ValueLayout.ADDRESS, 0).address())
+            try {
+                val key = value(arena, after ?: prefix)
+                val data = NPointer<MDBX_val>(arena.allocate(MDBX_val.layout).address())
+                var operation = if (prefix.isEmpty() && after == null) MDBX_FIRST else MDBX_SET_RANGE
+                val entries = ArrayList<MdbxEntry>()
+                var copiedBytes = 0L
+                while (entries.size < limit) {
+                    val code = mdbx_cursor_get(cursor, key, data, operation)
+                    if (code == MDBX_NOTFOUND) break
+                    checkMdbx("mdbx_cursor_get", code)
+                    operation = MDBX_NEXT
+                    check(key.iov_len in 0..maxKeyBytes.toLong()) { "Key exceeds copy limit $maxKeyBytes: ${key.iov_len}" }
+                    check(key.iov_len <= maxTotalBytes - copiedBytes) { "Scan exceeds total copy limit $maxTotalBytes" }
+                    val copiedKey = copyValue(key)
+                    if (copiedKey.size < prefix.size || prefix.indices.any { copiedKey[it] != prefix[it] }) break
+                    if (after != null && copiedKey.contentEquals(after)) continue
+                    check(data.iov_len in 0..maxValueBytes.toLong()) { "Value exceeds copy limit $maxValueBytes: ${data.iov_len}" }
+                    val entryBytes = key.iov_len + data.iov_len
+                    check(entryBytes <= maxTotalBytes - copiedBytes) { "Scan exceeds total copy limit $maxTotalBytes" }
+                    entries.add(MdbxEntry(copiedKey, copyValue(data)))
+                    copiedBytes += entryBytes
+                }
+                entries
+            } finally { mdbx_cursor_close(cursor) }
+        }
+    }
+
+    private fun copyValue(value: NPointer<MDBX_val>): ByteArray {
+        val size = value.iov_len
+        check(size in 0..Int.MAX_VALUE.toLong()) { "Value too large for ByteArray: $size" }
+        return if (size == 0L) ByteArray(0) else MemorySegment.ofAddress(value.iov_base._address)
+            .reinterpret(size).toArray(ValueLayout.JAVA_BYTE)
+    }
+
     private fun value(arena: Arena, bytes: ByteArray): NPointer<MDBX_val> {
         val storage = arena.allocate(bytes.size.toLong().coerceAtLeast(1))
         storage.asSlice(0, bytes.size.toLong()).copyFrom(MemorySegment.ofArray(bytes))
@@ -107,8 +155,24 @@ public class MdbxTransaction internal constructor(
 /** Valid only while its owning transaction is active. Returned values are owned copies. */
 public class MdbxTable internal constructor(private val transaction: MdbxTransaction, private val dbi: UInt) {
     /** Missing keys return null; empty values return an empty array. */
-    public fun get(key: ByteArray): ByteArray? = transaction.get(dbi, key)
+    public fun get(key: ByteArray): ByteArray? = transaction.get(dbi, key, Int.MAX_VALUE)
+    /** Rejects a larger stored value before allocating/copying any value bytes. */
+    public fun get(key: ByteArray, maxValueBytes: Int): ByteArray? = transaction.get(dbi, key, maxValueBytes)
     public fun put(key: ByteArray, value: ByteArray, noOverwrite: Boolean = false): Unit =
         transaction.put(dbi, key, value, noOverwrite)
     public fun delete(key: ByteArray): Boolean = transaction.delete(dbi, key)
+    /** Binary lexicographic prefix scan; exclusive continuation, bounded count, no borrowed mmap views.
+     * Intended for ordinary non-DUPSORT/non-integer-key tables, as created by [MdbxTransaction.table].
+     */
+    public fun scanPrefix(prefix: ByteArray, limit: Int = 256, after: ByteArray? = null): List<MdbxEntry> =
+        transaction.scanPrefix(dbi, prefix, limit, after, Int.MAX_VALUE, Int.MAX_VALUE, Long.MAX_VALUE)
+    /** Copy limits are checked on native lengths before key/value allocation. On limit failure the
+     * entire scan throws and closes its cursor; use a smaller count limit for a smaller batch.
+     */
+    public fun scanPrefix(prefix: ByteArray, limit: Int = 256, after: ByteArray? = null,
+                          maxKeyBytes: Int, maxValueBytes: Int, maxTotalBytes: Long): List<MdbxEntry> =
+        transaction.scanPrefix(dbi, prefix, limit, after, maxKeyBytes, maxValueBytes, maxTotalBytes)
 }
+
+/** Owned copies; valid after cursor/transaction/environment close. */
+public data class MdbxEntry(public val key: ByteArray, public val value: ByteArray)

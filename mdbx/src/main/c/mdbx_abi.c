@@ -36,3 +36,5 @@ _Static_assert(_Alignof(MDBX_val) == 8, "val alignment");
 _Static_assert(offsetof(MDBX_val, iov_base) == 0, "val base offset");
 _Static_assert(offsetof(MDBX_val, iov_len) == 8, "val length offset");
 _Static_assert(MDBX_BUSY == -30778, "busy");
+_Static_assert(sizeof(MDBX_cursor_op) == 4, "cursor operation enum");
+_Static_assert(MDBX_FIRST == 0 && MDBX_NEXT == 8 && MDBX_SET_RANGE == 17, "cursor operations");

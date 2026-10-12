@@ -162,3 +162,46 @@ Remaining boundary: Windows x86_64 native runtime, geometry and concurrency are
 still unexecuted. The direct binding intentionally covers the 18-symbol D1 subset;
 scans/cursors, used-page statistics, mapped-value borrowing, application encoding,
 writer queues and quota/eviction policy are not implemented by this work package.
+
+## Bounded cursor scan increment (2026-10-12)
+
+Baseline `b1e69cd02890e04f57577b667477e07cb8270506`; isolated branch
+`e2/mdbx-prefix-scan`. Only the generic synchronous scan binding/wrapper and
+focused tests/docs were added; no downstream application code or format was copied.
+
+The actual code generator regenerated three new cursor functions from the
+normalized header. The existing pinned upstream header was independently checked
+for signatures and enum ordinals. Both Linux and Windows native compiles passed
+cursor-op constant/width assertions; `nm -D` / `objdump -p` found all three cursor
+exports. Windows runtime remains unexecuted.
+
+GraalVM25 Linux on workspace filesystem: `MdbxScanTest` **2 tests, zero
+failures/errors/skips**. Covers binary order including 0xff, exact-prefix key,
+exclusive bounded continuation, missing prefix/end, empty-prefix whole table,
+invalid limit/prefix-continuation, copied values after all handles close, stale
+table scan and cross-platform-thread rejection.
+
+Task set: `:caelum-mdbx:test --tests '*MdbxScanTest' :caelum-mdbx:jar :caelum-zstd:jar`;
+`BUILD SUCCESSFUL`, 55 actionable tasks (34 executed, 21 up-to-date). Existing
+point/lifecycle/geometry implementation and zstd sources were unchanged; their
+prior regression claims remain those documented above, without an unnecessary full rerun.
+Same GraalVM25/Gradle8.14.2/init bootstrap/proxy and verified pinned source/tool
+setup as above, restored in a fresh environment. No installation privilege,
+network security, or pinned native dependency changes.
+
+### Increment review
+
+Added opt-in point-read and scan copy limits in the same public transaction file;
+original method signatures remain available. Native lengths are checked before
+copy allocation, with per-key, per-value and total-batch byte budgets. Cursor
+closure on bounds exceptions was verified by a subsequent successful cursor in
+the same transaction. No new native symbol, source archive, or unrelated public
+module/file was changed during this review.
+
+Focused `MdbxScanTest`: **3 tests, zero failures/errors/skips**. Adds 65536-byte
+stored-value rejection with a 4096-byte read/scan limit, negative limit rejection,
+key/total-budget rejection, successful reads/scans after failures, and a missing
+exclusive-continuation key seeking forward. Legacy unrestricted `get(key)` still
+returns the original 65536-byte value. Build: `BUILD SUCCESSFUL in 10s`, 47 tasks,
+2 executed and 45 up-to-date; native outputs remained up-to-date. Prior two-target
+carrier assertions/export checks still describe the unchanged native code.

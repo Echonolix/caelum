@@ -9,6 +9,7 @@ typedef long long int64_t;
 typedef unsigned long long size_t;
 typedef struct MDBX_env MDBX_env;
 typedef struct MDBX_txn MDBX_txn;
+typedef struct MDBX_cursor MDBX_cursor;
 typedef struct MDBX_commit_latency MDBX_commit_latency;
 typedef struct MDBX_val {
     void *iov_base;
@@ -42,3 +43,11 @@ size_t caelum_mdbx_val_size(void);
 size_t caelum_mdbx_val_alignment(void);
 size_t caelum_mdbx_val_base_offset(void);
 size_t caelum_mdbx_val_length_offset(void);
+
+/* libmdbx 0.14.4 cursor enum ordinals, verified against the pinned header. */
+#define MDBX_FIRST 0
+#define MDBX_NEXT 8
+#define MDBX_SET_RANGE 17
+int mdbx_cursor_open(MDBX_txn *txn, unsigned int dbi, MDBX_cursor **cursor);
+void mdbx_cursor_close(MDBX_cursor *cursor);
+int mdbx_cursor_get(MDBX_cursor *cursor, MDBX_val *key, MDBX_val *data, int op);
