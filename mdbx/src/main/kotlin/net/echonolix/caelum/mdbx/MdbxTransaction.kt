@@ -9,7 +9,7 @@ import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
 
-/** Thread-confined transaction. Closing an unfinished writer rolls it back. */
+/** Platform-thread-confined transaction. Closing an unfinished writer rolls it back. */
 public class MdbxTransaction internal constructor(
     private val environment: MdbxEnvironment,
     private val handle: NPointer<MDBX_txn>,

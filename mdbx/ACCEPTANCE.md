@@ -87,3 +87,78 @@ were not run. Cross-compilation and export/layout checks are not runtime accepta
 No GPU, crash/power-loss injection, performance tuning, application storage format,
 writer queue, compression integration, quota or eviction architecture was attempted.
 There is no remaining blocker to the tested Linux CPU module scope.
+
+## Final review and additional Linux gates
+
+The first 13-test run used JUnit's default `/tmp` temp directory, which is tmpfs
+on this host. It was still the real native database, but libmdbx selected its
+in-core filesystem branch. The final module test run uses a workspace build
+subdirectory on overlayfs: the default durable native branch executes, and no
+`in-core database` message is present. This is close/reopen and real filesystem
+acceptance, not evidence of host power-loss durability.
+
+Added 9 real integration tests; final module total: **22 tests, zero failures,
+errors or skips**. Shared generator/core/zstd code did not change during this
+review, so their previous 9 passing regression tests were not rerun.
+
+Observed physical file sizes (bytes):
+
+| Case | Before/grown | After |
+|---|---:|---:|
+| Growth with a live snapshot reader | 65,536 → 2,359,296 | Old snapshot and subsequent readers remained correct |
+| Delete with a reader retaining 32 overflow values | 2,359,296 | Same old values readable until reader close |
+| Quiescent `resize(0)` after delete and reader release | 2,359,296 | 2,293,760; native clamps to retained MVCC/GC pages |
+| Temporary 4 MiB tail inserted/deleted in one write txn with live reader | 4,456,448 | 262,144 automatically on commit; old reader remains valid |
+| Aborted 4 MiB growth | 65,536 → 4,456,448 | Subsequent commit, close and reopen retained physical size |
+| Explicit quiescent resize after the aborted-growth reopen | 4,456,448 | 65,536; committed marker preserved, aborted key absent |
+
+A pure C diagnostic linked to the same library independently reproduced the
+aborted-growth behavior and reported the configured native geometry. Neither
+source nor native library was patched to force shrinking. Delete is not a promise
+of immediate file truncation; physical file size is not database used-page count.
+
+Further checks: queued writer serialization with a close attempt completing while
+the writer waits; failed native begin returning its active reservation; MAP_FULL
+put (`-30792`) followed by failed commit (`MDBX_RESULT_TRUE = -1`) consuming the
+handle exactly once; continued reads of earlier committed data; resize rejection
+with active readers/writers; minimum-size clamp preserving data; rejected virtual
+threads; a 64 GiB upper mapping bound with an actual file under 1 MiB; invalid
+geometry rejected before file creation. These are small bounded cases, without
+stress loops, crash injection or performance claims.
+
+Review repairs:
+
+- Reject virtual threads before native begin: Java thread identity alone does not
+  preserve libmdbx's OS-thread/TLS ownership across carrier migration.
+- On Java-side failure after successful native begin but before ownership transfer,
+  abort the pending handle and retain cleanup failures as suppressed exceptions.
+  Keep the environment reservation if native cleanup cannot confirm consumption.
+  This exception path was statically reviewed; no fake allocator/OOM injection.
+- `MdbxGeometry` makes open-time growth/shrink controls explicit; `resize()` permits
+  only quiescent current-size changes and retains the upper mapping bound.
+- Package upstream COPYRIGHT alongside LICENSE/NOTICE, since NOTICE references
+  those credits. Source/archive identities and flags are unchanged.
+
+Windows generator review: all four existing DLL resources are byte-for-byte
+identical to the baseline, and the non-Linux loading order remains
+`libzstd → wasmtime → libtree-sitter-0.25 → c`. The clang path override, concurrent
+pipe handling and error checks are shared. Configured preprocessor defines now
+actually take effect on both platforms; Windows execution/output equivalence was
+not tested. The new Linux parser build is packaged alongside those legacy DLLs;
+Windows-host execution of that build was not run.
+
+Download/provenance review: the exact three pinned source archives were rehashed;
+all archive members are regular files/directories with relative paths, without
+`..`, absolute paths, links or special entries. The existing shared downloader
+checks HTTP status and SHA-256 before extraction, writes via a partial download,
+and publishes extraction under an archive-keyed lock and completion marker. No
+new trusted host, permissive TLS or system permission change was introduced.
+No machine-specific workspace/home paths, private repository source or secrets
+were added to committed production code/documentation. Platform keyring/example
+clang paths in the acceptance instructions are portable descriptions, not an
+embedded machine configuration.
+
+Remaining boundary: Windows x86_64 native runtime, geometry and concurrency are
+still unexecuted. The direct binding intentionally covers the 18-symbol D1 subset;
+scans/cursors, used-page statistics, mapped-value borrowing, application encoding,
+writer queues and quota/eviction policy are not implemented by this work package.

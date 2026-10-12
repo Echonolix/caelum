@@ -50,6 +50,7 @@ crossNative {
 tasks.jar {
     from(sourceRoot.map { it.file("LICENSE") }) { rename { "LICENSE-libmdbx" } }
     from(sourceRoot.map { it.file("NOTICE") }) { rename { "NOTICE-libmdbx" } }
+    from(sourceRoot.map { it.file("COPYRIGHT") }) { rename { "COPYRIGHT-libmdbx" } }
 }
 tasks.named<Jar>("sourcesJar") {
     from("include")
@@ -58,9 +59,15 @@ tasks.named<Jar>("sourcesJar") {
     from(sourceRoot.map { it.file("VERSION.json") }) { into("upstream") }
     from(sourceRoot.map { it.file("LICENSE") }) { rename { "LICENSE-libmdbx" } }
     from(sourceRoot.map { it.file("NOTICE") }) { rename { "NOTICE-libmdbx" } }
+    from(sourceRoot.map { it.file("COPYRIGHT") }) { rename { "COPYRIGHT-libmdbx" } }
     from("README.md")
 }
 tasks.test {
+    // /tmp may be tmpfs: libmdbx then uses its in-core path. Exercise actual
+    // workspace files for lifecycle/geometry acceptance instead.
+    val databaseDirectory = layout.buildDirectory.dir("test-databases")
+    systemProperty("java.io.tmpdir", databaseDirectory.get().asFile.absolutePath)
+    doFirst { databaseDirectory.get().asFile.mkdirs() }
     useJUnitPlatform()
     jvmArgs("--enable-native-access=ALL-UNNAMED")
 }

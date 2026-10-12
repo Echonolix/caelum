@@ -17,7 +17,12 @@ MdbxEnvironment.open(existingDirectory).use { env ->
 }
 ```
 
-Transactions are confined to their creating thread. `close()` aborts unfinished
+Transactions are confined to their creating platform thread. `begin()` rejects
+virtual threads: Java thread identity does not pin a native OS thread, and libmdbx
+uses OS thread ownership/TLS. Use a dedicated platform-thread executor when
+calling from coroutine or virtual-thread applications. In the default sticky
+thread mode, libmdbx allows only one active transaction per thread/environment;
+a second begin may fail with a native error without invalidating the first. `close()` aborts unfinished
 transactions; commit consumes the native handle even when libmdbx reports an
 error, except `MDBX_THREAD_MISMATCH`, as specified by upstream. Tables are scoped
 to their transaction. Environment close refuses active transactions and pending
@@ -33,6 +38,30 @@ calling native code. The default open uses durable libmdbx defaults. Geometry is
 bounded by `maxSizeBytes`, and does not implement an application quota, eviction,
 record formats, compression, world identifiers, or a writer queue.
 
+## File geometry and lifecycle
+
+Pass `MdbxGeometry` to `MdbxEnvironment.open()` for lower/current size, growth step,
+shrink threshold and page size. The native implementation rounds to database/system
+pages and clamps current size to live MVCC pages. `-1` retains an existing setting
+or selects the native default; zero shrink disables automatic shrinking. Set both
+growth/shrink to zero to disable automatic resizing; libmdbx may round zero growth
+up when shrinking is enabled. Zero lower/current/page size requests the native minimum. Page size cannot change
+for an existing database. The upper bound remains `maxSizeBytes`.
+
+`env.resize(sizeBytes)` changes only current file size, with all other geometry
+settings retained. It rejects active transactions and pending begins, keeps the
+maximum mapping bound fixed and serializes against begin/close. Shrinking below
+live pages is clamped; it does not discard records. `resize(0)` requests the native
+minimum compatible with retained pages, not an exact zero-byte file.
+
+Physical file size is not used-page count. Delete and commit do not guarantee
+immediate physical shrinking: native GC/MVCC can retain high pages, and an aborted
+growth can leave a larger physical file even after commit/close/reopen. Linux CPU
+acceptance covers growth with a live reader, automatic shrink of temporary tail
+pages with a live reader, and explicit quiescent shrink with preserved records and
+reopen. This is neither application quota enforcement nor a guarantee that every
+unused extent can be returned. See `ACCEPTANCE.md` for observed sizes.
+
 ## Source and ABI provenance
 
 - libmdbx 0.14.4, official mirror
@@ -43,7 +72,8 @@ record formats, compression, world identifiers, or a writer queue.
 - The archive's `VERSION.json` records origin commit
   `716ce9d5ae5458fa1de44097dc6e8f80ed1e4809`; it is distinct from the mirror
   archive identity. Both are preserved, not substituted for one another.
-- Apache-2.0; binary and source JARs include upstream LICENSE and NOTICE.
+- Apache-2.0; binary and source JARs include upstream LICENSE, NOTICE and the COPYRIGHT
+  credits referenced by NOTICE.
 
 `include/mdbx-binding.h` is a deliberately limited, normalized API surface,
 processed by `codegen-c`. It exposes environment create/options/geometry/open/close,
