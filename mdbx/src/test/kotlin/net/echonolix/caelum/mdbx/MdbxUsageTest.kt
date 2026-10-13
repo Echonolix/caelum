@@ -8,7 +8,7 @@ import java.nio.file.Path
 class MdbxUsageTest {
     @TempDir lateinit var directory: Path
     @Test fun nativeUsageSeparatesPreallocatedFileAndUsedPagesAndTracksSnapshot() {
-        MdbxEnvironment.open(directory, 32L shl 20, MdbxGeometry(initialSizeBytes = 16L shl 20, growthStepBytes = 1L shl 20, shrinkThresholdBytes = 0)).use { env ->
+        MdbxEnvironment.open(directory, 32L shl 20, geometry = MdbxGeometry(initialSizeBytes = 16L shl 20, growthStepBytes = 1L shl 20, shrinkThresholdBytes = 0)).use { env ->
             val initial = env.begin(true).use { it.usage() }
             assertTrue(initial.usedPages > 0)
             assertEquals(initial.usedBytes, initial.usedPages * initial.pageSize)
