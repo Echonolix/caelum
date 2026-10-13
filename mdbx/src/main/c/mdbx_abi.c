@@ -38,3 +38,17 @@ _Static_assert(offsetof(MDBX_val, iov_len) == 8, "val length offset");
 _Static_assert(MDBX_BUSY == -30778, "busy");
 _Static_assert(sizeof(MDBX_cursor_op) == 4, "cursor operation enum");
 _Static_assert(MDBX_FIRST == 0 && MDBX_NEXT == 8 && MDBX_SET_RANGE == 17, "cursor operations");
+
+LIBMDBX_API int caelum_mdbx_usage(const MDBX_txn *txn, uint64_t *used_bytes,
+                                 uint64_t *file_bytes, uint32_t *page_size) {
+  MDBX_txn_info info;
+  MDBX_stat stat;
+  int rc = mdbx_txn_info(txn, &info, false);
+  if (rc != MDBX_SUCCESS) return rc;
+  rc = mdbx_env_stat_ex(NULL, txn, &stat, sizeof(stat));
+  if (rc != MDBX_SUCCESS) return rc;
+  *used_bytes = info.txn_space_used;
+  *file_bytes = info.txn_space_limit_soft;
+  *page_size = stat.ms_psize;
+  return MDBX_SUCCESS;
+}

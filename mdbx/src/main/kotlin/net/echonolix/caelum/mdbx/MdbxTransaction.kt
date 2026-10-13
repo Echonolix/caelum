@@ -24,6 +24,20 @@ public class MdbxTransaction internal constructor(
         check(!write || !readOnly) { "Cannot write in a read-only transaction" }
     }
 
+    /** Native transaction snapshot high-water used pages, including MVCC/GC retained space.
+     * Does not scan the reader table or estimate bytes from values/file length. */
+    public fun usage(): MdbxUsage {
+        ensureActive()
+        return Arena.ofConfined().use { arena ->
+            val used = arena.allocate(ValueLayout.JAVA_LONG)
+            val file = arena.allocate(ValueLayout.JAVA_LONG)
+            val page = arena.allocate(ValueLayout.JAVA_INT)
+            checkMdbx("caelum_mdbx_usage", caelum_mdbx_usage(handle,
+                NPointer(used.address()), NPointer(file.address()), NPointer(page.address())))
+            MdbxUsage(used.get(ValueLayout.JAVA_LONG, 0), file.get(ValueLayout.JAVA_LONG, 0), page.get(ValueLayout.JAVA_INT, 0))
+        }
+    }
+
     /** Returns a transaction-scoped table; null denotes the unnamed table. */
     public fun table(name: String? = null, create: Boolean = false): MdbxTable {
         ensureActive(create)
@@ -176,3 +190,10 @@ public class MdbxTable internal constructor(private val transaction: MdbxTransac
 
 /** Owned copies; valid after cursor/transaction/environment close. */
 public data class MdbxEntry(public val key: ByteArray, public val value: ByteArray)
+
+/** Upstream txn_space_used is the extent through the last used database page.
+ * Deleted pages can remain here until native GC/tail reclamation; this is not live payload size. */
+public data class MdbxUsage(public val usedBytes: Long, public val fileBytes: Long, public val pageSize: Int) {
+    init { require(pageSize > 0 && usedBytes >= 0 && usedBytes % pageSize == 0L && fileBytes >= usedBytes) }
+    public val usedPages: Long get() = usedBytes / pageSize
+}

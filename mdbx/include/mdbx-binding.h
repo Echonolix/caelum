@@ -51,3 +51,6 @@ size_t caelum_mdbx_val_length_offset(void);
 int mdbx_cursor_open(MDBX_txn *txn, unsigned int dbi, MDBX_cursor **cursor);
 void mdbx_cursor_close(MDBX_cursor *cursor);
 int mdbx_cursor_get(MDBX_cursor *cursor, MDBX_val *key, MDBX_val *data, int op);
+
+/* Read-only upstream snapshot statistics; normalized fixed-width outputs. */
+int caelum_mdbx_usage(const MDBX_txn *txn, uint64_t *used_bytes, uint64_t *file_bytes, uint32_t *page_size);

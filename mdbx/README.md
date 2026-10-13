@@ -142,3 +142,17 @@ checks the native value length before copying. The bounded scan overload require
 batch byte budget are checked before copying. Count alone does not bound byte
 allocation. On a byte-limit failure the scan throws and closes its cursor; it
 does not return a misleading short batch. The transaction remains usable.
+
+## Transaction used-page statistics
+
+`txn.usage()` reads upstream `mdbx_txn_info(txn, ..., false)` and
+`mdbx_env_stat_ex(NULL, txn, ..., sizeof(MDBX_stat))` through a fixed-width C
+bridge compiled with the pinned official header. `usedBytes` is exactly
+`txn_space_used` (extent through the last used page); `usedPages` divides by
+`ms_psize`. `fileBytes` is `txn_space_limit_soft`, provided separately. It is
+not a sum of live value lengths or an estimate from physical file size. GC and
+MVCC-retained pages may remain in the used extent after deletion. A read
+transaction reports its own snapshot. No reader-lock-table scan is performed.
+The existing transaction thread/finished-handle contracts apply.
+Official source: https://github.com/Mithril-mine/libmdbx/blob/a032e40c1c06eaf695a163cfc32d4a01ffb8b26c/mdbx.h
+(`MDBX_txn_info`, `MDBX_stat`, `mdbx_txn_info`, `mdbx_env_stat_ex`).
