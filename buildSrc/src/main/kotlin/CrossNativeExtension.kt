@@ -60,6 +60,9 @@ abstract class CrossNativeExtension @Inject constructor(objects: ObjectFactory) 
     /** ISPC `--target` list; more than one entry enables runtime ISA dispatch. */
     abstract val ispcTargets: ListProperty<String>
 
+    /** Targets included in ordinary local runtime jars. Portable publications always include every target. */
+    abstract val runtimeTargets: ListProperty<NativeTarget>
+
     /** Strip symbols that are not needed for dynamic linking. */
     abstract val strip: Property<Boolean>
 }

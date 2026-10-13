@@ -11,7 +11,11 @@ the generated ABI.
   names with `codegenC.elementMapper`.
 - When the binding also owns its native library, add `buildsrc.convention.cross-native`
   (see `caelum-zstd`). It compiles C, C++ and ISPC sources for every `NativeTarget`
-  with the pinned zig/ISPC toolchain and packages them for `NativeLibraries`. Pin
+  with the pinned zig/ISPC toolchain and packages them for `NativeLibraries`.
+  `crossNative.runtimeTargets` may select local runtime targets (BC7 uses its host);
+  portable publication still depends on all target outputs through `portableJar`
+  and publication-only Java variants. Never replace publication with a host-only
+  artifact or silently skip an unsupported target. Pin
   downloaded sources with `registerPinnedArchive` and a SHA-256, or vendor a single
   unmodified file with its provenance when no stable archive exists.
 - Use a custom registry generator only when the upstream API requires one. The
