@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="net.echonolix.caelum.mdbx.MdbxUsageTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-13T05:55:49.429Z" hostname="7b2e8a580211" time="0.186">
+  <properties/>
+  <testcase name="nativeUsageSeparatesPreallocatedFileAndUsedPagesAndTracksSnapshot()" classname="net.echonolix.caelum.mdbx.MdbxUsageTest" time="0.172"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

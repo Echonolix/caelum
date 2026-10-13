@@ -1,0 +1,3 @@
+000000000006b830 T caelum_mdbx_usage
+0000000000045116 T mdbx_env_stat_ex
+0000000000027ac0 T mdbx_txn_info
