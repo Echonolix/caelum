@@ -2,7 +2,7 @@
 
 Bindings for `bc7e.ispc`, the SIMD BC7 encoder from
 [bc7enc_rdo](https://github.com/richgel999/bc7enc_rdo), with the library built for
-Windows x86_64 and Linux x86_64 and bundled in the jar. The library contains SSE2,
+Windows x86_64 and Linux x86_64 and bundled in the portable published jar. The library contains SSE2,
 SSE4, AVX2 and AVX-512 (SKX) code paths and picks one at runtime.
 
 ## Usage
@@ -36,3 +36,27 @@ fastest to best quality: `ultrafast` (opaque blocks use mode 6 only), `veryfast`
 
 `bc7e.ispc` is Copyright (C) 2018-2021 Binomial LLC under the Apache License 2.0.
 The jar ships `LICENSE-bc7enc_rdo` (upstream notice) and `LICENSE-Apache-2.0`.
+
+
+## Local runtime and portable publication
+
+Ordinary `test`, `jar`, and consuming composite builds use the current host native
+resource (`crossNative.runtimeTargets = [NativeTarget.host()]`). This avoids asking
+Linux ISPC for unsupported Windows object output during a Linux assets build, and
+uses Windows ISPC for the Windows native resource on Windows. It does not disable
+or remove either native compile task.
+
+`compileNative` still explicitly requests both targets. Maven publication replaces
+only the Java component's publication variants with `portableApiElements` and
+`portableRuntimeElements`. These are not locally consumable; composite consumers
+continue using ordinary api/runtime elements. Their main artifact is `portableJar`,
+which preserves the ordinary jar's classes, notices and manifest, replaces native
+resources, and depends on both native target outputs. `publish`, `publishToMavenLocal`,
+and Gradle module metadata therefore cannot silently publish a host-only jar.
+The published coordinate, filename, Java API/runtime dependency scopes and native
+resource paths remain unchanged. `sourcesJar` is unchanged.
+
+The pinned Linux ISPC archive does not support Windows object output. This change
+makes local Linux runtime builds independent of it; it does not claim that a Linux
+host can produce the complete portable BC7 artifact with that compiler. Portable
+publication must still use a toolchain that can build every requested target.

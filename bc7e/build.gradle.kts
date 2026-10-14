@@ -1,4 +1,5 @@
 import buildsrc.convention.ElementType
+import buildsrc.convention.NativeTarget
 
 plugins {
     id("buildsrc.convention.codegen-c")
@@ -27,6 +28,9 @@ dependencies {
 
 crossNative {
     libraryName.set("caelum_bc7e")
+    // Each ISPC release compiler supports its host object formats. Ordinary runtime
+    // builds use the host; portable publication remains an explicit all-target jar.
+    runtimeTargets.set(listOf(NativeTarget.host()))
     ispcSources.from("src/main/ispc/bc7e.ispc")
     // Compile-time layout check against the ISPC-generated header; emits no code.
     cSources.from("src/main/c/bc7e_abi_check.c")
