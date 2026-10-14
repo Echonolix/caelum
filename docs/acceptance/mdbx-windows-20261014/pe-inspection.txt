@@ -1,0 +1,1305 @@
+
+File: mdbx/build/native/windows-x86_64/caelum_mdbx.dll
+Format: COFF-x86-64
+Arch: x86_64
+AddressSize: 64bit
+ImageFileHeader {
+  Machine: IMAGE_FILE_MACHINE_AMD64 (0x8664)
+  SectionCount: 6
+  TimeDateStamp: 2026-10-14 21:37:29 (0x6ACFF619)
+  PointerToSymbolTable: 0x0
+  SymbolCount: 0
+  StringTableSize: 0
+  OptionalHeaderSize: 240
+  Characteristics [ (0x2022)
+    IMAGE_FILE_DLL (0x2000)
+    IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
+    IMAGE_FILE_LARGE_ADDRESS_AWARE (0x20)
+  ]
+}
+ImageOptionalHeader {
+  Magic: 0x20B
+  MajorLinkerVersion: 14
+  MinorLinkerVersion: 0
+  SizeOfCode: 419328
+  SizeOfInitializedData: 89600
+  SizeOfUninitializedData: 0
+  AddressOfEntryPoint: 0x55D00
+  BaseOfCode: 0x1000
+  ImageBase: 0x180000000
+  SectionAlignment: 4096
+  FileAlignment: 512
+  MajorOperatingSystemVersion: 6
+  MinorOperatingSystemVersion: 0
+  MajorImageVersion: 0
+  MinorImageVersion: 0
+  MajorSubsystemVersion: 6
+  MinorSubsystemVersion: 0
+  SizeOfImage: 532480
+  SizeOfHeaders: 1024
+  CheckSum: 0x0
+  Subsystem: IMAGE_SUBSYSTEM_WINDOWS_GUI (0x2)
+  Characteristics [ (0x160)
+    IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
+    IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA (0x20)
+    IMAGE_DLL_CHARACTERISTICS_NX_COMPAT (0x100)
+  ]
+  SizeOfStackReserve: 1048576
+  SizeOfStackCommit: 4096
+  SizeOfHeapReserve: 1048576
+  SizeOfHeapCommit: 4096
+  NumberOfRvaAndSize: 16
+  DataDirectory {
+    ExportTableRVA: 0x75C68
+    ExportTableSize: 0x17A3
+    ImportTableRVA: 0x7740C
+    ImportTableSize: 0x104
+    ResourceTableRVA: 0x0
+    ResourceTableSize: 0x0
+    ExceptionTableRVA: 0x7E000
+    ExceptionTableSize: 0x1E84
+    CertificateTableRVA: 0x0
+    CertificateTableSize: 0x0
+    BaseRelocationTableRVA: 0x81000
+    BaseRelocationTableSize: 0x25C
+    DebugRVA: 0x0
+    DebugSize: 0x0
+    ArchitectureRVA: 0x0
+    ArchitectureSize: 0x0
+    GlobalPtrRVA: 0x0
+    GlobalPtrSize: 0x0
+    TLSTableRVA: 0x71F88
+    TLSTableSize: 0x28
+    LoadConfigTableRVA: 0x0
+    LoadConfigTableSize: 0x0
+    BoundImportRVA: 0x0
+    BoundImportSize: 0x0
+    IATRVA: 0x77980
+    IATSize: 0x470
+    DelayImportDescriptorRVA: 0x0
+    DelayImportDescriptorSize: 0x0
+    CLRRuntimeHeaderRVA: 0x0
+    CLRRuntimeHeaderSize: 0x0
+    ReservedRVA: 0x0
+    ReservedSize: 0x0
+  }
+}
+DOSHeader {
+  Magic: MZ
+  UsedBytesInTheLastPage: 120
+  FileSizeInPages: 1
+  NumberOfRelocationItems: 0
+  HeaderSizeInParagraphs: 4
+  MinimumExtraParagraphs: 0
+  MaximumExtraParagraphs: 0
+  InitialRelativeSS: 0
+  InitialSP: 0
+  Checksum: 0
+  InitialIP: 0
+  InitialRelativeCS: 0
+  AddressOfRelocationTable: 64
+  OverlayNumber: 0
+  OEMid: 0
+  OEMinfo: 0
+  AddressOfNewExeHeader: 120
+}
+Import {
+  Name: ntdll.dll
+  ImportLookupTableRVA: 0x77510
+  ImportAddressTableRVA: 0x77980
+  Symbol: NtAllocateVirtualMemory (0)
+  Symbol: NtClose (0)
+  Symbol: NtCreateSection (0)
+  Symbol: NtFreeVirtualMemory (0)
+  Symbol: NtMapViewOfSection (0)
+  Symbol: NtQuerySystemInformation (0)
+  Symbol: NtUnmapViewOfSection (0)
+}
+Import {
+  Name: api-ms-win-crt-heap-l1-1-0.dll
+  ImportLookupTableRVA: 0x77550
+  ImportAddressTableRVA: 0x779C0
+  Symbol: calloc (0)
+  Symbol: free (0)
+  Symbol: malloc (0)
+  Symbol: realloc (0)
+}
+Import {
+  Name: api-ms-win-crt-private-l1-1-0.dll
+  ImportLookupTableRVA: 0x77578
+  ImportAddressTableRVA: 0x779E8
+  Symbol: memchr (0)
+}
+Import {
+  Name: api-ms-win-crt-runtime-l1-1-0.dll
+  ImportLookupTableRVA: 0x77588
+  ImportAddressTableRVA: 0x779F8
+  Symbol: _errno (0)
+  Symbol: _execute_onexit_table (0)
+  Symbol: _exit (0)
+  Symbol: _initialize_onexit_table (0)
+  Symbol: _initterm (0)
+  Symbol: _initterm_e (0)
+  Symbol: _register_onexit_function (0)
+  Symbol: abort (0)
+  Symbol: strerror (0)
+}
+Import {
+  Name: api-ms-win-crt-stdio-l1-1-0.dll
+  ImportLookupTableRVA: 0x775D8
+  ImportAddressTableRVA: 0x77A48
+  Symbol: __acrt_iob_func (0)
+  Symbol: __stdio_common_vfprintf (0)
+  Symbol: __stdio_common_vsprintf (0)
+  Symbol: fflush (0)
+  Symbol: fputc (0)
+  Symbol: fwrite (0)
+}
+Import {
+  Name: api-ms-win-crt-string-l1-1-0.dll
+  ImportLookupTableRVA: 0x77610
+  ImportAddressTableRVA: 0x77A80
+  Symbol: _stricmp (0)
+  Symbol: _wcsnicmp (0)
+  Symbol: isalnum (0)
+  Symbol: isprint (0)
+  Symbol: wcslen (0)
+}
+Import {
+  Name: ADVAPI32.dll
+  ImportLookupTableRVA: 0x77640
+  ImportAddressTableRVA: 0x77AB0
+  Symbol: AdjustTokenPrivileges (0)
+  Symbol: CryptAcquireContextW (0)
+  Symbol: CryptGenRandom (0)
+  Symbol: CryptReleaseContext (0)
+  Symbol: LookupPrivilegeValueW (0)
+  Symbol: OpenProcessToken (0)
+  Symbol: RegCloseKey (0)
+  Symbol: RegOpenKeyA (0)
+  Symbol: RegQueryValueExA (0)
+}
+Import {
+  Name: KERNEL32.dll
+  ImportLookupTableRVA: 0x77690
+  ImportAddressTableRVA: 0x77B00
+  Symbol: CancelIo (0)
+  Symbol: CancelIoEx (0)
+  Symbol: CloseHandle (0)
+  Symbol: CreateDirectoryW (0)
+  Symbol: CreateEventW (0)
+  Symbol: CreateFileW (0)
+  Symbol: CreateMutexW (0)
+  Symbol: CreateThread (0)
+  Symbol: CreateToolhelp32Snapshot (0)
+  Symbol: DebugBreak (0)
+  Symbol: DeleteCriticalSection (0)
+  Symbol: DeleteFileW (0)
+  Symbol: EnterCriticalSection (0)
+  Symbol: FatalExit (0)
+  Symbol: FlushFileBuffers (0)
+  Symbol: FlushViewOfFile (0)
+  Symbol: FormatMessageA (0)
+  Symbol: GetCurrentProcess (0)
+  Symbol: GetCurrentProcessId (0)
+  Symbol: GetCurrentThread (0)
+  Symbol: GetCurrentThreadId (0)
+  Symbol: GetDriveTypeW (0)
+  Symbol: GetEnvironmentVariableA (0)
+  Symbol: GetExitCodeThread (0)
+  Symbol: GetFileAttributesW (0)
+  Symbol: GetFileInformationByHandle (0)
+  Symbol: GetFileType (0)
+  Symbol: GetLastError (0)
+  Symbol: GetModuleHandleA (0)
+  Symbol: GetOverlappedResult (0)
+  Symbol: GetProcAddress (0)
+  Symbol: GetProcessWorkingSetSize (0)
+  Symbol: GetSystemInfo (0)
+  Symbol: GetSystemTimeAsFileTime (0)
+  Symbol: GetThreadTimes (0)
+  Symbol: GlobalMemoryStatusEx (0)
+  Symbol: InitializeCriticalSection (0)
+  Symbol: IsBadReadPtr (0)
+  Symbol: IsDebuggerPresent (0)
+  Symbol: LeaveCriticalSection (0)
+  Symbol: LockFileEx (0)
+  Symbol: MultiByteToWideChar (0)
+  Symbol: OpenProcess (0)
+  Symbol: OpenThread (0)
+  Symbol: OutputDebugStringA (0)
+  Symbol: QueryPerformanceCounter (0)
+  Symbol: QueryPerformanceFrequency (0)
+  Symbol: ReadFile (0)
+  Symbol: ReleaseMutex (0)
+  Symbol: RemoveDirectoryW (0)
+  Symbol: ResetEvent (0)
+  Symbol: ResumeThread (0)
+  Symbol: SetEndOfFile (0)
+  Symbol: SetEvent (0)
+  Symbol: SetFileAttributesW (0)
+  Symbol: SetFilePointerEx (0)
+  Symbol: SetLastError (0)
+  Symbol: SetProcessWorkingSetSize (0)
+  Symbol: SignalObjectAndWait (0)
+  Symbol: Sleep (0)
+  Symbol: SleepEx (0)
+  Symbol: SuspendThread (0)
+  Symbol: SwitchToThread (0)
+  Symbol: Thread32First (0)
+  Symbol: Thread32Next (0)
+  Symbol: TlsAlloc (0)
+  Symbol: TlsFree (0)
+  Symbol: TlsGetValue (0)
+  Symbol: TlsSetValue (0)
+  Symbol: TryEnterCriticalSection (0)
+  Symbol: UnlockFile (0)
+  Symbol: VirtualAlloc (0)
+  Symbol: VirtualFree (0)
+  Symbol: VirtualLock (0)
+  Symbol: VirtualProtect (0)
+  Symbol: VirtualQuery (0)
+  Symbol: VirtualUnlock (0)
+  Symbol: WaitForMultipleObjectsEx (0)
+  Symbol: WaitForSingleObject (0)
+  Symbol: WideCharToMultiByte (0)
+  Symbol: WriteFile (0)
+  Symbol: WriteFileEx (0)
+  Symbol: WriteFileGather (0)
+}
+Import {
+  Name: USER32.dll
+  ImportLookupTableRVA: 0x77930
+  ImportAddressTableRVA: 0x77DA0
+  Symbol: CharToOemBuffA (0)
+}
+Import {
+  Name: api-ms-win-crt-filesystem-l1-1-0.dll
+  ImportLookupTableRVA: 0x77940
+  ImportAddressTableRVA: 0x77DB0
+  Symbol: _lock_file (0)
+  Symbol: _unlock_file (0)
+}
+Import {
+  Name: api-ms-win-crt-locale-l1-1-0.dll
+  ImportLookupTableRVA: 0x77958
+  ImportAddressTableRVA: 0x77DC8
+  Symbol: localeconv (0)
+}
+Import {
+  Name: api-ms-win-crt-convert-l1-1-0.dll
+  ImportLookupTableRVA: 0x77968
+  ImportAddressTableRVA: 0x77DD8
+  Symbol: mbrtowc (0)
+  Symbol: wcrtomb (0)
+}
+Export {
+  Ordinal: 1
+  Name: caelum_mdbx_env_open
+  RVA: 0x55A90
+}
+Export {
+  Ordinal: 2
+  Name: caelum_mdbx_usage
+  RVA: 0x55AA0
+}
+Export {
+  Ordinal: 3
+  Name: caelum_mdbx_val_alignment
+  RVA: 0x55A60
+}
+Export {
+  Ordinal: 4
+  Name: caelum_mdbx_val_base_offset
+  RVA: 0x55A70
+}
+Export {
+  Ordinal: 5
+  Name: caelum_mdbx_val_length_offset
+  RVA: 0x55A80
+}
+Export {
+  Ordinal: 6
+  Name: caelum_mdbx_val_size
+  RVA: 0x55A50
+}
+Export {
+  Ordinal: 7
+  Name: caelum_mdbx_version_number
+  RVA: 0x55A20
+}
+Export {
+  Ordinal: 8
+  Name: mdbx_assert_fail
+  RVA: 0x2846F
+}
+Export {
+  Ordinal: 9
+  Name: mdbx_build
+  RVA: 0x6A9E0
+}
+Export {
+  Ordinal: 10
+  Name: mdbx_cache_get
+  RVA: 0x1CB50
+}
+Export {
+  Ordinal: 11
+  Name: mdbx_cache_get_SingleThreaded
+  RVA: 0x1D540
+}
+Export {
+  Ordinal: 12
+  Name: mdbx_cache_init
+  RVA: 0x1D590
+}
+Export {
+  Ordinal: 13
+  Name: mdbx_canary_get
+  RVA: 0x202D0
+}
+Export {
+  Ordinal: 14
+  Name: mdbx_canary_put
+  RVA: 0x208D0
+}
+Export {
+  Ordinal: 15
+  Name: mdbx_cmp
+  RVA: 0x1E160
+}
+Export {
+  Ordinal: 16
+  Name: mdbx_cursor_bind
+  RVA: 0x3350
+}
+Export {
+  Ordinal: 17
+  Name: mdbx_cursor_bunch_delete
+  RVA: 0x74A0
+}
+Export {
+  Ordinal: 18
+  Name: mdbx_cursor_close
+  RVA: 0x3F10
+}
+Export {
+  Ordinal: 19
+  Name: mdbx_cursor_close2
+  RVA: 0x3F60
+}
+Export {
+  Ordinal: 20
+  Name: mdbx_cursor_compare
+  RVA: 0x4770
+}
+Export {
+  Ordinal: 21
+  Name: mdbx_cursor_copy
+  RVA: 0x42B0
+}
+Export {
+  Ordinal: 22
+  Name: mdbx_cursor_count
+  RVA: 0x4B50
+}
+Export {
+  Ordinal: 23
+  Name: mdbx_cursor_count_ex
+  RVA: 0x49F0
+}
+Export {
+  Ordinal: 24
+  Name: mdbx_cursor_create
+  RVA: 0x32B0
+}
+Export {
+  Ordinal: 25
+  Name: mdbx_cursor_dbi
+  RVA: 0x6530
+}
+Export {
+  Ordinal: 26
+  Name: mdbx_cursor_del
+  RVA: 0x68B0
+}
+Export {
+  Ordinal: 27
+  Name: mdbx_cursor_delete_range
+  RVA: 0x8610
+}
+Export {
+  Ordinal: 28
+  Name: mdbx_cursor_distance
+  RVA: 0x9B00
+}
+Export {
+  Ordinal: 29
+  Name: mdbx_cursor_distribute
+  RVA: 0x8B20
+}
+Export {
+  Ordinal: 30
+  Name: mdbx_cursor_eof
+  RVA: 0x4E40
+}
+Export {
+  Ordinal: 31
+  Name: mdbx_cursor_get
+  RVA: 0x4E90
+}
+Export {
+  Ordinal: 32
+  Name: mdbx_cursor_get_batch
+  RVA: 0x5D70
+}
+Export {
+  Ordinal: 33
+  Name: mdbx_cursor_get_userctx
+  RVA: 0x64C0
+}
+Export {
+  Ordinal: 34
+  Name: mdbx_cursor_ignord
+  RVA: 0x7447
+}
+Export {
+  Ordinal: 35
+  Name: mdbx_cursor_on_first
+  RVA: 0x4C00
+}
+Export {
+  Ordinal: 36
+  Name: mdbx_cursor_on_first_dup
+  RVA: 0x4C80
+}
+Export {
+  Ordinal: 37
+  Name: mdbx_cursor_on_last
+  RVA: 0x4D10
+}
+Export {
+  Ordinal: 38
+  Name: mdbx_cursor_on_last_dup
+  RVA: 0x4DA0
+}
+Export {
+  Ordinal: 39
+  Name: mdbx_cursor_open
+  RVA: 0x3E30
+}
+Export {
+  Ordinal: 40
+  Name: mdbx_cursor_put
+  RVA: 0x6560
+}
+Export {
+  Ordinal: 41
+  Name: mdbx_cursor_renew
+  RVA: 0x3300
+}
+Export {
+  Ordinal: 42
+  Name: mdbx_cursor_reset
+  RVA: 0x35F0
+}
+Export {
+  Ordinal: 43
+  Name: mdbx_cursor_scan
+  RVA: 0x5890
+}
+Export {
+  Ordinal: 44
+  Name: mdbx_cursor_scan_from
+  RVA: 0x5B90
+}
+Export {
+  Ordinal: 45
+  Name: mdbx_cursor_scroll
+  RVA: 0x9710
+}
+Export {
+  Ordinal: 46
+  Name: mdbx_cursor_set_userctx
+  RVA: 0x63F0
+}
+Export {
+  Ordinal: 47
+  Name: mdbx_cursor_txn
+  RVA: 0x64F0
+}
+Export {
+  Ordinal: 48
+  Name: mdbx_cursor_unbind
+  RVA: 0x3900
+}
+Export {
+  Ordinal: 49
+  Name: mdbx_dbi_close
+  RVA: 0xC350
+}
+Export {
+  Ordinal: 50
+  Name: mdbx_dbi_dupsort_depthmask
+  RVA: 0x20044
+}
+Export {
+  Ordinal: 51
+  Name: mdbx_dbi_flags
+  RVA: 0x2720
+}
+Export {
+  Ordinal: 52
+  Name: mdbx_dbi_flags_ex
+  RVA: 0xC680
+}
+Export {
+  Ordinal: 53
+  Name: mdbx_dbi_open
+  RVA: 0xB150
+}
+Export {
+  Ordinal: 54
+  Name: mdbx_dbi_open2
+  RVA: 0xA110
+}
+Export {
+  Ordinal: 55
+  Name: mdbx_dbi_open_ex
+  RVA: 0xB1D0
+}
+Export {
+  Ordinal: 56
+  Name: mdbx_dbi_open_ex2
+  RVA: 0xB110
+}
+Export {
+  Ordinal: 57
+  Name: mdbx_dbi_rename
+  RVA: 0xBD47
+}
+Export {
+  Ordinal: 58
+  Name: mdbx_dbi_rename2
+  RVA: 0xBD93
+}
+Export {
+  Ordinal: 59
+  Name: mdbx_dbi_sequence
+  RVA: 0x1DAE0
+}
+Export {
+  Ordinal: 60
+  Name: mdbx_dbi_stat
+  RVA: 0xC831
+}
+Export {
+  Ordinal: 61
+  Name: mdbx_dcmp
+  RVA: 0x1E190
+}
+Export {
+  Ordinal: 62
+  Name: mdbx_default_pagesize
+  RVA: 0x1000
+}
+Export {
+  Ordinal: 63
+  Name: mdbx_del
+  RVA: 0x20BB0
+}
+Export {
+  Ordinal: 64
+  Name: mdbx_double_from_key
+  RVA: 0x1D830
+}
+Export {
+  Ordinal: 65
+  Name: mdbx_drop
+  RVA: 0xB25A
+}
+Export {
+  Ordinal: 66
+  Name: mdbx_dump_val
+  RVA: 0x27F85
+}
+Export {
+  Ordinal: 67
+  Name: mdbx_enumerate_tables
+  RVA: 0xCBF4
+}
+Export {
+  Ordinal: 68
+  Name: mdbx_env_chk
+  RVA: 0x259E8
+}
+Export {
+  Ordinal: 69
+  Name: mdbx_env_chk_encount_problem
+  RVA: 0x259B0
+}
+Export {
+  Ordinal: 70
+  Name: mdbx_env_close
+  RVA: 0x2758
+}
+Export {
+  Ordinal: 71
+  Name: mdbx_env_close_ex
+  RVA: 0xFFB9
+}
+Export {
+  Ordinal: 72
+  Name: mdbx_env_copy
+  RVA: 0x3121
+}
+Export {
+  Ordinal: 73
+  Name: mdbx_env_copy2fd
+  RVA: 0x2C6C
+}
+Export {
+  Ordinal: 74
+  Name: mdbx_env_copyW
+  RVA: 0x3196
+}
+Export {
+  Ordinal: 75
+  Name: mdbx_env_create
+  RVA: 0xD01D
+}
+Export {
+  Ordinal: 76
+  Name: mdbx_env_defrag
+  RVA: 0x16571
+}
+Export {
+  Ordinal: 77
+  Name: mdbx_env_delete
+  RVA: 0xE7CD
+}
+Export {
+  Ordinal: 78
+  Name: mdbx_env_deleteW
+  RVA: 0xE833
+}
+Export {
+  Ordinal: 79
+  Name: mdbx_env_get_fd
+  RVA: 0x1E0F
+}
+Export {
+  Ordinal: 80
+  Name: mdbx_env_get_flags
+  RVA: 0x2292
+}
+Export {
+  Ordinal: 81
+  Name: mdbx_env_get_hsr
+  RVA: 0x23E2
+}
+Export {
+  Ordinal: 82
+  Name: mdbx_env_get_maxdbs
+  RVA: 0x27A5
+}
+Export {
+  Ordinal: 83
+  Name: mdbx_env_get_maxkeysize
+  RVA: 0x12AC
+}
+Export {
+  Ordinal: 84
+  Name: mdbx_env_get_maxkeysize_ex
+  RVA: 0x127D
+}
+Export {
+  Ordinal: 85
+  Name: mdbx_env_get_maxreaders
+  RVA: 0x27F3
+}
+Export {
+  Ordinal: 86
+  Name: mdbx_env_get_maxvalsize_ex
+  RVA: 0x13AE
+}
+Export {
+  Ordinal: 87
+  Name: mdbx_env_get_option
+  RVA: 0x1F025
+}
+Export {
+  Ordinal: 88
+  Name: mdbx_env_get_pairsize4page_max
+  RVA: 0x148B
+}
+Export {
+  Ordinal: 89
+  Name: mdbx_env_get_path
+  RVA: 0x248A
+}
+Export {
+  Ordinal: 90
+  Name: mdbx_env_get_pathW
+  RVA: 0x2401
+}
+Export {
+  Ordinal: 91
+  Name: mdbx_env_get_syncbytes
+  RVA: 0x2844
+}
+Export {
+  Ordinal: 92
+  Name: mdbx_env_get_syncperiod
+  RVA: 0x2897
+}
+Export {
+  Ordinal: 93
+  Name: mdbx_env_get_userctx
+  RVA: 0x2365
+}
+Export {
+  Ordinal: 94
+  Name: mdbx_env_get_valsize4page_max
+  RVA: 0x158B
+}
+Export {
+  Ordinal: 95
+  Name: mdbx_env_info
+  RVA: 0x270E
+}
+Export {
+  Ordinal: 96
+  Name: mdbx_env_info_ex
+  RVA: 0x1075C
+}
+Export {
+  Ordinal: 97
+  Name: mdbx_env_open
+  RVA: 0xF1BB
+}
+Export {
+  Ordinal: 98
+  Name: mdbx_env_openW
+  RVA: 0xE5D4
+}
+Export {
+  Ordinal: 99
+  Name: mdbx_env_open_for_recovery
+  RVA: 0xE4A1
+}
+Export {
+  Ordinal: 100
+  Name: mdbx_env_open_for_recoveryW
+  RVA: 0xE521
+}
+Export {
+  Ordinal: 101
+  Name: mdbx_env_set_flags
+  RVA: 0x1E95
+}
+Export {
+  Ordinal: 102
+  Name: mdbx_env_set_geometry
+  RVA: 0x114A6
+}
+Export {
+  Ordinal: 103
+  Name: mdbx_env_set_hsr
+  RVA: 0x2388
+}
+Export {
+  Ordinal: 104
+  Name: mdbx_env_set_mapsize
+  RVA: 0x2764
+}
+Export {
+  Ordinal: 105
+  Name: mdbx_env_set_maxdbs
+  RVA: 0x2796
+}
+Export {
+  Ordinal: 106
+  Name: mdbx_env_set_maxreaders
+  RVA: 0x27E1
+}
+Export {
+  Ordinal: 107
+  Name: mdbx_env_set_option
+  RVA: 0x1E377
+}
+Export {
+  Ordinal: 108
+  Name: mdbx_env_set_syncbytes
+  RVA: 0x2832
+}
+Export {
+  Ordinal: 109
+  Name: mdbx_env_set_syncperiod
+  RVA: 0x2885
+}
+Export {
+  Ordinal: 110
+  Name: mdbx_env_set_userctx
+  RVA: 0x230B
+}
+Export {
+  Ordinal: 111
+  Name: mdbx_env_stat
+  RVA: 0x26FC
+}
+Export {
+  Ordinal: 112
+  Name: mdbx_env_stat_ex
+  RVA: 0x143E4
+}
+Export {
+  Ordinal: 113
+  Name: mdbx_env_sync
+  RVA: 0x273A
+}
+Export {
+  Ordinal: 114
+  Name: mdbx_env_sync_ex
+  RVA: 0x1435E
+}
+Export {
+  Ordinal: 115
+  Name: mdbx_env_sync_poll
+  RVA: 0x2749
+}
+Export {
+  Ordinal: 116
+  Name: mdbx_env_turn_for_recovery
+  RVA: 0xD366
+}
+Export {
+  Ordinal: 117
+  Name: mdbx_env_warmup
+  RVA: 0x15BA
+}
+Export {
+  Ordinal: 118
+  Name: mdbx_estimate_distance
+  RVA: 0x1F270
+}
+Export {
+  Ordinal: 119
+  Name: mdbx_estimate_move
+  RVA: 0x1F760
+}
+Export {
+  Ordinal: 120
+  Name: mdbx_estimate_range
+  RVA: 0x1FAD0
+}
+Export {
+  Ordinal: 121
+  Name: mdbx_float_from_key
+  RVA: 0x1D860
+}
+Export {
+  Ordinal: 122
+  Name: mdbx_gc_info
+  RVA: 0x15AEC
+}
+Export {
+  Ordinal: 123
+  Name: mdbx_get
+  RVA: 0x203D0
+}
+Export {
+  Ordinal: 124
+  Name: mdbx_get_datacmp
+  RVA: 0x1E1DD
+}
+Export {
+  Ordinal: 125
+  Name: mdbx_get_equal_or_great
+  RVA: 0x20570
+}
+Export {
+  Ordinal: 126
+  Name: mdbx_get_ex
+  RVA: 0x20700
+}
+Export {
+  Ordinal: 127
+  Name: mdbx_get_keycmp
+  RVA: 0x1E1B4
+}
+Export {
+  Ordinal: 128
+  Name: mdbx_get_sysraminfo
+  RVA: 0x1D97E
+}
+Export {
+  Ordinal: 129
+  Name: mdbx_int32_from_key
+  RVA: 0x1D880
+}
+Export {
+  Ordinal: 130
+  Name: mdbx_int64_from_key
+  RVA: 0x1D890
+}
+Export {
+  Ordinal: 131
+  Name: mdbx_is_dirty
+  RVA: 0x20A10
+}
+Export {
+  Ordinal: 132
+  Name: mdbx_is_readahead_reasonable
+  RVA: 0x1D8A6
+}
+Export {
+  Ordinal: 133
+  Name: mdbx_jsonInteger_from_key
+  RVA: 0x1D7C0
+}
+Export {
+  Ordinal: 134
+  Name: mdbx_key_from_double
+  RVA: 0x1D5A0
+}
+Export {
+  Ordinal: 135
+  Name: mdbx_key_from_float
+  RVA: 0x1D5F0
+}
+Export {
+  Ordinal: 136
+  Name: mdbx_key_from_int32
+  RVA: 0x28E4
+}
+Export {
+  Ordinal: 137
+  Name: mdbx_key_from_int64
+  RVA: 0x28D6
+}
+Export {
+  Ordinal: 138
+  Name: mdbx_key_from_jsonInteger
+  RVA: 0x1D630
+}
+Export {
+  Ordinal: 139
+  Name: mdbx_key_from_ptrdouble
+  RVA: 0x1D5D0
+}
+Export {
+  Ordinal: 140
+  Name: mdbx_key_from_ptrfloat
+  RVA: 0x1D610
+}
+Export {
+  Ordinal: 141
+  Name: mdbx_liberr2str
+  RVA: 0x41DD
+}
+Export {
+  Ordinal: 142
+  Name: mdbx_limits_dbsize_max
+  RVA: 0x10C5
+}
+Export {
+  Ordinal: 143
+  Name: mdbx_limits_dbsize_min
+  RVA: 0x1056
+}
+Export {
+  Ordinal: 144
+  Name: mdbx_limits_keysize_max
+  RVA: 0x11CE
+}
+Export {
+  Ordinal: 145
+  Name: mdbx_limits_keysize_min
+  RVA: 0x12DE
+}
+Export {
+  Ordinal: 146
+  Name: mdbx_limits_pairsize4page_max
+  RVA: 0x13F5
+}
+Export {
+  Ordinal: 147
+  Name: mdbx_limits_pgsize_max
+  RVA: 0x28FB
+}
+Export {
+  Ordinal: 148
+  Name: mdbx_limits_pgsize_min
+  RVA: 0x28F0
+}
+Export {
+  Ordinal: 149
+  Name: mdbx_limits_txnsize_max
+  RVA: 0x1144
+}
+Export {
+  Ordinal: 150
+  Name: mdbx_limits_valsize4page_max
+  RVA: 0x14BA
+}
+Export {
+  Ordinal: 151
+  Name: mdbx_limits_valsize_max
+  RVA: 0x12EB
+}
+Export {
+  Ordinal: 152
+  Name: mdbx_limits_valsize_min
+  RVA: 0x13DD
+}
+Export {
+  Ordinal: 153
+  Name: mdbx_preopen_snapinfo
+  RVA: 0x109E2
+}
+Export {
+  Ordinal: 154
+  Name: mdbx_preopen_snapinfoW
+  RVA: 0x10A51
+}
+Export {
+  Ordinal: 155
+  Name: mdbx_put
+  RVA: 0x20DE0
+}
+Export {
+  Ordinal: 156
+  Name: mdbx_ratio2digits
+  RVA: 0x158AC
+}
+Export {
+  Ordinal: 157
+  Name: mdbx_ratio2percents
+  RVA: 0x15A4A
+}
+Export {
+  Ordinal: 158
+  Name: mdbx_reader_check
+  RVA: 0x14E4E
+}
+Export {
+  Ordinal: 159
+  Name: mdbx_reader_list
+  RVA: 0x14B83
+}
+Export {
+  Ordinal: 160
+  Name: mdbx_replace
+  RVA: 0x216A0
+}
+Export {
+  Ordinal: 161
+  Name: mdbx_replace_ex
+  RVA: 0x21140
+}
+Export {
+  Ordinal: 162
+  Name: mdbx_set_panic
+  RVA: 0x237B
+}
+Export {
+  Ordinal: 163
+  Name: mdbx_setup_debug
+  RVA: 0x281EE
+}
+Export {
+  Ordinal: 164
+  Name: mdbx_setup_debug_nofmt
+  RVA: 0x280FA
+}
+Export {
+  Ordinal: 165
+  Name: mdbx_sourcery_571ec970123acacadaf0d5c6322948f08060cbc5ad47e04264dfa375e0355469_v0_14_4_0_g716ce9d5
+  RVA: 0x6ACA0
+}
+Export {
+  Ordinal: 166
+  Name: mdbx_strerror
+  RVA: 0x1E299
+}
+Export {
+  Ordinal: 167
+  Name: mdbx_strerror_ANSI2OEM
+  RVA: 0x1E360
+}
+Export {
+  Ordinal: 168
+  Name: mdbx_strerror_r
+  RVA: 0x1E214
+}
+Export {
+  Ordinal: 169
+  Name: mdbx_strerror_r_ANSI2OEM
+  RVA: 0x1E2B0
+}
+Export {
+  Ordinal: 170
+  Name: mdbx_thread_register
+  RVA: 0x1521C
+}
+Export {
+  Ordinal: 171
+  Name: mdbx_thread_unregister
+  RVA: 0x15560
+}
+Export {
+  Ordinal: 172
+  Name: mdbx_txn_abort
+  RVA: 0x26F0
+}
+Export {
+  Ordinal: 173
+  Name: mdbx_txn_abort_ex
+  RVA: 0x21CD0
+}
+Export {
+  Ordinal: 174
+  Name: mdbx_txn_amend
+  RVA: 0x25400
+}
+Export {
+  Ordinal: 175
+  Name: mdbx_txn_begin
+  RVA: 0x26C0
+}
+Export {
+  Ordinal: 176
+  Name: mdbx_txn_begin_ex
+  RVA: 0x23010
+}
+Export {
+  Ordinal: 177
+  Name: mdbx_txn_break
+  RVA: 0x21C00
+}
+Export {
+  Ordinal: 178
+  Name: mdbx_txn_checkpoint
+  RVA: 0x240E0
+}
+Export {
+  Ordinal: 179
+  Name: mdbx_txn_clone
+  RVA: 0x248B0
+}
+Export {
+  Ordinal: 180
+  Name: mdbx_txn_commit
+  RVA: 0x26E0
+}
+Export {
+  Ordinal: 181
+  Name: mdbx_txn_commit_embark_read
+  RVA: 0x236E0
+}
+Export {
+  Ordinal: 182
+  Name: mdbx_txn_commit_ex
+  RVA: 0x23B50
+}
+Export {
+  Ordinal: 183
+  Name: mdbx_txn_copy2fd
+  RVA: 0x2906
+}
+Export {
+  Ordinal: 184
+  Name: mdbx_txn_copy2pathname
+  RVA: 0x2D83
+}
+Export {
+  Ordinal: 185
+  Name: mdbx_txn_copy2pathnameW
+  RVA: 0x2EBB
+}
+Export {
+  Ordinal: 186
+  Name: mdbx_txn_env
+  RVA: 0x21950
+}
+Export {
+  Ordinal: 187
+  Name: mdbx_txn_flags
+  RVA: 0x219A0
+}
+Export {
+  Ordinal: 188
+  Name: mdbx_txn_get_userctx
+  RVA: 0x22FB0
+}
+Export {
+  Ordinal: 189
+  Name: mdbx_txn_id
+  RVA: 0x21980
+}
+Export {
+  Ordinal: 190
+  Name: mdbx_txn_info
+  RVA: 0x24420
+}
+Export {
+  Ordinal: 191
+  Name: mdbx_txn_lock
+  RVA: 0x156D0
+}
+Export {
+  Ordinal: 192
+  Name: mdbx_txn_park
+  RVA: 0x221A0
+}
+Export {
+  Ordinal: 193
+  Name: mdbx_txn_refresh
+  RVA: 0x22A60
+}
+Export {
+  Ordinal: 194
+  Name: mdbx_txn_release_all_cursors_ex
+  RVA: 0x4510
+}
+Export {
+  Ordinal: 195
+  Name: mdbx_txn_renew
+  RVA: 0x22D90
+}
+Export {
+  Ordinal: 196
+  Name: mdbx_txn_reset
+  RVA: 0x21A00
+}
+Export {
+  Ordinal: 197
+  Name: mdbx_txn_rollback
+  RVA: 0x24F00
+}
+Export {
+  Ordinal: 198
+  Name: mdbx_txn_set_userctx
+  RVA: 0x22F00
+}
+Export {
+  Ordinal: 199
+  Name: mdbx_txn_straggler
+  RVA: 0x21720
+}
+Export {
+  Ordinal: 200
+  Name: mdbx_txn_unlock
+  RVA: 0x157B0
+}
+Export {
+  Ordinal: 201
+  Name: mdbx_txn_unpark
+  RVA: 0x224A0
+}
+Export {
+  Ordinal: 202
+  Name: mdbx_version
+  RVA: 0x6AC68
+}

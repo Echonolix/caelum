@@ -1,0 +1,14 @@
+
+Algorithm : SHA256
+Hash      : 2420CC5E9AD4FA827D1BB504C60BFA86FF1B61121C6009B3B5DE0B66F1ED2D21
+Path      : C:\Users\Luna5ama\AppData\Local\Temp\caelum-mdbx-windows-20261014\caelum\mdbx\build\native\windows-x86_64\caelum_mdbx.dll
+
+Algorithm : SHA256
+Hash      : 58B770F90B75C533FD66D6D040764F75589565A2BC46034CC2EC2D8D9B257176
+Path      : C:\Users\Luna5ama\AppData\Local\Temp\caelum-mdbx-windows-20261014\caelum\mdbx\build\archives\mdbxSources\libmdbx-a032e40c1c06eaf695a163cfc32d4a01ffb8b26c\mdbx.c
+
+Algorithm : SHA256
+Hash      : C92004944D8E47B585930988EE9CE8942825A76FAF38A2F170066B6E42405B4D
+Path      : C:\Users\Luna5ama\AppData\Local\Temp\caelum-mdbx-windows-20261014\caelum\buildSrc\src\main\kotlin\CompileCrossNativeTask.kt
+
+

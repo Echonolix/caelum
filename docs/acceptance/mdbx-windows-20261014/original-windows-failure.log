@@ -1,0 +1,404 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :ktgen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :caelum:buildSrc:generateScriptPluginAdapters UP-TO-DATE
+> Task :caelum:buildSrc:pluginDescriptors UP-TO-DATE
+> Task :caelum:buildSrc:processResources UP-TO-DATE
+> Task :ktgen:compileKotlin UP-TO-DATE
+> Task :ktgen:compileJava NO-SOURCE
+> Task :ktgen:pluginDescriptors UP-TO-DATE
+> Task :ktgen:processResources UP-TO-DATE
+> Task :ktgen:classes UP-TO-DATE
+> Task :ktgen:jar UP-TO-DATE
+> Task :caelum:buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :caelum:buildSrc:compilePluginsBlocks UP-TO-DATE
+> Task :caelum:buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :caelum:buildSrc:compileKotlin UP-TO-DATE
+> Task :caelum:buildSrc:compileJava NO-SOURCE
+> Task :caelum:buildSrc:compileGroovy NO-SOURCE
+> Task :caelum:buildSrc:classes UP-TO-DATE
+> Task :caelum:buildSrc:jar UP-TO-DATE
+
+> Configure project :caelum:caelum-vulkan
+w: Unsupported API dependency types in test source sets
+API dependency types are used in test source sets
+Dependencies:
+    - unspecified (source sets: test)
+
+Adding API dependency types to test source sets is not supported and will removed in a future version of Kotlin.
+
+API dependencies are transitively exposed to consumers, but test source sets should not be consumable.
+Solutions:
+ * Replace API dependency types in test source sets with implementation dependencies.
+ * For Kotlin/JVM projects, consider using Test Fixtures https://docs.gradle.org/current/userguide/java_testing.html#sec:java_test_fixtures
+ * For Test Fixtures support in non-Kotlin/JVM projects, please add your use-case to https://youtrack.jetbrains.com/issue/KT-63142
+
+Including project 'cygnus-utils' at 'utils'.
+Including project 'cygnus-core' at 'core'.
+Including project 'cygnus-gradle-plugin' at 'gradle-plugin'.
+Including project 'cygnus-api' at 'api'.
+Including project 'cygnus-rendering-api' at 'rendering/api'.
+Including project 'cygnus-rendering-internal' at 'rendering/internal'.
+Including project 'cygnus-rendering-vulkan' at 'rendering/vulkan'.
+Including project 'cygnus-rendering-vulkan-standalone' at 'rendering/vulkan/standalone'.
+Including project 'cygnus-rendering-codegen' at 'rendering/codegen'.
+Including project 'cygnus-io-api' at 'io/api'.
+Including project 'cygnus-io-internal' at 'io/internal'.
+Including project 'cygnus-resource-api' at 'resource/api'.
+Including project 'cygnus-resource-internal' at 'resource/internal'.
+
+> Task :cygnus:buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :cygnus:buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :cygnus:buildSrc:compilePluginsBlocks UP-TO-DATE
+> Task :cygnus:buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :cygnus:buildSrc:generateScriptPluginAdapters UP-TO-DATE
+> Task :cygnus:buildSrc:compileKotlin UP-TO-DATE
+> Task :cygnus:buildSrc:compileJava NO-SOURCE
+> Task :cygnus:buildSrc:compileGroovy NO-SOURCE
+> Task :cygnus:buildSrc:pluginDescriptors UP-TO-DATE
+> Task :cygnus:buildSrc:processResources UP-TO-DATE
+> Task :cygnus:buildSrc:classes UP-TO-DATE
+> Task :cygnus:buildSrc:jar UP-TO-DATE
+> Task :slang-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :slang-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :slang-gradle-plugin:compileJava NO-SOURCE
+> Task :slang-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :slang-gradle-plugin:processResources UP-TO-DATE
+> Task :slang-gradle-plugin:classes UP-TO-DATE
+> Task :slang-gradle-plugin:jar UP-TO-DATE
+> Task :caelum:caelum-codegen-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-codegen-api:processResources NO-SOURCE
+> Task :caelum:caelum-core:codegen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-core:codegen:processResources UP-TO-DATE
+> Task :caelum:caelum-struct:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-struct:pluginDescriptors UP-TO-DATE
+> Task :caelum:caelum-struct:processResources UP-TO-DATE
+> Task :caelum:caelum-core:processResources NO-SOURCE
+> Task :ktgen:ktgen-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ktgen:ktgen-api:compileKotlin UP-TO-DATE
+> Task :ktgen:ktgen-api:compileJava NO-SOURCE
+> Task :ktgen:ktgen-api:processResources NO-SOURCE
+> Task :ktgen:ktgen-api:classes UP-TO-DATE
+> Task :ktgen:ktgen-api:jar UP-TO-DATE
+> Task :ktgen:ktgen-runtime:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ktgen:ktgen-runtime:compileKotlin UP-TO-DATE
+> Task :ktgen:ktgen-runtime:compileJava NO-SOURCE
+> Task :ktgen:ktgen-runtime:processResources NO-SOURCE
+> Task :ktgen:ktgen-runtime:classes UP-TO-DATE
+> Task :ktgen:ktgen-runtime:jar UP-TO-DATE
+> Task :caelum:caelum-codegen-api:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-codegen-api:compileJava NO-SOURCE
+> Task :caelum:caelum-codegen-api:classes UP-TO-DATE
+> Task :caelum:caelum-codegen-api:jar UP-TO-DATE
+> Task :caelum:caelum-core:codegen:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-core:codegen:compileJava NO-SOURCE
+> Task :caelum:caelum-core:codegen:classes UP-TO-DATE
+> Task :caelum:caelum-core:codegen:jar UP-TO-DATE
+> Task :caelum:caelum-core:ktgen UP-TO-DATE
+> Task :caelum:caelum-core:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-core:compileJava UP-TO-DATE
+> Task :caelum:caelum-struct:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-struct:compileJava NO-SOURCE
+> Task :caelum:caelum-struct:classes UP-TO-DATE
+> Task :caelum:caelum-struct:jar UP-TO-DATE
+> Task :caelum:caelum-core:classes UP-TO-DATE
+> Task :caelum:caelum-core:jar UP-TO-DATE
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :buildSrc:compilePluginsBlocks UP-TO-DATE
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :buildSrc:generateScriptPluginAdapters UP-TO-DATE
+> Task :buildSrc:compileKotlin UP-TO-DATE
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:pluginDescriptors UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :cygnus:cygnus-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-gradle-plugin:compileJava NO-SOURCE
+> Task :cygnus:cygnus-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :cygnus:cygnus-gradle-plugin:processResources UP-TO-DATE
+> Task :cygnus:cygnus-gradle-plugin:classes UP-TO-DATE
+> Task :cygnus:cygnus-gradle-plugin:jar UP-TO-DATE
+
+> Configure project :mc-26.3-fabric
+Fabric Loom: 1.18.3
+
+> Task :dev-control:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :dev-control:protobufDummy UP-TO-DATE
+> Task :engine-common:processResources NO-SOURCE
+> Task :cygnus:cygnus-rendering-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :dev-control:extractIncludeProto UP-TO-DATE
+> Task :dev-control:extractProto UP-TO-DATE
+> Task :dev-control:generateProto UP-TO-DATE
+> Task :engine-common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-utils:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-utils:compileJava UP-TO-DATE
+> Task :engine-common:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-utils:processResources NO-SOURCE
+> Task :engine-common:compileJava NO-SOURCE
+> Task :cygnus:cygnus-utils:classes UP-TO-DATE
+> Task :cygnus:cygnus-utils:jar UP-TO-DATE
+> Task :cygnus:cygnus-rendering-api:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-rendering-api:compileJava NO-SOURCE
+> Task :cygnus:cygnus-rendering-api:processResources NO-SOURCE
+> Task :cygnus:cygnus-rendering-api:classes UP-TO-DATE
+> Task :dev-control:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-rendering-api:jar UP-TO-DATE
+> Task :cygnus:cygnus-rendering-internal:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-rendering-internal:processResources NO-SOURCE
+> Task :cygnus:cygnus-rendering-codegen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :dev-control:compileJava UP-TO-DATE
+> Task :engine-assets:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engine-concurrent:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-rendering-codegen:processResources UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-rendering-vulkan-standalone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cygnus:cygnus-rendering-vulkan:processResources NO-SOURCE
+> Task :cygnus:cygnus-rendering-vulkan-standalone:processResources UP-TO-DATE
+> Task :engine-concurrent:compileKotlin UP-TO-DATE
+> Task :engine-concurrent:compileJava NO-SOURCE
+> Task :engine-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engine-persistence:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mc-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mc-api:compileKotlin UP-TO-DATE
+> Task :mc-api:compileJava NO-SOURCE
+> Task :engine-terrain:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engine-terrain:compileSlang UP-TO-DATE
+> Task :engine-vulkan:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sandbox:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sandbox:processResources UP-TO-DATE
+> Task :dev-control:processResources UP-TO-DATE
+> Task :dev-control:classes UP-TO-DATE
+> Task :dev-control:jar UP-TO-DATE
+> Task :engine-assets:processResources NO-SOURCE
+> Task :engine-common:classes UP-TO-DATE
+> Task :engine-common:jar UP-TO-DATE
+> Task :engine-concurrent:processResources NO-SOURCE
+> Task :engine-concurrent:classes UP-TO-DATE
+> Task :engine-concurrent:jar UP-TO-DATE
+> Task :engine-core:processResources NO-SOURCE
+> Task :engine-persistence:processResources NO-SOURCE
+> Task :engine-terrain:processResources NO-SOURCE
+> Task :engine-vulkan:processResources NO-SOURCE
+> Task :mc-api:processResources NO-SOURCE
+> Task :mc-api:classes UP-TO-DATE
+> Task :mc-api:jar UP-TO-DATE
+> Task :sandbox:processTestResources NO-SOURCE
+> Task :caelum:caelum-bc7e:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:codegen-c:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:codegen-c:adapter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:codegen-c:c-ast:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:codegen-c:tree-sitter-lang-c:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:codegen-c:tree-sitter-lang-c:compileKotlin UP-TO-DATE
+> Task :caelum:codegen-c:tree-sitter-lang-c:compileJava NO-SOURCE
+> Task :caelum:codegen-c:tree-sitter-lang-c:processResources NO-SOURCE
+> Task :caelum:codegen-c:tree-sitter-lang-c:classes UP-TO-DATE
+> Task :caelum:codegen-c:tree-sitter-lang-c:jar UP-TO-DATE
+> Task :caelum:codegen-c:c-ast:compileKotlin UP-TO-DATE
+> Task :caelum:codegen-c:c-ast:compileJava NO-SOURCE
+> Task :caelum:codegen-c:c-ast:processResources NO-SOURCE
+> Task :caelum:codegen-c:c-ast:classes UP-TO-DATE
+> Task :caelum:codegen-c:c-ast:jar UP-TO-DATE
+> Task :caelum:codegen-c:adapter:compileKotlin UP-TO-DATE
+> Task :caelum:codegen-c:adapter:compileJava NO-SOURCE
+> Task :caelum:codegen-c:adapter:processResources NO-SOURCE
+> Task :caelum:codegen-c:adapter:classes UP-TO-DATE
+> Task :caelum:codegen-c:adapter:jar UP-TO-DATE
+> Task :caelum:codegen-c:compileKotlin UP-TO-DATE
+> Task :caelum:codegen-c:compileJava NO-SOURCE
+> Task :caelum:codegen-c:treeSitterCSources UP-TO-DATE
+> Task :caelum:codegen-c:treeSitterSources UP-TO-DATE
+> Task :caelum:codegen-c:compileNativeLinuxX64 UP-TO-DATE
+> Task :caelum:codegen-c:compileNativeWindowsX64 SKIPPED
+> Task :caelum:codegen-c:processResources UP-TO-DATE
+> Task :caelum:codegen-c:classes UP-TO-DATE
+> Task :caelum:codegen-c:jar UP-TO-DATE
+> Task :caelum:caelum-bc7e:ktgen UP-TO-DATE
+> Task :caelum:caelum-bc7e:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-bc7e:compileJava NO-SOURCE
+> Task :caelum:caelum-zstd:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-zstd:zstdSources UP-TO-DATE
+> Task :caelum:caelum-zstd:bindingHeaders UP-TO-DATE
+> Task :caelum:caelum-zstd:ktgen UP-TO-DATE
+> Task :caelum:caelum-zstd:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-zstd:compileJava NO-SOURCE
+> Task :caelum:caelum-mdbx:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-mdbx:ktgen UP-TO-DATE
+> Task :caelum:caelum-mdbx:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-mdbx:compileJava NO-SOURCE
+> Task :caelum:caelum-vulkan:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-vulkan:codegen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-vulkan:codegen:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:codegen:compileJava NO-SOURCE
+> Task :caelum:caelum-vulkan:codegen:processResources UP-TO-DATE
+> Task :caelum:caelum-vulkan:codegen:classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:codegen:jar UP-TO-DATE
+> Task :engine-assets:compileKotlin UP-TO-DATE
+> Task :engine-assets:compileJava NO-SOURCE
+> Task :engine-persistence:compileKotlin UP-TO-DATE
+> Task :engine-persistence:compileJava NO-SOURCE
+> Task :engine-assets:classes UP-TO-DATE
+> Task :engine-assets:jar UP-TO-DATE
+> Task :engine-persistence:classes UP-TO-DATE
+> Task :engine-persistence:jar UP-TO-DATE
+> Task :caelum:caelum-vulkan:ktgen UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileBaseSrcKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileBaseSrcJava NO-SOURCE
+> Task :caelum:caelum-vulkan:processBaseSrcResources NO-SOURCE
+> Task :caelum:caelum-vulkan:baseSrcClasses UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums0Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums0Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums1Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums1Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums2Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums2Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums3Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums3Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums4Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums4Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums5Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums5Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums6Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums6Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileEnums7Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnums7Java NO-SOURCE
+> Task :caelum:caelum-vulkan:processEnums0Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums0Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums1Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums1Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums2Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums2Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums3Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums3Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums4Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums4Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums5Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums5Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums6Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums6Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processEnums7Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:enums7Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnumsKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileEnumsJava NO-SOURCE
+> Task :caelum:caelum-vulkan:processEnumsResources NO-SOURCE
+> Task :caelum:caelum-vulkan:enumsClasses UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileObjectHandlesKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileObjectHandlesJava NO-SOURCE
+> Task :caelum:caelum-vulkan:processObjectHandlesResources NO-SOURCE
+> Task :caelum:caelum-vulkan:objectHandlesClasses UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups0Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups0Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups1Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups1Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups2Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups2Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups3Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups3Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups4Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups4Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups5Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups5Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups6Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups6Java NO-SOURCE
+> Task :caelum:caelum-vulkan:compileGroups7Kotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroups7Java NO-SOURCE
+> Task :caelum:caelum-vulkan:processGroups0Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups0Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups1Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups1Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups2Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups2Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups3Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups3Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups4Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups4Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups5Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups5Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups6Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups6Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:processGroups7Resources NO-SOURCE
+> Task :caelum:caelum-vulkan:groups7Classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroupsKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileGroupsJava NO-SOURCE
+> Task :caelum:caelum-vulkan:processGroupsResources NO-SOURCE
+> Task :caelum:caelum-vulkan:groupsClasses UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileObjectBaseKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileObjectBaseJava NO-SOURCE
+> Task :caelum:caelum-vulkan:processObjectBaseResources NO-SOURCE
+> Task :caelum:caelum-vulkan:objectBaseClasses UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-vulkan:compileJava NO-SOURCE
+> Task :caelum:caelum-vulkan:processResources NO-SOURCE
+> Task :caelum:caelum-vulkan:classes UP-TO-DATE
+> Task :caelum:caelum-vulkan:jar UP-TO-DATE
+> Task :caelum:caelum-glfw:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-glfw:ktgen UP-TO-DATE
+> Task :caelum:caelum-glfw:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-glfw:compileJava NO-SOURCE
+> Task :caelum:caelum-zstd:compileNativeLinuxX64
+> Task :caelum:caelum-zstd:compileNativeWindowsX64
+> Task :caelum:caelum-zstd:processResources
+> Task :caelum:caelum-zstd:classes
+> Task :caelum:caelum-zstd:jar
+> Task :caelum:caelum-glfw-vulkan:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum:caelum-glfw-vulkan:compileKotlin UP-TO-DATE
+> Task :caelum:caelum-glfw-vulkan:compileJava NO-SOURCE
+> Task :caelum:caelum-glfw-vulkan:processResources NO-SOURCE
+> Task :caelum:caelum-glfw-vulkan:classes UP-TO-DATE
+> Task :caelum:caelum-glfw-vulkan:jar UP-TO-DATE
+> Task :caelum:caelum-glfw:processResources NO-SOURCE
+> Task :caelum:caelum-glfw:classes UP-TO-DATE
+> Task :caelum:caelum-glfw:jar UP-TO-DATE
+> Task :caelum:caelum-mdbx:mdbxSources UP-TO-DATE
+> Task :caelum:caelum-mdbx:compileNativeWindowsX64 FAILED
+> Task :cygnus:cygnus-rendering-internal:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-rendering-internal:compileJava NO-SOURCE
+> Task :cygnus:cygnus-rendering-internal:classes UP-TO-DATE
+> Task :cygnus:cygnus-rendering-internal:jar UP-TO-DATE
+> Task :cygnus:cygnus-rendering-codegen:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-rendering-codegen:compileJava NO-SOURCE
+> Task :cygnus:cygnus-rendering-codegen:classes UP-TO-DATE
+> Task :cygnus:cygnus-rendering-codegen:jar UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan:compileJava NO-SOURCE
+> Task :cygnus:cygnus-rendering-vulkan-standalone:compileKotlin UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan-standalone:compileJava NO-SOURCE
+> Task :cygnus:cygnus-rendering-vulkan:classes UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan:jar UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan-standalone:classes UP-TO-DATE
+> Task :cygnus:cygnus-rendering-vulkan-standalone:jar UP-TO-DATE
+
+[Incubating] Problems report is available at: file:///I:/code/Echonolix/fornax/.worktrees/main-integration-sandbox-cygnus-contract-eba97bde/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':caelum:caelum-mdbx:compileNativeWindowsX64' (registered by plugin 'buildsrc.convention.cross-native').
+> Native command failed with exit 1:
+  C:\Users\Luna5ama\AppData\Local\Temp\fornax-contract-integration-deps-eba97bde\gradle-home\caches\caelum-native\b5663f69581dcf39\zig-x86_64-windows-0.17.0\zig.exe cc -target x86_64-windows-gnu -std=c11 -O2 -DLIBMDBX_EXPORTS=1 -DMDBX_BUILD_FLAGS="Caelum Zig 0.17.0; C11; O2; shared; CPU dispatch disabled" -DMDBX_BUILD_SHARED_LIBRARY=1 -DMDBX_BUILD_TIMESTAMP="2026-10-12T00:00:00Z" -DMDBX_HAVE_BUILTIN_CPU_SUPPORTS=0 -Ibuild\native\windows-x86_64\include -Ibuild\archives\mdbxSources\libmdbx-a032e40c1c06eaf695a163cfc32d4a01ffb8b26c -c build\archives\mdbxSources\libmdbx-a032e40c1c06eaf695a163cfc32d4a01ffb8b26c\mdbx.c -o C:\Users\Luna5ama\AppData\Local\Temp\fornax-contract-integration-deps-eba97bde\caelum\mdbx\build\tmp\compileNativeWindowsX64\obj\c0-mdbx.o
+  error: Zig: unrecognized file extension
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 38s
+148 actionable tasks: 5 executed, 143 up-to-date

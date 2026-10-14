@@ -1,0 +1,17 @@
+{
+  "expectedExports": 22,
+  "executed": true,
+  "target": ":caelum-mdbx:compileNativeWindowsX64",
+  "gpuTested": false,
+  "dllSha256": "2420cc5e9ad4fa827d1bb504c60bfa86ff1b61121c6009b3b5de0b66f1ed2d21",
+  "linuxTested": false,
+  "dllBytes": 509952,
+  "missingExports": 0,
+  "buildSeconds": 17,
+  "testedCommit": "4d076517e64dd12e409ce0ec24500f67503388f1",
+  "base": "01973afcc5483d1aab2572a7a4d1aa567139a4ea",
+  "reusedFix": "5883abfa3d93a4658f3d0b4c0a6b7c45ba461b71",
+  "date": "2026-10-14",
+  "buildExit": 0,
+  "runtimeTested": false
+}

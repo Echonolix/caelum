@@ -1,0 +1,10 @@
+var zig = "C:/Users/Luna5ama/AppData/Local/Temp/fornax-contract-integration-deps-eba97bde/gradle-home/caches/caelum-native/b5663f69581dcf39/zig-x86_64-windows-0.17.0/zig.exe";
+var base = new java.io.File("C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/mdbx");
+var source = "build/archives/mdbxSources/libmdbx-a032e40c1c06eaf695a163cfc32d4a01ffb8b26c/mdbx.c";
+var direct = new ProcessBuilder(zig, "cc", "-###", "-target", "x86_64-windows-gnu", "-std=c11", "-O2", "-DLIBMDBX_EXPORTS=1", "-DMDBX_BUILD_FLAGS=\"Caelum Zig 0.17.0; C11; O2; shared; CPU dispatch disabled\"", "-DMDBX_BUILD_SHARED_LIBRARY=1", "-DMDBX_BUILD_TIMESTAMP=\"2026-10-12T00:00:00Z\"", "-DMDBX_HAVE_BUILTIN_CPU_SUPPORTS=0", "-Ibuild/native/windows-x86_64/include", "-Ibuild/archives/mdbxSources/libmdbx-a032e40c1c06eaf695a163cfc32d4a01ffb8b26c", "-c", source, "-o", "build/tmp/compileNativeWindowsX64/obj/probe.o").directory(base).redirectErrorStream(true).start();
+System.out.println("DIRECT_DIAGNOSTIC=" + direct.inputReader().readAllAsString());
+System.out.println("DIRECT_EXIT=" + direct.waitFor());
+var response = new ProcessBuilder(zig, "cc", "-###", "@build/tmp/compileNativeWindowsX64/c0.rsp").directory(base).redirectErrorStream(true).start();
+System.out.println("RESPONSE_DIAGNOSTIC=" + response.inputReader().readAllAsString());
+System.out.println("RESPONSE_EXIT=" + response.waitFor());
+/exit
