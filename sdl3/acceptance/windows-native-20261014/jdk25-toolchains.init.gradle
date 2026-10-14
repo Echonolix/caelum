@@ -1,0 +1,8 @@
+gradle.beforeProject { project ->
+    project.afterEvaluate {
+        if (project.name == 'buildSrc' || project.rootProject.name == 'ktgen') {
+            project.extensions.findByType(org.gradle.api.plugins.JavaPluginExtension)
+                ?.toolchain?.languageVersion?.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(25))
+        }
+    }
+}

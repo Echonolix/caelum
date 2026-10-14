@@ -1,0 +1,81 @@
+Repository format tooling search: no Spotless, ktlint, ktfmt, detekt, or formatCheck task/plugin found in tracked build configuration.
+Command: git diff --check origin/main...HEAD
+Exit code: 2
+Diagnostics: 76 (72 trailing whitespace; 4 blank-at-EOF)
+Locations:
+sdl3/LICENSE.SDL.txt:2: trailing whitespace.
+sdl3/LICENSE.SDL.txt:10: trailing whitespace.
+sdl3/LICENSE.SDL.txt:14: trailing whitespace.
+sdl3/LICENSE.SDL.txt:18: new blank line at EOF.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:11: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:13: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:14: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:17: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:24: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:29: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:46: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:47: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:48: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:50: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:52: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:53: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:55: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:59: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:61: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:62: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:65: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:70: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:93: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:109: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:110: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:118: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:146: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:412: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:417: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:422: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:429: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:432: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:433: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:434: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:455: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:456: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:457: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:459: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:477: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:480: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:492: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:493: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:496: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:504: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:505: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:518: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:519: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:520: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:523: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:538: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:825: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:826: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:827: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:831: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:834: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:838: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:839: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:840: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:845: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:846: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:847: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:848: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:849: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:851: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:857: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:860: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:861: trailing whitespace.
+sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv:1153: new blank line at EOF.
+sdl3/include/SDL3/SDL_begin_code.h:553: new blank line at EOF.
+sdl3/include/SDL3/SDL_gpu.h:887: trailing whitespace.
+sdl3/include/SDL3/SDL_gpu.h:971: trailing whitespace.
+sdl3/include/SDL3/SDL_gpu.h:972: trailing whitespace.
+sdl3/include/SDL3/SDL_hints.h:1435: trailing whitespace.
+sdl3/include/SDL3/SDL_hints.h:1436: trailing whitespace.
+sdl3/include/SDL3/SDL_hints.h:1438: trailing whitespace.
+sdl3/include/SDL3/SDL_pen.h:198: new blank line at EOF.

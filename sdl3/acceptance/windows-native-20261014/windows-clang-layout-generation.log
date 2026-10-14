@@ -1,0 +1,3 @@
+COMMAND=node sdl3/codegen/tools/generate-sdl-type-layouts.mjs
+Generated 122 records, 839 fields, 1 partial records, 0 storage-only records, 2 unsupported fields.
+LAYOUT_SNAPSHOT_COMPARE=EXACT_MATCH

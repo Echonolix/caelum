@@ -1,0 +1,146 @@
+[
+  {
+    "group": "core",
+    "file": "TEST-net.echonolix.caelum.FunctionStubLifecycleTest.xml",
+    "name": "net.echonolix.caelum.FunctionStubLifecycleTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "core",
+    "file": "TEST-net.echonolix.caelum.MemoryStackTest.xml",
+    "name": "net.echonolix.caelum.MemoryStackTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "core",
+    "file": "TEST-net.echonolix.caelum.UnionLayoutTest.xml",
+    "name": "net.echonolix.caelum.UnionLayoutTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "core",
+    "file": "TEST-net.echonolix.caelum.UnsafeUtilTest.xml",
+    "name": "net.echonolix.caelum.UnsafeUtilTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLCallbackGeneratorTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLCallbackGeneratorTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLCallbackParserTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLCallbackParserTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLConstantParserTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLConstantParserTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLGeneratorTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLGeneratorTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLHeaderParserTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLHeaderParserTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLTypeGeneratorTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLTypeGeneratorTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3/codegen",
+    "file": "TEST-net.echonolix.caelum.sdl3.codegen.SDLTypeLayoutsTest.xml",
+    "name": "net.echonolix.caelum.sdl3.codegen.SDLTypeLayoutsTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3",
+    "file": "TEST-net.echonolix.caelum.sdl3.SDLBindingsTest.xml",
+    "name": "net.echonolix.caelum.sdl3.SDLBindingsTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3",
+    "file": "TEST-net.echonolix.caelum.sdl3.SDLCallbackTest.xml",
+    "name": "net.echonolix.caelum.sdl3.SDLCallbackTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3",
+    "file": "TEST-net.echonolix.caelum.sdl3.SDLInlineTest.xml",
+    "name": "net.echonolix.caelum.sdl3.SDLInlineTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3",
+    "file": "TEST-net.echonolix.caelum.sdl3.SDLLoaderTest.xml",
+    "name": "net.echonolix.caelum.sdl3.SDLLoaderTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "group": "sdl3",
+    "file": "TEST-net.echonolix.caelum.sdl3.SDLTypeAccessorsTest.xml",
+    "name": "net.echonolix.caelum.sdl3.SDLTypeAccessorsTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

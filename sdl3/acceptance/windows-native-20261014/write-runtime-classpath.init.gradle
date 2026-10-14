@@ -1,0 +1,22 @@
+gradle.projectsEvaluated {
+    def expectedDir = new File(System.getenv("SDL3_ACCEPTANCE_PROJECT_DIR")).canonicalFile
+    def currentDir = gradle.rootProject.projectDir.canonicalFile
+    if (currentDir == expectedDir) {
+        def sdlProject = gradle.rootProject.project(":caelum-sdl3")
+        sdlProject.tasks.register("writeSdl3RuntimeClasspath") {
+            dependsOn(sdlProject.tasks.named("testClasses"))
+            doLast {
+                def outputPath = System.getenv("SDL3_TEST_RUNTIME_CLASSPATH_FILE")
+                if (!outputPath) {
+                    throw new GradleException("SDL3_TEST_RUNTIME_CLASSPATH_FILE is required")
+                }
+                def sourceSets = sdlProject.extensions.getByType(org.gradle.api.tasks.SourceSetContainer)
+                def runtimeClasspath = sourceSets.getByName("test").runtimeClasspath.asPath
+                def output = new File(outputPath)
+                output.parentFile.mkdirs()
+                output.setText(runtimeClasspath, "UTF-8")
+                println("SDL3_TEST_RUNTIME_CLASSPATH_ENTRIES=" + runtimeClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)).length)
+            }
+        }
+    }
+}

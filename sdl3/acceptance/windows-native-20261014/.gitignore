@@ -1,0 +1,27 @@
+# Local files from the acceptance run
+/downloads/
+/tools/
+/gradle-user-home/
+/dependencies/
+/layout-validation/
+/harness-classes/
+/gradle-version.log
+/ktgen-dependency.json
+/candidate-settings.original.gradle.kts
+/candidate-settings.temporary.sha256
+/windows-acceptance.settings.gradle.kts
+/not-a-native-library.dll
+/sdl3-test-runtime-classpath.txt
+/sdl3-classpath-export*.log
+/repo-format-check.log
+/windows-acceptance-results.md
+/provenance.json
+
+# Native archives, binaries, and scratch outputs
+*.zip
+*.dll
+*.exe
+*.class
+/repo-format-check-final.log
+/sdl3-smoke.log
+/sdl3-smoke-with-local-ktgen.log
