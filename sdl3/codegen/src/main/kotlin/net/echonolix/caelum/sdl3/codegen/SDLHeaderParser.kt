@@ -15,7 +15,7 @@ internal object SDLHeaderParser {
     private val typedefGroupRegex = Regex("""typedef\s+(struct|union)\s+(SDL_[A-Za-z0-9_]+)\b(?:[^;{]*\{)?""")
     private val opaqueRegex = Regex("""typedef\s+(?:struct|union)\s+(SDL_[A-Za-z0-9_]+)\s+\1\s*;""")
     private val functionPointerRegex = Regex(
-        """typedef\s+.+?\(\s*(?:SDLCALL\s*)?\*\s*(SDL_[A-Za-z0-9_]+)\s*\)\s*\(""",
+        """typedef\s+[^;{}]+?\(\s*(?:SDLCALL\s*)?\*\s*(SDL_[A-Za-z0-9_]+)\s*\)\s*\(""",
         RegexOption.DOT_MATCHES_ALL,
     )
     private val scalarTypedefRegex = Regex(

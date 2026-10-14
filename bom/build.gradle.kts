@@ -8,6 +8,7 @@ dependencies {
         api(project(":caelum-core"))
         api(project(":caelum-opengl"))
         api(project(":caelum-vulkan"))
+        api(project(":caelum-sdl3"))
         api(project(":caelum-glfw"))
         api(project(":caelum-glfw-vulkan"))
         api(project(":caelum-dxgi"))

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,16 +14,18 @@ const layoutSource = resolve(
   "codegen/src/main/kotlin/net/echonolix/caelum/sdl3/codegen/SDLTypeLayouts.kt",
 );
 
-const currentSource = readFileSync(layoutSource, "utf8");
-const expectedRecords = [
-  ...currentSource.matchAll(/(?:record\(\s*"|name\s*=\s*")(SDL_[^"]+)"/g),
-]
-  .map((match) => match[1])
-  .filter((name, index, names) => names.indexOf(name) === index)
-  .sort();
+// Discover concrete records from headers so a stale snapshot cannot hide omissions.
+const expectedRecords = [...new Set(readdirSync(resolve(headerDir, "SDL3"))
+  .filter((name) => name.endsWith(".h"))
+  .flatMap((name) => {
+    const text = readFileSync(resolve(headerDir, "SDL3", name), "utf8")
+      .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "");
+    return [...text.matchAll(/\b(?:struct|union)\s+(SDL_\w+)\s*\{/g)]
+      .map((match) => match[1]);
+  }))].sort();
 
 if (expectedRecords.length !== 122) {
-  throw new Error(`Expected 122 records in the checked-in snapshot, found ${expectedRecords.length}`);
+  throw new Error(`Expected 122 concrete records in the pinned public headers, found ${expectedRecords.length}`);
 }
 
 const layoutDump = execFileSync(

@@ -1,6 +1,8 @@
 package net.echonolix.caelum.sdl3.codegen
 
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -9,6 +11,27 @@ import kotlin.test.assertTrue
 class SDLHeaderParserTest {
     private val registry by lazy {
         SDLHeaderParser.parse(Path.of("..", "include", "SDL3").toAbsolutePath().normalize())
+    }
+
+    @Test
+    fun `every exported header declaration is generated or explicitly skipped`() {
+        // This inventory deliberately does not use the parser's declaration regex.
+        val exportedName = Regex(
+            """extern\s+SDL_DECLSPEC[^;]*?\bSDLCALL\s+(SDL_\w+)\s*\(""",
+            RegexOption.DOT_MATCHES_ALL,
+        )
+        val names = Files.list(Path.of("..", "include", "SDL3")).use { paths ->
+            paths.filter { it.fileName.toString().endsWith(".h") && it.fileName.toString() != "SDL_oldnames.h" }
+                .flatMap { header ->
+                    val text = header.readText().replace(
+                        Regex("""/\*.*?\*/|//[^\n]*""", RegexOption.DOT_MATCHES_ALL), "",
+                    )
+                    exportedName.findAll(text).map { it.groupValues[1] }.toList().stream()
+                }.toList().toSet()
+        }
+        assertEquals(1271, names.size)
+        val classified = registry.functions.map(SDLFunction::name) + registry.skipped.map(SDLSkipped::name)
+        assertEquals(names, classified.toSet())
     }
 
     @Test

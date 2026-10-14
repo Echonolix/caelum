@@ -1,11 +1,29 @@
 package net.echonolix.caelum.sdl3.codegen
 
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SDLTypeLayoutsTest {
+    @Test
+    fun `snapshot record names cover independently scanned concrete public headers`() {
+        val declaration = Regex("""\b(?:struct|union)\s+(SDL_\w+)\s*\{""")
+        val names = Files.list(Path.of("..", "include", "SDL3")).use { paths ->
+            paths.filter { it.fileName.toString().endsWith(".h") }
+                .flatMap { header ->
+                    val text = header.readText().replace(
+                        Regex("""/\*.*?\*/|//[^\n]*""", RegexOption.DOT_MATCHES_ALL), "",
+                    )
+                    declaration.findAll(text).map { it.groupValues[1] }.toList().stream()
+                }.toList().toSet()
+        }
+        assertEquals(names, SDLWindowsX64Layouts.records.map(SDLRecordLayout::name).toSet())
+    }
+
     @Test
     fun `Windows x64 ABI snapshot covers every concrete public SDL record`() {
         val records = SDLWindowsX64Layouts.records

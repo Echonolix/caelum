@@ -3,7 +3,8 @@
 Low-level SDL 3 bindings generated from the vendored SDL 3.4.14 public headers.
 
 The module targets JDK 24 bytecode and is published as
-`net.echonolix:caelum-sdl3:1.0-SNAPSHOT`. When consuming it from this repository,
+`net.echonolix:caelum-sdl3:1.0-SNAPSHOT` and included in `caelum-bom`.
+Use `-PcaelumJavaVersion=25` for GraalVM 25 builds. When consuming it from this repository,
 use the project dependency:
 
 ```kotlin
@@ -38,7 +39,10 @@ does not use.
 Generated callback typedefs accept Kotlin lambdas directly as well as raw
 function pointers. Their native stubs stay alive until
 `SDLFunction.freeFunctionStubs()` is called; only release them after SDL has
-unregistered every callback that may still be invoked.
+unregistered every callback and all in-flight native invocations have finished.
+The cache retains callback objects by identity for that lifetime. Releasing stubs
+does not unload SDL, unregister callbacks, or call `SDL_Quit`. A callback must
+handle its exceptions before they escape into native code.
 `SDLCallbacks.erasures` reports callback parameters whose pointee layout is
 owned by external platform headers. In this ABI, `MSG*` and `XEvent*` remain
 one-level `NPointer<*>` values instead of pretending SDL defines those records.
@@ -65,6 +69,9 @@ varargs, `va_list`, unsupported by-value aggregate signatures, platform-owned
 native handles, and unsupported macro entry points are listed in
 `SDLFunctions.skipped` instead of receiving an unsafe signature.
 
+The binary and source jars include the SDL license and provenance. The source
+jar also includes all vendored headers. Native SDL binaries are not bundled.
+
 ## Verification
 
 Normal tests do not require a native SDL installation. The explicit Windows
@@ -75,3 +82,6 @@ window, polls an event, and shuts SDL down:
 .\gradlew.bat :caelum-sdl3:sdl3Smoke `
   -Psdl3Dll=C:\absolute\path\to\SDL3.dll
 ```
+
+CPU integration evidence, export accounting, and the remaining Windows/native
+validation steps are recorded in [acceptance/README.md](acceptance/README.md).

@@ -10,6 +10,7 @@ dependencies {
     ktgen(project("codegen"))
     ktgenInput(files("include/SDL3"))
     testImplementation(kotlin("test-junit5"))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
     extraJarEntries(files("README.md", "LICENSE.SDL.txt", "UPSTREAM.md"))
 }
 
@@ -49,4 +50,9 @@ tasks.register<JavaExec>("sdl3Smoke") {
 
 kotlin {
     explicitApi()
+}
+
+// Keep the exact generation inputs auditable in the published sources.
+tasks.named<Jar>("sourcesJar") {
+    from("include") { into("include") }
 }

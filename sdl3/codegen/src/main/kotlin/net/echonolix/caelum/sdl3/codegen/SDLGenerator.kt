@@ -22,51 +22,6 @@ internal object SDLGenerator {
         return written
     }
 
-    private fun typesFile(registry: SDLRegistry): String = buildString {
-        appendLine(FILE_HEADER)
-        appendLine("package $PACKAGE_NAME")
-        appendLine()
-        appendLine("import java.lang.foreign.MemoryLayout")
-        appendLine("import java.lang.foreign.ValueLayout")
-        appendLine("import net.echonolix.caelum.NInt")
-        appendLine("import net.echonolix.caelum.NStruct")
-        appendLine("import net.echonolix.caelum.NUnion")
-        appendLine()
-        appendLine("public object SDL_Rect : NStruct.Impl<SDL_Rect>(")
-        appendLine("    NInt.layout.withName(\"x\"),")
-        appendLine("    NInt.layout.withName(\"y\"),")
-        appendLine("    NInt.layout.withName(\"w\"),")
-        appendLine("    NInt.layout.withName(\"h\"),")
-        appendLine(")")
-        appendLine()
-        appendLine("public object SDL_Event : NUnion.Impl<SDL_Event>(")
-        appendLine("    MemoryLayout.sequenceLayout(128, ValueLayout.JAVA_BYTE)")
-        appendLine("        .withByteAlignment(8)")
-        appendLine("        .withName(\"padding\"),")
-        appendLine(")")
-        appendLine()
-        val pointerPointees = registry.functions.asSequence()
-            .flatMap { sequenceOf(it.returnType) + it.parameters.asSequence().map(SDLParameter::type) }
-            .filterIsInstance<SDLType.Pointer>()
-            .mapNotNull(SDLType.Pointer::pointee)
-            .filter { it.startsWith("SDL_") }
-            .filterNot { it in setOf("SDL_Rect", "SDL_Event") }
-            .filterNot { registry.namedTypes[it]?.kind == SDLNamedKind.FUNCTION_POINTER }
-            .toSortedSet()
-        pointerPointees.forEach { name ->
-            appendLine("public object $name : NStruct.Impl<$name>()")
-        }
-    }
-
-    private fun constantsFile(registry: SDLRegistry): String = buildString {
-        appendLine(FILE_HEADER)
-        appendLine("package $PACKAGE_NAME")
-        appendLine()
-        registry.constants.forEach { constant ->
-            appendLine("public const val ${constant.name}: ${constant.kind.kotlinType} = ${constant.literal()}")
-        }
-    }
-
     private fun inventoryFile(registry: SDLRegistry): String = buildString {
         appendLine(FILE_HEADER)
         appendLine("package $PACKAGE_NAME")
@@ -252,11 +207,6 @@ internal object SDLGenerator {
         is SDLType.Aggregate -> type.name
     }
 
-    private fun SDLConstant.literal(): String = when (kind) {
-        SDLConstantKind.INT -> value.toInt().toString()
-        SDLConstantKind.UINT -> "${value.toUInt()}u"
-        SDLConstantKind.ULONG -> "${value}uL"
-    }
 
     private fun escapeIdentifier(name: String): String = if (name in KOTLIN_KEYWORDS) "`$name`" else name
 

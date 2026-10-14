@@ -7,8 +7,10 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import net.echonolix.caelum.NChar
 import net.echonolix.caelum.NPointer
+import net.echonolix.caelum.nullptr
 import net.echonolix.caelum.sdl3.functions.SDL_EventFilter
 import net.echonolix.caelum.sdl3.functions.SDLFunction
+import net.echonolix.caelum.sdl3.functions.SDL_LogOutputFunction
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -49,6 +51,19 @@ class SDLCallbackTest {
             assertEquals(0x1234L, receivedUserdata)
             assertEquals(0x5678L, receivedEvent)
             assertFalse(nativeCallback(NPointer<NChar>(0L), NPointer<SDL_Event>(0x5678L)))
+        } finally {
+            SDLFunction.freeFunctionStubs()
+        }
+    }
+
+    @Test
+    fun `void log callback roundtrips through its native wrapper`() {
+        var receivedCategory = -1
+        val callback = SDL_LogOutputFunction { _, category, _, _ -> receivedCategory = category }
+        try {
+            val pointer = SDL_LogOutputFunction.toPointer(callback)
+            SDL_LogOutputFunction.fromNativeData(pointer._address)(nullptr<NChar>(), 42, 1, nullptr<NChar>())
+            assertEquals(42, receivedCategory)
         } finally {
             SDLFunction.freeFunctionStubs()
         }
