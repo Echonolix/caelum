@@ -1,0 +1,136 @@
+{
+  "core": [
+    {
+      "name": "net.echonolix.caelum.FunctionStubLifecycleTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.05"
+    },
+    {
+      "name": "net.echonolix.caelum.MemoryStackTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.112"
+    },
+    {
+      "name": "net.echonolix.caelum.UnionLayoutTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.084"
+    },
+    {
+      "name": "net.echonolix.caelum.UnsafeUtilTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.184"
+    }
+  ],
+  "sdl3/codegen": [
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLCallbackGeneratorTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.278"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLCallbackParserTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.334"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLConstantParserTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.382"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLGeneratorTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.299"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLHeaderParserTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.796"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLTypeGeneratorTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.165"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.codegen.SDLTypeLayoutsTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.07"
+    }
+  ],
+  "sdl3": [
+    {
+      "name": "net.echonolix.caelum.sdl3.SDLBindingsTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.159"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.SDLCallbackTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.069"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.SDLInlineTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.026"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.SDLLoaderTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.04"
+    },
+    {
+      "name": "net.echonolix.caelum.sdl3.SDLTypeAccessorsTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.052"
+    }
+  ]
+}

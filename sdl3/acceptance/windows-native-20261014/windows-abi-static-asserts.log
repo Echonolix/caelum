@@ -1,0 +1,4 @@
+CLANG_VERSION=clang version 22.1.8 (https://github.com/llvm/llvm-project ca7933e47d3a3451d81e72ac174dcb5aa28b59d1)
+COMMAND=clang -target x86_64-pc-windows-msvc -std=c11 -DSDL_DISABLE_OLD_NAMES -I sdl3/include -fsyntax-only windows-abi-smoke.c
+EXIT_CODE=0
+WINDOWS_X64_ABI_STATIC_ASSERTS=PASS

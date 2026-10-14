@@ -1,0 +1,137 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :ktgen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :ktgen:pluginDescriptors
+> Task :ktgen:processResources
+> Task :ktgen:compileKotlin
+> Task :ktgen:compileJava NO-SOURCE
+> Task :ktgen:classes
+> Task :ktgen:jar
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:compilePluginsBlocks
+
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+This version of Gradle expects version '6.5.7' of the `kotlin-dsl` plugin but version '5.2.0' has been applied to project ':buildSrc:generatePrecompiledScriptPluginAccessors:accessors12417107377235061369'. Let Gradle control the version of `kotlin-dsl` by removing any explicit `kotlin-dsl` version constraints from your build logic.
+WARNING: Unsupported Kotlin plugin version.
+The `embedded-kotlin` and `kotlin-dsl` plugins rely on features of Kotlin `2.3.20` that might work differently than in the requested version `2.4.21`.
+
+> Task :buildSrc:compileKotlin
+w: file:///I:/code/Echonolix/caelum/build/.codex-worktrees/sdl3-integration-8fa9ac1-20261014/buildSrc/src/main/kotlin/NativeToolchainService.kt:144:26 'constructor(p0: String!): URL' is deprecated. Deprecated in Java.
+
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+
+> Configure project :caelum-vulkan
+w: Unsupported API dependency types in test source sets
+API dependency types are used in test source sets
+Dependencies:
+    - unspecified (source sets: test)
+
+Adding API dependency types to test source sets is not supported and will removed in a future version of Kotlin.
+
+API dependencies are transitively exposed to consumers, but test source sets should not be consumable.
+Solutions:
+ * Replace API dependency types in test source sets with implementation dependencies.
+ * For Kotlin/JVM projects, consider using Test Fixtures https://docs.gradle.org/current/userguide/java_testing.html#sec:java_test_fixtures
+ * For Test Fixtures support in non-Kotlin/JVM projects, please add your use-case to https://youtrack.jetbrains.com/issue/KT-63142
+
+
+> Task :ktgen:ktgen-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum-codegen-api:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum-codegen-api:processResources NO-SOURCE
+> Task :caelum-core:codegen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum-core:codegen:processResources
+> Task :caelum-core:processResources NO-SOURCE
+> Task :caelum-sdl3:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum-sdl3:codegen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :caelum-sdl3:codegen:processResources
+> Task :caelum-sdl3:processResources NO-SOURCE
+> Task :caelum-sdl3:processTestResources NO-SOURCE
+> Task :ktgen:ktgen-runtime:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ktgen:ktgen-runtime:processResources NO-SOURCE
+> Task :ktgen:ktgen-api:processResources NO-SOURCE
+> Task :ktgen:ktgen-api:compileKotlin
+> Task :ktgen:ktgen-api:compileJava NO-SOURCE
+> Task :ktgen:ktgen-api:classes UP-TO-DATE
+> Task :ktgen:ktgen-api:jar
+> Task :ktgen:ktgen-runtime:compileKotlin
+> Task :ktgen:ktgen-runtime:compileJava NO-SOURCE
+> Task :ktgen:ktgen-runtime:classes UP-TO-DATE
+> Task :ktgen:ktgen-runtime:jar
+
+> Task :caelum-codegen-api:compileKotlin
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+w: The argument '-Xcontext-parameters' is redundant for the current language version 2.4.
+
+> Task :caelum-codegen-api:compileJava NO-SOURCE
+> Task :caelum-codegen-api:classes UP-TO-DATE
+> Task :caelum-codegen-api:jar
+
+> Task :caelum-core:codegen:compileKotlin
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+w: The argument '-Xcontext-parameters' is redundant for the current language version 2.4.
+
+> Task :caelum-core:codegen:compileJava NO-SOURCE
+> Task :caelum-core:codegen:classes
+> Task :caelum-core:codegen:jar
+> Task :caelum-core:ktgen
+
+> Task :caelum-core:compileKotlin
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+w: The argument '-Xcontext-parameters' is redundant for the current language version 2.4.
+
+> Task :caelum-core:compileJava
+> Task :caelum-core:classes
+> Task :caelum-core:jar
+
+> Task :caelum-sdl3:codegen:compileKotlin
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+w: The argument '-Xcontext-parameters' is redundant for the current language version 2.4.
+
+> Task :caelum-sdl3:codegen:compileJava NO-SOURCE
+> Task :caelum-sdl3:codegen:classes
+> Task :caelum-sdl3:codegen:jar
+> Task :caelum-sdl3:ktgen
+
+> Task :caelum-sdl3:compileKotlin
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+w: The argument '-Xcontext-parameters' is redundant for the current language version 2.4.
+
+> Task :caelum-sdl3:compileJava NO-SOURCE
+> Task :caelum-sdl3:classes UP-TO-DATE
+> Task :caelum-sdl3:jar
+
+> Task :caelum-sdl3:compileTestKotlin
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+w: The argument '-Xcontext-parameters' is redundant for the current language version 2.4.
+w: file:///I:/code/Echonolix/caelum/build/.codex-worktrees/sdl3-integration-8fa9ac1-20261014/sdl3/src/test/kotlin/net/echonolix/caelum/sdl3/SDLBindingsTest.kt:94:20 Check for instance is always 'true'.
+
+> Task :caelum-sdl3:compileTestJava NO-SOURCE
+> Task :caelum-sdl3:testClasses UP-TO-DATE
+
+> Task :caelum-sdl3:sdl3Smoke
+SDL_VERSION=3.4.14
+SDL_REVISION=SDL-release-3.4.14-0-g147a8ee32 (libsdl.org)
+SDL_GUID=030000005e0400008e02000014010000
+SDL_EVENT_AVAILABLE=true
+SDL3_SMOKE_OK
+
+[Incubating] Problems report is available at: file:///I:/code/Echonolix/caelum/build/.codex-worktrees/sdl3-integration-8fa9ac1-20261014/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 52s
+34 actionable tasks: 34 executed
+EXIT_CODE=0

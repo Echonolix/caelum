@@ -1,0 +1,103 @@
+{
+  "captureDateUtc": "2026-10-14",
+  "codeCommitTested": "8fa9ac1ae3c6cf79665731d0b820a02730f0313a",
+  "remoteMainAtAcceptance": "5883abfa3d93a4658f3d0b4c0a6b7c45ba461b71",
+  "target": "Caelum SDL3, Windows x64",
+  "runtime": {
+    "os": "Windows 11 x64 (build 10.0.26200)",
+    "java": "Oracle GraalVM 25+37.1",
+    "gradle": "9.5.0",
+    "clang": "22.1.8, target x86_64-pc-windows-msvc"
+  },
+  "sdl": {
+    "releaseTag": "release-3.4.14",
+    "assetUrl": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.14/SDL3-3.4.14-win32-x64.zip",
+    "officialReleaseMetadataDigest": "sha256:69a4e55645651af85e6ccfe40981b5a0bc2c594d0004fe7844db680e23cfbdaf",
+    "archiveSha256": "69a4e55645651af85e6ccfe40981b5a0bc2c594d0004fe7844db680e23cfbdaf",
+    "dllFileVersion": "3, 4, 14, 0",
+    "dllProductVersion": "3, 4, 14, 0",
+    "dllSha256": "9fa7bcb4c3667bfe4cf5e5b740a1da708151af0d499c2d0afee50c9874ba181c",
+    "reportedVersion": "3.4.14",
+    "reportedRevision": "SDL-release-3.4.14-0-g147a8ee32 (libsdl.org)",
+    "smokePassed": true,
+    "invalidDllRejectedAndLoaderRecovered": true,
+    "repeatedHiddenWindowLifecycleCycles": 3,
+    "repeatedLifecyclePassed": true
+  },
+  "gradleDistribution": {
+    "version": "9.5.0",
+    "url": "https://services.gradle.org/distributions/gradle-9.5.0-all.zip",
+    "archiveSha256": "a3c4ba4aca8f0075688b9c5b18939fd28e8cb4357c227da5c1d9f38343791439",
+    "officialSidecarMatched": true,
+    "candidateWrapperVersionMatched": true
+  },
+  "windowsAbi": {
+    "clangRecords": 122,
+    "clangFields": 839,
+    "generatedLayoutMatchesCandidateSnapshotByteForByte": true,
+    "staticAssertionsPassed": [
+      "pointer=8",
+      "size_t=8",
+      "long=4",
+      "wchar_t=2",
+      "SDL_GUID size/alignment=16/1",
+      "SDL_FColor size/alignment=16/4",
+      "SDL_HapticEffect size/alignment=72/8",
+      "SDL_TLSID size/alignment=4/4"
+    ]
+  },
+  "cpuTests": {
+    "tasks": [
+      ":caelum-sdl3:codegen:test",
+      ":caelum-sdl3:test",
+      ":caelum-core:test"
+    ],
+    "core": { "tests": 12, "failures": 0, "errors": 0, "skipped": 0 },
+    "sdl3Codegen": { "tests": 23, "failures": 0, "errors": 0, "skipped": 0 },
+    "sdl3Runtime": { "tests": 34, "failures": 0, "errors": 0, "skipped": 0 },
+    "total": { "tests": 69, "failures": 0, "errors": 0, "skipped": 0 },
+    "buildPassed": true
+  },
+  "kotlinFfmLayoutAudit": {
+    "runtimeRecords": 123,
+    "runtimeFields": 840,
+    "clangNamedCRecords": 122,
+    "clangFields": 839,
+    "extraGeneratedTypedefLayout": "SDL_TLSID contributes one additional 1-field layout to the Kotlin runtime listing; the Clang generator counts named struct/union records.",
+    "auditPassed": true
+  },
+  "formatCheck": {
+    "dedicatedFormatTaskFound": false,
+    "command": "git diff --check origin/main...HEAD",
+    "exitCode": 2,
+    "diagnostics": 76,
+    "diagnosticFiles": [
+      "sdl3/codegen/src/main/resources/net/echonolix/caelum/sdl3/codegen/sdl3-3.4.14-windows-x64-active-macros.tsv",
+      "sdl3/include/SDL3/SDL_begin_code.h",
+      "sdl3/include/SDL3/SDL_gpu.h",
+      "sdl3/include/SDL3/SDL_hints.h",
+      "sdl3/include/SDL3/SDL_pen.h",
+      "sdl3/LICENSE.SDL.txt"
+    ],
+    "passed": false,
+    "note": "Findings are trailing whitespace and final blank lines in the imported SDL license/headers and tab-delimited generated macro inventory; these source artifacts were preserved unchanged."
+  },
+  "candidateSourceDiff": {
+    "totalTrackedPaths": 138,
+    "sdl3Paths": 130,
+    "pathsOutsideSdl3": [
+      "README.MD",
+      "bom/build.gradle.kts",
+      "build.gradle.kts",
+      "core/build.gradle.kts",
+      "core/src/main/kotlin/net/echonolix/caelum/Type.kt",
+      "core/src/test/kotlin/net/echonolix/caelum/FunctionStubLifecycleTest.kt",
+      "core/src/test/kotlin/net/echonolix/caelum/UnionLayoutTest.kt",
+      "settings.gradle.kts"
+    ]
+  },
+  "nativeRendererOrGpuUsed": false,
+  "fornaxG4Touched": false,
+  "candidateSettingsRestoredSha256": "27366ab7d7e98709d7dd682e598f813d0e9d08c1e9b228a46f4944702168c6c6",
+  "primaryWorktreeChanged": false
+}

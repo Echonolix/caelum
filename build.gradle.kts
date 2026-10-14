@@ -16,6 +16,7 @@ val moduleDescriptions = mapOf(
     "caelum-core" to "Core native types, memory allocation, and FFM utilities for Caelum.",
     "caelum-opengl" to "Generated desktop OpenGL bindings for Caelum.",
     "caelum-vulkan" to "Generated Vulkan bindings and object model for Caelum.",
+    "caelum-sdl3" to "Generated SDL 3 bindings with a Windows x64 ABI and explicit runtime loading.",
     "caelum-glfw" to "Generated GLFW windowing and input bindings for Caelum.",
     "caelum-glfw-vulkan" to "GLFW Vulkan integration bindings for Caelum.",
     "caelum-dxgi" to "Generated DXGI 1.0-1.6 bindings and Windows COM runtime for Caelum.",

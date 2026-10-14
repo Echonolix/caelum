@@ -17,6 +17,7 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 | caelum-vulkan      | Vulkan API with OOP structure                         |
 | caelum-glfw        | Cross platform window library                         |
 | caelum-glfw-vulkan | An extension for glfw that provides Vulkan support    |
+| [caelum-sdl3](sdl3/README.md) | Generated SDL 3 native bindings and runtime loader |
 | caelum-dxgi        | DXGI 1.0-1.6 bindings and shared Windows COM runtime   |
 | caelum-directx     | Direct3D 9 through current Direct3D 12 bindings        |
 | caelum-assimp      | Assimp asset import/export C API bindings              |
