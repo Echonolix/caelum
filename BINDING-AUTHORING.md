@@ -18,6 +18,11 @@ the generated ABI.
   artifact or silently skip an unsupported target. Pin
   downloaded sources with `registerPinnedArchive` and a SHA-256, or vendor a single
   unmodified file with its provenance when no stable archive exists.
+  On Windows, Zig compile/link arguments use per-invocation UTF-8 response files:
+  quote every argument and escape backslashes and literal double quotes. This
+  preserves string-valued defines containing spaces, such as MDBX build metadata,
+  without relying on Windows `ProcessBuilder` command-line quoting. Keep the
+  original macro values; do not remove spaces or change metadata to avoid quoting.
 - Use a custom registry generator only when the upstream API requires one. The
   staged `caelum-vulkan` generator is specific to Vulkan's XML registry and is
   not the default model for C libraries.

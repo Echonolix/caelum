@@ -185,7 +185,7 @@ abstract class CompileCrossNativeTask : DefaultTask() {
             add("-o")
             add(linked.absolutePath)
         }
-        run(link, zigWorkingDir.get().asFile, work, "link")
+        run(link, zigWorkingDir.get().asFile, work, "link", zigResponseFile = true)
         val output = outputLibrary.get().asFile
         output.parentFile.mkdirs()
         linked.copyTo(output, overwrite = true)
@@ -230,7 +230,7 @@ abstract class CompileCrossNativeTask : DefaultTask() {
             add("-o")
             add(objectFile.absolutePath)
         }
-        run(command, zigWorkingDir.get().asFile, work, id)
+        run(command, zigWorkingDir.get().asFile, work, id, zigResponseFile = true)
         return objectFile
     }
 
@@ -241,8 +241,17 @@ abstract class CompileCrossNativeTask : DefaultTask() {
         return if (path.startsWith(base) && path != base) base.relativize(path).toString() else path.toString()
     }
 
-    private fun run(command: List<String>, directory: File, work: File, id: String) {
-        val builder = ProcessBuilder(command).directory(directory).redirectErrorStream(true)
+    private fun run(command: List<String>, directory: File, work: File, id: String, zigResponseFile: Boolean = false) {
+        // Windows ProcessBuilder quoting can split -D values containing both spaces and
+        // literal quotes. Zig response files preserve the argument boundaries and C strings.
+        val invocation = if (zigResponseFile && System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
+            val response = File(work, "$id.rsp")
+            response.writeText(command.drop(2).joinToString("\n", postfix = "\n") { argument ->
+                "\"" + argument.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+            })
+            listOf(command[0], command[1], "@${zigPath(response)}")
+        } else command
+        val builder = ProcessBuilder(invocation).directory(directory).redirectErrorStream(true)
         // Keep zig's local cache inside the task, one directory per invocation so concurrent
         // compiles never share cache state. The global cache (libc, compiler-rt) stays shared.
         builder.environment()["ZIG_LOCAL_CACHE_DIR"] = File(work, "zig-cache/$id").absolutePath
