@@ -27,6 +27,7 @@ include(
 (listOf(
     "core",
     "opengl",
+    "sdl3",
     "vulkan",
 ).flatMap {
     sequenceOf(
