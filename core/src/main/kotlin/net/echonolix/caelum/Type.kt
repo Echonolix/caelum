@@ -101,6 +101,19 @@ private fun paddedStructLayout(vararg members: MemoryLayout): StructLayout {
 }
 
 
+private fun paddedUnionLayout(vararg members: MemoryLayout): UnionLayout {
+    val layout = MemoryLayout.unionLayout(*members)
+    val remainder = layout.byteSize() % layout.byteAlignment()
+    if (remainder == 0L) return layout
+
+    // FFM unionLayout takes the largest member size without C's tail padding.
+    // An overlapping padding member must cover the full rounded size, not just
+    // the extra bytes; the existing members retain their names and zero offsets.
+    val paddedSize = Math.addExact(layout.byteSize(), layout.byteAlignment() - remainder)
+    return MemoryLayout.unionLayout(*members, MemoryLayout.paddingLayout(paddedSize))
+}
+
+
 public interface NEnum<T : NEnum<T, N>, N : Any> : NPrimitive<N, T> {
     public val value: N
     public val nType: NPrimitive<N, N>
@@ -126,7 +139,7 @@ public interface NUnion : NGroup {
     public abstract class Impl<T : NComposite> private constructor(override val layout: UnionLayout) :
         NComposite.Impl<T>(layout), NUnion {
         public constructor(vararg members: MemoryLayout) : this(
-            MemoryLayout.unionLayout(*members)
+            paddedUnionLayout(*members)
         )
     }
 }

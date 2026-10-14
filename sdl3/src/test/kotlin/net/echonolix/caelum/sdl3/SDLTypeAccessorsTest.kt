@@ -1,6 +1,11 @@
 package net.echonolix.caelum.sdl3
 
 import java.lang.foreign.Arena
+import java.lang.foreign.GroupLayout
+import java.lang.foreign.MemoryLayout
+import java.lang.foreign.MemoryLayout.PathElement.groupElement
+import java.lang.foreign.UnionLayout
+import net.echonolix.caelum.NType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -13,6 +18,40 @@ import net.echonolix.caelum.get
 import net.echonolix.caelum.set
 
 class SDLTypeAccessorsTest {
+    @Test
+    fun `actual generated FFM records match every snapshot size alignment and field`() {
+        for (record in SDLRecordLayouts.records) {
+            val descriptor = Class.forName("net.echonolix.caelum.sdl3.${record.name}")
+                .getField("INSTANCE").get(null) as NType.Descriptor<*>
+            val layout = descriptor.layout as GroupLayout
+            assertEquals(record.size, layout.byteSize(), "${record.name} size")
+            assertEquals(record.alignment, layout.byteAlignment(), "${record.name} alignment")
+            assertEquals(record.kind == SDLRecordKind.UNION, layout is UnionLayout, "${record.name} kind")
+            println(
+                "SDL_FFM_LAYOUT ${record.name} size=${layout.byteSize()} " +
+                    "alignment=${layout.byteAlignment()} fields=${record.fields.size}"
+            )
+            for (field in record.fields) {
+                assertEquals(field.offset, layout.byteOffset(groupElement(field.name)), "${record.name}.${field.name}")
+                assertEquals(
+                    field.size, layout.select(groupElement(field.name)).byteSize(),
+                    "${record.name}.${field.name} size"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `haptic effect union has the C verified padded size and array stride`() {
+        assertEquals(72L, SDL_HapticEffect.layout.byteSize())
+        assertEquals(8L, SDL_HapticEffect.layout.byteAlignment())
+        assertEquals(144L, MemoryLayout.sequenceLayout(2, SDL_HapticEffect.layout).byteSize())
+        assertEquals(
+            72L, MemoryLayout.sequenceLayout(2, SDL_HapticEffect.layout)
+                .byteOffset(MemoryLayout.PathElement.sequenceElement(1))
+        )
+    }
+
     @Test
     fun `scalar enum bool pointer and TLS accessors round trip through both receivers`() {
         Arena.ofConfined().use { arena ->

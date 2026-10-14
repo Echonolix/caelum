@@ -68,7 +68,7 @@ gradle -I <temporary-init-script> -PcaelumJavaVersion=25 --no-configuration-cach
 ```
 
 After adding the void callback test, the test/publication targets passed again.
-Totals: **8 core + 23 SDL generator + 32 SDL runtime = 63 tests**, no failures,
+Current totals after the union ABI correction: **12 core + 23 SDL generator + 34 SDL runtime = 69 tests**, no failures,
 errors, or skips. Clean `ktgen` executed; unchanged compilation/test outputs may
 be reused by Gradle's build cache. `cpu-results.json` records per-suite results.
 
@@ -136,6 +136,59 @@ represented by this generator. This candidate is not an SDL window backend for
 Cygnus/Fornax. Full Cygnus/Fornax compilation, mod-classloader runtime compatibility,
 GLFW generated callback execution and end-to-end rendering were not validated by
 these focused CPU gates.
+
+## Union ABI correction after Windows review
+
+Windows review of candidate `fefb5b69f82f0208b7d45aa15c77a0d8f81d194a`
+reported `SDL_HapticEffect` as C/Clang size 72, alignment 8, while its actual
+FFM layout was size 68, alignment 8. The shared `NUnion.Impl` delegated directly
+to JDK `MemoryLayout.unionLayout`, which uses the largest member size without
+rounding it to the union alignment. The largest haptic field is 68 bytes with
+lower alignment than another member.
+
+The shared core now rounds only when required, adding an anonymous padding
+member covering the **full rounded size**. Union members overlap, so adding a
+four-byte padding member would not change the maximum member size. The result
+remains a `UnionLayout`; original members, names, layouts and zero offsets are
+preserved. Already-aligned unions are returned unchanged. No SDL header or ABI
+snapshot was altered to mask the mismatch, and public API signatures are unchanged.
+
+Validation on the same GraalVM 25 cloud toolchain, **offline** (no SDL DLL or
+Gradle downloads):
+
+- Before the fix, the focused core suite reproduced two failures: tail padding
+  and nested layout. The already-aligned union case passed.
+- Four core regressions cover a 68-byte low-alignment member plus an 8-byte
+  aligned member, existing aligned unions, nested unions/struct offsets,
+  sequence stride and actual `calloc` array storage. A two-element padded union
+  allocation reserves 144 bytes aligned to 8; its final byte is accessible.
+- Runtime reflection reads the **actual generated FFM layouts** for all 123 SDL
+  records (122 public records plus TLSID), checking group kind, size, alignment,
+  and all 840 field sizes/offsets against the checked-in snapshot.
+  `kotlin-ffm-layout-audit.log` records actual per-record values. Haptic effect
+  is now size 72/alignment 8, with two-element sequence size 144 and stride 72.
+  This is distinct from independent native Windows ABI verification.
+- Clean SDL generator output, SDL runtime suites and core regressions passed:
+  **12 + 23 + 34 = 69 tests**, zero failures/errors/skips. The command retained
+  the temporary JDK 25 init script and added `--offline` to the documented
+  clean generation/test/jar gate. The final runtime audit gate also passed.
+- Existing Vulkan generation was rerun. The documented Vulkan callback probe
+  was recompiled against the repaired core jar and returned
+  `VULKAN_CALLBACK_CPU_OK` again.
+- The installed Linux C compiler verified both matching synthetic nested
+  layouts and the actual vendored SDL haptic union, without linking SDL:
+
+  ```text
+  cc -std=c11 -Wall -Wextra -I sdl3/include sdl3/acceptance/UnionLayoutProbe.c -o <probe>
+  <probe>
+  SDL_HAPTIC_EFFECT_C_SIZE=72 ALIGN=8
+  UNION_LAYOUT_C_OK
+  ```
+
+The original candidate history is retained; this fix is a new descendant commit.
+Main and downstream pins are unchanged. The external Windows evidence is owned
+by the independent acceptance task; this cloud did not read its local disk or
+repeat its Windows runs. Windows re-audit and DLL/window smoke remain required.
 
 ## Required Windows/local follow-up
 
