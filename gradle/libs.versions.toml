@@ -3,16 +3,16 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlinDSLGradlePlugin = "5.2.0"
+kotlinDSLGradlePlugin = "6.7.13"
 
 kotlin = "2.4.21"
 
-kotlinxSerialization = "1.8.1"
-xmlUtil = "0.91.1"
+kotlinxSerialization = "1.11.0"
+xmlUtil = "1.0.2.1"
 
-fastutil = "8.5.16"
+fastutil = "8.5.19"
 
-asm = "9.8"
+asm = "9.11"
 
 ktgen = "1.0.0"
 
