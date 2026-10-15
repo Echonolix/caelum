@@ -41,7 +41,8 @@ data class XMLMember(
     val featurelink: String? = null,
     val selector: String? = null,
     val selection: String? = null,
-    val externsync: Boolean = false,
+    // Vulkan registry values include both "true" and "maybe".
+    val externsync: String? = null,
     @XmlElement val comment: String? = null,
     @XmlValue val inner: List<CompactFragment> = emptyList()
 ) {
