@@ -18,43 +18,47 @@ pluginManagement {
 
 includeBuild("../ktgen")
 
-include(
-    ":codegen-c",
-    ":codegen-c:tree-sitter-lang-c",
-    ":codegen-c:c-ast",
-    ":codegen-c:adapter"
-)
-
-(listOf(
-    "core",
-    "opengl",
-    "sdl3",
-    "vulkan",
-).flatMap {
-    sequenceOf(
-        "caelum-$it" to file(it),
-        "caelum-$it:codegen" to file("$it/codegen")
+fun includeNativeModules() {
+    include(
+        ":codegen-c",
+        ":codegen-c:tree-sitter-lang-c",
+        ":codegen-c:c-ast",
+        ":codegen-c:adapter"
     )
-} + listOf(
-    "codegen-api",
-    "bom",
-    "struct",
-    "glfw",
-    "glfw-vulkan",
-    "dxgi",
-    "directx",
-    "assimp",
-    "openal",
-    "vma",
-    "codegen-cpp",
-    "zstd",
-    "mdbx",
-    "bc7e"
-).map {
-    "caelum-$it" to file(it)
-}).forEach { (name, dir) ->
-    include(name)
-    project(":$name").projectDir = dir
+
+    (listOf(
+        "core",
+        "opengl",
+        "sdl3",
+        "vulkan",
+    ).flatMap {
+        sequenceOf(
+            "caelum-$it" to file(it),
+            "caelum-$it:codegen" to file("$it/codegen")
+        )
+    } + listOf(
+        "codegen-api",
+        "bom",
+        "struct",
+        "glfw",
+        "glfw-vulkan",
+        "dxgi",
+        "directx",
+        "assimp",
+        "openal",
+        "vma",
+        "codegen-cpp",
+        "zstd",
+        "mdbx",
+        "bc7e"
+    ).map {
+        "caelum-$it" to file(it)
+    }).forEach { (name, dir) ->
+        include(name)
+        project(":$name").projectDir = dir
+    }
 }
+
+includeNativeModules()
 
 rootProject.name = "caelum"
