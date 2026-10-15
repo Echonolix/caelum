@@ -1,0 +1,103 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :ktgen:ktgen-api
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/ktgen/api/build.gradle.kts:6:38: 'fun Project.provideDelegate(any: Any?, property: KProperty<*>): PropertyDelegate' is deprecated. Use 'val property = project.property(name)' or 'val property = project.findProperty(name)' instead. See the Gradle 9.6 upgrading guide.
+
+> Configure project :ktgen:ktgen-runtime
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/ktgen/runtime/build.gradle.kts:2:38: 'fun Project.provideDelegate(any: Any?, property: KProperty<*>): PropertyDelegate' is deprecated. Use 'val property = project.property(name)' or 'val property = project.findProperty(name)' instead. See the Gradle 9.6 upgrading guide.
+
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :ktgen:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ktgen:compileKotlin
+> Task :ktgen:compileJava NO-SOURCE
+> Task :ktgen:pluginDescriptors
+> Task :ktgen:processResources
+> Task :ktgen:classes
+> Task :ktgen:jar
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:compilePluginsBlocks
+
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+This version of Gradle expects version '6.7.6' of the `kotlin-dsl` plugin but version '5.2.0' has been applied to project ':buildSrc:generatePrecompiledScriptPluginAccessors:accessors10974853332673043735'. Let Gradle control the version of `kotlin-dsl` by removing any explicit `kotlin-dsl` version constraints from your build logic.
+WARNING: Unsupported Kotlin plugin version.
+The `embedded-kotlin` and `kotlin-dsl` plugins rely on features of Kotlin `2.4.10` that might work differently than in the requested version `2.4.21`.
+
+> Task :buildSrc:compileKotlin
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/buildSrc/src/main/kotlin/published-module.gradle.kts:23:39 'fun <T : Any, C : NamedDomainObjectContainer<T>> RegisteringDomainObjectDelegateProvider<C>.provideDelegate(receiver: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<NamedDomainObjectProvider<T>>' is deprecated. Use 'val element = register(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/buildSrc/src/main/kotlin/published-module.gradle.kts:23:39 'val <T : Any, C : NamedDomainObjectContainer<T>> C.registering: RegisteringDomainObjectDelegateProvider<out C>' is deprecated. Use 'val element = register(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/buildSrc/src/main/kotlin/published-module.gradle.kts:23:39 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+
+> Configure project :caelum-vma
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vma/build.gradle.kts:62:27: 'fun <U : Task> RegisteringDomainObjectDelegateProviderWithTypeAndAction<out TaskContainer, U>.provideDelegate(receiver: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<TaskProvider<U>>' is deprecated. Use 'val task = tasks.register<Type>(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vma/build.gradle.kts:62:27: 'fun <T : Any, C : PolymorphicDomainObjectContainer<T>, U : T> C.registering(type: KClass<U>, action: U.() -> Unit): RegisteringDomainObjectDelegateProviderWithTypeAndAction<out C, U>' is deprecated. Use 'val element = register<Type>(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vma/build.gradle.kts:62:27: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+
+> Configure project :caelum-vulkan
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:12:27: 'fun provideDelegate(thisRef: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<SourceSet>' is deprecated. Use 'val element = create(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:12:27: 'fun <T : Any> NamedDomainObjectContainer<T>.creating(configuration: T.() -> Unit): NamedDomainObjectContainerCreatingDelegateProvider<T>' is deprecated. Use 'val element = create(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:12:27: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:39:25: 'fun provideDelegate(thisRef: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<SourceSet>' is deprecated. Use 'val element = create(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:39:25: 'fun <T : Any> NamedDomainObjectContainer<T>.creating(configuration: T.() -> Unit): NamedDomainObjectContainerCreatingDelegateProvider<T>' is deprecated. Use 'val element = create(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:39:25: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:43:33: 'fun provideDelegate(thisRef: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<SourceSet>' is deprecated. Use 'val element = create(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:43:33: 'fun <T : Any> NamedDomainObjectContainer<T>.creating(configuration: T.() -> Unit): NamedDomainObjectContainerCreatingDelegateProvider<T>' is deprecated. Use 'val element = create(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:43:33: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:53:26: 'fun provideDelegate(thisRef: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<SourceSet>' is deprecated. Use 'val element = create(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:53:26: 'fun <T : Any> NamedDomainObjectContainer<T>.creating(configuration: T.() -> Unit): NamedDomainObjectContainerCreatingDelegateProvider<T>' is deprecated. Use 'val element = create(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:53:26: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:57:30: 'fun provideDelegate(thisRef: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<SourceSet>' is deprecated. Use 'val element = create(name)' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:57:30: 'fun <T : Any> NamedDomainObjectContainer<T>.creating(configuration: T.() -> Unit): NamedDomainObjectContainerCreatingDelegateProvider<T>' is deprecated. Use 'val element = create(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/vulkan/build.gradle.kts:57:30: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+w: Unsupported API dependency types in test source sets
+API dependency types are used in test source sets
+Dependencies:
+    - unspecified (source sets: test)
+
+Adding API dependency types to test source sets is not supported and will removed in a future version of Kotlin.
+
+API dependencies are transitively exposed to consumers, but test source sets should not be consumable.
+Solutions:
+ * Replace API dependency types in test source sets with implementation dependencies.
+ * For Kotlin/JVM projects, consider using Test Fixtures https://docs.gradle.org/current/userguide/java_testing.html#sec:java_test_fixtures
+ * For Test Fixtures support in non-Kotlin/JVM projects, please add your use-case to https://youtrack.jetbrains.com/issue/KT-63142
+
+
+> Configure project :caelum-zstd
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/zstd/build.gradle.kts:21:29: 'fun <U : Task> RegisteringDomainObjectDelegateProviderWithTypeAndAction<out TaskContainer, U>.provideDelegate(receiver: Any?, property: KProperty<*>): ExistingDomainObjectDelegate<TaskProvider<U>>' is deprecated. Use 'val task = tasks.register<Type>(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/zstd/build.gradle.kts:21:29: 'fun <T : Any, C : PolymorphicDomainObjectContainer<T>, U : T> C.registering(type: KClass<U>, action: U.() -> Unit): RegisteringDomainObjectDelegateProviderWithTypeAndAction<out C, U>' is deprecated. Use 'val element = register<Type>(name) { }' instead. See the Gradle 9.6 upgrading guide.
+w: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/zstd/build.gradle.kts:21:29: 'fun <T> ExistingDomainObjectDelegate<out T>.getValue(receiver: Any?, property: KProperty<*>): T' is deprecated. Use the named() API instead. See the Gradle 9.6 upgrading guide.
+
+[Incubating] Problems report is available at: file:///C:/Users/Luna5ama/AppData/Local/Temp/caelum-mdbx-windows-20261014/caelum/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Selection failed
+  Task '.compiler.execution.strategy=in-process' not found in root project 'caelum' and its subprojects.
+
+* Try:
+> Run gradle tasks to get a list of available tasks.
+> For more on name expansion, please refer to https://docs.gradle.org/9.8.1/userguide/command_line_interface.html#sec:name_abbreviation in the Gradle documentation.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 2s
+13 actionable tasks: 13 executed

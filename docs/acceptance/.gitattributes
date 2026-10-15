@@ -1,0 +1,2 @@
+# Preserve historical raw acceptance bytes, including CRLF console output.
+mdbx-windows-20261014/** -whitespace

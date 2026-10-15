@@ -11,9 +11,9 @@ repositories {
 
 dependencies {
     api(libs.ktgenApi)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.20")
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.21")
 }
 
 kotlin {
