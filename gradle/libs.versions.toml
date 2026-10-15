@@ -3,7 +3,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlinDSLGradlePlugin = "6.7.13"
+kotlinDSLGradlePlugin = "6.7.6"
 
 kotlin = "2.4.21"
 
