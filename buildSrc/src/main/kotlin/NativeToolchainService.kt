@@ -48,6 +48,13 @@ object NativeToolchainPins {
         ),
         "zig",
     )
+    private val zigMacosArm64 = PinnedTool(
+        PinnedArchive(
+            "https://ziglang.org/download/0.17.0/zig-aarch64-macos-0.17.0.tar.xz",
+            "b607e9b9234790a008116ae5bdb71c6243b84b9fb42a53a9e70fde41c06c536a",
+        ),
+        "zig",
+    )
     private val ispcWindows = PinnedTool(
         PinnedArchive(
             "https://github.com/ispc/ispc/releases/download/v1.31.0/ispc-v1.31.0-windows.zip",
@@ -62,24 +69,27 @@ object NativeToolchainPins {
         ),
         "ispc",
     )
+    private val ispcMacosArm64 = PinnedTool(
+        PinnedArchive(
+            "https://github.com/ispc/ispc/releases/download/v1.31.0/ispc-v1.31.0-macOS.arm64.tar.gz",
+            "eac8009da38d41074d0adcf1fad4a3412fc9644a81ee5a49efeb07eac505b6ec",
+        ),
+        "ispc",
+    )
 
     /** Stable identity of the pinned toolchain, used as a task input. */
     val id: String get() = "zig-$ZIG_VERSION,ispc-$ISPC_VERSION"
 
-    fun zig(): PinnedTool = if (hostIsWindows()) zigWindows else zigLinux
-    fun ispc(): PinnedTool = if (hostIsWindows()) ispcWindows else ispcLinux
+    fun zig(): PinnedTool = when (NativeTarget.host()) {
+        NativeTarget.WINDOWS_X86_64 -> zigWindows
+        NativeTarget.LINUX_X86_64 -> zigLinux
+        NativeTarget.MACOS_AARCH_64 -> zigMacosArm64
+    }
 
-    private fun hostIsWindows(): Boolean {
-        val os = System.getProperty("os.name")
-        val arch = System.getProperty("os.arch").lowercase()
-        if (arch != "amd64" && arch != "x86_64") {
-            throw GradleException("Caelum cross-native builds need an x86_64 host, found $arch")
-        }
-        return when {
-            os.startsWith("Windows", ignoreCase = true) -> true
-            os.startsWith("Linux", ignoreCase = true) -> false
-            else -> throw GradleException("Caelum cross-native builds need a Windows or Linux host, found $os")
-        }
+    fun ispc(): PinnedTool = when (NativeTarget.host()) {
+        NativeTarget.WINDOWS_X86_64 -> ispcWindows
+        NativeTarget.LINUX_X86_64 -> ispcLinux
+        NativeTarget.MACOS_AARCH_64 -> ispcMacosArm64
     }
 }
 

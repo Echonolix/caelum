@@ -127,7 +127,12 @@ abstract class CompileCrossNativeTask : DefaultTask() {
                     add(optimization.get())
                     add("--target-os=${target.ispcOs}")
                     add("--arch=${target.ispcArch}")
-                    add("--target=" + ispcTargets.get().joinToString(","))
+                    val targets = if (target == NativeTarget.MACOS_AARCH_64) {
+                        listOf("neon-i32x4")
+                    } else {
+                        ispcTargets.get()
+                    }
+                    add("--target=" + targets.joinToString(","))
                     if (!target.isWindows) add("--pic")
                     addAll(ispcFlags.get())
                     add("-o")

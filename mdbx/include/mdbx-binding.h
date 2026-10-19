@@ -1,5 +1,5 @@
 /* ABI-normalized D1 subset of libmdbx 0.14.4 mdbx.h (Apache-2.0).
- * x86_64 only: size_t/ intptr_t are 64 bits on both supported targets.
+ * 64-bit only: size_t/ intptr_t are 64 bits on all supported targets.
  * Opaque structs remain opaque; uint8_t represents C bool at the ABI boundary.
  * See README.md for source provenance and omitted APIs. */
 typedef unsigned char uint8_t;

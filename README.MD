@@ -32,7 +32,7 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 ## Cross-compiled native libraries
 
 `buildsrc.convention.cross-native` builds one shared library per supported target
-(Windows x86_64 and Linux x86_64) from any host, using a zig and ISPC toolchain that
+(Windows x86_64, Linux x86_64 and macOS arm64) from supported hosts, using a Zig and ISPC toolchain that
 Gradle downloads at pinned versions and verifies by SHA-256. The binaries are packaged
 as `META-INF/caelum/native/<os>-<arch>/`, and `NativeLibraries.load` in
 caelum-core extracts and loads the one for the running platform before codegen-c

@@ -19,17 +19,21 @@ enum class NativeTarget(
     WINDOWS_X86_64("windows", "x86_64", "x86_64-windows-gnu", "windows", "x86-64", "WindowsX64"),
 
     // glibc 2.28 (2018) keeps the binary loadable on older distributions.
-    LINUX_X86_64("linux", "x86_64", "x86_64-linux-gnu.2.28", "linux", "x86-64", "LinuxX64");
+    LINUX_X86_64("linux", "x86_64", "x86_64-linux-gnu.2.28", "linux", "x86-64", "LinuxX64"),
+
+    MACOS_AARCH_64("macos", "aarch64", "aarch64-macos-none", "macos", "aarch64", "MacOsAArch64");
 
     companion object {
         fun host(): NativeTarget {
             val arch = System.getProperty("os.arch").lowercase()
-            require(arch == "amd64" || arch == "x86_64") { "Unsupported native host architecture: $arch" }
             val os = System.getProperty("os.name")
-            return when {
-                os.startsWith("Windows", ignoreCase = true) -> WINDOWS_X86_64
-                os.startsWith("Linux", ignoreCase = true) -> LINUX_X86_64
-                else -> error("Unsupported native host: $os")
+            return when (Pair(os.substringBefore(' ').lowercase(), arch)) {
+                "windows" to "amd64", "windows" to "x86_64" -> WINDOWS_X86_64
+                "linux" to "amd64", "linux" to "x86_64" -> LINUX_X86_64
+                "mac" to "aarch64", "mac" to "arm64",
+                "macos" to "aarch64", "macos" to "arm64",
+                "darwin" to "aarch64", "darwin" to "arm64" -> MACOS_AARCH_64
+                else -> error("Unsupported native host: $os/$arch")
             }
         }
     }
@@ -39,5 +43,9 @@ enum class NativeTarget(
     val isWindows: Boolean get() = os == "windows"
 
     fun libraryFileName(libraryName: String): String =
-        if (isWindows) "$libraryName.dll" else "lib$libraryName.so"
+        when (os) {
+            "windows" -> "$libraryName.dll"
+            "macos" -> "lib$libraryName.dylib"
+            else -> "lib$libraryName.so"
+        }
 }

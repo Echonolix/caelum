@@ -12,7 +12,7 @@ import javax.inject.Inject
  * is built for every [NativeTarget] from the same sources and flags.
  */
 abstract class CrossNativeExtension @Inject constructor(objects: ObjectFactory) {
-    /** Library base name; the file is `<name>.dll` or `lib<name>.so`. */
+    /** Library base name; the file is `<name>.dll`, `lib<name>.so` or `lib<name>.dylib`. */
     abstract val libraryName: Property<String>
 
     abstract val cSources: ConfigurableFileCollection

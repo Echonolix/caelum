@@ -1,7 +1,7 @@
 # caelum-mdbx
 
 Generated libmdbx bindings and a small Kotlin ownership layer. Supported native
-platforms are Windows and Linux x86_64. Call `Mdbx.load()` before directly using
+platforms are Windows/Linux x86_64 and macOS arm64. Call `Mdbx.load()` before directly using
 `functions.*`; `MdbxEnvironment.open()` loads automatically. Uses the Caelum JDK toolchain (default 24, validated with GraalVM 25) and
 native access (`--enable-native-access=ALL-UNNAMED`).
 
@@ -80,16 +80,16 @@ processed by `codegen-c`. It exposes environment create/options/geometry/open/cl
 transaction begin/commit/abort, table open, get/put/delete, and error formatting.
 The environment-open entry point is `caelum_mdbx_env_open`, a small C bridge
 calling upstream `mdbx_env_open`. It accepts fixed 32-bit mode/flags because
-`mdbx_mode_t` is 16-bit on Windows and 32-bit on Linux; a shared generated
+`mdbx_mode_t` is 16-bit on Windows/macOS and 32-bit on Linux; a shared generated
 function descriptor cannot describe both signatures. C enums/flags use 32-bit carriers; `size_t` and `intptr_t` use explicit 64-bit
-carriers on the supported x86_64 targets. C bool is normalized to a one-byte
+carriers on the supported targets. C bool is normalized to a one-byte
 unsigned carrier. `MDBX_val` retains upstream pointer/length field order.
 Environment/transaction/latency structs are opaque and must never be allocated
 or dereferenced. No by-value aggregate returns, public cursor handles, recovery tools,
 callbacks, or inline-only helpers are claimed as bound.
 
 `src/main/c/mdbx_abi.c` includes the unmodified upstream header, checks carriers
-and constants at compile time on both targets, and provides version/layout probes.
+and constants at compile time on all targets, and provides version/layout probes.
 CPU tests compare the actual generated Kotlin struct size, alignment, names,
 and offsets against these probes and execute all included database operations.
 The source JAR carries the normalized input, probes, upstream header and version
@@ -99,9 +99,10 @@ metadata so the binding is auditable.
 
 Uses Caelum `registerPinnedArchive` and `cross-native`, Zig 0.17.0 pinned by the
 shared toolchain. Linux target: `x86_64-linux-gnu.2.28`; Windows:
-`x86_64-windows-gnu`. Both use C11, `-O2`, shared linking and `-pthread`;
-Linux additionally uses `-fPIC` and `_SYS_CACHECTL_H=1`; Windows links `-lntdll`.
-Both define `MDBX_HAVE_BUILTIN_CPU_SUPPORTS=0`,
+`x86_64-windows-gnu`; macOS: `aarch64-macos-none`. All use C11, `-O2`,
+shared linking and `-pthread`; Unix targets use `-fPIC`, Linux also sets
+`_SYS_CACHECTL_H=1`, and Windows links `-lntdll`.
+All define `MDBX_HAVE_BUILTIN_CPU_SUPPORTS=0`,
 `MDBX_BUILD_SHARED_LIBRARY=1`, `LIBMDBX_EXPORTS=1`.
 Build metadata uses the fixed timestamp `2026-10-12T00:00:00Z` and fixed build
 flags description. This timestamp is metadata, not a claim of actual execution
@@ -133,7 +134,7 @@ scans in one read transaction; separate transactions can observe intervening wri
 The normalized binding adds only `mdbx_cursor_open`, `mdbx_cursor_get`, and
 `mdbx_cursor_close`. `MDBX_FIRST=0`, `MDBX_NEXT=8`, `MDBX_SET_RANGE=17`, enum width,
 and signatures were checked against the existing pinned 0.14.4 header; native
-compile-time assertions check the constants/carrier on both targets.
+compile-time assertions check the constants/carrier on all targets.
 
 Copy bounds for untrusted stored blobs are opt-in, preserving the original
 `get(key)` and three-argument `scanPrefix` signatures. `get(key, maxValueBytes)`

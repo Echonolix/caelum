@@ -2,7 +2,7 @@
 
 Bindings for the stable [Zstandard](https://github.com/facebook/zstd) API (`zstd.h`
 without `ZSTD_STATIC_LINKING_ONLY`, plus `zstd_errors.h`), with the library built
-for Windows x86_64 and Linux x86_64 and bundled in the jar.
+for Windows/Linux x86_64 and macOS arm64 and bundled in the jar.
 
 ## Usage
 

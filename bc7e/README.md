@@ -2,8 +2,8 @@
 
 Bindings for `bc7e.ispc`, the SIMD BC7 encoder from
 [bc7enc_rdo](https://github.com/richgel999/bc7enc_rdo), with the library built for
-Windows x86_64 and Linux x86_64 and bundled in the portable published jar. The library contains SSE2,
-SSE4, AVX2 and AVX-512 (SKX) code paths and picks one at runtime.
+Windows x86_64, Linux x86_64 and macOS arm64 and bundled in the portable published jar.
+The x86_64 library contains SSE2, SSE4, AVX2 and AVX-512 (SKX) code paths; macOS arm64 uses NEON.
 
 ## Usage
 
@@ -46,7 +46,7 @@ Linux ISPC for unsupported Windows object output during a Linux assets build, an
 uses Windows ISPC for the Windows native resource on Windows. It does not disable
 or remove either native compile task.
 
-`compileNative` still explicitly requests both targets. Maven publication replaces
+`compileNative` still explicitly requests every target. Maven publication replaces
 only the Java component's publication variants with `portableApiElements` and
 `portableRuntimeElements`. These are not locally consumable; composite consumers
 continue using ordinary api/runtime elements. Their main artifact is `portableJar`,
@@ -56,7 +56,5 @@ and Gradle module metadata therefore cannot silently publish a host-only jar.
 The published coordinate, filename, Java API/runtime dependency scopes and native
 resource paths remain unchanged. `sourcesJar` is unchanged.
 
-The pinned Linux ISPC archive does not support Windows object output. This change
-makes local Linux runtime builds independent of it; it does not claim that a Linux
-host can produce the complete portable BC7 artifact with that compiler. Portable
-publication must still use a toolchain that can build every requested target.
+ISPC object-format support varies by host. Local runtime builds only request the
+host target; portable publication still needs a toolchain capable of all targets.

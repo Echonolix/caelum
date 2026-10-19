@@ -15,13 +15,18 @@ val baseSrc by sourceSets.creating {
 
 fun SourceSet.setup(parents: List<SourceSet>) {
     kotlin.srcDir(ktgen.outputDir.file(this.name))
+    val dependencyConfiguration = if (name == SourceSet.TEST_SOURCE_SET_NAME) {
+        implementationConfigurationName
+    } else {
+        apiConfigurationName
+    }
     parents.forEach {
-        configurations.named(this.apiConfigurationName)
+        configurations.named(dependencyConfiguration)
             .extendsFrom(configurations.named(it.apiConfigurationName))
     }
     dependencies {
         parents.forEach {
-            apiConfigurationName(it.output)
+            dependencyConfiguration(it.output)
         }
     }
 }
