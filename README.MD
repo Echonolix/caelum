@@ -25,6 +25,7 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 | caelum-vma         | VMA core/virtual bindings and compiled native implementation |
 | caelum-codegen-cpp | Clang-based C++ API to stable C ABI/FFM code generator |
 | caelum-mdbx        | libmdbx bindings and transaction ownership with bundled native libraries |
+| caelum-mimalloc    | Explicit native allocation without process-wide malloc replacement |
 | caelum-zstd        | Zstandard bindings with bundled cross-compiled libraries |
 | caelum-bc7e        | bc7e.ispc BC7 encoder bindings with bundled cross-compiled libraries |
 

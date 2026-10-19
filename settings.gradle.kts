@@ -50,7 +50,8 @@ fun includeNativeModules() {
         "codegen-cpp",
         "zstd",
         "mdbx",
-        "bc7e"
+        "bc7e",
+        "mimalloc"
     ).map {
         "caelum-$it" to file(it)
     }).forEach { (name, dir) ->
