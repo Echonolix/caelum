@@ -47,9 +47,9 @@ val compileNativeLibrary = tasks.register("compileNativeLibrary", CompileNativeL
     headers.from(nativeLibrary.headers)
     includeDirs.from(nativeLibrary.includeDirs)
     includeDirectoryPaths.set(
-        nativeLibrary.includeDirs.files
-            .map { directory -> directory.absoluteFile.invariantSeparatorsPath }
-            .sorted(),
+        nativeLibrary.includeDirs.elements.map { directories ->
+            directories.map { directory -> directory.asFile.absoluteFile.invariantSeparatorsPath }.sorted()
+        },
     )
     generatedImplementationSource.set(nativeLibrary.generatedImplementationSource)
     outputLibrary.set(nativeLibrary.outputLibrary)

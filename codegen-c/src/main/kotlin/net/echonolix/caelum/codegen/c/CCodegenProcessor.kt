@@ -177,7 +177,11 @@ class CCodegenProcessor : KtgenProcessor {
 
         init {
             tempLibDir.createDirectories()
-            if (System.getProperty("os.name").startsWith("Linux", ignoreCase = true)) {
+            val osName = System.getProperty("os.name")
+            if (osName.startsWith("Linux", ignoreCase = true) ||
+                osName.startsWith("Mac", ignoreCase = true) ||
+                osName.startsWith("Darwin", ignoreCase = true)
+            ) {
                 NativeLibraries.load(CCodegenProcessor::class.java, "caelum_codegen_c")
             } else {
                 loadLibrary("libzstd")

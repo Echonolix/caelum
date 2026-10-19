@@ -1,6 +1,8 @@
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Exec
 import org.gradle.jvm.tasks.Jar
+import buildsrc.convention.NativeIncludeArguments
+import buildsrc.convention.VulkanHeadersInclude
 
 plugins {
     id("buildsrc.convention.published-module")
@@ -13,16 +15,17 @@ kotlin {
 
 val vulkanInclude = providers.gradleProperty("vulkanIncludeDir").orElse(
     providers.environmentVariable("VULKAN_SDK").map { "$it/include" }
-)
+).orElse(providers.of(VulkanHeadersInclude::class.java) {})
+val vulkanIncludeDirectory = layout.dir(vulkanInclude.map { File(it) })
 
 nativeLibrary {
     libraryName.set("caelum_vma")
     headers.from(layout.projectDirectory.file("src/main/headers/vk_mem_alloc.h"))
-    includeDirs.from(vulkanInclude.map(::file))
+    includeDirs.from(vulkanIncludeDirectory)
     // VMA includes Vulkan-Headers transitively. Track each consumed SDK header
     // as an input without making it a top-level include in the generated TU.
-    dependencyHeaders.from(vulkanInclude.map { includeDirectory ->
-        fileTree(includeDirectory) { include("**/*.h") }
+    dependencyHeaders.from(vulkanIncludeDirectory.map { includeDirectory ->
+        includeDirectory.asFileTree.matching { include("**/*.h") }
     })
     if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
         apiDefines.put("VMA_CALL_PRE", "__declspec(dllexport)")
@@ -66,16 +69,18 @@ val verifyVmaAbi by tasks.registering(Exec::class) {
     val probe = layout.projectDirectory.file("src/test/native/VmaAllocatorAbiProbe.cpp").asFile
     inputs.file(probe)
     inputs.file(layout.projectDirectory.file("src/main/headers/vk_mem_alloc.h"))
-    inputs.dir(vulkanInclude.map(::file))
+    inputs.dir(vulkanIncludeDirectory)
     executable(nativeLibrary.compilerExecutable.get())
     args(
         "-std=${nativeLibrary.cppStandard.get()}",
         "-fsyntax-only",
         "-DVMA_EXTERNAL_MEMORY=1",
         "-I${headerDirectory.absolutePath}",
-        "-I${vulkanInclude.get()}",
         probe.absolutePath,
     )
+    argumentProviders.add(objects.newInstance(NativeIncludeArguments::class.java).apply {
+        includeDirectory.set(vulkanInclude)
+    })
 }
 
 tasks.test {

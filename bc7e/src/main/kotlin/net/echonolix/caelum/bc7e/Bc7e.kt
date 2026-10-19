@@ -8,8 +8,8 @@ import net.echonolix.caelum.bc7e.functions.bc7e_compress_block_init
  * any function in [net.echonolix.caelum.bc7e.functions]; it loads the native library
  * and builds the encoder's shared tables.
  *
- * The native library contains SSE2, SSE4, AVX2 and AVX-512 (SKX) variants and picks
- * one at runtime. `bc7e_compress_blocks` is thread-safe after [load].
+ * The x86_64 library selects an SSE2, SSE4, AVX2 or AVX-512 (SKX) variant at runtime;
+ * macOS arm64 uses NEON. `bc7e_compress_blocks` is thread-safe after [load].
  */
 public object Bc7e {
     /** Bytes per encoded 4x4 block. */

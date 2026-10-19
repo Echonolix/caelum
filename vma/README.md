@@ -8,8 +8,10 @@ loader), and the module does not duplicate Vulkan public types owned by
 
 The vendored source is `src/main/headers/vk_mem_alloc.h`. Its provenance and
 checksum are recorded next to it in `PROVENANCE.md`. To build the native shared
-library, a C++17 compiler and Vulkan headers are required. Set `VULKAN_SDK`, or
-pass `-PvulkanIncludeDir=/path/to/Vulkan-Headers/include`. Vulkan-Headers
+library, a C++17 compiler and Vulkan headers are required. Gradle discovers
+Vulkan-Headers through `pkg-config` or standard system include paths. Set
+`VULKAN_SDK` or pass `-PvulkanIncludeDir=/path/to/Vulkan-Headers/include` to
+override discovery. Vulkan-Headers
 v1.4.309 is the closest published headers release to the repository registry's
 header version 308.
 

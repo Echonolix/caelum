@@ -1,10 +1,10 @@
 # caelum-mimalloc
 
 Explicit `mi_*` allocation from Microsoft mimalloc **v2.5.2** (MIT), packaged for
-Windows and Linux x86_64 using the existing pinned Zig cross-native toolchain.
+Windows/Linux x86_64 and macOS arm64 using the pinned Zig cross-native toolchain.
 The source archive URL and SHA-256 are fixed in `build.gradle.kts`; `include/mimalloc-api.h`
 normalizes only the bound subset of upstream `include/mimalloc.h`. `size_t` is 64-bit
-and `bool` is one byte on both targets. Upstream header and license ship in the sources jar.
+and `bool` is one byte on all targets. Upstream header and license ship in the sources jar.
 
 `Mimalloc.malloc(size, alignment)` returns an uninitialized address; `calloc` zeros it.
 Both throw `OutOfMemoryError` on native allocation failure. Free each address exactly

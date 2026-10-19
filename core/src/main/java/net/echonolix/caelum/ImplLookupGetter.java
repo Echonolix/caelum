@@ -3,7 +3,6 @@ package net.echonolix.caelum;
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 import java.util.Properties;
 
 @SuppressWarnings({"unused", "SameParameterValue", "DuplicatedCode", "SpellCheckingInspection"})
@@ -130,12 +129,10 @@ class ImplLookupGetter {
         return (MemorySegment) getStaticMethodId.invokeExact(env, clazz, arena.allocateFrom(name), arena.allocateFrom(sig));
     }
 
-    private static MemorySegment callStaticObjectMethod(Arena arena, MemorySegment env, MemorySegment clazz, MemorySegment methodId, Object... args) throws Throwable {
-        ValueLayout[] argsLayout = new ValueLayout[args.length + 3/*env, clazz, methodId*/];
-        Arrays.fill(argsLayout, ValueLayout.ADDRESS);
+    private static MemorySegment callStaticObjectMethod(Arena arena, MemorySegment env, MemorySegment clazz, MemorySegment methodId, MemorySegment... args) throws Throwable {
         final MethodHandle callStaticObjectMethod = Linker.nativeLinker().downcallHandle(
-                getFunction(env, 114), FunctionDescriptor.of(
-                        ValueLayout.ADDRESS, argsLayout
+                getFunction(env, 116), FunctionDescriptor.of(
+                        ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS
                 )
         );
         final MethodHandle newGlobalRef = Linker.nativeLinker().downcallHandle(
@@ -145,7 +142,7 @@ class ImplLookupGetter {
         );
 
         MethodHandle chain = MethodHandles.filterReturnValue(callStaticObjectMethod, newGlobalRef.bindTo(env));
-        return (MemorySegment) chain.asSpreader(Object[].class, args.length).invoke(env, clazz, methodId, args);
+        return (MemorySegment) chain.invokeExact(env, clazz, methodId, jniArguments(arena, args));
     }
 
     private static MemorySegment getMethodId(Arena arena, MemorySegment env, MemorySegment clazz, String name, String sig) throws Throwable {
@@ -157,12 +154,10 @@ class ImplLookupGetter {
         return (MemorySegment) getMethodId.invokeExact(env, clazz, arena.allocateFrom(name), arena.allocateFrom(sig));
     }
 
-    private static MemorySegment callObjectMethod(Arena arena, MemorySegment env, MemorySegment object, MemorySegment methodId, Object... args) throws Throwable {
-        ValueLayout[] argsLayout = new ValueLayout[args.length + 3/*env, object, methodId*/];
-        Arrays.fill(argsLayout, ValueLayout.ADDRESS);
+    private static MemorySegment callObjectMethod(Arena arena, MemorySegment env, MemorySegment object, MemorySegment methodId, MemorySegment... args) throws Throwable {
         final MethodHandle callObjectMethod = Linker.nativeLinker().downcallHandle(
-                getFunction(env, 34), FunctionDescriptor.of(
-                        ValueLayout.ADDRESS, argsLayout
+                getFunction(env, 36), FunctionDescriptor.of(
+                        ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS
                 )
         );
         final MethodHandle newGlobalRef = Linker.nativeLinker().downcallHandle(
@@ -172,7 +167,18 @@ class ImplLookupGetter {
         );
 
         MethodHandle chain = MethodHandles.filterReturnValue(callObjectMethod, newGlobalRef.bindTo(env));
-        return (MemorySegment) chain.asSpreader(Object[].class, args.length).invoke(env, object, methodId, args);
+        return (MemorySegment) chain.invokeExact(env, object, methodId, jniArguments(arena, args));
+    }
+
+    private static MemorySegment jniArguments(Arena arena, MemorySegment... args) {
+        if (args.length == 0) return MemorySegment.NULL;
+        // JNI's variadic Call*Method entries use a different calling convention on macOS arm64.
+        // The A entries accept a fixed jvalue[]; each jobject occupies one pointer-sized slot.
+        final MemorySegment values = arena.allocate(ValueLayout.ADDRESS, args.length);
+        for (int i = 0; i < args.length; i++) {
+            values.setAtIndex(ValueLayout.ADDRESS, i, args[i]);
+        }
+        return values;
     }
 
     private static MemorySegment allocObject(Arena arena, MemorySegment env, MemorySegment clazz) throws Throwable {
