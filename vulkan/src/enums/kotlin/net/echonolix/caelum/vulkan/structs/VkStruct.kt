@@ -70,7 +70,6 @@ abstract class VkStruct<T : VkStruct<T>>(
     }
 }
 
-@StructAccessor
 inline fun <T : VkStruct<T>> T.allocate(
     allocator: AllocateScope,
     block: @StructAccessor NValue<T>.() -> Unit
@@ -81,7 +80,6 @@ inline fun <T : VkStruct<T>> T.allocate(
     return allocate(allocator).apply(block)
 }
 
-@StructAccessor
 context(allocator: AllocateScope)
 inline fun <T : VkStruct<T>> T.allocate(block: @StructAccessor NValue<T>.() -> Unit): NValue<T> {
     contract {
@@ -89,6 +87,7 @@ inline fun <T : VkStruct<T>> T.allocate(block: @StructAccessor NValue<T>.() -> U
     }
     return allocate(allocator).apply(block)
 }
+
 val NValue<out VkStruct<*>>.sType: VkStructureType
     get() = ptr().sType
 

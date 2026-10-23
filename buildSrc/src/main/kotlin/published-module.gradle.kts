@@ -20,10 +20,10 @@ publishing {
     }
 }
 
-val extraJarEntries by configurations.registering
+val extraJarEntries = configurations.register("extraJarEntries")
 
 dependencies {
-    extraJarEntries(rootProject.files("LICENSE"))
+    add(extraJarEntries.name, rootProject.files("LICENSE"))
 }
 
 tasks {

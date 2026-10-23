@@ -3,8 +3,6 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlinDSLGradlePlugin = "6.7.6"
-
 kotlin = "2.4.21"
 
 kotlinxSerialization = "1.11.0"
@@ -17,8 +15,6 @@ asm = "9.11"
 ktgen = "1.0.0"
 
 [libraries]
-kotlinDSLGradlePlugin = { module = "org.gradle.kotlin.kotlin-dsl:org.gradle.kotlin.kotlin-dsl.gradle.plugin", version.ref = "kotlinDSLGradlePlugin" }
-
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 
 kotlinxSerializationCore = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }

@@ -229,7 +229,11 @@ public open class GroupGenerator(
                         .receiver(pointerCNameP)
                         .addParameter("indexDelta", LONG)
                         .returns(pointerCNameP)
-                        .addStatement("return %T(_address + indexDelta * %T.layout.byteSize())", CaelumCodegenHelper.pointerCName, thisCName)
+                        .addStatement(
+                            "return %T(_address + indexDelta * %T.layout.byteSize())",
+                            CaelumCodegenHelper.pointerCName,
+                            thisCName
+                        )
                         .build()
                 )
                 file.addFunction(
@@ -238,7 +242,11 @@ public open class GroupGenerator(
                         .receiver(pointerCNameP)
                         .addParameter("indexDelta", LONG)
                         .returns(pointerCNameP)
-                        .addStatement("return %T(_address - indexDelta * %T.layout.byteSize())", CaelumCodegenHelper.pointerCName, thisCName)
+                        .addStatement(
+                            "return %T(_address - indexDelta * %T.layout.byteSize())",
+                            CaelumCodegenHelper.pointerCName,
+                            thisCName
+                        )
                         .build()
                 )
                 file.addFunction(
@@ -246,7 +254,11 @@ public open class GroupGenerator(
                         .addModifiers(KModifier.OPERATOR, KModifier.PUBLIC)
                         .receiver(pointerCNameP)
                         .returns(pointerCNameP)
-                        .addStatement("return %T(_address + %T.layout.byteSize())", CaelumCodegenHelper.pointerCName, thisCName)
+                        .addStatement(
+                            "return %T(_address + %T.layout.byteSize())",
+                            CaelumCodegenHelper.pointerCName,
+                            thisCName
+                        )
                         .build()
                 )
                 file.addFunction(
@@ -254,7 +266,11 @@ public open class GroupGenerator(
                         .addModifiers(KModifier.OPERATOR, KModifier.PUBLIC)
                         .receiver(pointerCNameP)
                         .returns(pointerCNameP)
-                        .addStatement("return %T(_address - %T.layout.byteSize())", CaelumCodegenHelper.pointerCName, thisCName)
+                        .addStatement(
+                            "return %T(_address - %T.layout.byteSize())",
+                            CaelumCodegenHelper.pointerCName,
+                            thisCName
+                        )
                         .build()
                 )
             }
@@ -440,12 +456,12 @@ public open class GroupGenerator(
                 )
                 .build()
         )
+        // DSL scope belongs to the receiver function type, not the accessor declaration.
         val blockType = LambdaTypeName.get(receiver = memberPointerCNameP, returnType = UNIT)
             .copy(annotations = listOf(CaelumCodegenHelper.structAccessorAnnotation))
         file.addFunction(
             FunSpec.builder(member.name)
                 .addUnsafe(unsafe)
-                .addAnnotation(CaelumCodegenHelper.structAccessorAnnotation)
                 .addModifiers(KModifier.INLINE)
                 .receiver(valueCNameP)
                 .addParameter("block", blockType)
@@ -455,7 +471,6 @@ public open class GroupGenerator(
         file.addFunction(
             FunSpec.builder(member.name)
                 .addUnsafe(unsafe)
-                .addAnnotation(CaelumCodegenHelper.structAccessorAnnotation)
                 .addModifiers(KModifier.INLINE)
                 .receiver(pointerCNameP)
                 .addParameter("block", blockType)

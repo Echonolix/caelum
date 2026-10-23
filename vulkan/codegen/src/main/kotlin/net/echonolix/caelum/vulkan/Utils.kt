@@ -15,7 +15,7 @@ import net.echonolix.caelum.codegen.api.toXMLTagFreeString
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.util.CompactFragment
 
-val __xml = XML {
+val __xml = XML.v1 {
     defaultToGenericParser = true
 }
 
