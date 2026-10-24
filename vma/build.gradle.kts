@@ -62,7 +62,7 @@ publishing {
 // used by the native library. This guards the FFM structure layout against a
 // future Vulkan-Headers change that would otherwise toggle VMA's conditional
 // external-memory field.
-val verifyVmaAbi by tasks.registering(Exec::class) {
+val verifyVmaAbi = tasks.register<Exec>("verifyVmaAbi") {
     group = "verification"
     description = "Compiles VMA's pinned-header ABI static assertions."
     val headerDirectory = layout.projectDirectory.dir("src/main/headers").asFile

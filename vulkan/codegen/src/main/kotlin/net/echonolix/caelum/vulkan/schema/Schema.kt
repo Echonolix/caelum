@@ -139,10 +139,10 @@ data class Registry(
 
             fun fix(): Type {
                 val name = name ?: proto?.name ?: inner.asSequence()
-                    .mapNotNull { runCatching { XML.decodeFromString<XMLName>(it.contentString) }.getOrNull() }
+                    .mapNotNull { runCatching { XML.v1.decodeFromString<XMLName>(it.contentString) }.getOrNull() }
                     .first().value
                 val comment = inner.asSequence()
-                    .mapNotNull { runCatching { XML.decodeFromString<XMLComment>(it.contentString) }.getOrNull() }
+                    .mapNotNull { runCatching { XML.v1.decodeFromString<XMLComment>(it.contentString) }.getOrNull() }
                     .firstOrNull()?.value
                 return this.copy(name = name, comment = comment)
             }

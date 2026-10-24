@@ -18,7 +18,7 @@ val zstdLib = zstdSources.flatMap { it.outputDirectory.dir("zstd-1.5.7/lib") }
 // codegen-c feeds headers to clang through stdin, so the quoted include of
 // zstd_errors.h cannot resolve; that header is passed as its own input instead.
 // Only the stable API is bound: ZSTD_STATIC_LINKING_ONLY stays undefined.
-val bindingHeaders by tasks.registering(Sync::class) {
+val bindingHeaders = tasks.register<Sync>("bindingHeaders") {
     from(zstdLib) {
         include("zstd_errors.h", "zstd.h")
     }
@@ -50,7 +50,11 @@ codegenC {
 
 dependencies {
     val headers = layout.buildDirectory.dir("generated/zstd-binding-headers")
-    ktgenInput(files(headers.map { it.file("zstd_errors.h") }, headers.map { it.file("zstd.h") }).builtBy(bindingHeaders))
+    ktgenInput(
+        files(
+            headers.map { it.file("zstd_errors.h") },
+            headers.map { it.file("zstd.h") }).builtBy(bindingHeaders)
+    )
     testImplementation(kotlin("test-junit5"))
 }
 

@@ -41,21 +41,29 @@ class CAstContext() {
 
     fun renameElements(updater: (ElementType, String) -> String?) {
         allElements0.forEach { (type, elements) ->
-            val iterator = elements.iterator()
-            val renamed = mutableMapOf<String, Any>()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                val oldName = entry.key
-                val newName = updater(type, oldName)
-                if (newName != oldName) {
-                    iterator.remove()
-                }
-                if (newName != null && newName != "null") {
-                    renamed[newName] = entry.value
-                }
-            }
-            (elements as MutableMap<String, Any>).putAll(renamed)
+            renameElements(type, elements, updater)
         }
+    }
+
+    private fun <T> renameElements(
+        type: ElementType,
+        elements: MutableMap<String, T>,
+        updater: (ElementType, String) -> String?
+    ) {
+        val iterator = elements.iterator()
+        val renamed = mutableMapOf<String, T>()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            val oldName = entry.key
+            val newName = updater(type, oldName)
+            if (newName != oldName) {
+                iterator.remove()
+            }
+            if (newName != null && newName != "null") {
+                renamed[newName] = entry.value
+            }
+        }
+        elements.putAll(renamed)
     }
 
     fun parse(source: String) {
@@ -118,7 +126,7 @@ class CAstContext() {
         consts0[name] = const
     }
 
-    enum class ElementType{
+    enum class ElementType {
         TYPEDEF,
         CONST,
         ENUM,

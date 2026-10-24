@@ -10,7 +10,7 @@ import org.gradle.api.services.BuildServiceParameters
 import java.io.File
 import java.io.Serializable
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -127,23 +127,24 @@ abstract class NativeToolchainService : BuildService<NativeToolchainService.Para
         val marker = File(target, ".caelum-complete")
         if (marker.isFile) return target
 
-        FileChannel.open(File(cache, "$key.lock").toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE).use { channel ->
-            channel.lock().use {
-                if (marker.isFile) return target
-                val download = File(cache, "$key-${archive.fileName}")
-                if (!download.isFile || sha256(download) != archive.sha256.lowercase()) {
-                    download(archive, download)
+        FileChannel.open(File(cache, "$key.lock").toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+            .use { channel ->
+                channel.lock().use {
+                    if (marker.isFile) return target
+                    val download = File(cache, "$key-${archive.fileName}")
+                    if (!download.isFile || sha256(download) != archive.sha256.lowercase()) {
+                        download(archive, download)
+                    }
+                    val staging = File(cache, "$key.staging")
+                    staging.deleteRecursively()
+                    staging.mkdirs()
+                    untar(download, staging)
+                    target.deleteRecursively()
+                    Files.move(staging.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE)
+                    marker.writeText(archive.url)
+                    download.delete()
                 }
-                val staging = File(cache, "$key.staging")
-                staging.deleteRecursively()
-                staging.mkdirs()
-                untar(download, staging)
-                target.deleteRecursively()
-                Files.move(staging.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE)
-                marker.writeText(archive.url)
-                download.delete()
             }
-        }
         return target
     }
 
@@ -151,7 +152,7 @@ abstract class NativeToolchainService : BuildService<NativeToolchainService.Para
         logger.lifecycle("Downloading ${archive.url}")
         val partial = File(destination.path + ".part")
         val digest = MessageDigest.getInstance("SHA-256")
-        val connection = URL(archive.url).openConnection() as HttpURLConnection
+        val connection = URI.create(archive.url).toURL().openConnection() as HttpURLConnection
         connection.instanceFollowRedirects = true
         connection.connectTimeout = 30_000
         connection.readTimeout = 120_000

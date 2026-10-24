@@ -36,16 +36,20 @@ fun countDepth(group: CType.Group, currDepth: Int = 1): Int {
 }
 
 class VulkanCodegenProcessor : KtgenProcessor {
-    override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> { 
+    override fun process(inputs: Set<Path>, outputDir: Path): Set<Path> {
         val registryText = javaClass.getResource("/vk.xml")!!.readText()
         // Metadata the bindings do not use. `deprecate` blocks only annotate features and extensions.
         val ignored = setOf("spirvextensions", "spirvcapabilities", "sync", "videocodecs", "dynamicstates", "deprecate")
-        val xml = XML {
+        val xml = XML.v1 {
             indentString = "    "
             defaultToGenericParser = true
-            defaultPolicy {
+            policy {
                 autoPolymorphic = true
                 typeDiscriminatorName = QName("category")
+                // vk.xml repeats top-level comments; retain the legacy last-comment behavior.
+                throwOnRepeatedElement = false
+                // Parameter metadata can contain "maybe"; preserve its legacy Boolean decoding.
+                isStrictBoolean = false
                 @OptIn(ExperimentalXmlUtilApi::class)
                 unknownChildHandler = object : UnknownChildHandler {
                     override fun handleUnknownChildRecovering(
@@ -71,6 +75,7 @@ class VulkanCodegenProcessor : KtgenProcessor {
             VulkanElementResolver(filteredRegistry),
             VulkanElementDocumenter()
         )
+
         fun processRequire(requires: List<Registry.Feature.Require>) {
             requires.asSequence()
                 .filter { it.comment !in skipped }

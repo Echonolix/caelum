@@ -10,7 +10,11 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(providers.gradleProperty("caelumJavaVersion").getOrElse("24").toInt()))
+        languageVersion.set(
+            JavaLanguageVersion.of(
+                providers.gradleProperty("caelumJavaVersion").getOrElse("24").toInt()
+            )
+        )
     }
 }
 
@@ -20,7 +24,6 @@ kotlin {
         jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
         freeCompilerArgs.addAll(
 //            "-Xbackend-threads=0",
-            "-Xcontext-parameters",
             "-Xassertions=jvm",
             "-Xno-call-assertions",
             "-Xno-receiver-assertions",
@@ -29,7 +32,6 @@ kotlin {
             "-Xuse-fast-jar-file-system",
 //            "-Xuse-javac",
             "-Xcompile-java",
-            "-Xjvm-default=all",
             "-Xir-inliner",
             "-Xuse-inline-scopes-numbers"
         )

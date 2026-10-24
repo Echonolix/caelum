@@ -9,7 +9,7 @@ ktgen {
     defaultCompile.set(false)
 }
 
-val baseSrc by sourceSets.creating {
+val baseSrc = sourceSets.create("baseSrc") {
     kotlin.srcDir(ktgen.outputDir.file("baseSrc"))
 }
 
@@ -41,11 +41,11 @@ val enumsBase = (0..7).map {
     }
 }
 
-val enums by sourceSets.creating {
+val enums = sourceSets.create("enums") {
     setup(enumsBase)
 }
 
-val objectHandles by sourceSets.creating {
+val objectHandles = sourceSets.create("objectHandles") {
     setup(enums)
 }
 
@@ -55,11 +55,11 @@ val groupsBase = (0..7).map {
     }
 }
 
-val groups by sourceSets.creating {
+val groups = sourceSets.create("groups") {
     setup(groupsBase)
 }
 
-val objectBase by sourceSets.creating {
+val objectBase = sourceSets.create("objectBase") {
     setup(groups)
 }
 
