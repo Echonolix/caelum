@@ -205,3 +205,30 @@ exclusive-continuation key seeking forward. Legacy unrestricted `get(key)` still
 returns the original 65536-byte value. Build: `BUILD SUCCESSFUL in 10s`, 47 tasks,
 2 executed and 45 up-to-date; native outputs remained up-to-date. Prior two-target
 carrier assertions/export checks still describe the unchanged native code.
+
+## 2026-10-26: direct transaction-owned value writes (Windows)
+
+Fornax cold-start JFR found repeated 9,773,372-byte snapshot writes spending most
+writer samples in the temporary native allocation/clear/copy. `put()` now fills
+`MDBX_RESERVE` storage synchronously, before the next mutation. The pinned 0.14.4
+header requires this lifetime and forbids DUPSORT; the wrapper exposes ordinary
+tables. Snapshot invalidation, commit ordering and the stored bytes are unchanged.
+
+GraalVM 25 on Windows: `MdbxTest`, `MdbxScanTest`, `MdbxUsageTest` **18/18 passed**.
+Includes large value preservation after further writes, failed NOOVERWRITE,
+aborted overwrite, size changes and reopen. Fornax owner/writer combination
+**121 executions passed** (includes existing repeated unload checks).
+
+Fixed-input A/B/B/A probe, 32 warmup and 128 measured put/delete transaction pairs
+per process, 9,773,372-byte values: old writer CPU 1,781.25/1,515.625 ms; candidate
+531.25/531.25 ms. Wall time 2,853/2,954 ms versus 1,390/1,522 ms; another game was
+running, so this is a local hotspot result, not end-to-end loading/FPS acceptance.
+
+The full suite hung in `growthAndShrinkPreserveActiveSnapshotsAndReopen`: the
+writer was inside native put/growth while the reader's executor cleanup waited
+for it. The frozen old put implementation reproduced the same stack and exceeded
+a separate 20-second limit. Both diagnostic JVMs were terminated after capturing
+stacks. That concurrent Windows geometry case is **not passed**, and was not
+silently skipped or attributed to this optimization. Linux geometry evidence
+above remains separate. Raw logs, frozen source and probes are in Fornax's ignored
+`build/diagnostics/lod-slow-20261026/`.

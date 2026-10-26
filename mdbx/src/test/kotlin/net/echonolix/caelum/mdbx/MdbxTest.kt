@@ -63,6 +63,30 @@ class MdbxTest {
         }
     }
 
+    @Test fun largeValueIsFilledBeforeLaterUpdatesAndFailedInsertion() {
+        val large = ByteArray(9_773_372) { ((it * 17) xor (it ushr 11)).toByte() }
+        MdbxEnvironment.open(directory).use { env ->
+            env.begin().use { txn ->
+                val table = txn.table()
+                table.put(key, large)
+                assertFailsWith<MdbxException> { table.put(key, byteArrayOf(9), noOverwrite = true) }
+                repeat(100) { table.put(byteArrayOf(77, it.toByte()), payload) }
+                assertContentEquals(large, table.get(key))
+                txn.commit()
+            }
+            env.begin().use { txn ->
+                txn.table().put(key, byteArrayOf())
+                txn.table().put(key, payload)
+            }
+            env.begin(true).use { assertContentEquals(large, it.table().get(key)) }
+        }
+        MdbxEnvironment.open(directory).use { env ->
+            env.begin(true).use { assertContentEquals(large, it.table().get(key)) }
+            env.begin().use { txn -> txn.table().put(key, payload); txn.commit() }
+            env.begin(true).use { assertContentEquals(payload, it.table().get(key)) }
+        }
+    }
+
     @Test fun missingEmptyValuesAndDeleteAreDistinct() {
         MdbxEnvironment.open(directory).use { env ->
             env.begin().use { txn ->
