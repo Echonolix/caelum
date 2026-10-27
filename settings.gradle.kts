@@ -50,6 +50,7 @@ fun includeNativeModules() {
         "codegen-cpp",
         "zstd",
         "mdbx",
+        "jolt",
         "bc7e",
         "mimalloc"
     ).map {

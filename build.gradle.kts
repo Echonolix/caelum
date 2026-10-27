@@ -25,6 +25,7 @@ val moduleDescriptions = mapOf(
     "caelum-openal" to "Generated OpenAL audio and device-context bindings for Caelum.",
     "caelum-vma" to "Vulkan Memory Allocator bindings and a compiled VMA implementation for Caelum.",
     "caelum-mdbx" to "libmdbx bindings and transaction lifecycle with bundled Windows/Linux x86_64 and macOS arm64 libraries.",
+    "caelum-jolt" to "Jolt Physics bindings with Caelum structs, managed ownership, and a portable C ABI bridge.",
     "caelum-zstd" to "Zstandard compression bindings with bundled Windows/Linux x86_64 and macOS arm64 libraries for Caelum.",
     "caelum-mimalloc" to "Explicit mimalloc allocation with bundled Windows/Linux x86_64 and macOS arm64 libraries.",
     "caelum-bc7e" to "bc7e.ispc SIMD BC7 encoder bindings with bundled Windows/Linux x86_64 and macOS arm64 libraries for Caelum.",

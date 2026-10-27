@@ -8,6 +8,11 @@ It also has a custom-built toolchain that generates caelum bindings from C heade
 Binding maintainers should follow the ABI, provenance, and publication checks
 in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 
+The Jolt Physics module's API and build policy are documented in
+[`jolt/README.md`](jolt/README.md), with its phases in the
+[`caelum-jolt` roadmap](docs/caelum-jolt-roadmap.md).
+Native runtime and portable release acceptance are pending.
+
 ## List of modules
 | Name               | Description                                           |
 |--------------------|-------------------------------------------------------|
@@ -15,6 +20,7 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 | caelum-struct      | A Gradle plugins providing support for custom structs |
 | caelum-opengl      | Generated OpenGL bindings and capability loading       |
 | caelum-vulkan      | Vulkan API with OOP structure                         |
+| [caelum-jolt](jolt/README.md) | Jolt Physics C ABI/FFM binding with managed resources (native acceptance pending) |
 | caelum-glfw        | Cross platform window library                         |
 | caelum-glfw-vulkan | An extension for glfw that provides Vulkan support    |
 | [caelum-sdl3](sdl3/README.md) | Generated SDL 3 native bindings and runtime loader |

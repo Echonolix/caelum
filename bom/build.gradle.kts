@@ -18,6 +18,7 @@ dependencies {
         api(project(":caelum-vma"))
         api(project(":caelum-zstd"))
         api(project(":caelum-mdbx"))
+        api(project(":caelum-jolt"))
         api(project(":caelum-bc7e"))
         api(project(":caelum-mimalloc"))
         api(project(":caelum-codegen-api"))
