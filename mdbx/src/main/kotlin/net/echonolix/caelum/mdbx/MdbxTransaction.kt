@@ -94,7 +94,15 @@ public class MdbxTransaction internal constructor(
     internal fun put(dbi: UInt, key: ByteArray, data: ByteArray, noOverwrite: Boolean) {
         ensureActive(write = true)
         Arena.ofConfined().use { arena ->
-            checkMdbx("mdbx_put", mdbx_put(handle, dbi, value(arena, key), value(arena, data), if (noOverwrite) MDBX_NOOVERWRITE.toUInt() else 0u))
+            val target = NPointer<MDBX_val>(arena.allocate(MDBX_val.layout).address())
+            target.iov_len = data.size.toLong()
+            val flags = MDBX_RESERVE or if (noOverwrite) MDBX_NOOVERWRITE else 0
+            checkMdbx("mdbx_put", mdbx_put(handle, dbi, value(arena, key), target, flags.toUInt()))
+            // These tables are ordinary, non-DUPSORT tables. Fill the entire reservation
+            // before another update or transaction exit; never expose its borrowed address.
+            // NOOVERWRITE failure returns the existing value: check before touching it.
+            if (data.isNotEmpty()) MemorySegment.ofAddress(target.iov_base._address)
+                .reinterpret(data.size.toLong()).copyFrom(MemorySegment.ofArray(data))
         }
     }
 

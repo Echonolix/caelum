@@ -38,6 +38,13 @@ calling native code. The default open uses durable libmdbx defaults. Geometry is
 bounded by `maxSizeBytes`, and does not implement an application quota, eviction,
 record formats, compression, world identifiers, or a writer queue.
 
+The ownership layer opens ordinary, non-DUPSORT tables. Writes use `MDBX_RESERVE`
+and fill the whole transaction-owned destination before any subsequent native update.
+This avoids allocating, clearing and copying a second native value buffer; no borrowed
+pointer escapes `put()`. Failed `noOverwrite` leaves the existing value untouched.
+The pinned 0.14.4 header and [upstream contract](https://libmdbx.dqdkfa.ru/doxygen/group__c__crud.html)
+require filling the reservation before the next update or transaction end.
+
 ## File geometry and lifecycle
 
 Pass `MdbxGeometry` to `MdbxEnvironment.open()` for lower/current size, growth step,

@@ -21,6 +21,7 @@ typedef struct MDBX_val {
 #define MDBX_RDONLY 131072
 #define MDBX_CREATE 262144
 #define MDBX_NOOVERWRITE 16
+#define MDBX_RESERVE 65536
 #define MDBX_BUSY -30778
 #define MDBX_THREAD_MISMATCH -30416
 int mdbx_env_create(MDBX_env **penv);
