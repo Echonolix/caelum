@@ -88,6 +88,17 @@ are supported.
 The full persistent ABI and ownership rationale is in
 [`docs/directx-bindings.md`](../docs/directx-bindings.md) in the source repository.
 
+## Jolt physics demos
+
+Three Direct3D 11 scenes exercise `caelum-jolt`: mixed-shape stacking, bowling,
+and a kinematic platform with sensor callbacks and ray queries. Run
+`:caelum-directx:joltStackDemo`, `joltBowlingDemo`, or `joltKinematicDemo`.
+`:caelum-directx:joltDemosSmoke` runs all three with hidden windows, fixed-step
+physics assertions and GPU PNG readback. These demos use a separate source set
+and do not add Jolt to the published DirectX library or ordinary tests.
+
+See [JOLT-DEMOS.md](JOLT-DEMOS.md) for commands, parameters, outputs and results.
+
 ## Stanford Dragon demo
 
 The runnable sample now uses a real Win32 window and a native Direct3D 12

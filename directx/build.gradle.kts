@@ -37,6 +37,59 @@ tasks.register("directxTeapotDemo") {
     dependsOn(directxDragonDemo)
 }
 
+// Keep Jolt and its native resources out of the library and ordinary DirectX tests.
+val joltDemos = sourceSets.create("joltDemos") {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+configurations[joltDemos.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[joltDemos.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+dependencies {
+    add(joltDemos.implementationConfigurationName, project(":caelum-jolt"))
+}
+kotlin.sourceSets.named("joltDemos") {
+    kotlin.srcDir("src/test/kotlin")
+    kotlin.include(
+        "**/demo/jolt/**",
+        "**/demo/TeapotMath.kt",
+        "**/demo/TeapotMesh.kt",
+        "**/demo/model/DemoMesh.kt",
+        "**/demo/d3d11/Win32DemoWindow.kt",
+    )
+}
+
+fun registerJoltDemo(taskName: String, scene: String) = tasks.register<JavaExec>(taskName) {
+    group = "application"
+    description = "Runs the Jolt $scene scene using Caelum Direct3D 11"
+    dependsOn(joltDemos.classesTaskName)
+    classpath = joltDemos.runtimeClasspath
+    mainClass.set("net.echonolix.caelum.directx.demo.jolt.JoltDirectXDemoKt")
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("caelum.jolt.demo.scene", scene)
+    systemProperty("caelum.jolt.demo.frames", providers.gradleProperty("demoFrames").orNull ?: "0")
+    systemProperty("caelum.jolt.demo.hidden", providers.gradleProperty("demoHidden").orNull ?: "false")
+    systemProperty("caelum.jolt.demo.workers", providers.gradleProperty("demoWorkers").orNull ?: "0")
+    systemProperty("caelum.jolt.demo.output", providers.gradleProperty("demoOutput").orNull
+        ?: layout.buildDirectory.dir("jolt-demos").get().asFile.absolutePath)
+}
+val joltStackDemo = registerJoltDemo("joltStackDemo", "stack")
+val joltBowlingDemo = registerJoltDemo("joltBowlingDemo", "bowling")
+val joltKinematicDemo = registerJoltDemo("joltKinematicDemo", "kinematic")
+tasks.register<JavaExec>("joltDemosSmoke") {
+    group = "verification"
+    description = "Runs all three hidden Jolt/Direct3D 11 scenes with physics and GPU readback assertions"
+    dependsOn(joltDemos.classesTaskName)
+    classpath = joltDemos.runtimeClasspath
+    mainClass.set("net.echonolix.caelum.directx.demo.jolt.JoltDirectXDemoKt")
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("caelum.jolt.demo.scene", "all")
+    systemProperty("caelum.jolt.demo.hidden", "true")
+    systemProperty("caelum.jolt.demo.frames", providers.gradleProperty("demoFrames").orNull ?: "360")
+    systemProperty("caelum.jolt.demo.workers", providers.gradleProperty("demoWorkers").orNull ?: "0")
+    systemProperty("caelum.jolt.demo.output", providers.gradleProperty("demoOutput").orNull
+        ?: layout.buildDirectory.dir("jolt-demos").get().asFile.absolutePath)
+}
+
 dependencies {
     extraJarEntries(rootProject.files("README.MD"))
 }

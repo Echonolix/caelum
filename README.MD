@@ -20,7 +20,7 @@ Native runtime and portable release acceptance are pending.
 | caelum-struct      | A Gradle plugins providing support for custom structs |
 | caelum-opengl      | Generated OpenGL bindings and capability loading       |
 | caelum-vulkan      | Vulkan API with OOP structure                         |
-| [caelum-jolt](jolt/README.md) | Jolt Physics C ABI/FFM binding with managed resources (native acceptance pending) |
+| [caelum-jolt](jolt/README.md) | Jolt Physics C ABI/FFM binding with managed resources (Windows tested; portable acceptance pending) |
 | caelum-glfw        | Cross platform window library                         |
 | caelum-glfw-vulkan | An extension for glfw that provides Vulkan support    |
 | [caelum-sdl3](sdl3/README.md) | Generated SDL 3 native bindings and runtime loader |
@@ -146,6 +146,11 @@ PowerShell users should quote decimal-valued Gradle properties such as
 `'-PdemoSeconds=1.0'`; otherwise PowerShell can split the suffix into a separate
 Gradle task name. See [the DirectX module guide](directx/README.md) for a hidden
 smoke invocation and the exact success markers.
+
+The [Jolt / DirectX demos](directx/JOLT-DEMOS.md) add mixed-shape stacking, bowling,
+and a moving platform with sensor/ray queries. Run `:caelum-directx:joltStackDemo`,
+`joltBowlingDemo`, or `joltKinematicDemo`. `:caelum-directx:joltDemosSmoke` runs all
+three with hidden windows, physics assertions and GPU PNG output.
 
 ## License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

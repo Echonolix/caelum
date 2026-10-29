@@ -1,17 +1,17 @@
 # caelum-jolt acceptance
 
-Status on 2026-10-24 (America/Los_Angeles): implementation authoring with limited
-checks only. Full native testing was explicitly deferred for this iteration.
-No native simulation, worker callback, benchmark, cross-platform release or
-independent Maven consumer result is claimed. P0–P5 release acceptance remains
-open even though their implementation/test/build sources have been authored.
+Status on 2026-10-27 (America/Los_Angeles): Windows x64 linking, 16 contract/native
+tests and three DirectX physics demos have passed. Demos ran with workers=0 and
+workers=2, including actual non-caller contact upcalls and GPU frame readback.
+Full stress, portable release, Maven consumer and performance acceptance remain
+open; P0–P5 are not declared complete across all targets.
 
 ## Recorded checks
 
-See [authoring-checks.md](authoring-checks.md) for commands and results. The
-compiled native test sources are not evidence that those tests passed. The
-source-only jar produced while excluding processResources is not a usable
-native or publishable artifact.
+See [windows-directx-demos.md](windows-directx-demos.md) for the latest native
+execution and graphics evidence. [authoring-checks.md](authoring-checks.md)
+retains the earlier source-only record. The source-only jar from that older run
+was not a usable native artifact; the current host jar contains the linked Windows library.
 
 ## Gates prepared for the next validation run
 
@@ -33,11 +33,11 @@ Native tests require `-PjoltNativeTests`; stress additionally requires
 test compilation may request the main jar and thus native build inputs; exclude
 `:caelum-jolt:processResources` only for source-only authoring checks.
 
-## Platform matrix (all runtime cells pending)
+## Platform matrix
 
 | Target/resource ID | Toolchain/link | Native ABI | Simulation/workers | Exports/dependencies | Maven consumer |
 | --- | --- | --- | --- | --- | --- |
-| `windows-x86_64` | pending | pending | pending | pending | pending |
+| `windows-x86_64` | PASS | PASS, 4 tests | PASS, native world tests + demos with 0/2 workers; stress pending | pending | pending |
 | `linux-x86_64` | pending | pending | pending | pending | pending |
 | `macos-aarch64` | pending | pending | pending | pending | pending |
 

@@ -4,9 +4,9 @@
 binding。路徑為官方 Jolt C++ → 自有 C ABI → `codegen-c` → Kotlin 管理層，
 沒有 JNI runtime 依賴。
 
-目前為首版程式編寫完成、原生驗收待執行的開發版本。主程式、範例和測試可編譯；
-本輪只執行小範圍契約檢查，尚未證明原生載入、物理行為或跨平台發佈可用。
-完整狀態見 [驗收記錄](acceptance/README.md)。
+目前為開發版本。Windows x64 原生建置、16 個契約／ABI／world 測試，以及三個
+DirectX 物理 demo 已通過；demo 涵蓋單執行緒與兩個原生 worker。壓力測試與
+跨平台發佈驗收仍待執行。完整狀態見 [驗收記錄](acceptance/README.md)。
 
 ## 範圍與建置
 
@@ -73,6 +73,8 @@ JoltRuntime.acquire().use { runtime ->
 ```
 
 可編譯的完整版本為 [HelloWorld.kt](src/examples/kotlin/net/echonolix/caelum/jolt/examples/HelloWorld.kt)。
+有畫面的範例見 [DirectX Jolt demos](../directx/JOLT-DEMOS.md)：堆疊、保齡球、
+移動平台／感應區／射線；也提供無桌面操作的 GPU 回讀驗證。
 Shape wrapper 關閉後，body 仍持有自己的 shape reference。world 關閉時會清除所有
 body。方便的 `createWorld` overload 同時擁有預設 allocator/jobs；若顯式傳入，
 它們保持 caller-owned，應晚於使用它們的 world 關閉。

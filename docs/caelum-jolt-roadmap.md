@@ -1,18 +1,18 @@
 # caelum-jolt 模組開發 Roadmap
 
-建立日期：2026-10-24。更新：首版程式已編寫，僅完成編譯與小範圍契約檢查；原生執行及發佈驗收尚未完成。
+建立日期：2026-10-24。更新：2026-10-27，Windows 原生測試與三個 DirectX 物理 demo 已通過；完整壓力及跨平台發佈驗收尚未完成。
 
 `caelum-jolt` 的目標是提供符合 Caelum 記憶體模型的 Kotlin Jolt Physics binding：資料以 `NStruct`、`NValue`、`NPointer`、`NArray` 存取；有生命週期的物件使用具型別的 handle；模擬、查詢與回呼透過明確的原生邊界執行。本文中的 caelum-vk 指本倉庫的 **`caelum-vulkan`，目錄為 `vulkan/`**。
 
 建議採用 **Jolt C++ → 自有 C ABI bridge → Caelum FFM binding → Kotlin 物件 API**。借鑑 Vulkan 的 struct、handle、生成器分層，以及 jolt-jni 的功能分組、所有權語義與使用範例。首個版本先完成可獨立使用的剛體模擬，再擴充角色、約束、車輛等功能。
 
-本文保留最初 roadmap 的設計與階段驗收標準。後續實作已加入 `jolt/`；目前 API 以 [模組 README](../jolt/README.md)、[surface 清單](../jolt/SURFACE.md) 與 header 為準。依本輪「先編寫，暫不做實際測試，可做小範圍測試」的要求，原生模擬、壓力、效能與跨平台驗收延期。下方里程碑勾選框仍代表完整階段驗收，不因程式已寫入而自動勾選。
+本文保留最初 roadmap 的設計與階段驗收標準。後續實作已加入 `jolt/`；目前 API 以 [模組 README](../jolt/README.md)、[surface 清單](../jolt/SURFACE.md) 與 header 為準。首次編寫階段僅做小範圍檢查；後續 DirectX demo 工作已補上 Windows 原生執行與 GPU 回讀。下方里程碑勾選框仍代表完整階段驗收，未完成的跨平台、壓力、效能與發佈門檻仍保持開放。
 
 | 實作狀態 | 已加入內容 | 驗證邊界 |
 | --- | --- | --- |
-| P0–P2 | 固定來源與 flags、C bridge/handshake、12 個 transport structs、完整 layout/constant oracle、defaults/allocation DSL | generation、Kotlin 編譯、bridge 語法、來源清單與純契約檢查；native oracle 尚未執行 |
-| P3–P4 | managed lifetime、shapes、bodies/locks、ray/batch、thread pool、callback registration/exception/deferred queue | 測試與範例已編譯；物理與 worker callback 執行待驗收 |
-| P5 | module/BOM、portable publication wiring、licenses/source packaging、benchmark、artifact checker、獨立 Maven consumer | 三平台 linking/runtime、artifact 審核、consumer 與效能數據待執行 |
+| P0–P2 | 固定來源與 flags、C bridge/handshake、12 個 transport structs、完整 layout/constant oracle、defaults/allocation DSL | Windows linking、4 個 native ABI 測試、7 個契約測試已通過；其他平台待驗收 |
+| P3–P4 | managed lifetime、shapes、bodies/locks、ray/batch、thread pool、callback registration/exception/deferred queue | Windows 5 個 native world 測試與 3 個 DirectX demo 通過；0/2 workers、實際 worker callback、defer、GPU 回讀有記錄；完整 stress 待驗收 |
+| P5 | module/BOM、portable publication wiring、licenses/source packaging、benchmark、artifact checker、獨立 Maven consumer | Windows host linking/runtime 已驗證；其餘平台、artifact 審核、consumer 與效能數據待執行 |
 | P6 | 維持後續範圍 | 本輪不實作 |
 
 詳見 [驗收記錄](../jolt/acceptance/README.md)。此狀態不代表已可發佈 portable release。
