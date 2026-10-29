@@ -1,17 +1,23 @@
 # caelum-jolt acceptance
 
-Status on 2026-10-27 (America/Los_Angeles): Windows x64 linking, 16 contract/native
-tests and three DirectX physics demos have passed. Demos ran with workers=0 and
-workers=2, including actual non-caller contact upcalls and GPU frame readback.
+Status on 2026-10-28 (America/Los_Angeles): Windows x64 linking, 19 contract/native
+tests, three D3D11 demos and the complex DX12/DXR museum have passed. Demos ran
+with workers=0 and workers=2, including actual non-caller contact upcalls and GPU
+frame readback. The museum includes convex-hull teapots/dragons and real ray-traced
+shadow occlusions/reflection hits.
 Full stress, portable release, Maven consumer and performance acceptance remain
 open; P0–P5 are not declared complete across all targets.
 
 ## Recorded checks
 
+The [DX12/DXR museum report](dxr-museum.md) records the later 170-body complex
+scene with teapot/dragon hulls, real dynamic hardware tracing, shadow/reflection
+hits and both hidden and visible Windows runs.
+
 See [convex-hull.md](convex-hull.md) for the 2026-10-28 Windows hull extension:
 19 contract/native tests and an exact 60-export host DLL audit passed.
 
-See [windows-directx-demos.md](windows-directx-demos.md) for the latest native
+See [windows-directx-demos.md](windows-directx-demos.md) for the initial D3D11
 execution and graphics evidence. [authoring-checks.md](authoring-checks.md)
 retains the earlier source-only record. The source-only jar from that older run
 was not a usable native artifact; the current host jar contains the linked Windows library.

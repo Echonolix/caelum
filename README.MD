@@ -11,7 +11,7 @@ in [`BINDING-AUTHORING.md`](BINDING-AUTHORING.md).
 The Jolt Physics module's API and build policy are documented in
 [`jolt/README.md`](jolt/README.md), with its phases in the
 [`caelum-jolt` roadmap](docs/caelum-jolt-roadmap.md).
-Native runtime and portable release acceptance are pending.
+Native runtime is verified on Windows x64; portable release acceptance remains pending.
 
 ## List of modules
 | Name               | Description                                           |
@@ -151,6 +151,11 @@ The [Jolt / DirectX demos](directx/JOLT-DEMOS.md) add mixed-shape stacking, bowl
 and a moving platform with sensor/ray queries. Run `:caelum-directx:joltStackDemo`,
 `joltBowlingDemo`, or `joltKinematicDemo`. `:caelum-directx:joltDemosSmoke` runs all
 three with hidden windows, physics assertions and GPU PNG output.
+
+For a larger physics scene, [the DX12 / DXR kinetic museum](directx/JOLT-DXR-MUSEUM.md)
+combines 170 rigid bodies, teapots and Stanford dragons with dynamic hardware
+ray-traced shadows/reflections. Run `:caelum-directx:joltDxrMuseumDemo` or
+`joltDxrMuseumSmoke` for bounded hidden acceptance.
 
 ## License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

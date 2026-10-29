@@ -90,6 +90,11 @@ The full persistent ABI and ownership rationale is in
 
 ## Jolt physics demos
 
+The [DX12 / DXR kinetic museum](JOLT-DXR-MUSEUM.md) adds a complex contact-driven
+scene with 170 rigid bodies, teapots and Stanford dragons, per-frame TLAS rebuilds,
+hardware ray-traced shadows and reflections. Run `:caelum-directx:joltDxrMuseumDemo`
+or use `joltDxrMuseumSmoke` for hidden GPU/physics acceptance.
+
 Three Direct3D 11 scenes exercise `caelum-jolt`: mixed-shape stacking, bowling,
 and a kinematic platform with sensor callbacks and ray queries. Run
 `:caelum-directx:joltStackDemo`, `joltBowlingDemo`, or `joltKinematicDemo`.

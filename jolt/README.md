@@ -75,6 +75,8 @@ JoltRuntime.acquire().use { runtime ->
 可編譯的完整版本為 [HelloWorld.kt](src/examples/kotlin/net/echonolix/caelum/jolt/examples/HelloWorld.kt)。
 有畫面的範例見 [DirectX Jolt demos](../directx/JOLT-DEMOS.md)：堆疊、保齡球、
 移動平台／感應區／射線；也提供無桌面操作的 GPU 回讀驗證。
+更複雜的 [DX12／DXR museum](../directx/JOLT-DXR-MUSEUM.md) 整合凸包模型、
+骨牌觸發、抽出展台與撞牆球，逐幀光追 teapot、Stanford dragon 和其他剛體。
 Shape wrapper 關閉後，body 仍持有自己的 shape reference。world 關閉時會清除所有
 body。方便的 `createWorld` overload 同時擁有預設 allocator/jobs；若顯式傳入，
 它們保持 caller-owned，應晚於使用它們的 world 關閉。

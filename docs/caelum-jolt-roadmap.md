@@ -1,6 +1,6 @@
 # caelum-jolt 模組開發 Roadmap
 
-建立日期：2026-10-24。更新：2026-10-27，Windows 原生測試與三個 DirectX 物理 demo 已通過；完整壓力及跨平台發佈驗收尚未完成。
+建立日期：2026-10-24。更新：2026-10-28，Windows 原生測試、凸包 API 與 DX12／DXR 複雜物理 demo 已通過；完整壓力及跨平台發佈驗收尚未完成。
 
 `caelum-jolt` 的目標是提供符合 Caelum 記憶體模型的 Kotlin Jolt Physics binding：資料以 `NStruct`、`NValue`、`NPointer`、`NArray` 存取；有生命週期的物件使用具型別的 handle；模擬、查詢與回呼透過明確的原生邊界執行。本文中的 caelum-vk 指本倉庫的 **`caelum-vulkan`，目錄為 `vulkan/`**。
 
@@ -13,7 +13,7 @@
 | P0–P2 | 固定來源與 flags、C bridge/handshake、12 個 transport structs、完整 layout/constant oracle、defaults/allocation DSL | Windows linking、4 個 native ABI 測試、7 個契約測試已通過；其他平台待驗收 |
 | P3–P4 | managed lifetime、shapes、bodies/locks、ray/batch、thread pool、callback registration/exception/deferred queue | Windows 5 個 native world 測試與 3 個 DirectX demo 通過；0/2 workers、實際 worker callback、defer、GPU 回讀有記錄；完整 stress 待驗收 |
 | P5 | module/BOM、portable publication wiring、licenses/source packaging、benchmark、artifact checker、獨立 Maven consumer | Windows host linking/runtime 已驗證；其餘平台、artifact 審核、consumer 與效能數據待執行 |
-| P6 | 維持後續範圍 | 本輪不實作 |
+| P6 | 首批補入 ConvexHull；其餘擴充維持後續範圍 | Windows 凸包測試與 teapot／dragon DXR 場景通過；不代表整個 P6 完成 |
 
 詳見 [驗收記錄](../jolt/acceptance/README.md)。此狀態不代表已可發佈 portable release。
 
@@ -197,7 +197,7 @@ callback adapter 必須捕捉 JVM `Throwable`，記錄首個失敗與後續錯�
 | --- | --- | --- |
 | 引擎與 world | load/version check、runtime lifecycle、PhysicsSystem、temp allocator、single-thread/thread-pool jobs | 自訂 job scheduler、自訂 allocator |
 | 基礎型別 | Vec3、RVec3、Quat、BodyId、SubShapeId、layer、必要 enum/flags | 更多 matrix、geometry 與 serialization types |
-| Shape | Box、Sphere、Capsule，建立錯誤與引用計數 | ConvexHull、Mesh、HeightField、Compound、decorated shapes |
+| Shape | Box、Sphere、Capsule，建立錯誤與引用計數；後續已補入 ConvexHull | Mesh、HeightField、Compound、decorated shapes |
 | Rigid body | create/add/remove/destroy、static/dynamic/kinematic、transform、velocity、force/impulse、sleep/activation | 批次 add/remove、進階 mass/motion settings |
 | 過濾與事件 | table layer filter、contact/activation listener、錯誤與 unregister 行為 | 更多 query filter、custom material、simulation listener |
 | 查詢 | closest ray cast、明確 miss/hit、caller-owned result | all-hits、overlap、shape cast、collector |
@@ -294,6 +294,10 @@ generated Kotlin 留在 build 產物，不手改。初期使用 `buildsrc.conven
 **驗收：** artifact 不缺任一宣告支援的原生庫，消費端不用本機手動安裝 Jolt；所有前述 gate 通過。效能資料固定硬體、JDK、引擎 commit、precision、CPU flags、body count 與 worker count；與 jolt-jni 比較時先對齊引擎/build，若無法對齊就標明差異，不宣稱差距僅來自 JNI/FFM。不預先承諾速度倍數。
 
 ### P6 擴充功能
+
+2026-10-28 已補入 ConvexHull 的 raw／managed API、錯誤與 ownership 檢查，並以
+[DX12／DXR museum](../directx/JOLT-DXR-MUSEUM.md) 的 teapot／Stanford dragon
+凸包驗證實際落體、旋轉與接觸。其餘功能仍按以下順序逐批交付。
 
 依使用需求逐批交付，而非一次追齊 jolt-jni：先 ConvexHull/Mesh/HeightField/Compound 與更多 query，再 constraints 與 CharacterVirtual，最後 Vehicle、Ragdoll、SoftBody、serialization 與 DebugRenderer。每批延續 surface accounting、ownership、layout 與場景驗收。V-HACD、Hair/GPU 和額外平台另立範圍。
 

@@ -23,6 +23,7 @@ internal class Win32DemoWindow(
     internal var hwnd: MemorySegment = MemorySegment.NULL
         private set
     private var closed = false
+    private val keyPresses = HashSet<Int>()
 
     init {
         arena = Arena.ofConfined()
@@ -64,12 +65,18 @@ internal class Win32DemoWindow(
             if (message.get(ValueLayout.JAVA_INT, Win32Layouts.MSG_MESSAGE_OFFSET) == WM_QUIT) {
                 closeRequested = true
             } else {
+                if (message.get(ValueLayout.JAVA_INT, Win32Layouts.MSG_MESSAGE_OFFSET) == WM_KEYDOWN &&
+                    message.get(ValueLayout.JAVA_LONG, 24L) and (1L shl 30) == 0L) {
+                    keyPresses.add(message.get(ValueLayout.JAVA_LONG, 16L).toInt())
+                }
                 Win32Native.translateMessage(message)
                 Win32Native.dispatchMessage(message)
             }
         }
         return closeRequested
     }
+
+    internal fun consumeKeyPress(virtualKey: Int): Boolean = keyPresses.remove(virtualKey)
 
     override fun close() {
         if (closed) return
@@ -277,3 +284,4 @@ private const val SW_SHOW = 5
 private const val PM_REMOVE = 0x0001
 private const val WM_DESTROY = 0x0002
 private const val WM_QUIT = 0x0012
+private const val WM_KEYDOWN = 0x0100

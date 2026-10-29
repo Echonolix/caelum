@@ -54,8 +54,49 @@ kotlin.sourceSets.named("joltDemos") {
         "**/demo/TeapotMath.kt",
         "**/demo/TeapotMesh.kt",
         "**/demo/model/DemoMesh.kt",
+        "**/demo/model/StanfordDragonMesh.kt",
         "**/demo/d3d11/Win32DemoWindow.kt",
+        "**/demo/d3d12/D3D12Native.kt",
     )
+}
+joltDemos.resources {
+    srcDir("src/test/resources")
+    include("**/jolt/dxr/**", "**/model/stanford_dragon_res3.ply", "**/model/STANFORD_DRAGON_NOTICE.txt")
+}
+
+fun registerJoltDxrDemo(taskName: String, hidden: Boolean) = tasks.register<JavaExec>(taskName) {
+    group = if (hidden) "verification" else "application"
+    description = "Runs the DX12 hardware-raytraced Jolt kinetic museum with teapot and Stanford Dragon"
+    dependsOn(joltDemos.classesTaskName)
+    classpath = joltDemos.runtimeClasspath
+    mainClass.set("net.echonolix.caelum.directx.demo.jolt.museum.JoltDxrMuseumKt")
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("caelum.museum.hidden", providers.gradleProperty("demoHidden").orNull ?: hidden.toString())
+    systemProperty("caelum.museum.frames", providers.gradleProperty("demoFrames").orNull ?: if (hidden) "720" else "0")
+    systemProperty("caelum.museum.workers", providers.gradleProperty("demoWorkers").orNull ?: "2")
+    systemProperty("caelum.museum.samples", providers.gradleProperty("demoDxrSamples").orNull ?: "2")
+    systemProperty("caelum.museum.output", providers.gradleProperty("demoOutput").orNull
+        ?: layout.buildDirectory.dir("jolt-dxr-museum").get().asFile.absolutePath)
+}
+registerJoltDxrDemo("joltDxrMuseumDemo", false)
+registerJoltDxrDemo("joltDxrMuseumSmoke", true)
+tasks.register<JavaExec>("joltDxrContracts") {
+    group = "verification"
+    description = "Checks native DXR instance, atlas and SDK field-layout contracts"
+    dependsOn(joltDemos.classesTaskName)
+    classpath = joltDemos.runtimeClasspath
+    mainClass.set("net.echonolix.caelum.directx.demo.jolt.dxr.DxrSceneContractCheck")
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+}
+tasks.register<JavaExec>("joltMuseumPhysicsSmoke") {
+    group = "verification"
+    description = "Checks the kinetic museum's actual contact-driven physics without creating a GPU device"
+    dependsOn(joltDemos.classesTaskName)
+    classpath = joltDemos.runtimeClasspath
+    mainClass.set("net.echonolix.caelum.directx.demo.jolt.museum.MuseumPhysicsSmokeKt")
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("caelum.museum.workers", providers.gradleProperty("demoWorkers").orNull ?: "2")
+    systemProperty("caelum.museum.output", layout.buildDirectory.dir("jolt-museum-physics").get().asFile.absolutePath)
 }
 
 fun registerJoltDemo(taskName: String, scene: String) = tasks.register<JavaExec>(taskName) {

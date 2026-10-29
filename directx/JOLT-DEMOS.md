@@ -1,5 +1,8 @@
 # Jolt × Caelum DirectX demos
 
+DX12／硬體光追的複雜場景見 [JOLT-DXR-MUSEUM.md](JOLT-DXR-MUSEUM.md)，包含 teapot、
+Stanford dragon 與骨牌觸發機關；本文保留三個 D3D11 入門場景的命令。
+
 三個可獨立啟動的剛體場景，以 `caelum-jolt` 模擬，透過 `caelum-directx`／
 `caelum-dxgi` 的 API catalog 建立 Direct3D 11 renderer。需要 Windows x64、
 JDK 24、D3D feature level 11_0 與 `d3dcompiler_47.dll`。
