@@ -71,6 +71,14 @@ DirectX tests. This does not exercise the separately tagged Jolt stress suite.
 
 ## Reproduction
 
+An additional visible launch explicitly selected `AMD Radeon(TM) Graphics`
+through `-PdemoGpu=amd` (PCI vendor `0x1002`, device `0x13c0`). Its real DXR dispatch
+and all 720-step physics/checkpoint assertions passed at 2 samples/pixel, including
+5,086 teapot and 7,309 dragon final primary hits, 126,040 shadow occlusions and
+107,561 reflection hits. The interactive window remains caller-controlled; this
+launch does not claim a post-close resource result. Evidence is in
+`build/jolt-dxr/amd-launch.log` and `directx/build/jolt-dxr-museum-amd/`.
+
 From repository root with JDK 24:
 
 ```powershell

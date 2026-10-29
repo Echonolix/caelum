@@ -75,6 +75,7 @@ fun registerJoltDxrDemo(taskName: String, hidden: Boolean) = tasks.register<Java
     systemProperty("caelum.museum.frames", providers.gradleProperty("demoFrames").orNull ?: if (hidden) "720" else "0")
     systemProperty("caelum.museum.workers", providers.gradleProperty("demoWorkers").orNull ?: "2")
     systemProperty("caelum.museum.samples", providers.gradleProperty("demoDxrSamples").orNull ?: "2")
+    systemProperty("caelum.museum.gpu", providers.gradleProperty("demoGpu").orNull ?: "auto")
     systemProperty("caelum.museum.output", providers.gradleProperty("demoOutput").orNull
         ?: layout.buildDirectory.dir("jolt-dxr-museum").get().asFile.absolutePath)
 }

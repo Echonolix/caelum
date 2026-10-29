@@ -9,12 +9,18 @@
 
 需要 Windows x64、JDK 24，以及支援硬體 DXR 的顯示卡／驅動。
 程式選取 high-performance adapter；不支援 DXR 時會直接報錯。
+用 `-PdemoGpu=amd` 可指定 AMD，或用 `nvidia`／`intel` 選擇廠商；預設 `auto`
+選取最高效能的硬體 adapter。指定廠商時不會改用另一家顯卡。
+啟動日誌列出實際選取的名稱及 PCI vendor/device ID，GPU checkpoint 也記錄這兩個 ID。
 從倉庫根目錄執行：
 
 ```powershell
 $env:JAVA_HOME = 'C:\Program Files\Java\jdk-24'
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat :caelum-directx:joltDxrMuseumDemo
+
+# 指定 AMD 硬體光追。
+.\gradlew.bat :caelum-directx:joltDxrMuseumDemo -PdemoGpu=amd
 ```
 
 - **Space**：暫停／繼續物理模擬。

@@ -5,6 +5,7 @@ import net.echonolix.caelum.directx.api.DirectXApiCatalog
 import net.echonolix.caelum.directx.demo.Vec3
 import net.echonolix.caelum.directx.demo.d3d12.*
 import net.echonolix.caelum.directx.demo.jolt.FrameCapture
+import net.echonolix.caelum.dxgi.api.NativeApiInvoker
 import java.awt.image.BufferedImage
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
@@ -61,6 +62,8 @@ internal class JoltDxrRenderer(
     private var tlasBuilds = 0L
     private var lastInstanceCount = 0
     private var tier = 0
+    private var adapterVendorId = 0
+    private var adapterDeviceId = 0
     private var lastCounters = IntArray(0)
     private var lastReflectionHits = 0
     private val lastMeshIndices = IntArray(capacity)
@@ -98,10 +101,7 @@ internal class JoltDxrRenderer(
             Arena.ofConfined().use { a ->
                 D3D12Native.ensureAvailable()
                 val factory = own(out(a, IID_FACTORY, "CreateDXGIFactory2") { iid, out -> D3D12Native.createFactory(iid, out) })
-                val adapter = own(out(a, IID_ADAPTER, "high-performance adapter") { iid, out ->
-                    D3D12Native.comInt(factory, D3D12Slots.FACTORY6_ENUM_ADAPTER_BY_GPU_PREFERENCE,
-                        D3D12Descriptors.ENUM_ADAPTER_BY_GPU_PREFERENCE, 0, 2, iid, out)
-                })
+                val adapter = own(selectAdapter(a, factory))
                 device = own(out(a, IID_DEVICE5, "D3D12CreateDevice(ID3D12Device5)") { iid, out -> D3D12Native.createDevice(adapter, iid, out) })
                 val options = a.allocate(12, 4)
                 checkHr(D3D12Native.comInt(device, feature.slot, feature.descriptor, 27, options, 12), "D3D12_OPTIONS5")
@@ -247,6 +247,7 @@ internal class JoltDxrRenderer(
         }
         return linkedMapOf<String, Number>(
             "raytracingTier" to tier, "blasBuilds" to meshes.size, "tlasBuilds" to tlasBuilds,
+            "adapterVendorId" to adapterVendorId, "adapterDeviceId" to adapterDeviceId,
             "tlasUpdates" to 0, "dispatchRaysCalls" to frames, "samplesPerPixel" to samplesPerPixel,
             "primaryRaysPerFrame" to width.toLong() * height * samplesPerPixel,
             "primaryHits" to (lastCounters.getOrNull(0)?.toUInt()?.toLong() ?: 0),
@@ -375,6 +376,55 @@ internal class JoltDxrRenderer(
         val base = result.outObject("swap chain")
         return try { out(a, IID_SWAP_CHAIN, "IDXGISwapChain3") { iid, out -> D3D12Native.queryInterface(base, iid, out) } }
         finally { D3D12Native.release(base) }
+    }
+
+    private fun selectAdapter(a: Arena, factory: MemorySegment): MemorySegment {
+        val requested = System.getProperty("caelum.museum.gpu", "auto").lowercase()
+        val vendor = when (requested) {
+            "auto" -> null
+            "amd" -> 0x1002
+            "nvidia" -> 0x10de
+            "intel" -> 0x8086
+            else -> error("demoGpu must be auto, amd, nvidia or intel; got '$requested'")
+        }
+        val dxgi = profile.catalogs.first { it.interfaceDeclaration("IDXGIAdapter1") != null }
+        val invoker = NativeApiInvoker(dxgi, types = profile.types)
+        val layout = dxgi.records.getValue("DXGI_ADAPTER_DESC1")
+        fun offset(name: String): Long = layout.fields.single { it.name == name }.offsetBits!! / 8
+        var index = 0
+        while (true) {
+            val result = a.allocate(ADDRESS)
+            val status = D3D12Native.comInt(factory, D3D12Slots.FACTORY6_ENUM_ADAPTER_BY_GPU_PREFERENCE,
+                D3D12Descriptors.ENUM_ADAPTER_BY_GPU_PREFERENCE, index, 2, a.guid(IID_ADAPTER.guidValue()), result)
+            if (status == 0x887a0002.toInt()) break // DXGI_ERROR_NOT_FOUND
+            val adapter = result.get(ADDRESS, 0)
+            if (status < 0) {
+                if (adapter.address() != 0L) D3D12Native.release(adapter)
+                checkHr(status, "EnumAdapterByGpuPreference($index)")
+            }
+            check(adapter.address() != 0L) { "DXGI returned a null adapter" }
+            var selected = false
+            try {
+                val desc = a.allocate(layout.size!!, layout.alignment!!)
+                checkHr(invoker.comMethod(adapter, "IDXGIAdapter1", "GetDesc1").invokeWithArguments(adapter, desc) as Int, "IDXGIAdapter1.GetDesc1")
+                val name = desc.asSlice(offset("Description"), 256).getString(0, Charsets.UTF_16LE)
+                val candidateVendor = desc.get(JAVA_INT, offset("VendorId"))
+                val candidateDevice = desc.get(JAVA_INT, offset("DeviceId"))
+                val software = desc.get(JAVA_INT, offset("Flags")) and 2 != 0
+                println("DXGI_ADAPTER[$index]=$name VENDOR=0x${candidateVendor.toString(16)} DEVICE=0x${candidateDevice.toString(16)} SOFTWARE=$software")
+                if (!software && (vendor == null || candidateVendor == vendor)) {
+                    adapterVendorId = candidateVendor
+                    adapterDeviceId = candidateDevice
+                    selected = true
+                    println("SELECTED_GPU=$name REQUEST=$requested VENDOR=0x${candidateVendor.toString(16)}")
+                    return adapter
+                }
+            } finally {
+                if (!selected) D3D12Native.release(adapter)
+            }
+            index++
+        }
+        error("No hardware DXGI adapter matches demoGpu=$requested; no other vendor was selected")
     }
 
     private fun buffer(a: Arena, size: Long, heapType: Int, state: Int, flags: Int = 0): Buffer {
