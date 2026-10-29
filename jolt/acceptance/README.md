@@ -8,6 +8,9 @@ open; P0–P5 are not declared complete across all targets.
 
 ## Recorded checks
 
+See [convex-hull.md](convex-hull.md) for the 2026-10-28 Windows hull extension:
+19 contract/native tests and an exact 60-export host DLL audit passed.
+
 See [windows-directx-demos.md](windows-directx-demos.md) for the latest native
 execution and graphics evidence. [authoring-checks.md](authoring-checks.md)
 retains the earlier source-only record. The source-only jar from that older run

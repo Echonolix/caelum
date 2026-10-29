@@ -206,6 +206,11 @@ CJ_API int32_t cj_world_set_callbacks(struct CJWorld *world, const struct CJCall
 CJ_API int32_t cj_shape_box(const struct CJVec3 *halfExtent, float convexRadius, struct CJShape **out);
 CJ_API int32_t cj_shape_sphere(float radius, struct CJShape **out);
 CJ_API int32_t cj_shape_capsule(float halfHeight, float radius, struct CJShape **out);
+/* Copies points[count] during this call; at least four finite, noncoplanar
+ * points, count <= INT32_MAX. Interior/duplicate points are permitted.
+ * convexRadius is finite/nonnegative and Jolt may reduce it to fit the hull.
+ * Shape coordinates remain relative to the supplied origin, not its COM. */
+CJ_API int32_t cj_shape_convex_hull(const struct CJVec3 *points, uint32_t count, float convexRadius, struct CJShape **out);
 CJ_API int32_t cj_shape_retain(struct CJShape *shape, struct CJShape **out);
 CJ_API int32_t cj_shape_release(struct CJShape *shape);
 

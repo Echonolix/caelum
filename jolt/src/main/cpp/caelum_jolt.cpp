@@ -15,6 +15,7 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/CastResult.h>
@@ -25,6 +26,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <limits>
 #include <mutex>
 #include <thread>
 
@@ -474,6 +476,27 @@ int32_t cj_shape_capsule(float height, float radius, CJShape **out) {
         if (!out || !std::isfinite(height) || height <= 0 || !std::isfinite(radius) || radius <= 0)
             return fail(CJ_INVALID_ARGUMENT, "capsule half height and radius must be positive and finite");
         JPH::CapsuleShapeSettings settings(height, radius); return make_shape(settings, out);
+    });
+}
+int32_t cj_shape_convex_hull(const CJVec3 *points, uint32_t count, float radius, CJShape **out) {
+    if (out) *out = nullptr;
+    return create_resource([&]() -> int32_t {
+        // Jolt's hull builder uses signed int point indices, even though the ABI uses uint32_t.
+        if (!out || !points || count < 4 || count > uint32_t(std::numeric_limits<int32_t>::max()) || !std::isfinite(radius) || radius < 0)
+            return fail(CJ_INVALID_ARGUMENT, "convex hull requires 4..INT32_MAX finite points and a nonnegative finite convex radius");
+        JPH::ConvexHullShapeSettings settings;
+        settings.mMaxConvexRadius = radius;
+        settings.mPoints.reserve(count);
+        for (uint32_t index = 0; index < count; ++index) {
+            if (!finite(points[index])) return fail(CJ_INVALID_ARGUMENT, "convex hull points must be finite");
+            settings.mPoints.push_back(vec(points[index]));
+        }
+        auto result = settings.Create();
+        if (result.HasError()) return fail(CJ_SHAPE_ERROR, result.GetError().c_str());
+        // Upstream also supports flat hulls; this solid-body API requires nonzero volume.
+        if (!std::isfinite(result.Get()->GetVolume()) || result.Get()->GetVolume() <= 0)
+            return fail(CJ_SHAPE_ERROR, "convex hull must enclose a finite, positive volume");
+        return make_shape(settings, out);
     });
 }
 int32_t cj_shape_retain(CJShape *shape, CJShape **out) {

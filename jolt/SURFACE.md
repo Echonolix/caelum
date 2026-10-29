@@ -88,6 +88,7 @@ later update fail its managed state check.
 | `cj_shape_box` | [BoxShapeSettings::Create][box] / `createBox` | positive finite half extents; nonnegative convex radius; owned ref, P3 |
 | `cj_shape_sphere` | [SphereShapeSettings::Create][sphere] / `createSphere` | positive finite radius; owned ref, P3 |
 | `cj_shape_capsule` | [CapsuleShapeSettings::Create][capsule] / `createCapsule` | positive finite half-height/radius; owned ref, P3 |
+| `cj_shape_convex_hull` | [ConvexHullShapeSettings::Create][hull] / `createConvexHull` | copied Vec3 points[count], 4..INT32_MAX; finite points, finite nonnegative maximum convex radius; positive-volume hull, owned ref, P6 expansion |
 | `cj_shape_retain` | [RefConst][ref] / shape `retain` | new independently owned wrapper/ref, P3 |
 | `cj_shape_release` | RefConst destructor / shape close | releases exactly one wrapper/ref, P3 |
 | `cj_body_create` | [BodyInterface::CreateBody/AddBody][bodies] / `create`, `createAndAdd` | settings+shape borrowed; body retains shape, world owns body; out uint32 ID, P3 |
@@ -113,6 +114,19 @@ Body IDs preserve index and sequence bits, including invalid `0xffffffff`.
 They carry no world identity: a valid ID from another world can name an unrelated
 body with the same bits. Sequence counters can wrap. Neither cross-world misuse
 nor permanent entity identity can be inferred from a uint32 alone.
+
+Convex hull creation accepts interior/duplicate model vertices; Jolt reduces them
+to its convex surface (at most 256 hull vertices) using its pinned default hull
+tolerance. At that vertex limit upstream accepts an approximation, which may
+exceed the default tolerance. It may lower the requested convex radius to fit without enlarging the
+outer hull. Coincident/collinear or zero-volume coplanar inputs fail with
+`CJ_SHAPE_ERROR`; malformed counts, nonfinite points/radius and negative radius
+fail with `CJ_INVALID_ARGUMENT`. Inputs are copied synchronously and never retained.
+The managed `NArray<JoltVec3>` overload checks the requested count against its
+capacity; the packed `FloatArray` overload requires complete xyz triples.
+Model coordinates remain relative to the supplied shape origin. Body snapshots
+use `Body::GetPosition`, preserving this origin when the hull's center of mass is
+offset. Concave detail is filled by the convex hull; no decomposition is performed.
 
 Body-create fields currently supported: position, rotation, linear/angular
 velocity, userData, motionType, motionQuality, objectLayer, isSensor,
@@ -169,7 +183,7 @@ Caelum's own. EPhysicsUpdateError bits are preserved, including unknown bits.
 
 ## Deferred and excluded surface
 
-P6: ConvexHull/Mesh/HeightField/Compound/decorated shapes, all-hits/shape/overlap
+P6 remaining: Mesh/HeightField/Compound/decorated shapes, all-hits/shape/overlap
 queries and collectors, advanced body settings/batch writes, constraints,
 Character/CharacterVirtual, vehicles, ragdolls/skeletons, SoftBody,
 StateRecorder/serialization and DebugRenderer. Every future batch needs its own
@@ -200,5 +214,6 @@ bridge symbol is generated or claimed supported.
 [box]: https://github.com/jrouwe/JoltPhysics/blob/e77f175595e64cb44218cc9d9d56fc365ad0e36a/Jolt/Physics/Collision/Shape/BoxShape.h
 [sphere]: https://github.com/jrouwe/JoltPhysics/blob/e77f175595e64cb44218cc9d9d56fc365ad0e36a/Jolt/Physics/Collision/Shape/SphereShape.h
 [capsule]: https://github.com/jrouwe/JoltPhysics/blob/e77f175595e64cb44218cc9d9d56fc365ad0e36a/Jolt/Physics/Collision/Shape/CapsuleShape.h
+[hull]: https://github.com/jrouwe/JoltPhysics/blob/e77f175595e64cb44218cc9d9d56fc365ad0e36a/Jolt/Physics/Collision/Shape/ConvexHullShape.h
 [ref]: https://github.com/jrouwe/JoltPhysics/blob/e77f175595e64cb44218cc9d9d56fc365ad0e36a/Jolt/Core/Reference.h
 [lock]: https://github.com/jrouwe/JoltPhysics/blob/e77f175595e64cb44218cc9d9d56fc365ad0e36a/Jolt/Physics/Body/BodyLock.h

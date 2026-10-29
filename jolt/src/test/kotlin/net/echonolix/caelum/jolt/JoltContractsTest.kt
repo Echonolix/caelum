@@ -122,7 +122,7 @@ class JoltContractsTest {
         val globals = Path.of("build/generated/ktgen/net/echonolix/caelum/jolt/functions/GlobalFuncs.kt").readText()
         val surface = Path.of("SURFACE.md").readText()
         val exports = Regex("CJ_API[^;]+?\\b(cj_\\w+)\\s*\\(").findAll(header).map { it.groupValues[1] }.toSet()
-        assertTrue(exports.size > 50)
+        assertEquals(60, exports.size)
         val implemented = Regex("\\b(cj_\\w+)\\s*\\([^;{}]*\\)\\s*\\{").findAll(implementation).map { it.groupValues[1] }.toSet()
         val generated = Regex("public fun (cj_\\w+)\\(").findAll(globals).map { it.groupValues[1] }.toSet()
         assertEquals(exports, implemented)

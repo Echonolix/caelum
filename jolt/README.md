@@ -4,7 +4,7 @@
 binding。路徑為官方 Jolt C++ → 自有 C ABI → `codegen-c` → Kotlin 管理層，
 沒有 JNI runtime 依賴。
 
-目前為開發版本。Windows x64 原生建置、16 個契約／ABI／world 測試，以及三個
+目前為開發版本。Windows x64 原生建置、19 個契約／ABI／world／convex hull 測試，以及三個
 DirectX 物理 demo 已通過；demo 涵蓋單執行緒與兩個原生 worker。壓力測試與
 跨平台發佈驗收仍待執行。完整狀態見 [驗收記錄](acceptance/README.md)。
 
@@ -12,7 +12,7 @@ DirectX 物理 demo 已通過；demo 涵蓋單執行緒與兩個原生 worker。
 
 - 固定官方 Jolt v5.6.0、double 世界座標、float 速度／旋轉、16-bit object layer。
 - Runtime lease、world、scratch allocator、單執行緒／原生 thread-pool jobs。
-- Box、Sphere、Capsule；剛體生命週期、transform、velocity、force／impulse、kinematic movement、activation。
+- Box、Sphere、Capsule、ConvexHull；剛體生命週期、transform、velocity、force／impulse、kinematic movement、activation。
 - layer table、closest ray cast、重用輸出陣列的批次 transform。
 - contact／activation listener、受限 callback view、deferred command queue。
 
@@ -78,6 +78,14 @@ JoltRuntime.acquire().use { runtime ->
 Shape wrapper 關閉後，body 仍持有自己的 shape reference。world 關閉時會清除所有
 body。方便的 `createWorld` overload 同時擁有預設 allocator/jobs；若顯式傳入，
 它們保持 caller-owned，應晚於使用它們的 world 關閉。
+
+模型的凸碰撞代理可用 `runtime.createConvexHull(positions, convexRadius = 0.025f)`
+建立；`positions` 是 `FloatArray` 的 xyz triples，也可傳 `NArray<JoltVec3>` 與
+`count: Long`。建立期間複製輸入，至少需要四個非共面有限點；凹部會填滿，Jolt
+最多保留 256 個 hull vertices。模型點與 body transform 使用相同 shape origin，
+不需因 Jolt 內部 center of mass 偏移而修改繪圖座標。詳細限制與錯誤合同見
+[SURFACE.md](SURFACE.md#shapes-bodies-and-query)，本輪原生驗證見
+[convex-hull.md](acceptance/convex-hull.md)。
 
 設定 struct 的 `allocate` 會呼叫原生 initializer，包含 padding 與非零預設值。
 `malloc` 只配置未初始化空間；不能用它直接建立引擎設定。上游 body 預設 motion
