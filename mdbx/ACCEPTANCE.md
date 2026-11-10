@@ -205,3 +205,27 @@ exclusive-continuation key seeking forward. Legacy unrestricted `get(key)` still
 returns the original 65536-byte value. Build: `BUILD SUCCESSFUL in 10s`, 47 tasks,
 2 executed and 45 up-to-date; native outputs remained up-to-date. Prior two-target
 carrier assertions/export checks still describe the unchanged native code.
+
+## Windows external-backing query completion
+
+The pinned libmdbx archive opens the lock file with overlapped I/O. A matching
+private ReFS lock-file probe observed `FSCTL_GET_EXTERNAL_BACKING` return
+`STATUS_PENDING`, then complete as `STATUS_INVALID_DEVICE_REQUEST` with zero
+output bytes. The pinned code treated pending as a successful backing query.
+The Windows build now supplies a private completion event and validates the
+returned header length before reading it. See the
+[Windows I/O completion contract](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_io_status_block).
+
+With the Fornax `ExportDatabase` owner and durable open flags, the old DLL
+returned 4352 on a fresh ReFS path. The candidate opened and closed fresh
+databases on both ReFS and NTFS. Each JVM exited normally after `resourcesReleased=true`.
+The Windows DLL SHA-256 was `2707677235f4cbf305c30975cd20aba3cc72aca100a938e9b3fd78ecf2b3c16c`.
+
+The Windows C fixture in `src/test/c/mdbx_windows_backing_test.c` compiles the
+generated `build/patchedMdbx/mdbx.c` with Zig 0.17.0. Its 11 controlled cases
+cover pending completion, valid backing rejection, malformed output, immediate
+errors and event creation or closure errors. The `wait-failure`,
+`incomplete-signal` and `synchronous-pending` child processes each exited with
+`0xC0000420` and their distinct assertion. `MdbxTest`, `MdbxScanTest` and
+`MdbxUsageTest` passed 17 Windows JVM cases. Linux and macOS native code was
+cross-compiled from the original archive source. Their runtime remains untested.

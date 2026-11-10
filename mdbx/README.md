@@ -75,6 +75,15 @@ unused extent can be returned. See `ACCEPTANCE.md` for observed sizes.
 - Apache-2.0; binary and source JARs include upstream LICENSE, NOTICE and the COPYRIGHT
   credits referenced by NOTICE.
 
+`prepareMdbx` applies the local Windows external-backing query fix to a separate
+compile input. `mdbx_windows_backing.inc` is included in the source JAR. An
+overlapped lock-file query waits for its own event before reading the completion
+status. An immediate return supplies the status directly. A malformed success
+response makes open return a native error. A valid backing response is subject
+to the existing filesystem restrictions. If a synchronous query returns pending,
+a private event wait fails, or a signaled event still reports pending, libmdbx
+stops the process because the operating system may still own the request buffers.
+
 `include/mdbx-binding.h` is a deliberately limited, normalized API surface,
 processed by `codegen-c`. It exposes environment create/options/geometry/open/close,
 transaction begin/commit/abort, table open, get/put/delete, and error formatting.

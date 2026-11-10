@@ -1,3 +1,4 @@
+import buildsrc.convention.CompileCrossNativeTask
 import buildsrc.convention.ElementType
 import buildsrc.convention.NativeTarget
 import buildsrc.convention.registerPinnedArchive
@@ -13,6 +14,64 @@ val sources = registerPinnedArchive(
     "48d16ea17f33ebd7143a7d60701ff8259ecd500c05561f533d9d64273a022f47",
 )
 val sourceRoot = sources.flatMap { it.outputDirectory.dir("libmdbx-a032e40c1c06eaf695a163cfc32d4a01ffb8b26c") }
+val upstreamMdbx = sourceRoot.map { it.file("mdbx.c") }
+val patchedMdbx = layout.buildDirectory.file("patchedMdbx/mdbx.c")
+val prepareMdbx = tasks.register("prepareMdbx") {
+    inputs.file(upstreamMdbx)
+    outputs.file(patchedMdbx)
+    doLast {
+        var source = upstreamMdbx.get().asFile.readText()
+        fun replaceOnce(original: String, replacement: String) {
+            val start = source.indexOf(original)
+            check(start >= 0 && source.indexOf(original, start + original.length) < 0) {
+                "The pinned libmdbx source no longer matches the local Windows external backing patch: $original"
+            }
+            source = source.replaceRange(start, start + original.length, replacement)
+        }
+        val checkLocal = "int osal_check_fs_local(mdbx_filehandle_t handle, int flags)"
+        replaceOnce("$checkLocal {\n#if IS_WINDOWS", """
+            #if IS_WINDOWS
+            static int osal_check_fs_local_windows(mdbx_filehandle_t handle, int flags, bool asynchronous) {
+            #else
+            $checkLocal {
+            #endif
+            #if IS_WINDOWS
+        """.trimIndent())
+        val query = """
+            IO_STATUS_BLOCK StatusBlock;
+            rc = imports.NtFsControlFile(handle, nullptr, nullptr, nullptr, &StatusBlock, FSCTL_GET_EXTERNAL_BACKING, nullptr,
+                                         0, &GetExternalBacking_OutputBuffer, sizeof(GetExternalBacking_OutputBuffer));
+        """.trimIndent().prependIndent("    ")
+        replaceOnce(query, "#include \"mdbx_windows_backing.inc\"")
+        val queryFailure = """
+            } else if (rc != STATUS_OBJECT_NOT_EXTERNALLY_BACKED && rc != STATUS_INVALID_DEVICE_REQUEST &&
+                       rc != STATUS_NOT_SUPPORTED)
+              return osal_ntstatus2errcode(rc);
+        """.trimIndent().prependIndent("    ")
+        replaceOnce(queryFailure, "$queryFailure\n    if (close_error)\n      return close_error;")
+        val mapEntry = "int osal_mmap(const int flags, osal_mmap_t *map, size_t size,"
+        replaceOnce(mapEntry, """
+            #if IS_WINDOWS
+            $checkLocal {
+              return osal_check_fs_local_windows(handle, flags, false);
+            }
+            #endif
+
+            $mapEntry
+        """.trimIndent())
+        replaceOnce("  int err = osal_check_fs_local(map->fd, flags);", """
+            #if IS_WINDOWS
+              /* Only the lock-file map uses an overlapped handle. */
+              int err = osal_check_fs_local_windows(map->fd, flags, (options & MMAP_OPTION_SEMAPHORE) != 0);
+            #else
+              int err = osal_check_fs_local(map->fd, flags);
+            #endif
+        """.trimIndent())
+        val output = patchedMdbx.get().asFile
+        output.parentFile.mkdirs()
+        output.writeText(source)
+    }
+}
 
 codegenC {
     packageName.set("net.echonolix.caelum.mdbx")
@@ -32,7 +91,7 @@ dependencies {
 
 crossNative {
     libraryName.set("caelum_mdbx")
-    cSources.from(sourceRoot.map { it.file("mdbx.c") }, "src/main/c/mdbx_abi.c")
+    cSources.from(upstreamMdbx, "src/main/c/mdbx_abi.c")
     includeDirs.from(sourceRoot)
     defines.putAll(mapOf(
         "MDBX_HAVE_BUILTIN_CPU_SUPPORTS" to "0",
@@ -45,6 +104,11 @@ crossNative {
     targetDefines(NativeTarget.LINUX_X86_64).put("_SYS_CACHECTL_H", "1")
     linkFlags.add("-pthread")
     targetLinkFlags(NativeTarget.WINDOWS_X86_64).add("-lntdll")
+}
+
+tasks.named<CompileCrossNativeTask>("compileNativeWindowsX64") {
+    cSources.setFrom(files(patchedMdbx).builtBy(prepareMdbx), "src/main/c/mdbx_abi.c")
+    includeDirs.from("src/main/c")
 }
 
 tasks.jar {
